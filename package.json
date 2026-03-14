@@ -1,0 +1,42 @@
+{
+  "name": "mood-health-web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "start-all": "powershell -ExecutionPolicy Bypass -File start-project.ps1",
+    "start-all:concurrent": "npx concurrently \"npm --prefix . run dev\" \"npm --prefix mood-health-server run dev\" \"python -m uvicorn mood-health-server.ollama_server:app --host 0.0.0.0 --port 8000\""
+  },
+  "dependencies": {
+    "@vueuse/core": "^14.2.1",
+    "axios": "^1.6.8",
+    "bcryptjs": "^3.0.3",
+    "echarts": "^5.4.3",
+    "echarts-wordcloud": "^2.1.0",
+    "element-plus": "^2.13.3",
+    "jsonwebtoken": "^9.0.3",
+    "pinia": "^2.3.1",
+    "vue": "^3.5.25",
+    "vue-router": "^4.6.3"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.10.1",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "@vitest/ui": "^2.0.0",
+    "@vue/test-utils": "^2.4.0",
+    "happy-dom": "^14.0.0",
+    "sass": "^1.94.2",
+    "typescript": "^5.2.2",
+    "vite": "^5.2.0",
+    "vitest": "^2.0.0",
+    "vue-tsc": "^2.0.6"
+  }
+}

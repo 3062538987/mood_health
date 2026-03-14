@@ -1,0 +1,500 @@
+<template>
+  <div class="profile">
+    <div class="container">
+      <h1 class="page-title">我的</h1>
+
+      <!-- 用户信息卡片 -->
+      <div class="user-info-card">
+        <div class="avatar">
+          <div class="avatar-placeholder">👤</div>
+        </div>
+        <div class="user-details">
+          <h2 class="username">大学生用户</h2>
+          <p class="user-id">用户ID: user_123456</p>
+        </div>
+      </div>
+
+      <!-- 个人情绪主页 -->
+      <div class="emotion-homepage">
+        <h3 class="section-title">个人情绪主页</h3>
+
+        <!-- 情绪健康评分 -->
+        <div class="emotion-score-card">
+          <div class="score-circle">
+            <div class="score-number">{{ emotionScore }}</div>
+            <div class="score-label">情绪健康评分</div>
+          </div>
+          <div class="score-description">
+            <p>基于近30天情绪记录</p>
+            <p>积极情绪占比越高，评分越高</p>
+          </div>
+        </div>
+
+        <!-- 近期高频情绪 -->
+        <div class="recent-emotions">
+          <h4>近期高频情绪</h4>
+          <div class="emotion-tags">
+            <div
+              class="emotion-tag"
+              v-for="(count, emotion) in recentEmotions"
+              :key="emotion"
+            >
+              <span class="emotion-name">{{ emotion }}</span>
+              <span class="emotion-count">{{ count }}次</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 参与记录与收藏 -->
+        <div class="activity-records">
+          <div class="record-item">
+            <h4>团体辅导参与记录</h4>
+            <p class="record-value">{{ groupActivityCount }}次</p>
+          </div>
+          <div class="record-item">
+            <h4>收藏的知识点</h4>
+            <p class="record-value">{{ favoriteKnowledgeCount }}个</p>
+          </div>
+          <div class="record-item">
+            <h4>收藏的解压工具</h4>
+            <p class="record-value">{{ favoriteToolsCount }}个</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 功能入口区域 -->
+      <div class="function-section">
+        <h3 class="section-title">功能入口</h3>
+        <div class="function-grid">
+          <!-- 情绪调研入口 -->
+          <div class="function-card survey-card" @click="goToSurvey">
+            <div class="card-icon">📋</div>
+            <h4 class="card-title">情绪调研</h4>
+            <p class="card-description">参与情绪健康调研，解锁高级分析报告</p>
+            <div class="card-badge" v-if="!surveyCompleted">未参与</div>
+            <div class="card-badge completed" v-else>已完成</div>
+          </div>
+
+          <!-- 其他功能入口 -->
+          <div class="function-card">
+            <div class="card-icon">📊</div>
+            <h4 class="card-title">情绪分析</h4>
+            <p class="card-description">查看我的情绪变化趋势</p>
+          </div>
+
+          <div class="function-card">
+            <div class="card-icon">🎁</div>
+            <h4 class="card-title">我的成就</h4>
+            <p class="card-description">查看已获得的情绪管理成就</p>
+          </div>
+
+          <div class="function-card">
+            <div class="card-icon">⚙️</div>
+            <h4 class="card-title">设置</h4>
+            <p class="card-description">账号和隐私设置</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 会员权益区域 -->
+      <div class="membership-section">
+        <div class="membership-card">
+          <h3 class="membership-title">会员权益</h3>
+          <div class="membership-benefits">
+            <div class="benefit-item">
+              <div class="benefit-icon">✨</div>
+              <div class="benefit-info">
+                <h4>基础权益</h4>
+                <p>情绪记录、简单分析</p>
+              </div>
+            </div>
+            <div class="benefit-item premium">
+              <div class="benefit-icon">💎</div>
+              <div class="benefit-info">
+                <h4>高级权益</h4>
+                <p>深度分析、个性化建议</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+
+// 状态管理
+const surveyCompleted = ref(false); // 问卷完成状态
+
+// 个人情绪主页数据
+const emotionScore = ref(85); // 情绪健康评分
+const recentEmotions = ref({
+  // 近期高频情绪
+  平静: 4,
+  焦虑: 2,
+  开心: 3,
+  压力: 1,
+});
+const groupActivityCount = ref(2); // 团体辅导参与记录
+const favoriteKnowledgeCount = ref(5); // 收藏的知识点
+const favoriteToolsCount = ref(3); // 收藏的解压工具
+
+// 前往问卷页面
+const goToSurvey = () => {
+  router.push("/improve/survey");
+};
+
+// 模拟从localStorage获取问卷完成状态
+onMounted(() => {
+  const completed = localStorage.getItem("surveyCompleted");
+  if (completed) {
+    surveyCompleted.value = JSON.parse(completed);
+  }
+});
+</script>
+
+<style scoped lang="scss">
+.profile-view {
+  min-height: 100vh;
+  background: #f5f7fa;
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .page-title {
+    text-align: center;
+    color: #42b983;
+    margin: 0 0 40px 0;
+    font-size: 32px;
+  }
+}
+
+// 用户信息卡片样式
+.user-info-card {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+
+  .avatar {
+    .avatar-placeholder {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 50px;
+      color: white;
+    }
+  }
+
+  .user-details {
+    .username {
+      margin: 0 0 8px 0;
+      color: #333;
+      font-size: 24px;
+    }
+
+    .user-id {
+      margin: 0;
+      color: #999;
+      font-size: 14px;
+    }
+  }
+}
+
+// 功能区域样式
+.function-section {
+  margin-bottom: 30px;
+
+  .section-title {
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 20px;
+  }
+}
+
+// 功能卡片网格
+.function-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+// 功能卡片样式
+.function-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 2px solid transparent;
+  position: relative;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  // 情绪调研卡片特殊样式
+  &.survey-card {
+    border-color: #42b983;
+    background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+
+    &:hover {
+      box-shadow: 0 8px 25px rgba(66, 185, 131, 0.15);
+    }
+  }
+
+  .card-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 18px;
+  }
+
+  .card-description {
+    margin: 0 0 16px 0;
+    color: #666;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .card-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #ff9800;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .card-badge.completed {
+    background: #4caf50;
+  }
+}
+
+// 个人情绪主页样式
+.emotion-homepage {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  .section-title {
+    margin: 0 0 24px 0;
+    color: #333;
+    font-size: 20px;
+  }
+}
+
+// 情绪健康评分卡片样式
+.emotion-score-card {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 40px;
+
+  .score-circle {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #42b983 0%, #388e3c 100%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 25px rgba(66, 185, 131, 0.2);
+
+    .score-number {
+      font-size: 48px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .score-label {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+  }
+
+  .score-description {
+    p {
+      margin: 4px 0;
+      color: #666;
+      font-size: 14px;
+    }
+  }
+}
+
+// 近期高频情绪样式
+.recent-emotions {
+  margin-bottom: 24px;
+
+  h4 {
+    margin: 0 0 16px 0;
+    color: #333;
+    font-size: 16px;
+  }
+}
+
+// 情绪标签样式
+.emotion-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  .emotion-tag {
+    background: #f0f0f0;
+    padding: 8px 16px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: #e0e0e0;
+      transform: translateY(-2px);
+    }
+
+    .emotion-name {
+      font-weight: 500;
+      color: #333;
+    }
+
+    .emotion-count {
+      background: #42b983;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+  }
+}
+
+// 活动记录样式
+.activity-records {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+
+  .record-item {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+
+    h4 {
+      margin: 0 0 8px 0;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .record-value {
+      margin: 0;
+      color: #42b983;
+      font-size: 24px;
+      font-weight: bold;
+    }
+  }
+}
+
+// 会员权益区域样式
+.membership-section {
+  .membership-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+
+    .membership-title {
+      margin: 0 0 24px 0;
+      font-size: 24px;
+    }
+
+    .membership-benefits {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .benefit-item {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      gap: 16px;
+      backdrop-filter: blur(10px);
+
+      &.premium {
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .benefit-icon {
+        font-size: 36px;
+        flex-shrink: 0;
+      }
+
+      .benefit-info {
+        .h4 {
+          margin: 0 0 8px 0;
+          font-size: 18px;
+        }
+
+        p {
+          margin: 0;
+          opacity: 0.9;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .user-info-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .function-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .membership-benefits {
+    grid-template-columns: 1fr;
+  }
+
+  .page-title {
+    font-size: 24px;
+  }
+}
+</style>
