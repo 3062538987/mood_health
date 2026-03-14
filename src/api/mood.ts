@@ -1,0 +1,97 @@
+import request from "@/utils/request";
+import {
+  MoodRecord,
+  MoodListResponse,
+  MoodWeeklyReport,
+  MoodTrendResponse,
+  MoodTypeEnum,
+} from "@/types/mood";
+
+export interface AnalyzeMoodRequest {
+  content: string;
+  mood_level: number;
+}
+
+export interface AnalyzeMoodResponse {
+  analysis: string;
+  suggestions: string[];
+}
+
+export const analyzeMood = (data: AnalyzeMoodRequest) => {
+  return request<AnalyzeMoodResponse>({
+    url: "http://localhost:8000/api/analyze-mood",
+    method: "post",
+    data,
+    timeout: 30000,
+  });
+};
+
+export const analyzeMoodWithRetry = async (
+  data: AnalyzeMoodRequest,
+  retries = 2,
+  delay = 1000,
+): Promise<AnalyzeMoodResponse> => {
+  try {
+    return await analyzeMood(data);
+  } catch (error: any) {
+    if (retries > 0 && shouldRetry(error)) {
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return analyzeMoodWithRetry(data, retries - 1, delay * 2);
+    }
+    throw error;
+  }
+};
+
+const shouldRetry = (error: any): boolean => {
+  if (error.response) {
+    const status = error.response.status;
+    return status >= 500 || status === 429;
+  }
+  if (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") {
+    return true;
+  }
+  if (error.message && error.message.includes("Network Error")) {
+    return true;
+  }
+  return false;
+};
+
+export const submitMoodRecord = (
+  data: Omit<MoodRecord, "id" | "userId" | "createTime">,
+) => {
+  return request({
+    url: "/api/moods/record",
+    method: "post",
+    data,
+  });
+};
+
+export const getMoodRecordList = (params: { page: number; size: number }) => {
+  return request<MoodListResponse>({
+    url: "/api/moods/list",
+    method: "get",
+    params,
+  });
+};
+
+export const getMoodWeeklyReport = () => {
+  return request<MoodWeeklyReport>({
+    url: "/api/moods/weekly-report",
+    method: "get",
+  });
+};
+
+export const getMoodTypeEnum = () => {
+  return request<MoodTypeEnum[]>({
+    url: "/api/moods/types",
+    method: "get",
+  });
+};
+
+export const getMoodTrend = (range: "week" | "month" | "quarter") => {
+  return request<MoodTrendResponse>({
+    url: "/api/moods/trend",
+    method: "get",
+    params: { range },
+  });
+};
