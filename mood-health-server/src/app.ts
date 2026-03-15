@@ -14,6 +14,7 @@ import questionnaireRoutes from "./routes/questionnaireRoutes";
 import musicRoutes from "./routes/musicRoutes";
 import courseRoutes from "./routes/courseRoutes";
 import logger from "./utils/logger";
+import redisClient from "./utils/redis.client";
 import { errorHandler } from "./middleware/errorHandler";
 
 dotenv.config();
@@ -66,17 +67,32 @@ app.use("/api/courses", courseRoutes);
 app.get("/health", async (req, res) => {
   try {
     // 测试 SQL Server 连接
-    const result = await query("SELECT 1 + 1 AS result");
+    const dbResult = await query("SELECT 1 + 1 AS result");
+
+    // 测试 Redis 连接
+    const redisStatus = await redisClient.ping();
+
     res.json({
       status: "ok",
       database: "connected",
-      result: result,
+      redis: redisStatus ? "connected" : "disconnected",
+      result: dbResult,
     });
   } catch (error) {
-    console.error("数据库连接失败:", error);
+    console.error("健康检查失败:", error);
+
+    // 单独检查 Redis 状态
+    let redisStatus;
+    try {
+      redisStatus = await redisClient.ping();
+    } catch (redisError) {
+      redisStatus = false;
+    }
+
     res.status(500).json({
       status: "error",
       database: "disconnected",
+      redis: redisStatus ? "connected" : "disconnected",
       message: error instanceof Error ? error.message : "Unknown error",
     });
   }

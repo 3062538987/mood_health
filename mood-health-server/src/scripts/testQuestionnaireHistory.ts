@@ -1,4 +1,5 @@
-import { query, connectDB } from './config/database';
+import { query, connectDB, pool } from '../config/database';
+import sql from 'mssql';
 
 const testQuestionnaireHistory = async () => {
   try {
@@ -34,8 +35,5 @@ const testQuestionnaireHistory = async () => {
     console.error('❌ 测试失败:', error);
   }
 };
-
-import pool from './config/database';
-import sql from 'mssql';
 
 testQuestionnaireHistory();

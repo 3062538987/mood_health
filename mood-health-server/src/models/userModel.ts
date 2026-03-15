@@ -1,5 +1,8 @@
 import pool from "../config/database";
-import bcrypt from "bcryptjs";
+import {
+  hashPassword,
+  comparePassword as comparePasswordUtil,
+} from "../utils/password";
 import sql from "mssql";
 
 /**
@@ -38,7 +41,7 @@ export const createUser = async (
   email: string,
 ) => {
   // 对密码进行加密
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await hashPassword(password);
   // 插入用户数据并返回新用户ID
   const result = await pool
     .request()
@@ -125,5 +128,5 @@ export const comparePassword = async (
   password: string,
   hashedPassword: string,
 ) => {
-  return bcrypt.compare(password, hashedPassword);
+  return comparePasswordUtil(password, hashedPassword);
 };
