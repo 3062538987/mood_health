@@ -9,6 +9,7 @@ import {
   findUserById,
 } from "../models/userModel";
 import dotenv from "dotenv";
+import { BusinessError, HttpException } from "../utils/errors";
 
 dotenv.config();
 
@@ -25,23 +26,31 @@ export const register = async (req: Request, res: Response) => {
 
     // 简单校验
     if (!username || !password || !email) {
-      return res.status(400).json({ code: 400, message: "请提供用户名、密码和邮箱" });
+      throw new BusinessError(
+        "请提供用户名、密码和邮箱",
+        null,
+        req.originalUrl,
+      );
     }
 
     // 检查用户名是否已存在
     const existingUser = await findUserByUsername(username);
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ code: 400, message: `用户名 "${username}" 已存在，请更换其他用户名` });
+      throw new BusinessError(
+        `用户名 "${username}" 已存在，请更换其他用户名`,
+        null,
+        req.originalUrl,
+      );
     }
 
     // 检查邮箱是否已存在
     const existingEmail = await findUserByEmail(email);
     if (existingEmail) {
-      return res
-        .status(400)
-        .json({ code: 400, message: `邮箱 "${email}" 已被注册，请更换其他邮箱` });
+      throw new BusinessError(
+        `邮箱 "${email}" 已被注册，请更换其他邮箱`,
+        null,
+        req.originalUrl,
+      );
     }
 
     // 创建新用户
@@ -51,8 +60,8 @@ export const register = async (req: Request, res: Response) => {
   } catch (error: any) {
     // 捕获并记录错误
     console.error(error);
-    // 返回服务器错误响应
-    res.status(500).json({ code: 500, message: "服务器错误" });
+    // 让错误处理中间件处理错误
+    throw error;
   }
 };
 
@@ -69,36 +78,40 @@ export const login = async (req: Request, res: Response) => {
 
     // 简单校验
     if (!username || !password) {
-      return res.status(400).json({ code: 400, message: "请提供用户名和密码" });
+      throw new BusinessError("请提供用户名和密码", null, req.originalUrl);
     }
 
     // 查找用户
     const user = await findUserByUsername(username);
     if (!user) {
-      return res.status(401).json({ code: 401, message: "用户名或密码错误" });
+      throw new HttpException("用户名或密码错误", 401, null, req.originalUrl);
     }
 
     // 验证密码
     const isValid = await comparePassword(password, user.password);
     if (!isValid) {
-      return res.status(401).json({ code: 401, message: "用户名或密码错误" });
+      throw new HttpException("用户名或密码错误", 401, null, req.originalUrl);
     }
 
     // 生成 JWT 令牌
+    if (!process.env.JWT_SECRET) {
+      throw new HttpException("JWT 密钥未配置", 500, null, req.originalUrl);
+    }
+
     const token = jwt.sign(
       { userId: user.id, username: user.username, role: user.role || "user" },
-      process.env.JWT_SECRET!,
+      process.env.JWT_SECRET,
       { expiresIn: "7d" },
     );
 
     // 返回用户信息（不含密码）
     const { password: _, ...userInfo } = user;
     res.json({ code: 0, data: { token, user: userInfo } });
-  } catch (error) {
+  } catch (error: any) {
     // 捕获并记录错误
     console.error(error);
-    // 返回服务器错误响应
-    res.status(500).json({ code: 500, message: "服务器错误" });
+    // 让错误处理中间件处理错误
+    throw error;
   }
 };
 
@@ -112,21 +125,21 @@ export const getMe = async (req: AuthRequest, res: Response) => {
   try {
     // 检查用户是否已登录
     if (!req.user) {
-      return res.status(401).json({ code: 401, message: "未登录" });
+      throw new HttpException("未登录", 401, null, req.originalUrl);
     }
 
     // 查找用户信息
     const user = await findUserById(req.user.userId);
     if (!user) {
-      return res.status(404).json({ code: 404, message: "用户不存在" });
+      throw new HttpException("用户不存在", 404, null, req.originalUrl);
     }
 
     // 返回用户信息
     res.json({ code: 0, data: { user } });
-  } catch (error) {
+  } catch (error: any) {
     // 捕获并记录错误
     console.error(error);
-    // 返回服务器错误响应
-    res.status(500).json({ code: 500, message: "服务器错误" });
+    // 让错误处理中间件处理错误
+    throw error;
   }
 };

@@ -23,7 +23,8 @@
     "jsonwebtoken": "^9.0.3",
     "pinia": "^2.3.1",
     "vue": "^3.5.25",
-    "vue-router": "^4.6.3"
+    "vue-router": "^4.6.3",
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

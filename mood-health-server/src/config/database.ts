@@ -1,5 +1,7 @@
 import sql from "mssql";
 import dotenv from "dotenv";
+import logger from "../utils/logger";
+import { DatabaseError } from "../utils/errors";
 
 dotenv.config();
 
@@ -37,11 +39,11 @@ export const pool = new sql.ConnectionPool(config);
 export const connectDB = async () => {
   try {
     await pool.connect();
-    console.log("✅ SQL Server 数据库连接成功");
+    logger.info("✅ SQL Server 数据库连接成功");
     return pool;
   } catch (error) {
-    console.error("❌ 数据库连接失败:", error);
-    throw error;
+    logger.error("❌ 数据库连接失败:", error);
+    throw new DatabaseError("数据库连接失败", error);
   }
 };
 
@@ -60,8 +62,8 @@ export const query = async (sqlQuery: string, params?: any[]) => {
     const result = await request.query(sqlQuery);
     return result.recordset;
   } catch (error) {
-    console.error("查询执行失败:", error);
-    throw error;
+    logger.error("查询执行失败:", error);
+    throw new DatabaseError("查询执行失败", error);
   }
 };
 

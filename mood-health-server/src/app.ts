@@ -15,7 +15,7 @@ import musicRoutes from "./routes/musicRoutes";
 import courseRoutes from "./routes/courseRoutes";
 import logger from "./utils/logger";
 import redisClient from "./utils/redis.client";
-import { errorHandler } from "./middleware/errorHandler";
+import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 
 dotenv.config();
 
@@ -79,7 +79,7 @@ app.get("/health", async (req, res) => {
       result: dbResult,
     });
   } catch (error) {
-    console.error("健康检查失败:", error);
+    logger.error("健康检查失败:", error);
 
     // 单独检查 Redis 状态
     let redisStatus;
@@ -90,13 +90,20 @@ app.get("/health", async (req, res) => {
     }
 
     res.status(500).json({
-      status: "error",
-      database: "disconnected",
-      redis: redisStatus ? "connected" : "disconnected",
-      message: error instanceof Error ? error.message : "Unknown error",
+      success: false,
+      code: 500,
+      message: "健康检查失败",
+      path: req.originalUrl,
+      timestamp: new Date().toISOString(),
     });
   }
 });
+
+// 404 处理中间件
+app.use(notFoundHandler);
+
+// 全局错误处理中间件
+app.use(errorHandler);
 
 // 启动服务器
 const PORT = process.env.PORT || 3000;
@@ -118,8 +125,5 @@ const startServer = async () => {
     process.exit(1);
   }
 };
-
-// 全局错误处理中间件
-app.use(errorHandler);
 
 startServer();

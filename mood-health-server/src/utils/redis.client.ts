@@ -1,5 +1,6 @@
 import Redis from "ioredis";
 import logger from "./logger";
+import { RedisError } from "./errors";
 
 class RedisClient {
   private client: Redis;
@@ -95,7 +96,7 @@ class RedisClient {
           logger.warn("Redis 未连接，返回 null");
           return null;
         }
-        throw new Error("Redis 未连接");
+        throw new RedisError("Redis 未连接", new Error("Redis 未连接"));
       }
       return await command.apply(this.client, args);
     } catch (error) {
@@ -103,7 +104,7 @@ class RedisClient {
       if (this.fallbackEnabled) {
         return null;
       }
-      throw error;
+      throw new RedisError("Redis 命令执行失败", error);
     }
   }
 
@@ -125,6 +126,9 @@ class RedisClient {
       return true;
     } catch (error) {
       logger.error("Redis set 失败:", error);
+      if (!this.fallbackEnabled) {
+        throw new RedisError("Redis set 失败", error);
+      }
       return false;
     }
   }
@@ -159,6 +163,7 @@ class RedisClient {
       logger.info("Redis 连接已关闭");
     } catch (error) {
       logger.error("关闭 Redis 连接失败:", error);
+      throw new RedisError("关闭 Redis 连接失败", error);
     }
   }
 

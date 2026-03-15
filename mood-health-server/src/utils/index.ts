@@ -17,3 +17,6 @@ export * from "./redis.client";
 
 // 密码工具
 export * from "./password";
+
+// 错误类
+export * from "./errors";
