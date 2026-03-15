@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   plugins: [vue()],
-  base: process.env.NODE_ENV === 'production' ? '/app/' : '/',
+  base: process.env.NODE_ENV === "production" ? "/app/" : "/",
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -20,14 +20,38 @@ export default defineConfig({
     open: true,
     allowedHosts: ["localhost", "moodhealth.loca.lt"],
     proxy: {
-      "/api": {
-        target: "https://dashscope.aliyuncs.com",
+      "/api/auth": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+      },
+      "/api/moods": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+      },
+      "/api/activities": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+      },
+      "/api/posts": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+      },
+      "/api/questionnaires": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+      },
+      "/api/music": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+      },
+      "/api/courses": {
+        target: "http://localhost:3000",
         changeOrigin: true,
       },
       "/api/ai": {
         target: "http://localhost:8000",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/ai/, '/api'),
+        rewrite: (path) => path.replace(/^\/api\/ai/, "/api"),
       },
     },
   },
