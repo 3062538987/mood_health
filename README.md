@@ -69,6 +69,8 @@ mood-health-web/
 │   │   └── ...             # 其他组件
 │   ├── composables/          # 组合式函数
 │   │   ├── usePosts.ts      # 帖子相关逻辑
+│   │   ├── useMoodAIAnalysis.ts # 情绪分析AI模块
+│   │   ├── useAIRecommend.ts # AI推荐模块
 │   │   └── ...             # 其他组合式函数
 │   ├── layouts/             # 布局组件
 │   │   ├── MoodLayout.vue   # 情绪模块布局
@@ -89,7 +91,15 @@ mood-health-web/
 │   │   ├── activityStatus.ts # 活动状态工具
 │   │   ├── sound.ts       # 音效工具
 │   │   ├── validation.ts   # 表单验证工具
+│   │   ├── aiContentFilter.ts # AI内容审核工具
 │   │   └── index.ts       # 工具函数统一入口
+│   ├── types/                # 类型定义
+│   │   ├── activity.ts      # 活动类型
+│   │   ├── mood.ts          # 情绪类型
+│   │   ├── post.ts          # 帖子类型
+│   │   ├── questionnaire.ts # 问卷类型
+│   │   ├── user.ts          # 用户类型
+│   │   └── ai.d.ts          # AI模块类型
 │   ├── views/               # 页面组件
 │   │   ├── Login.vue       # 登录页面
 │   │   ├── Register.vue    # 注册页面
@@ -261,6 +271,12 @@ pnpm type-check
 - **成就系统**：查看个人成就和进度
 - **设置**：应用设置和偏好
 
+### 8. AI能力模块
+
+- **情绪分析**：基于AI的情绪文本解析和趋势预测
+- **内容审核**：AI增强的文本违规检测
+- **智能推荐**：基于用户情绪数据的个性化推荐
+
 ## 工具函数说明
 
 ### 日期工具 (dateUtil.ts)
@@ -268,7 +284,7 @@ pnpm type-check
 提供日期格式化、时间计算等功能
 
 ```typescript
-import { formatDate, formatTime } from '@/utils/dateUtil';
+import { formatDate, formatTime } from "@/utils/dateUtil";
 
 // 格式化日期
 const dateStr = formatDate(new Date()); // 返回 "2026-03-15"
@@ -282,13 +298,13 @@ const timeStr = formatTime(new Date()); // 返回 "13:30:00"
 封装 Axios 请求，提供统一的 API 调用接口
 
 ```typescript
-import request from '@/utils/request';
+import request from "@/utils/request";
 
 // GET 请求
-const data = await request.get('/api/user');
+const data = await request.get("/api/user");
 
 // POST 请求
-const result = await request.post('/api/auth/login', { username, password });
+const result = await request.post("/api/auth/login", { username, password });
 ```
 
 ### 存储工具 (storageUtil.ts)
@@ -296,16 +312,16 @@ const result = await request.post('/api/auth/login', { username, password });
 提供本地存储的封装接口
 
 ```typescript
-import { setStorage, getStorage, removeStorage } from '@/utils/storageUtil';
+import { setStorage, getStorage, removeStorage } from "@/utils/storageUtil";
 
 // 设置存储
-setStorage('token', 'your_token_here');
+setStorage("token", "your_token_here");
 
 // 获取存储
-const token = getStorage('token');
+const token = getStorage("token");
 
 // 删除存储
-removeStorage('token');
+removeStorage("token");
 ```
 
 ### 表单验证工具 (validation.ts)
@@ -313,16 +329,20 @@ removeStorage('token');
 提供常用的表单数据验证功能
 
 ```typescript
-import { isValidEmail, isValidPhone, getPasswordStrength } from '@/utils/validation';
+import {
+  isValidEmail,
+  isValidPhone,
+  getPasswordStrength,
+} from "@/utils/validation";
 
 // 验证邮箱
-const isValid = isValidEmail('test@example.com');
+const isValid = isValidEmail("test@example.com");
 
 // 验证手机号
-const isPhoneValid = isValidPhone('13800138000');
+const isPhoneValid = isValidPhone("13800138000");
 
 // 检查密码强度
-const strength = getPasswordStrength('password123'); // 返回 'weak', 'medium', 'strong'
+const strength = getPasswordStrength("password123"); // 返回 'weak', 'medium', 'strong'
 ```
 
 ### 防抖节流工具 (debounce.ts)
@@ -330,17 +350,100 @@ const strength = getPasswordStrength('password123'); // 返回 'weak', 'medium',
 提供防抖和节流功能
 
 ```typescript
-import { debounce, throttle } from '@/utils/debounce';
+import { debounce, throttle } from "@/utils/debounce";
 
 // 防抖函数
 const debouncedFn = debounce(() => {
-  console.log('防抖执行');
+  console.log("防抖执行");
 }, 300);
 
 // 节流函数
 const throttledFn = throttle(() => {
-  console.log('节流执行');
+  console.log("节流执行");
 }, 300);
+```
+
+### AI内容审核工具 (aiContentFilter.ts)
+
+提供AI增强的内容审核功能
+
+```typescript
+import {
+  filterContent,
+  debouncedFilterContent,
+  shouldAutoReject,
+  shouldMarkForReview,
+} from "@/utils/aiContentFilter";
+
+// 内容审核
+const result = await filterContent("需要审核的内容");
+
+// 防抖版本的内容审核
+const debouncedResult = await debouncedFilterContent("需要审核的内容");
+
+// 检查是否应该自动拒绝
+const shouldReject = await shouldAutoReject("需要审核的内容");
+
+// 检查是否应该标记为需要人工审核
+const shouldReview = await shouldMarkForReview("需要审核的内容");
+```
+
+## 组合式函数
+
+### 情绪分析AI模块 (useMoodAIAnalysis.ts)
+
+提供情绪文本解析和趋势预测功能
+
+```typescript
+import { useMoodAIAnalysis } from "@/composables/useMoodAIAnalysis";
+
+const {
+  isLoading,
+  error,
+  analysisResult,
+  trendPrediction,
+  analyzeMood,
+  predictMoodTrend,
+  debouncedAnalyzeMood,
+} = useMoodAIAnalysis();
+
+// 分析情绪
+const result = await analyzeMood("今天心情很好，感觉很开心");
+
+// 预测情绪趋势
+const trend = await predictMoodTrend([
+  { date: "2026-03-15", intensity: 8 },
+  { date: "2026-03-16", intensity: 7 },
+]);
+
+// 防抖版本的情绪分析
+const debouncedResult = await debouncedAnalyzeMood("今天心情很好，感觉很开心");
+```
+
+### AI推荐模块 (useAIRecommend.ts)
+
+提供基于用户情绪数据的个性化推荐功能
+
+```typescript
+import { useAIRecommend } from "@/composables/useAIRecommend";
+
+const {
+  isLoading,
+  error,
+  recommendResult,
+  getRecommendations,
+  debouncedGetRecommendations,
+  saveRecommendationClick,
+} = useAIRecommend();
+
+// 获取推荐
+const recommendations = await getRecommendations("开心", 5);
+
+// 防抖版本的获取推荐
+const debouncedRecommendations = await debouncedGetRecommendations("开心", 5);
+
+// 保存推荐点击记录
+await saveRecommendationClick(recommendations.items[0]);
 ```
 
 ## 组件开发规范
@@ -360,7 +463,7 @@ const throttledFn = throttle(() => {
 
 <script setup lang="ts">
 // 导入依赖
-import { ref, computed } from 'vue';
+import { ref, computed } from "vue";
 
 // 定义组件属性
 const props = defineProps<{
@@ -369,7 +472,7 @@ const props = defineProps<{
 
 // 定义组件事件
 const emit = defineEmits<{
-  (e: 'update', value: string): void;
+  (e: "update", value: string): void;
 }>();
 
 // 响应式数据
@@ -381,7 +484,7 @@ const doubled = computed(() => count.value * 2);
 // 方法
 const increment = () => {
   count.value++;
-  emit('update', count.value);
+  emit("update", count.value);
 };
 </script>
 
@@ -393,26 +496,26 @@ const increment = () => {
 ### 组合式函数
 
 ```typescript
-import { ref, computed } from 'vue';
+import { ref, computed } from "vue";
 
 export function useCounter(initialValue = 0) {
   const count = ref(initialValue);
-  
+
   const increment = () => {
     count.value++;
   };
-  
+
   const decrement = () => {
     count.value--;
   };
-  
+
   const doubled = computed(() => count.value * 2);
-  
+
   return {
     count,
     increment,
     decrement,
-    doubled
+    doubled,
   };
 }
 ```
@@ -422,27 +525,27 @@ export function useCounter(initialValue = 0) {
 ### Pinia Store
 
 ```typescript
-import { defineStore } from 'pinia';
+import { defineStore } from "pinia";
 
-export const useUserStore = defineStore('user', () => {
+export const useUserStore = defineStore("user", () => {
   const user = ref(null);
-  const token = ref('');
-  
+  const token = ref("");
+
   const login = (userData: any) => {
     user.value = userData;
     token.value = userData.token;
   };
-  
+
   const logout = () => {
     user.value = null;
-    token.value = '';
+    token.value = "";
   };
-  
+
   return {
     user,
     token,
     login,
-    logout
+    logout,
   };
 });
 ```
@@ -452,22 +555,22 @@ export const useUserStore = defineStore('user', () => {
 ### 路由定义
 
 ```typescript
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHistory } from "vue-router";
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
-      path: '/',
-      name: 'Home',
-      component: () => import('@/views/Home.vue')
+      path: "/",
+      name: "Home",
+      component: () => import("@/views/Home.vue"),
     },
     {
-      path: '/login',
-      name: 'Login',
-      component: () => import('@/views/Login.vue')
-    }
-  ]
+      path: "/login",
+      name: "Login",
+      component: () => import("@/views/Login.vue"),
+    },
+  ],
 });
 
 export default router;
@@ -479,9 +582,9 @@ export default router;
 
 ```scss
 // 主题色
-$primary-color: #4CAF50;
-$secondary-color: #2196F3;
-$accent-color: #FF9800;
+$primary-color: #4caf50;
+$secondary-color: #2196f3;
+$accent-color: #ff9800;
 
 // 文字颜色
 $text-primary: #333333;
@@ -613,9 +716,9 @@ npm run dev -- --port 3002
 ```typescript
 const routes = [
   {
-    path: '/home',
-    component: () => import('@/views/Home.vue')
-  }
+    path: "/home",
+    component: () => import("@/views/Home.vue"),
+  },
 ];
 ```
 
@@ -653,8 +756,6 @@ const routes = [
 
 **注意**：本系统仅供学习和研究使用，请勿用于商业用途。
 
-
-
 # **大学生情绪健康系统 - 后端服务**
 
 # 项目介绍
@@ -670,6 +771,7 @@ const routes = [
 - **课程学习**：心理健康课程、课程详情
 - **活动管理**：团体活动、活动详情、活动报名
 - **树洞功能**：匿名发布、评论互动、内容审核
+- **AI能力**：情绪分析、内容审核、智能推荐
 - **数据缓存**：Redis 缓存支持，提升系统性能
 - **错误处理**：完整的全局错误处理系统
 - **日志记录**：Winston 日志系统，支持多级别日志
@@ -711,10 +813,12 @@ const routes = [
 mood-health-server/
 ├── src/                          # 源代码目录
 │   ├── config/                   # 配置文件
-│   │   └── database.ts          # 数据库连接配置
+│   │   ├── database.ts          # 数据库连接配置
+│   │   └── aiConfig.ts          # AI模块配置
 │   ├── controllers/              # 控制器层
 │   │   ├── activityController.ts  # 活动相关控制器
 │   │   ├── authController.ts     # 认证相关控制器
+│   │   ├── aiController.ts      # AI相关控制器
 │   │   ├── courseController.ts   # 课程相关控制器
 │   │   ├── moodController.ts     # 情绪相关控制器
 │   │   ├── musicController.ts    # 音乐相关控制器
@@ -727,6 +831,7 @@ mood-health-server/
 │   ├── models/                  # 数据模型
 │   │   ├── activityModel.ts     # 活动数据模型
 │   │   ├── adviceModel.ts       # 建议数据模型
+│   │   ├── aiModel.ts          # AI数据模型
 │   │   ├── commentModel.ts      # 评论数据模型
 │   │   ├── courseModel.ts      # 课程数据模型
 │   │   ├── moodModel.ts        # 情绪数据模型
@@ -736,6 +841,7 @@ mood-health-server/
 │   │   └── userModel.ts        # 用户数据模型
 │   ├── routes/                  # 路由定义
 │   │   ├── activityRoutes.ts    # 活动相关路由
+│   │   ├── aiRoutes.ts         # AI相关路由
 │   │   ├── authRoutes.ts       # 认证相关路由
 │   │   ├── courseRoutes.ts     # 课程相关路由
 │   │   ├── moodRoutes.ts       # 情绪相关路由
@@ -757,6 +863,11 @@ mood-health-server/
 │   ├── types/                   # TypeScript 类型定义
 │   │   └── express.d.ts        # Express 类型扩展
 │   ├── utils/                   # 工具函数
+│   │   ├── ai/                  # AI服务核心层
+│   │   │   ├── aiClient.ts      # AI模型统一调用客户端
+│   │   │   ├── contentAuditService.ts # 内容审核服务
+│   │   │   ├── moodAnalysisService.ts # 情绪分析服务
+│   │   │   └── recommendService.ts # 推荐系统服务
 │   │   ├── cache.ts            # 缓存工具
 │   │   ├── contentFilter.ts     # 内容过滤工具
 │   │   ├── encryption.ts        # 加密工具
@@ -806,6 +917,21 @@ JWT_SECRET=your_jwt_secret_key_here
 
 # API 配置
 API_BASE_URL=http://localhost:3000
+
+# AI 配置
+AI_MODEL_TYPE=local # 可选值: openai, local, deepseek
+AI_API_BASE_URL=http://localhost:8000/api
+AI_API_KEY=your_ai_api_key_here
+AI_TIMEOUT=30000
+AI_MAX_RETRIES=3
+AI_CACHE_TTL=3600
+AI_ENABLE_CACHE=true
+AI_ENABLE_RATE_LIMIT=true
+AI_RATE_LIMIT_MAX_REQUESTS=60
+AI_RATE_LIMIT_WINDOW_MS=60000
+AI_MODEL_MOOD_ANALYSIS=gpt-4o-mini
+AI_MODEL_CONTENT_AUDIT=gpt-4o-mini
+AI_MODEL_RECOMMENDATION=gpt-4o-mini
 ```
 
 ## 安装依赖
@@ -981,6 +1107,276 @@ npm run lint
   }
   ```
 
+### AI接口
+
+#### 情绪分析
+
+- **接口**：`POST /api/ai/analyze-mood`
+
+- **描述**：分析文本中的情绪
+
+- **请求体**：
+
+  ```json
+  {
+    "text": "今天心情很好，感觉很开心",
+    "userId": 1,
+    "historicalData": [
+      {
+        "date": "2026-03-15",
+        "intensity": 8,
+        "moodType": ["开心"]
+      }
+    ]
+  }
+  ```
+
+- **响应**：
+
+  ```json
+  {
+    "code": 0,
+    "message": "情绪分析成功",
+    "data": {
+      "mood": "开心",
+      "confidence": 0.9,
+      "emotions": [
+        { "tag": "开心", "score": 0.9 },
+        { "tag": "焦虑", "score": 0.1 },
+        { "tag": "抑郁", "score": 0.0 }
+      ],
+      "suggestion": "保持积极的心态，继续享受美好的时光！",
+      "timestamp": "2026-03-16T13:30:00.000Z"
+    },
+    "timestamp": "2026-03-16T13:30:00.000Z"
+  }
+  ```
+
+#### 情绪趋势预测
+
+- **接口**：`POST /api/ai/predict-mood-trend`
+
+- **描述**：预测未来的情绪趋势
+
+- **请求体**：
+
+  ```json
+  {
+    "historicalData": [
+      { "date": "2026-03-10", "intensity": 7 },
+      { "date": "2026-03-11", "intensity": 6 },
+      { "date": "2026-03-12", "intensity": 8 },
+      { "date": "2026-03-13", "intensity": 7 },
+      { "date": "2026-03-14", "intensity": 8 },
+      { "date": "2026-03-15", "intensity": 9 }
+    ],
+    "days": 7,
+    "userId": 1
+  }
+  ```
+
+- **响应**：
+
+  ```json
+  {
+    "code": 0,
+    "message": "情绪趋势预测成功",
+    "data": {
+      "labels": [
+        "2026-03-16",
+        "2026-03-17",
+        "2026-03-18",
+        "2026-03-19",
+        "2026-03-20",
+        "2026-03-21",
+        "2026-03-22"
+      ],
+      "data": [8.5, 8.7, 8.9, 9.0, 9.1, 9.2, 9.3],
+      "trend": "情绪趋于积极",
+      "timestamp": "2026-03-16T13:30:00.000Z"
+    },
+    "timestamp": "2026-03-16T13:30:00.000Z"
+  }
+  ```
+
+#### 内容审核
+
+- **接口**：`POST /api/ai/content-audit`
+
+- **描述**：审核内容是否违规
+
+- **请求体**：
+
+  ```json
+  {
+    "content": "需要审核的内容",
+    "type": "post",
+    "userId": 1
+  }
+  ```
+
+- **响应**：
+
+  ```json
+  {
+    "code": 0,
+    "message": "内容审核成功",
+    "data": {
+      "isSafe": true,
+      "detectedIssues": [],
+      "severity": "low",
+      "suggestion": "内容安全，可以发布",
+      "timestamp": "2026-03-16T13:30:00.000Z"
+    },
+    "timestamp": "2026-03-16T13:30:00.000Z"
+  }
+  ```
+
+#### 获取推荐
+
+- **接口**：`POST /api/ai/recommend`
+
+- **描述**：基于用户情绪获取推荐内容
+
+- **请求体**：
+
+  ```json
+  {
+    "mood": "开心",
+    "limit": 5,
+    "userId": 1,
+    "userPreferences": ["音乐", "活动"],
+    "recentActivities": [
+      {
+        "type": "音乐",
+        "duration": 30,
+        "timestamp": "2026-03-15T13:00:00.000Z"
+      }
+    ]
+  }
+  ```
+
+- **响应**：
+
+  ```json
+  {
+    "code": 0,
+    "message": "推荐获取成功",
+    "data": {
+      "items": [
+        {
+          "id": "1",
+          "type": "music",
+          "title": "快乐时光",
+          "description": "轻快的音乐，适合保持愉悦的心情",
+          "url": "/api/music/1",
+          "cover": "https://example.com/cover1.jpg",
+          "relevance": 0.9
+        },
+        {
+          "id": "2",
+          "type": "activity",
+          "title": "户外散步",
+          "description": "在阳光下散步，享受美好时光",
+          "url": "/api/activities/2",
+          "cover": "https://example.com/cover2.jpg",
+          "relevance": 0.85
+        }
+      ],
+      "strategy": "基于情绪类型的推荐",
+      "explanation": "根据您当前的开心情绪状态，为您推荐了相关的放松内容",
+      "timestamp": "2026-03-16T13:30:00.000Z"
+    },
+    "timestamp": "2026-03-16T13:30:00.000Z"
+  }
+  ```
+
+#### 保存推荐点击记录
+
+- **接口**：`POST /api/ai/recommendation-click`
+
+- **描述**：保存用户对推荐内容的点击记录
+
+- **请求体**：
+
+  ```json
+  {
+    "itemId": "1",
+    "itemType": "music",
+    "userId": 1
+  }
+  ```
+
+- **响应**：
+
+  ```json
+  {
+    "code": 0,
+    "message": "推荐点击记录保存成功",
+    "data": null,
+    "timestamp": "2026-03-16T13:30:00.000Z"
+  }
+  ```
+
+#### 分析用户情绪
+
+- **接口**：`POST /api/ai/analyze-user-mood`
+
+- **描述**：基于用户的情绪记录分析整体情绪状态
+
+- **请求头**：
+
+  ```
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+  ```
+
+- **请求体**：
+
+  ```json
+  {
+    "userId": 1,
+    "moodRecords": [
+      {
+        "date": "2026-03-10",
+        "intensity": 7,
+        "moodType": ["开心"]
+      },
+      {
+        "date": "2026-03-11",
+        "intensity": 6,
+        "moodType": ["平静"]
+      },
+      {
+        "date": "2026-03-12",
+        "intensity": 8,
+        "moodType": ["开心"]
+      }
+    ]
+  }
+  ```
+
+- **响应**：
+
+  ```json
+  {
+    "code": 0,
+    "message": "用户情绪分析成功",
+    "data": {
+      "mood": "开心",
+      "confidence": 0.8,
+      "emotions": [
+        { "tag": "开心", "score": 0.8 },
+        { "tag": "平静", "score": 0.2 },
+        { "tag": "焦虑", "score": 0.0 },
+        { "tag": "抑郁", "score": 0.0 }
+      ],
+      "suggestion": "保持积极的心态，继续享受美好的时光！",
+      "timestamp": "2026-03-16T13:30:00.000Z"
+    },
+    "timestamp": "2026-03-16T13:30:00.000Z"
+  }
+  ```
+
 ## 错误处理
 
 系统实现了完整的全局错误处理机制，统一错误返回格式：
@@ -1001,6 +1397,11 @@ npm run lint
 - **401**：未授权或认证失败
 - **404**：资源不存在
 - **500**：服务器内部错误
+- **600**：AI分析失败
+- **601**：内容审核不通过
+- **602**：推荐系统失败
+- **603**：AI服务错误
+- **604**：请求限流超出
 
 ## 开发规范
 
@@ -1076,6 +1477,6 @@ docker run -p 3000:3000 --env-file .env mood-health-server
 - 提交 Issue
 - 发送邮件至项目维护者
 
-------
+---
 
 **注意**：本系统仅供学习和研究使用，请勿用于商业用途。

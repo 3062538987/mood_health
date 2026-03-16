@@ -6,6 +6,15 @@ import {
   MoodTrendResponse,
   MoodTypeEnum,
 } from "@/types/mood";
+import {
+  MoodAnalysisRequest,
+  MoodAnalysisResponse,
+  analyzeMood,
+  debouncedAnalyzeMood,
+  analyzeMoodWithRetry
+} from "./moodAnalysis";
+
+export type { MoodAnalysisRequest, MoodAnalysisResponse }; export { analyzeMood, debouncedAnalyzeMood, analyzeMoodWithRetry };
 
 export interface AnalyzeMoodRequest {
   content: string;
@@ -15,9 +24,10 @@ export interface AnalyzeMoodRequest {
 export interface AnalyzeMoodResponse {
   analysis: string;
   suggestions: string[];
+  mood?: string;
 }
 
-export const analyzeMood = (data: AnalyzeMoodRequest) => {
+export const analyzeMoodLegacy = (data: AnalyzeMoodRequest) => {
   return request<AnalyzeMoodResponse>({
     url: "http://localhost:8000/api/analyze-mood",
     method: "post",
@@ -26,17 +36,17 @@ export const analyzeMood = (data: AnalyzeMoodRequest) => {
   });
 };
 
-export const analyzeMoodWithRetry = async (
+export const analyzeMoodWithRetryLegacy = async (
   data: AnalyzeMoodRequest,
   retries = 2,
   delay = 1000,
 ): Promise<AnalyzeMoodResponse> => {
   try {
-    return await analyzeMood(data);
+    return await analyzeMoodLegacy(data);
   } catch (error: any) {
     if (retries > 0 && shouldRetry(error)) {
       await new Promise((resolve) => setTimeout(resolve, delay));
-      return analyzeMoodWithRetry(data, retries - 1, delay * 2);
+      return analyzeMoodWithRetryLegacy(data, retries - 1, delay * 2);
     }
     throw error;
   }

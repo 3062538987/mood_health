@@ -13,6 +13,7 @@ import postRoutes from "./routes/postRoutes";
 import questionnaireRoutes from "./routes/questionnaireRoutes";
 import musicRoutes from "./routes/musicRoutes";
 import courseRoutes from "./routes/courseRoutes";
+import aiRoutes from "./routes/aiRoutes";
 import logger from "./utils/logger";
 import redisClient from "./utils/redis.client";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
@@ -62,6 +63,7 @@ app.use("/api/posts", postRoutes);
 app.use("/api/questionnaires", questionnaireRoutes);
 app.use("/api/music", musicRoutes);
 app.use("/api/courses", courseRoutes);
+app.use("/api/ai", aiRoutes);
 
 // 健康检查接口
 app.get("/health", async (req, res) => {

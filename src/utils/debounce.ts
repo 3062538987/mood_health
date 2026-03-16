@@ -4,7 +4,7 @@
  * @param delay 延迟时间（毫秒）
  * @returns 防抖后的函数
  */
-export function debounce<T extends (...args: unknown[]) => unknown>(
+export function debounce<T extends (...args: any[]) => any>(
   fn: T,
   delay: number = 300,
 ): (...args: Parameters<T>) => void {

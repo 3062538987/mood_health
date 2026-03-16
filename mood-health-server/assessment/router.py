@@ -65,11 +65,15 @@ async def analyze_mood(
         HTTPException: 当服务不可用或分析失败时抛出
     """
     try:
+        # 从请求中获取用户ID（如果有）
+        user_id = getattr(request.state, 'user_id', None)
+        
         # 调用服务进行情绪分析
         result = assessment_analyze_mood(
             content=data.content,
             mood_level=data.mood_level,
-            use_cache=True
+            use_cache=True,
+            user_id=user_id
         )
         return result
         

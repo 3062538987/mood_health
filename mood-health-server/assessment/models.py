@@ -93,6 +93,11 @@ class AssessmentResponse(BaseModel):
         description="风险等级: low/medium/high",
         pattern="^(low|medium|high)$"
     )
+    mood: Optional[str] = Field(
+        default="未知",
+        description="情绪标签",
+        examples=["开心", "焦虑", "抑郁", "平静", "愤怒", "疲惫", "紧张", "兴奋"]
+    )
     
     @field_validator('suggestions')
     @classmethod

@@ -150,7 +150,17 @@
         </el-button>
 
         <el-card v-if="aiResult" class="ai-advice-card">
-          <h3>🤖 AI 情绪分析</h3>
+          <div class="ai-header">
+            <h3>🤖 AI 情绪分析</h3>
+            <div
+              v-if="aiResult.mood"
+              class="mood-badge"
+              :style="{ backgroundColor: moodColor }"
+            >
+              <span class="mood-emoji">{{ moodEmoji }}</span>
+              <span class="mood-label">{{ aiResult.mood }}</span>
+            </div>
+          </div>
           <p>{{ aiResult.analysis }}</p>
           <h4>💡 建议：</h4>
           <ul>
@@ -223,6 +233,32 @@ interface MoodDraft {
   selectedTriggers: string[];
   savedAt: number;
 }
+
+// 情绪标签到图标的映射
+const MOOD_EMOJI_MAP: Record<string, string> = {
+  开心: "😊",
+  焦虑: "😰",
+  抑郁: "😢",
+  平静: "😌",
+  愤怒: "😠",
+  疲惫: "😴",
+  紧张: "😟",
+  兴奋: "🤩",
+  未知: "❓",
+};
+
+// 情绪标签到颜色的映射
+const MOOD_COLOR_MAP: Record<string, string> = {
+  开心: "#FFD166",
+  焦虑: "#FF6B6B",
+  抑郁: "#4D96FF",
+  平静: "#95E1D3",
+  愤怒: "#EF476F",
+  疲惫: "#78C0A8",
+  紧张: "#FF8E72",
+  兴奋: "#FF6B9D",
+  未知: "#CCCCCC",
+};
 
 const moodTypes: MoodType[] = [
   {
@@ -341,6 +377,22 @@ const aiResult = ref<AnalyzeMoodResponse | null>(null);
 // 计算属性：最大频率用于气泡大小计算
 const maxFrequency = computed(() => {
   return Math.max(...moodTypes.map((t) => t.frequency));
+});
+
+// 计算属性：情绪图标
+const moodEmoji = computed(() => {
+  if (!aiResult.value || !aiResult.value.mood) {
+    return MOOD_EMOJI_MAP["未知"];
+  }
+  return MOOD_EMOJI_MAP[aiResult.value.mood] || MOOD_EMOJI_MAP["未知"];
+});
+
+// 计算属性：情绪颜色
+const moodColor = computed(() => {
+  if (!aiResult.value || !aiResult.value.mood) {
+    return MOOD_COLOR_MAP["未知"];
+  }
+  return MOOD_COLOR_MAP[aiResult.value.mood] || MOOD_COLOR_MAP["未知"];
 });
 
 // 情绪转盘相关函数
@@ -530,6 +582,7 @@ const resetForm = () => {
   selectedTriggers.value = [];
   triggerText.value = "";
   suggestions.value = [];
+  aiResult.value = null;
   clearDraft();
 };
 
@@ -651,13 +704,15 @@ const handleGetAdvice = async () => {
         ElMessage.error("服务器繁忙，请稍后重试");
       } else {
         ElMessage.error(
-          `获取建议失败: ${error.response.data?.message || "未知错误"}`,
+          `获取建议失败: ${error.response.data?.detail || error.response.data?.message || "未知错误"}`,
         );
       }
     } else if (error.code === "ECONNABORTED") {
       ElMessage.error("请求超时，请检查网络");
     } else if (error.message && error.message.includes("Network Error")) {
       ElMessage.error("网络连接失败，请检查网络设置");
+    } else if (error.message) {
+      ElMessage.error(error.message);
     } else {
       ElMessage.error("获取建议失败，请稍后重试");
     }
@@ -802,35 +857,29 @@ onMounted(() => {
           background: linear-gradient(135deg, #ffd16620, #ffe66d30);
         }
         &.high {
-          background: linear-gradient(135deg, #6bcb7720, #4d96ff30);
+          background: linear-gradient(135deg, #6bcb7720, #95e1d330);
         }
       }
 
       .wheel-segment {
         position: absolute;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        top: 50%;
+        left: 50%;
+        width: 50%;
+        height: 2px;
+        transform-origin: left center;
         cursor: pointer;
         transition: all 0.3s ease;
-        top: 10px;
-        left: 50%;
-        transform-origin: 0 130px;
-        margin-left: -20px;
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(4px);
-        border: 2px solid rgba(255, 255, 255, 0.5);
 
         &:hover {
-          transform: scale(1.2);
-          background: rgba(255, 255, 255, 1);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          height: 4px;
         }
 
         .segment-number {
+          position: absolute;
+          right: 20px;
+          top: 50%;
+          transform: translateY(-50%);
           font-size: 14px;
           font-weight: 600;
           color: var(--text-color);
@@ -845,182 +894,211 @@ onMounted(() => {
       max-width: 280px;
       font-size: $font-size-sm;
       color: var(--text-light-color);
-
-      span {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
     }
 
     .intensity-slider {
       width: 100%;
       max-width: 280px;
-      height: 8px;
-      border-radius: 4px;
-      background: linear-gradient(to right, #ff6b6b, #ffd166, #6bcb77);
-      outline: none;
-      -webkit-appearance: none;
-      appearance: none;
+      cursor: pointer;
+    }
+  }
 
-      &::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        background: white;
-        border: 3px solid var(--theme-color, var(--primary-color));
-        cursor: pointer;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        transition: all 0.2s ease;
+  // AI 建议卡片样式
+  .ai-advice-card {
+    margin-top: 16px;
+    border-radius: $border-radius-lg;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 
-        &:hover {
-          transform: scale(1.1);
+    .ai-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+
+      h3 {
+        margin: 0;
+        font-size: $font-size-lg;
+        color: var(--primary-color);
+      }
+
+      .mood-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: $border-radius-full;
+        background: var(--primary-color);
+        color: white;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        animation: pulse 2s infinite;
+
+        .mood-emoji {
+          font-size: 24px;
         }
+
+        .mood-label {
+          font-size: $font-size-md;
+        }
+      }
+    }
+
+    p {
+      margin: 12px 0;
+      color: var(--text-color);
+      line-height: 1.6;
+    }
+
+    h4 {
+      margin: 16px 0 8px 0;
+      font-size: $font-size-md;
+      color: var(--primary-color);
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 20px;
+
+      li {
+        margin: 8px 0;
+        color: var(--text-color);
+        line-height: 1.6;
       }
     }
   }
 
-  // 动态气泡云样式
+  @keyframes pulse {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+
+  // 其他样式保持不变...
   .emotion-cloud {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: 12px;
     justify-content: center;
     padding: 20px;
-    min-height: 200px;
-    align-items: center;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: $border-radius-lg;
+    backdrop-filter: blur(8px);
 
     .emotion-bubble {
-      width: var(--bubble-size);
-      height: var(--bubble-size);
-      border-radius: 50%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      width: var(--bubble-size);
+      height: var(--bubble-size);
+      border-radius: 50%;
+      background: var(--bubble-color);
       cursor: pointer;
-      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(10px);
-      border: 2px solid var(--bubble-color);
+      transition: all 0.3s ease;
       position: relative;
-      animation: float 3s ease-in-out infinite;
-      animation-delay: calc(var(--bubble-size) * 0.01s);
 
       &:hover {
-        transform: scale(1.15) translateY(-5px);
-        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+        transform: scale(1.1);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
       }
 
       &.selected {
-        background: var(--bubble-color);
-        transform: scale(1.1);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-
-        .bubble-emoji,
-        .bubble-name {
-          color: white;
-        }
+        box-shadow: 0 0 0 4px var(--primary-color);
+        transform: scale(1.15);
       }
 
       &.merging {
-        animation: mergeBubble 0.5s ease;
+        animation: merge 0.5s ease;
       }
 
       .bubble-emoji {
-        font-size: calc(var(--bubble-size) * 0.35);
-        margin-bottom: 2px;
+        font-size: 28px;
+        margin-bottom: 4px;
       }
 
       .bubble-name {
-        font-size: calc(var(--bubble-size) * 0.18);
-        font-weight: 600;
+        font-size: 12px;
+        font-weight: 500;
         color: var(--text-color);
       }
 
       .frequency-dot {
         position: absolute;
-        top: 5px;
-        right: 5px;
+        top: 8px;
+        right: 8px;
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background: var(--bubble-color);
+        background: var(--primary-color);
       }
     }
   }
 
-  @keyframes float {
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-8px);
-    }
-  }
-
-  @keyframes mergeBubble {
+  @keyframes merge {
     0% {
       transform: scale(1);
     }
     50% {
-      transform: scale(0.9);
+      transform: scale(1.2);
     }
     100% {
-      transform: scale(1.1);
+      transform: scale(1.15);
     }
   }
 
-  // 智能标签推荐样式
   .trigger-input-container {
+    position: relative;
+
     .trigger-input {
       width: 100%;
-      padding: 16px 20px;
+      padding: 12px 16px;
       border: 1px solid var(--border-color);
-      border-radius: $border-radius-lg;
+      border-radius: $border-radius-md;
       font-size: $font-size-md;
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(8px);
       transition: all 0.3s ease;
 
       &:focus {
         outline: none;
-        border-color: var(--theme-color, var(--primary-color));
+        border-color: var(--primary-color);
         box-shadow: 0 0 0 3px rgba(106, 176, 165, 0.1);
       }
     }
 
     .suggestion-chips {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border-radius: $border-radius-md;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 8px;
+      z-index: 10;
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 12px;
-      animation: slideDown 0.3s ease;
+      gap: 8px;
+      margin-top: 4px;
 
       .chip {
-        padding: 8px 16px;
-        background: rgba(106, 176, 165, 0.1);
-        border: 1px solid var(--theme-color, var(--primary-color));
+        padding: 6px 12px;
+        background: var(--primary-color);
+        color: white;
         border-radius: $border-radius-full;
-        font-size: $font-size-sm;
-        color: var(--theme-color, var(--primary-color));
         cursor: pointer;
+        font-size: $font-size-sm;
         transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 6px;
 
         &:hover {
-          background: var(--theme-color, var(--primary-color));
-          color: white;
+          background: var(--primary-color-dark);
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(106, 176, 165, 0.3);
         }
 
         .chip-add {
+          margin-left: 4px;
           font-weight: 600;
         }
       }
@@ -1029,241 +1107,156 @@ onMounted(() => {
     .selected-triggers {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 16px;
+      gap: 8px;
+      margin-top: 12px;
 
       .trigger-tag {
-        padding: 10px 18px;
+        padding: 6px 12px;
         border-radius: $border-radius-full;
-        font-size: $font-size-sm;
         color: white;
+        font-size: $font-size-sm;
+        cursor: pointer;
+        transition: all 0.3s ease;
         display: flex;
         align-items: center;
-        gap: 8px;
-        animation: popIn 0.3s ease;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        gap: 6px;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        &.delete-item {
+          animation: fadeOut 0.3s ease;
+        }
 
         .remove-btn {
-          cursor: pointer;
-          opacity: 0.8;
-          transition: all 0.2s ease;
-
-          &:hover {
-            opacity: 1;
-            transform: scale(1.2);
-          }
+          font-size: 12px;
+          opacity: 0.7;
         }
       }
     }
   }
 
-  @keyframes slideDown {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
+  @keyframes fadeOut {
     to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes popIn {
-    from {
       opacity: 0;
       transform: scale(0.8);
     }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
   }
 
-  // 标签容器样式
   .tags-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 8px;
 
     .tag-item {
-      padding: 10px 20px;
+      padding: 8px 16px;
       border: 1px solid var(--border-color);
       border-radius: $border-radius-full;
       background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(8px);
       cursor: pointer;
       transition: all 0.3s ease;
       font-size: $font-size-sm;
-      font-weight: 500;
 
       &:hover {
-        border-color: var(--theme-color, var(--primary-color));
-        background-color: rgba(106, 176, 165, 0.1);
-        transform: translateY(-2px);
+        border-color: var(--primary-color);
+        background: rgba(106, 176, 165, 0.1);
       }
 
       &.active {
-        background: var(--theme-color, var(--primary-color));
-        color: var(--white);
-        border-color: var(--theme-color, var(--primary-color));
-        box-shadow: var(--shadow-sm);
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+      }
+
+      &.delete-item {
+        animation: fadeOut 0.3s ease;
       }
     }
   }
 
-  // 草稿状态样式
   .draft-status {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 20px;
-    background: rgba(106, 176, 165, 0.1);
-    border-radius: $border-radius-lg;
-    margin-bottom: 20px;
-    border: 1px solid rgba(106, 176, 165, 0.2);
+    padding: 12px 16px;
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: $border-radius-md;
 
     .draft-indicator {
       font-size: $font-size-sm;
-      color: var(--theme-color, var(--primary-color));
-      font-weight: 500;
+      color: #f57c00;
     }
 
     .clear-draft-btn {
-      background: rgba(255, 255, 255, 0.8);
-      border: 1px solid var(--border-color);
-      padding: 6px 16px;
-      border-radius: $border-radius-md;
-      font-size: $font-size-sm;
+      padding: 6px 12px;
+      background: transparent;
+      border: 1px solid #f57c00;
+      color: #f57c00;
+      border-radius: $border-radius-sm;
       cursor: pointer;
+      font-size: $font-size-sm;
       transition: all 0.3s ease;
 
       &:hover {
-        border-color: var(--theme-color, var(--primary-color));
-        color: var(--theme-color, var(--primary-color));
-        transform: translateY(-1px);
+        background: #f57c00;
+        color: white;
       }
     }
   }
 
-  // 提交按钮样式
+  .ai-advice-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: $font-size-md;
+    font-weight: 600;
+    border-radius: $border-radius-md;
+  }
+
   .submit-btn {
     width: 100%;
-    padding: 16px 32px;
-    background: var(--theme-color, var(--primary-color));
-    color: var(--white);
+    padding: 16px;
+    background: linear-gradient(
+      135deg,
+      var(--primary-color),
+      var(--primary-color-dark)
+    );
+    color: white;
     border: none;
     border-radius: $border-radius-lg;
-    cursor: pointer;
     font-size: $font-size-lg;
     font-weight: 600;
+    cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: var(--shadow-sm);
-    font-family: "Noto Serif SC", serif;
+    box-shadow: 0 4px 12px rgba(106, 176, 165, 0.3);
 
     &:hover:not(:disabled) {
-      background: var(--theme-color, var(--primary-color));
-      opacity: 0.9;
-      box-shadow: var(--shadow-md);
       transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(106, 176, 165, 0.4);
     }
 
     &:disabled {
-      background: var(--border-color);
+      opacity: 0.6;
       cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
+    }
+
+    &.submit-success {
+      background: linear-gradient(135deg, #6bcb77, #95e1d3);
+      animation: successPulse 0.6s ease;
     }
   }
 
-  // AI 建议按钮样式
-  .ai-advice-btn {
-    width: 100%;
-    margin-bottom: 16px;
-  }
-
-  // AI 建议卡片样式
-  .ai-advice-card {
-    margin-top: 16px;
-    background: linear-gradient(
-      135deg,
-      rgba(106, 176, 165, 0.1),
-      rgba(106, 176, 165, 0.05)
-    );
-    border: 1px solid rgba(106, 176, 165, 0.3);
-    border-radius: $border-radius-lg;
-    padding: 20px;
-
-    h3 {
-      color: var(--theme-color, var(--primary-color));
-      margin-bottom: 12px;
-      font-size: $font-size-lg;
+  @keyframes successPulse {
+    0% {
+      transform: scale(1);
     }
-
-    p {
-      color: var(--text-color);
-      line-height: 1.6;
-      margin-bottom: 16px;
+    50% {
+      transform: scale(1.05);
     }
-
-    h4 {
-      color: var(--text-color);
-      margin-bottom: 12px;
-      font-size: $font-size-md;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-
-      li {
-        padding: 8px 0;
-        padding-left: 24px;
-        position: relative;
-        color: var(--text-color);
-        line-height: 1.5;
-
-        &::before {
-          content: "•";
-          position: absolute;
-          left: 8px;
-          color: var(--theme-color, var(--primary-color));
-          font-weight: bold;
-        }
-      }
-    }
-  }
-
-  @media (max-width: 768px) {
-    padding: 15px;
-
-    .emotion-wheel-container {
-      .emotion-wheel {
-        width: 240px;
-        height: 240px;
-
-        .emotion-face {
-          width: 80px;
-          height: 80px;
-          font-size: 36px;
-        }
-
-        .wheel-segment {
-          width: 32px;
-          height: 32px;
-          transform-origin: 0 110px;
-          margin-left: -16px;
-
-          .segment-number {
-            font-size: 12px;
-          }
-        }
-      }
-    }
-
-    .emotion-cloud {
-      gap: 12px;
-      padding: 15px;
+    100% {
+      transform: scale(1);
     }
   }
 }

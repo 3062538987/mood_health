@@ -24,6 +24,8 @@ class AssessmentService:
     提供情绪分析、心理评估等核心功能
     """
     
+    VALID_MOODS = ["开心", "焦虑", "抑郁", "平静", "愤怒", "疲惫", "紧张", "兴奋"]
+    
     def __init__(self):
         """初始化服务"""
         self.cache = CacheManager(key_prefix="assessment:")
@@ -47,14 +49,16 @@ class AssessmentService:
 情绪强度：{mood_level}/10
 
 要求：
-1. 首先对用户的情绪状态进行分析（50字以内）
-2. 提供3-5条具体、可执行的建议
-3. 建议简洁明了，适合大学生理解和执行
-4. 语气亲切，避免专业术语堆砌
-5. 每条建议控制在30字以内
+1. 首先识别用户的主要情绪标签，只能从以下选项中选择一个：开心、焦虑、抑郁、平静、愤怒、疲惫、紧张、兴奋
+2. 对用户的情绪状态进行分析（50字以内）
+3. 提供3-5条具体、可执行的建议
+4. 建议简洁明了，适合大学生理解和执行
+5. 语气亲切，避免专业术语堆砌
+6. 每条建议控制在30字以内
 
 请按以下JSON格式返回（不要包含其他文字）：
 {{
+  "mood": "情绪标签（只能从：开心、焦虑、抑郁、平静、愤怒、疲惫、紧张、兴奋中选择一个）",
   "analysis": "情绪分析内容",
   "suggestions": ["建议1", "建议2", "建议3"]
 }}"""
@@ -74,8 +78,14 @@ class AssessmentService:
         
         if parsed and isinstance(parsed, dict):
             # 验证必要字段
+            mood = parsed.get("mood", "未知")
             analysis = parsed.get("analysis", "")
             suggestions = parsed.get("suggestions", [])
+            
+            # 验证并修正情绪标签
+            if mood not in self.VALID_MOODS:
+                logger.warning(f"AI返回的情绪标签无效: {mood}，使用默认值'未知'")
+                mood = "未知"
             
             # 确保analysis是字符串
             if not isinstance(analysis, str):
@@ -86,12 +96,14 @@ class AssessmentService:
                 suggestions = common_slice_text(ai_response, 50)[:3]
             
             return {
+                "mood": mood,
                 "analysis": analysis.strip(),
                 "suggestions": [s.strip() for s in suggestions if isinstance(s, str) and s.strip()]
             }
         
         # 兜底处理：文本切片
         return {
+            "mood": "未知",
             "analysis": ai_response[:200].strip(),
             "suggestions": common_slice_text(ai_response, 50)[:3]
         }
@@ -143,7 +155,8 @@ class AssessmentService:
         self,
         content: str,
         mood_level: int,
-        use_cache: bool = True
+        use_cache: bool = True,
+        user_id: Optional[int] = None
     ) -> AssessmentResponse:
         """
         情绪分析核心函数
@@ -154,6 +167,7 @@ class AssessmentService:
             content: 情绪描述内容
             mood_level: 情绪强度等级 (1-10)
             use_cache: 是否使用缓存
+            user_id: 用户ID（用于日志记录）
             
         Returns:
             AssessmentResponse: 分析结果
@@ -168,6 +182,9 @@ class AssessmentService:
         
         if not 1 <= mood_level <= 10:
             raise ValueError("情绪强度必须在1-10之间")
+        
+        # 记录调用日志
+        logger.info(f"情绪分析调用 - 用户ID: {user_id}, 内容: {content[:50]}..., 强度: {mood_level}")
         
         # 构建缓存键
         cache_key = None
@@ -199,8 +216,12 @@ class AssessmentService:
             analysis=parsed_result["analysis"],
             suggestions=parsed_result["suggestions"],
             mood_score=mood_level * 10,  # 转换为百分制
-            risk_level=self._calculate_risk_level(mood_level)
+            risk_level=self._calculate_risk_level(mood_level),
+            mood=parsed_result["mood"]  # 添加情绪标签
         )
+        
+        # 记录结果日志
+        logger.info(f"情绪分析结果 - 用户ID: {user_id}, 情绪标签: {response.mood}, 分析: {response.analysis[:30]}...")
         
         # 写入缓存
         if use_cache and cache_key:
@@ -252,7 +273,8 @@ class AssessmentService:
                 # 返回错误占位
                 results.append(AssessmentResponse(
                     analysis="分析失败，请稍后重试",
-                    suggestions=["请检查网络连接", "稍后再次尝试"]
+                    suggestions=["请检查网络连接", "稍后再次尝试"],
+                    mood="未知"
                 ))
         return results
     
@@ -316,7 +338,8 @@ def get_assessment_service() -> AssessmentService:
 def assessment_analyze_mood(
     content: str,
     mood_level: int,
-    use_cache: bool = True
+    use_cache: bool = True,
+    user_id: Optional[int] = None
 ) -> AssessmentResponse:
     """
     情绪分析便捷函数
@@ -325,12 +348,13 @@ def assessment_analyze_mood(
         content: 情绪描述内容
         mood_level: 情绪强度等级
         use_cache: 是否使用缓存
+        user_id: 用户ID（用于日志记录）
         
     Returns:
         AssessmentResponse: 分析结果
     """
     service = get_assessment_service()
-    return service.assessment_analyze_mood(content, mood_level, use_cache)
+    return service.assessment_analyze_mood(content, mood_level, use_cache, user_id)
 
 
 def calculate_score(answers: List[Dict[str, Any]], scoring_rules: Dict[str, Any]) -> int:

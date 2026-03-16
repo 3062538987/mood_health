@@ -16,6 +16,9 @@
           <router-link to="/improve" active-class="active">
             <i class="fas fa-chart-line"></i> 提升
           </router-link>
+          <router-link to="/counseling" active-class="active">
+            <i class="fas fa-heart"></i> 咨询
+          </router-link>
           <router-link to="/user" active-class="active">
             <i class="fas fa-user"></i> 我的
           </router-link>

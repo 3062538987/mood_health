@@ -176,6 +176,10 @@ const routes: RouteRecordRaw[] = [
     component: () => import("@/views/admin/TreeHoleAudit.vue"),
     meta: { adminOnly: true },
   },
+  {
+    path: "/counseling",
+    component: () => import("@/views/counseling/Counseling.vue"),
+  },
 ];
 
 const router = createRouter({
