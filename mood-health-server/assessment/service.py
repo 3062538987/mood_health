@@ -113,7 +113,16 @@ class AssessmentService:
             self.ollama_url,
             json={
                 "model": self.model_name,
-                "prompt": prompt,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "你是一名专业的大学生心理健康咨询师，请为用户提供专业、温和、实用的情绪疏导建议。"
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
                 "stream": False,
                 "options": {
                     "temperature": settings.OLLAMA_TEMPERATURE,
@@ -128,7 +137,7 @@ class AssessmentService:
             raise requests.RequestException(f"Ollama API错误: {response.text}")
         
         result = response.json()
-        return result.get("response", "").strip()
+        return result.get("message", {}).get("content", "").strip()
     
     def assessment_analyze_mood(
         self,

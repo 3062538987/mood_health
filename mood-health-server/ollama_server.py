@@ -20,7 +20,7 @@ limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/chat")
 MODEL_NAME = os.getenv("OLLAMA_MODEL", "deepseek-r1:1.5b")
 
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
@@ -63,7 +63,18 @@ async def analyze_mood(request: Request, data: MoodRequest):
                 logger.info(f"命中缓存: {cache_key}")
                 return json.loads(cached)
 
-        prompt = f"""你是一名专业的大学生心理健康咨询师，请根据以下信息为用户提供专业、温和、实用的情绪疏导建议：
+        response = requests.post(
+            OLLAMA_URL,
+            json={
+                "model": MODEL_NAME,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "你是一名专业的大学生心理健康咨询师，请为用户提供专业、温和、实用的情绪疏导建议。"
+                    },
+                    {
+                        "role": "user",
+                        "content": f"""请根据以下信息为用户提供情绪分析建议：
 
 情绪描述：{data.content}
 情绪强度：{data.mood_level}/10
@@ -80,12 +91,8 @@ async def analyze_mood(request: Request, data: MoodRequest):
   "analysis": "情绪分析内容",
   "suggestions": ["建议1", "建议2", "建议3"]
 }}"""
-
-        response = requests.post(
-            OLLAMA_URL,
-            json={
-                "model": MODEL_NAME,
-                "prompt": prompt,
+                    }
+                ],
                 "stream": False,
                 "options": {
                     "temperature": 0.7,
@@ -100,7 +107,7 @@ async def analyze_mood(request: Request, data: MoodRequest):
             raise HTTPException(status_code=500, detail=f"Ollama API错误: {response.text}")
         
         result = response.json()
-        ai_response = result.get("response", "").strip()
+        ai_response = result.get("message", {}).get("content", "").strip()
         
         try:
             json_start = ai_response.find("{")
