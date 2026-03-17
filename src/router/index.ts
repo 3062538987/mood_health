@@ -1,6 +1,12 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 import Home from "@/views/Home.vue";
 import { useUserStore } from "@/stores/userStore";
+import {
+  getRouteRedirect,
+  GUIDE_ROUTE_PATH,
+  initializeUserState,
+  shouldRedirectToGuide,
+} from "@/router/guards";
 
 const routes: RouteRecordRaw[] = [
   {
@@ -12,12 +18,12 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/login",
     component: () => import("@/views/auth/Login.vue"),
-    meta: { public: true },
+    meta: { public: true, guestOnly: true },
   },
   {
     path: "/register",
     component: () => import("@/views/auth/Register.vue"),
-    meta: { public: true },
+    meta: { public: true, guestOnly: true },
   },
   {
     path: "/mood",
@@ -180,6 +186,12 @@ const routes: RouteRecordRaw[] = [
     path: "/counseling",
     component: () => import("@/views/counseling/Counseling.vue"),
   },
+  {
+    path: "/:pathMatch(.*)*",
+    name: "NotFound",
+    component: () => import("@/views/NotFound.vue"),
+    meta: { public: true },
+  },
 ];
 
 const router = createRouter({
@@ -190,38 +202,21 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore();
 
-  if (userStore.token && !userStore.user) {
-    await userStore.fetchUserInfo();
-  }
+  await initializeUserState(userStore);
 
-  // 检查是否首次访问，重定向到引导页
-  if (to.path === "/" && !localStorage.getItem("guideCompleted")) {
-    next("/guide");
+  if (shouldRedirectToGuide(to, from)) {
+    next(GUIDE_ROUTE_PATH);
     return;
   }
 
-  // 检查管理员权限
-  if (to.meta.adminOnly) {
-    if (!userStore.isLoggedIn || !userStore.isAdmin) {
-      next("/");
-      return;
-    }
-  }
+  const redirectPath = getRouteRedirect(to, userStore);
 
-  if (to.meta.public) {
-    if (userStore.isLoggedIn) {
-      next("/");
-    } else {
-      next();
-    }
-    return;
-  }
-
-  if (!userStore.isLoggedIn) {
-    next("/login");
-  } else {
+  if (!redirectPath) {
     next();
+    return;
   }
+
+  next(redirectPath);
 });
 
 export default router;

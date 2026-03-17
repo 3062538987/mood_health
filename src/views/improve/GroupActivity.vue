@@ -268,7 +268,7 @@ const loading = ref(false);
 const error = ref("");
 
 // 筛选
-const filter = reactive<ActivityFilter>({});
+const filter = ref<ActivityFilter>({});
 const locationOptions = ref<string[]>([
   "心理咨询中心",
   "团体辅导室",
@@ -330,7 +330,7 @@ const loadActivities = async () => {
     const response = await getActivities(
       pagination.page,
       pagination.limit,
-      filter,
+      filter.value,
     );
     activities.value = response.data;
     pagination.total = response.pagination.total;
@@ -350,9 +350,7 @@ const handleSearch = () => {
 
 // 重置筛选
 const handleReset = () => {
-  Object.keys(filter).forEach((key) => {
-    delete (filter as Record<string, unknown>)[key];
-  });
+  filter.value = {};
   pagination.page = 1;
   loadActivities();
 };
