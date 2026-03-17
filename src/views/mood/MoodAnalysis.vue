@@ -18,99 +18,155 @@
             </button>
           </div>
 
-          <!-- 沉浸式叙事图表 -->
-          <div class="narrative-chart">
-            <div class="chart-container" ref="chartContainer">
-              <MoodChart
-                :chart-data="chartData"
-                :loading="isLoading"
-                @hover-point="handleHoverPoint"
-                @leave-point="handleLeavePoint"
-              />
+          <transition name="analysis-state" mode="out-in">
+            <SoftLoadingState
+              v-if="showTrendLoading"
+              key="trend-loading"
+              variant="panel"
+              :item-count="4"
+              title="正在整理情绪趋势"
+              description="会把你的记录转成图表和洞察，先给界面一点时间。"
+            />
 
-              <!-- 悬浮信息卡片 -->
-              <div
-                v-if="hoveredPoint"
-                class="hover-card"
-                :style="hoverCardStyle"
-              >
-                <div class="hover-date">
-                  {{ formatDate(hoveredPoint.date) }}
-                </div>
-                <div class="hover-intensity">
-                  <span class="intensity-label">情绪强度</span>
-                  <span
-                    class="intensity-value"
-                    :style="{ color: getIntensityColor(hoveredPoint.intensity) }"
-                  >
-                    {{ hoveredPoint.intensity }}/10
-                  </span>
-                </div>
-                <div v-if="hoveredPoint.note" class="hover-note">
-                  <span class="note-icon">📝</span>
-                  {{ truncateText(hoveredPoint.note, 50) }}
-                </div>
-                <div
-                  v-if="
-                    hoveredPoint.triggers && hoveredPoint.triggers.length > 0
-                  "
-                  class="hover-triggers"
-                >
-                  <span class="trigger-icon">🎯</span>
-                  <span class="trigger-text">
-                    {{ hoveredPoint.triggers.join(", ") }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- AI洞察卡片 -->
-          <div class="insight-cards">
             <div
-              v-for="(insight, index) in insights"
-              :key="index"
-              class="insight-card"
-              :class="`insight-${insight.type}`"
-              :style="{ animationDelay: `${index * 0.2}s` }"
+              v-else-if="showTrendEmpty"
+              key="trend-empty"
+              class="analysis-state-shell"
             >
-              <div class="insight-icon">{{ insight.emoji }}</div>
-              <div class="insight-content">
-                <h4 class="insight-title">{{ insight.title }}</h4>
-                <p class="insight-description">{{ insight.description }}</p>
-                <div class="insight-action">
-                  <button
-                    class="action-btn"
-                    @click="applySuggestion(insight.suggestion)"
+              <SoftEmptyState
+                title="还没有足够的情绪记录可供分析"
+                description="先去记录几次心情，趋势图和 AI 洞察会在这里逐步长出来。"
+                action-text="去记录情绪"
+                @action="goToMoodRecord"
+              />
+            </div>
+
+            <div v-else key="trend-content" class="trend-content">
+              <!-- 沉浸式叙事图表 -->
+              <div class="narrative-chart">
+                <div class="chart-container" ref="chartContainer">
+                  <MoodChart
+                    :chart-data="chartData"
+                    :loading="isLoading"
+                    @hover-point="handleHoverPoint"
+                    @leave-point="handleLeavePoint"
+                  />
+
+                  <!-- 悬浮信息卡片 -->
+                  <div
+                    v-if="hoveredPoint"
+                    class="hover-card"
+                    :style="hoverCardStyle"
                   >
-                    {{ insight.actionText }}
-                  </button>
+                    <div class="hover-date">
+                      {{ formatDate(hoveredPoint.date) }}
+                    </div>
+                    <div class="hover-intensity">
+                      <span class="intensity-label">情绪强度</span>
+                      <span
+                        class="intensity-value"
+                        :style="{
+                          color: getIntensityColor(hoveredPoint.intensity),
+                        }"
+                      >
+                        {{ hoveredPoint.intensity }}/10
+                      </span>
+                    </div>
+                    <div v-if="hoveredPoint.note" class="hover-note">
+                      <span class="note-icon">📝</span>
+                      {{ truncateText(hoveredPoint.note, 50) }}
+                    </div>
+                    <div
+                      v-if="
+                        hoveredPoint.triggers &&
+                        hoveredPoint.triggers.length > 0
+                      "
+                      class="hover-triggers"
+                    >
+                      <span class="trigger-icon">🎯</span>
+                      <span class="trigger-text">
+                        {{ hoveredPoint.triggers.join(", ") }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- AI洞察卡片 -->
+              <div class="insight-cards">
+                <div
+                  v-for="(insight, index) in insights"
+                  :key="index"
+                  class="insight-card"
+                  :class="`insight-${insight.type}`"
+                  :style="{ animationDelay: `${index * 0.2}s` }"
+                >
+                  <div class="insight-icon">{{ insight.emoji }}</div>
+                  <div class="insight-content">
+                    <h4 class="insight-title">{{ insight.title }}</h4>
+                    <p class="insight-description">{{ insight.description }}</p>
+                    <div class="insight-action">
+                      <button
+                        class="action-btn"
+                        @click="applySuggestion(insight.suggestion)"
+                      >
+                        {{ insight.actionText }}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </transition>
         </el-tab-pane>
 
         <el-tab-pane label="AI 建议历史" name="history">
           <div class="advice-history-container">
-            <el-timeline v-if="adviceHistory.length > 0">
-              <el-timeline-item
-                v-for="item in adviceHistory"
-                :key="item.id"
-                :timestamp="formatDate(item.createdAt)"
-                placement="top"
+            <transition name="analysis-state" mode="out-in">
+              <SoftLoadingState
+                v-if="showHistoryLoading"
+                key="history-loading"
+                variant="panel"
+                :item-count="3"
+                title="正在整理 AI 建议历史"
+                description="会把之前保存的建议按时间串起来，方便你回看。"
+              />
+
+              <el-timeline
+                v-else-if="adviceHistory.length > 0"
+                key="history-list"
               >
-                <div class="advice-item">
-                  <h4 class="advice-analysis">{{ item.analysis }}</h4>
-                  <div class="advice-suggestions">
-                    <p v-for="(s, idx) in item.suggestions" :key="idx" class="suggestion-item">
-                      💡 {{ s }}
-                    </p>
+                <el-timeline-item
+                  v-for="item in adviceHistory"
+                  :key="item.id"
+                  :timestamp="formatDate(item.createdAt)"
+                  placement="top"
+                >
+                  <div class="advice-item">
+                    <h4 class="advice-analysis">{{ item.analysis }}</h4>
+                    <div class="advice-suggestions">
+                      <p
+                        v-for="(s, idx) in item.suggestions"
+                        :key="idx"
+                        class="suggestion-item"
+                      >
+                        💡 {{ s }}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </el-timeline-item>
-            </el-timeline>
-            <el-empty v-else description="暂无 AI 建议历史" />
+                </el-timeline-item>
+              </el-timeline>
+
+              <SoftEmptyState
+                v-else
+                key="history-empty"
+                compact
+                title="这里还没有 AI 建议历史"
+                description="先在记录页生成几次建议，之后就能在这里回看自己的情绪陪伴轨迹。"
+                action-text="去生成建议"
+                @action="goToMoodRecord"
+              />
+            </transition>
           </div>
         </el-tab-pane>
       </el-tabs>
@@ -120,16 +176,21 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
+import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { getMoodTrend, getMoodWeeklyReport } from "@/api/mood";
 import { getAdviceHistory, type AdviceHistoryItem } from "@/api/advice";
 import { MoodTrendResponse, MoodWeeklyReport } from "@/types/mood";
 import MoodChart from "@/components/mood/MoodChart.vue";
+import SoftEmptyState from "@/components/shared/SoftEmptyState.vue";
+import SoftLoadingState from "@/components/shared/SoftLoadingState.vue";
 import { formatDate as formatDateUtil } from "@/utils/dateUtil";
 
+const router = useRouter();
 const activeTab = ref("trend");
 const adviceHistory = ref<AdviceHistoryItem[]>([]);
 const adviceLoading = ref(false);
+const hasFetchedAdvice = ref(false);
 
 // 时间范围选项
 const timeRanges: { label: string; value: "week" | "month" | "quarter" }[] = [
@@ -158,11 +219,31 @@ interface Insight {
 
 const selectedRange = ref<"week" | "month" | "quarter">("week");
 const isLoading = ref(false);
+const hasFetchedTrend = ref(false);
 const chartData = ref<MoodTrendResponse | null>(null);
 const weeklyData = ref<MoodWeeklyReport | null>(null);
 const hoveredPoint = ref<ChartPoint | null>(null);
 const chartContainer = ref<HTMLElement>();
 const insights = ref<Insight[]>([]);
+
+const hasTrendData = computed(() => {
+  return Boolean(chartData.value?.data?.length);
+});
+
+const showTrendLoading = computed(() => {
+  return !hasFetchedTrend.value || (isLoading.value && !hasTrendData.value);
+});
+
+const showTrendEmpty = computed(() => {
+  return hasFetchedTrend.value && !isLoading.value && !hasTrendData.value;
+});
+
+const showHistoryLoading = computed(() => {
+  return (
+    !hasFetchedAdvice.value ||
+    (adviceLoading.value && adviceHistory.value.length === 0)
+  );
+});
 
 // 计算属性：平均情绪强度
 const averageIntensity = computed(() => {
@@ -261,6 +342,7 @@ const fetchMoodData = async (range: "week" | "month" | "quarter") => {
     console.error("获取情绪数据失败", error);
   } finally {
     isLoading.value = false;
+    hasFetchedTrend.value = true;
   }
 };
 
@@ -275,6 +357,7 @@ const fetchAdviceHistory = async () => {
     console.error("获取建议历史失败", error);
   } finally {
     adviceLoading.value = false;
+    hasFetchedAdvice.value = true;
   }
 };
 
@@ -464,8 +547,7 @@ const handleLeavePoint = () => {
 const applySuggestion = (suggestion: string) => {
   switch (suggestion) {
     case "record":
-      // 跳转到记录页面
-      window.location.href = "/mood/record";
+      router.push("/mood/record");
       break;
     case "relax":
       // 跳转到放松中心
@@ -504,6 +586,10 @@ const applySuggestion = (suggestion: string) => {
   }
 };
 
+const goToMoodRecord = () => {
+  router.push("/mood/record");
+};
+
 // 格式化日期
 const formatDate = (dateString: string) => {
   return formatDateUtil(dateString);
@@ -530,7 +616,7 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-@import "@/assets/styles/theme.scss";
+@use "@/assets/styles/theme.scss" as *;
 
 .mood-analysis {
   padding: 20px;
@@ -550,6 +636,30 @@ onMounted(() => {
 
   .analysis-tabs {
     margin-bottom: 24px;
+  }
+
+  .analysis-state-shell {
+    min-height: 520px;
+    display: flex;
+    align-items: center;
+  }
+
+  .trend-content {
+    display: grid;
+    gap: 24px;
+  }
+
+  .analysis-state-enter-active,
+  .analysis-state-leave-active {
+    transition:
+      opacity 0.24s ease,
+      transform 0.24s ease;
+  }
+
+  .analysis-state-enter-from,
+  .analysis-state-leave-to {
+    opacity: 0;
+    transform: translateY(10px);
   }
 
   .range-selector {
@@ -942,6 +1052,8 @@ onMounted(() => {
     border-radius: $border-radius-lg;
     padding: 24px;
     min-height: 400px;
+    display: grid;
+    align-items: start;
 
     .advice-item {
       padding: 16px;

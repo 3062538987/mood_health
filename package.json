@@ -36,6 +36,7 @@
     "@vue/test-utils": "^2.4.0",
     "happy-dom": "^14.0.0",
     "sass": "^1.94.2",
+    "sass-embedded": "^1.98.0",
     "typescript": "^5.2.2",
     "vite": "^5.2.0",
     "vitest": "^2.0.0",

@@ -53,7 +53,10 @@
     </div>
 
     <!-- 活动占比图表 -->
-    <div class="chart-section" v-if="statistics && statistics.activityBreakdown.length > 0">
+    <div
+      class="chart-section"
+      v-if="statistics && statistics.activityBreakdown.length > 0"
+    >
       <h3>活动占比</h3>
       <div ref="chartRef" class="chart-container"></div>
     </div>
@@ -64,19 +67,30 @@
       <div v-if="isLoading" class="loading">加载中...</div>
       <div v-else-if="records.length === 0" class="empty">暂无记录</div>
       <div v-else class="record-list">
-        <div 
-          v-for="record in records" 
+        <div
+          v-for="record in records"
           :key="record.id || record.startTime"
           class="record-item"
           @click="showRecordDetail(record)"
         >
-          <div class="record-icon">{{ getActivityIcon(record.activityType) }}</div>
+          <div class="record-icon">
+            {{ getActivityIcon(record.activityType) }}
+          </div>
           <div class="record-info">
             <h4>{{ getActivityName(record.activityType) }}</h4>
-            <p class="record-time">{{ formatDateTime(record.startTime) }} - {{ formatDateTime(record.endTime) }}</p>
-            <p class="record-duration">时长：{{ formatDuration(getRecordDuration(record)) }}</p>
+            <p class="record-time">
+              {{ formatDateTime(record.startTime) }} -
+              {{ formatDateTime(record.endTime) }}
+            </p>
+            <p class="record-duration">
+              时长：{{ formatDuration(getRecordDuration(record)) }}
+            </p>
             <div class="record-metrics" v-if="record.metrics">
-              <span v-for="(value, key) in record.metrics" :key="key" class="metric-tag">
+              <span
+                v-for="(value, key) in record.metrics"
+                :key="key"
+                class="metric-tag"
+              >
                 {{ getMetricLabel(key) }}: {{ value }}
               </span>
             </div>
@@ -87,7 +101,11 @@
     </div>
 
     <!-- 记录详情弹窗 -->
-    <div v-if="selectedRecord" class="record-detail-modal" @click="closeRecordDetail">
+    <div
+      v-if="selectedRecord"
+      class="record-detail-modal"
+      @click="closeRecordDetail"
+    >
       <div class="modal-content" @click.stop>
         <h3>记录详情</h3>
         <div class="detail-item">
@@ -113,7 +131,11 @@
         <div class="detail-item metrics">
           <label>活动指标：</label>
           <div class="metrics-list">
-            <div v-for="(value, key) in selectedRecord.metrics" :key="key" class="metric-item">
+            <div
+              v-for="(value, key) in selectedRecord.metrics"
+              :key="key"
+              class="metric-item"
+            >
               <span class="metric-key">{{ getMetricLabel(key) }}：</span>
               <span class="metric-value">{{ value }}</span>
             </div>
@@ -126,23 +148,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick } from 'vue';
-import useRelaxStore from '@/stores/relaxStore';
-import * as echarts from 'echarts';
-import type { RelaxRecord } from '@/api/relax';
+import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
+import useRelaxStore from "@/stores/relaxStore";
+import type { RelaxRecord } from "@/api/relax";
+import { init, type EChartsType } from "@/utils/echarts";
 
 const relaxStore = useRelaxStore();
 const records = ref<RelaxRecord[]>([]);
 const statistics = ref(relaxStore.statistics);
 const isLoading = ref(false);
 const chartRef = ref<HTMLElement | null>(null);
-const chartInstance = ref<echarts.ECharts | null>(null);
+const chartInstance = ref<EChartsType | null>(null);
 const selectedRecord = ref<RelaxRecord | null>(null);
 
 const filter = ref({
-  startDate: '',
-  endDate: '',
-  activityType: ''
+  startDate: "",
+  endDate: "",
+  activityType: "",
 });
 
 // 初始化
@@ -150,6 +172,12 @@ onMounted(async () => {
   relaxStore.init();
   await loadData();
   initChart();
+  window.addEventListener("resize", handleResize);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", handleResize);
+  chartInstance.value?.dispose();
 });
 
 // 加载数据
@@ -161,7 +189,7 @@ async function loadData() {
     records.value = relaxStore.records;
     statistics.value = relaxStore.statistics;
   } catch (error) {
-    console.error('加载数据失败:', error);
+    console.error("加载数据失败:", error);
   } finally {
     isLoading.value = false;
   }
@@ -174,12 +202,12 @@ async function applyFilter() {
     await relaxStore.fetchRecords({
       startDate: filter.value.startDate,
       endDate: filter.value.endDate,
-      activityType: filter.value.activityType
+      activityType: filter.value.activityType,
     });
     records.value = relaxStore.records;
     updateChart();
   } catch (error) {
-    console.error('筛选数据失败:', error);
+    console.error("筛选数据失败:", error);
   } finally {
     isLoading.value = false;
   }
@@ -189,7 +217,7 @@ async function applyFilter() {
 function initChart() {
   nextTick(() => {
     if (chartRef.value) {
-      chartInstance.value = echarts.init(chartRef.value);
+      chartInstance.value = init(chartRef.value);
       updateChart();
     }
   });
@@ -198,37 +226,37 @@ function initChart() {
 // 更新图表
 function updateChart() {
   if (chartInstance.value && statistics.value) {
-    const data = statistics.value.activityBreakdown.map(item => ({
+    const data = statistics.value.activityBreakdown.map((item) => ({
       name: getActivityName(item.type),
-      value: item.count
+      value: item.count,
     }));
 
     const option = {
       tooltip: {
-        trigger: 'item',
-        formatter: '{a} <br/>{b}: {c} ({d}%)'
+        trigger: "item",
+        formatter: "{a} <br/>{b}: {c} ({d}%)",
       },
       legend: {
-        orient: 'vertical',
-        left: 'left',
-        data: data.map(item => item.name)
+        orient: "vertical",
+        left: "left",
+        data: data.map((item) => item.name),
       },
       series: [
         {
-          name: '活动类型',
-          type: 'pie',
-          radius: '50%',
-          center: ['50%', '50%'],
+          name: "活动类型",
+          type: "pie",
+          radius: "50%",
+          center: ["50%", "50%"],
           data: data,
           emphasis: {
             itemStyle: {
               shadowBlur: 10,
               shadowOffsetX: 0,
-              shadowColor: 'rgba(0, 0, 0, 0.5)'
-            }
-          }
-        }
-      ]
+              shadowColor: "rgba(0, 0, 0, 0.5)",
+            },
+          },
+        },
+      ],
     };
 
     chartInstance.value.setOption(option);
@@ -248,12 +276,12 @@ function closeRecordDetail() {
 // 格式化日期时间
 function formatDateTime(dateTime: string) {
   const date = new Date(dateTime);
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
+  return date.toLocaleString("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -282,23 +310,23 @@ function getRecordDuration(record: RelaxRecord) {
 // 获取活动图标
 function getActivityIcon(activityType: string) {
   const icons: Record<string, string> = {
-    woodenFish: '🪘',
-    breathing: '🧘',
-    pinball: '🎮',
-    tetris: '🧩',
-    audio: '🎵'
+    woodenFish: "🪘",
+    breathing: "🧘",
+    pinball: "🎮",
+    tetris: "🧩",
+    audio: "🎵",
   };
-  return icons[activityType] || '📅';
+  return icons[activityType] || "📅";
 }
 
 // 获取活动名称
 function getActivityName(activityType: string) {
   const names: Record<string, string> = {
-    woodenFish: '木鱼敲击',
-    breathing: '呼吸冥想',
-    pinball: '弹珠消砖',
-    tetris: '俄罗斯方块',
-    audio: '音频放松'
+    woodenFish: "木鱼敲击",
+    breathing: "呼吸冥想",
+    pinball: "弹珠消砖",
+    tetris: "俄罗斯方块",
+    audio: "音频放松",
   };
   return names[activityType] || activityType;
 }
@@ -306,22 +334,22 @@ function getActivityName(activityType: string) {
 // 获取指标标签
 function getMetricLabel(key: string) {
   const labels: Record<string, string> = {
-    tapCount: '敲击次数',
-    focusLevel: '专注度',
-    rhythmStability: '呼吸节奏',
-    actualDuration: '实际时长',
-    finalScore: '解压得分',
-    destroyedBricks: '破坏砖块数',
-    audioType: '音频类型',
-    volume: '音量'
+    tapCount: "敲击次数",
+    focusLevel: "专注度",
+    rhythmStability: "呼吸节奏",
+    actualDuration: "实际时长",
+    finalScore: "解压得分",
+    destroyedBricks: "破坏砖块数",
+    audioType: "音频类型",
+    volume: "音量",
   };
   return labels[key] || key;
 }
 
 // 监听窗口大小变化，调整图表
-window.addEventListener('resize', () => {
+function handleResize() {
   chartInstance.value?.resize();
-});
+}
 </script>
 
 <style scoped lang="scss">
@@ -650,7 +678,7 @@ window.addEventListener('resize', () => {
 
             .metric-item {
               display: flex;
-              
+
               .metric-key {
                 width: 100px;
                 font-size: 14px;

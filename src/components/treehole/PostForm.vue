@@ -147,7 +147,7 @@ const submitPost = async () => {
     // 获取温柔回复
     const replyResponse = await submitTreeHoleAndGetReply(
       newPost.value.content,
-      undefined // 用户ID可以从用户状态中获取
+      undefined, // 用户ID可以从用户状态中获取
     );
 
     gentleReply.value = replyResponse.reply;
@@ -172,7 +172,8 @@ const submitPost = async () => {
 </script>
 
 <style scoped lang="scss">
-@import "@/assets/styles/theme.scss";
+@use "sass:color";
+@use "@/assets/styles/theme.scss" as *;
 
 .create-post {
   margin-bottom: 30px;
@@ -383,7 +384,11 @@ const submitPost = async () => {
 
   button {
     width: 100%;
-    background: linear-gradient(135deg, $primary-color, darken($primary-color, 8%));
+    background: linear-gradient(
+      135deg,
+      $primary-color,
+      color.adjust($primary-color, $lightness: -8%)
+    );
     color: $white;
     border: none;
     padding: 14px 24px;

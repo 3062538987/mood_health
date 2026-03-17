@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from "vue";
-import * as echarts from "echarts";
+import { init, type EChartsType } from "@/utils/echarts";
 import { MoodTrendResponse } from "@/types/mood";
 
 interface ChartPoint {
@@ -31,14 +31,14 @@ const emit = defineEmits<{
 }>();
 
 const chartRef = ref<HTMLElement | null>(null);
-const chart = ref<echarts.ECharts | null>(null);
+const chart = ref<EChartsType | null>(null);
 
 // 初始化图表
 const initChart = () => {
   if (!chartRef.value) return;
 
   if (!chart.value) {
-    chart.value = echarts.init(chartRef.value);
+    chart.value = init(chartRef.value);
   }
 
   updateChart();

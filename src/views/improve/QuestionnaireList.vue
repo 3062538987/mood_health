@@ -95,7 +95,7 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-@import "@/assets/styles/theme.scss";
+@use "@/assets/styles/theme.scss" as *;
 
 .questionnaire-list {
   padding: 20px;

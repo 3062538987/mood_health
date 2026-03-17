@@ -37,9 +37,7 @@
       <div v-else class="empty-state">
         <div class="empty-icon">📋</div>
         <p>暂无测评记录</p>
-        <button class="btn primary" @click="goToList">
-          去测评
-        </button>
+        <button class="btn primary" @click="goToList">去测评</button>
       </div>
     </div>
   </div>
@@ -48,10 +46,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import {
-  getAssessmentHistory,
-  AssessmentHistory,
-} from "@/api/questionnaire";
+import { getAssessmentHistory, AssessmentHistory } from "@/api/questionnaire";
 
 const router = useRouter();
 const history = ref<AssessmentHistory[]>([]);
@@ -113,7 +108,7 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-@import "@/assets/styles/theme.scss";
+@use "@/assets/styles/theme.scss" as *;
 
 .questionnaire-history {
   padding: 20px;

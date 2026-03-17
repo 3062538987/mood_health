@@ -89,7 +89,7 @@ onMounted(loadDetail);
 </script>
 
 <style scoped lang="scss">
-@import "@/assets/styles/theme.scss";
+@use "@/assets/styles/theme.scss" as *;
 
 .post-detail {
   max-width: 800px;

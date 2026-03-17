@@ -63,78 +63,88 @@
         <button class="reset-btn" @click="resetFilters">重置筛选</button>
       </div>
 
-      <!-- 骨架屏 -->
-      <div
-        v-if="isLoading && moodRecords.length === 0"
-        class="skeleton-container"
-      >
-        <el-skeleton :rows="10" animated />
-      </div>
+      <transition name="archive-state" mode="out-in">
+        <SoftLoadingState
+          v-if="showInitialLoading"
+          key="loading"
+          variant="cards"
+          :item-count="6"
+          title="情绪档案正在整理中"
+          description="正在为你铺开最近的情绪轨迹，马上就能看到更完整的记录。"
+        />
 
-      <!-- 时间轴+本托布局 -->
-      <div v-else class="timeline-bento-container">
-        <div v-if="filteredRecords.length === 0" class="no-records">
-          没有找到匹配的情绪记录
+        <div
+          v-else-if="showEmptyState"
+          key="empty"
+          class="timeline-bento-container"
+        >
+          <SoftEmptyState
+            title="还没有记录过情绪哦，去记录一下吧～"
+            description="每一次小小的记录，都会帮你更温柔地看见自己的情绪轨迹。先写下今天的心情，档案页就会慢慢丰富起来。"
+            action-text="去记录情绪"
+            @action="goToMoodRecord"
+          />
         </div>
 
-        <div v-else class="timeline-bento">
-          <div
-            v-for="(record, index) in filteredRecords"
-            :key="record.id"
-            class="bento-item"
-            :class="getItemSize(record, index)"
-            @click="showDetail(record)"
-          >
-            <div class="date-badge">
-              <div class="date-day">{{ getDay(record.createTime) }}</div>
-              <div class="date-month">{{ getMonth(record.createTime) }}</div>
-            </div>
+        <div v-else key="content" class="timeline-bento-container">
+          <div class="timeline-bento">
+            <div
+              v-for="(record, index) in filteredRecords"
+              :key="record.id"
+              class="bento-item"
+              :class="getItemSize(record, index)"
+              @click="showDetail(record)"
+            >
+              <div class="date-badge">
+                <div class="date-day">{{ getDay(record.createTime) }}</div>
+                <div class="date-month">{{ getMonth(record.createTime) }}</div>
+              </div>
 
-            <div class="emotion-summary">
-              <div
-                v-for="(type, idx) in record.moodType"
-                :key="idx"
-                class="emotion-dot"
-                :style="{
-                  backgroundColor: getMoodColor(type),
-                  transform: `scale(${(record.moodRatio[idx] || 50) / 30})`,
-                  zIndex: idx,
-                }"
-                :title="`${getMoodName(type)}: ${record.moodRatio[idx] || 50}%`"
-              ></div>
-            </div>
+              <div class="emotion-summary">
+                <div
+                  v-for="(type, idx) in record.moodType"
+                  :key="idx"
+                  class="emotion-dot"
+                  :style="{
+                    backgroundColor: getMoodColor(type),
+                    transform: `scale(${(record.moodRatio[idx] || 50) / 30})`,
+                    zIndex: idx,
+                  }"
+                  :title="`${getMoodName(type)}: ${record.moodRatio[idx] || 50}%`"
+                ></div>
+              </div>
 
-            <div class="trigger-preview">
-              <span class="trigger-icon">🎯</span>
-              <span class="trigger-text">{{ getMainTrigger(record) }}</span>
-            </div>
+              <div class="trigger-preview">
+                <span class="trigger-icon">🎯</span>
+                <span class="trigger-text">{{ getMainTrigger(record) }}</span>
+              </div>
 
-            <div class="mood-note">{{ truncateText(record.event, 20) }}</div>
+              <div class="mood-note">{{ truncateText(record.event, 20) }}</div>
 
-            <div class="item-actions">
-              <button
-                class="action-btn edit-btn"
-                @click.stop="editRecord(record)"
-              >
-                ✏️
-              </button>
-              <button
-                class="action-btn delete-btn"
-                @click.stop="confirmDeleteRecord(record)"
-              >
-                🗑️
-              </button>
+              <div class="item-actions">
+                <button
+                  class="action-btn edit-btn"
+                  @click.stop="editRecord(record)"
+                >
+                  ✏️
+                </button>
+                <button
+                  class="action-btn delete-btn"
+                  @click.stop="confirmDeleteRecord(record)"
+                >
+                  🗑️
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- 加载更多 -->
-        <div class="load-more" v-if="hasMore">
-          <el-button type="primary" :loading="isLoading" @click="loadMore">
-            加载更多
-          </el-button>
+          <div class="load-more" v-if="hasMore">
+            <el-button type="primary" :loading="isLoading" @click="loadMore">
+              加载更多
+            </el-button>
+          </div>
         </div>
-      </div>
+      </transition>
     </div>
 
     <!-- 详情对话框 -->
@@ -219,6 +229,8 @@
 import { ref, computed, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter } from "vue-router";
+import SoftEmptyState from "@/components/shared/SoftEmptyState.vue";
+import SoftLoadingState from "@/components/shared/SoftLoadingState.vue";
 
 import { getMoodRecordList } from "@/api/mood";
 import { MoodRecord } from "@/types/mood";
@@ -256,6 +268,20 @@ const totalRecords = ref(0);
 const isLoading = ref(false);
 const showDetailDialog = ref(false);
 const selectedRecord = ref<MoodRecord | null>(null);
+const hasFetchedRecords = ref(false);
+
+const showInitialLoading = computed(
+  () =>
+    !hasFetchedRecords.value ||
+    (isLoading.value && moodRecords.value.length === 0),
+);
+
+const showEmptyState = computed(
+  () =>
+    hasFetchedRecords.value &&
+    !isLoading.value &&
+    filteredRecords.value.length === 0,
+);
 
 // 计算属性：是否有更多数据
 const hasMore = computed(() => {
@@ -334,6 +360,7 @@ const fetchMoodRecords = async () => {
     console.error("获取情绪记录失败", error);
     ElMessage.error("获取情绪记录失败，请稍后再试");
   } finally {
+    hasFetchedRecords.value = true;
     isLoading.value = false;
   }
 };
@@ -499,6 +526,10 @@ const editRecord = (record: MoodRecord) => {
   });
 };
 
+const goToMoodRecord = () => {
+  router.push("/mood/record");
+};
+
 // 确认删除记录
 const confirmDeleteRecord = (record: MoodRecord) => {
   ElMessageBox.confirm("确定要删除这条情绪记录吗？", "删除确认", {
@@ -530,7 +561,7 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-@import "@/assets/styles/theme.scss";
+@use "@/assets/styles/theme.scss" as *;
 
 .mood-archive {
   padding: 20px;
@@ -665,17 +696,6 @@ onMounted(() => {
       color: var(--primary-color);
       transform: translateY(-2px);
     }
-  }
-
-  .skeleton-container {
-    margin: 20px 0;
-  }
-
-  .no-records {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-light-color);
-    font-size: $font-size-lg;
   }
 
   // 时间轴+本托布局
@@ -957,9 +977,26 @@ onMounted(() => {
   }
 }
 
+.archive-state-enter-active,
+.archive-state-leave-active {
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+
+.archive-state-enter-from,
+.archive-state-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
 @media (max-width: 768px) {
   .mood-archive {
     padding: 15px;
+
+    .skeleton-container {
+      grid-template-columns: 1fr;
+    }
 
     .timeline-bento {
       grid-template-columns: 1fr;

@@ -133,9 +133,11 @@ const nextQuestion = async () => {
         questionnaire_id: questionnaireId.value,
         answers: selectedAnswers.value,
       });
-      const data = (res as {
-        data: { score: number; result_text: string };
-      }).data;
+      const data = (
+        res as {
+          data: { score: number; result_text: string };
+        }
+      ).data;
       router.push({
         path: "/improve/questionnaire/result",
         query: {
@@ -157,7 +159,7 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-@import "@/assets/styles/theme.scss";
+@use "@/assets/styles/theme.scss" as *;
 
 .questionnaire {
   padding: 20px;

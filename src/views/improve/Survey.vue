@@ -112,7 +112,8 @@ const cancelSurvey = () => {
 </script>
 
 <style scoped lang="scss">
-@import "@/assets/styles/theme.scss";
+@use "sass:color";
+@use "@/assets/styles/theme.scss" as *;
 
 .survey-page {
   max-width: 600px;
@@ -138,7 +139,7 @@ const cancelSurvey = () => {
     cursor: pointer;
     transition: all 0.3s;
     &:hover {
-      background-color: darken($primary-color, 10%);
+      background-color: color.adjust($primary-color, $lightness: -10%);
     }
   }
 }

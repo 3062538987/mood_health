@@ -96,7 +96,8 @@ const formatDate = (dateStr: string) => {
 </script>
 
 <style scoped lang="scss">
-@import "@/assets/styles/theme.scss";
+@use "sass:color";
+@use "@/assets/styles/theme.scss" as *;
 
 .comments {
   margin-top: 30px;
@@ -150,7 +151,7 @@ const formatDate = (dateStr: string) => {
       font-size: $font-size-md;
       transition: all 0.3s;
       &:hover:not(:disabled) {
-        background-color: darken($primary-color, 10%);
+        background-color: color.adjust($primary-color, $lightness: -10%);
       }
       &:disabled {
         opacity: 0.5;

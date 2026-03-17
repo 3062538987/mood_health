@@ -11,46 +11,47 @@
     </div>
 
     <!-- 帖子列表 -->
-    <PostList 
-      :posts="posts" 
+    <PostList
+      :posts="posts"
       @view-detail="goToDetail"
       @like-updated="handleLikeUpdated"
     />
 
     <!-- 分页 -->
     <div class="pagination">
-      <button @click="changePage(currentPage - 1)" :disabled="currentPage <= 1">上一页</button>
+      <button @click="changePage(currentPage - 1)" :disabled="currentPage <= 1">
+        上一页
+      </button>
       <span>第 {{ currentPage }} 页</span>
-      <button @click="changePage(currentPage + 1)" :disabled="posts.length < pageSize">下一页</button>
+      <button
+        @click="changePage(currentPage + 1)"
+        :disabled="posts.length < pageSize"
+      >
+        下一页
+      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
-import PostForm from '@/components/treehole/PostForm.vue';
-import PostList from '@/components/treehole/PostList.vue';
-import { usePosts } from '@/composables/usePosts';
-import type { CreatePostData } from '@/types/post';
+import { onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
+import PostForm from "@/components/treehole/PostForm.vue";
+import PostList from "@/components/treehole/PostList.vue";
+import { usePosts } from "@/composables/usePosts";
+import type { CreatePostData } from "@/types/post";
 
 const router = useRouter();
-const { 
-  posts, 
-  currentPage, 
-  pageSize, 
-  loadPosts, 
-  createNewPost 
-} = usePosts();
+const { posts, currentPage, pageSize, loadPosts, createNewPost } = usePosts();
 
 const handleSubmitPost = async (post: CreatePostData) => {
   const success = await createNewPost(post);
   if (success) {
-    ElMessage.success('发布成功，等待审核通过后显示');
+    ElMessage.success("发布成功，等待审核通过后显示");
     await loadPosts();
   } else {
-    ElMessage.error('发布失败，请稍后重试');
+    ElMessage.error("发布失败，请稍后重试");
   }
 };
 
@@ -68,7 +69,7 @@ const refreshPosts = async () => {
 };
 
 const handleLikeUpdated = (postId: number, likes: number, liked: boolean) => {
-  const post = posts.value.find(p => p.id === postId);
+  const post = posts.value.find((p) => p.id === postId);
   if (post) {
     post.likes = likes;
     post.liked = liked;
@@ -79,7 +80,7 @@ onMounted(loadPosts);
 </script>
 
 <style scoped lang="scss">
-@import '@/assets/styles/theme.scss';
+@use "@/assets/styles/theme.scss" as *;
 
 .tree-hole {
   max-width: 800px;

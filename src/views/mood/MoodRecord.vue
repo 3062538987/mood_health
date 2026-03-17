@@ -45,6 +45,7 @@
       <div class="form-group">
         <label>情绪描述</label>
         <textarea
+          ref="moodTextareaRef"
           v-model="moodContent"
           rows="3"
           placeholder="请描述你当前的情绪状态..."
@@ -149,26 +150,49 @@
           获取 AI 情绪建议
         </el-button>
 
-        <el-card v-if="aiResult" class="ai-advice-card">
-          <div class="ai-header">
-            <h3>🤖 AI 情绪分析</h3>
-            <div
-              v-if="aiResult.mood"
-              class="mood-badge"
-              :style="{ backgroundColor: moodColor }"
-            >
-              <span class="mood-emoji">{{ moodEmoji }}</span>
-              <span class="mood-label">{{ aiResult.mood }}</span>
+        <transition name="record-ai-state" mode="out-in">
+          <SoftLoadingState
+            v-if="aiLoading"
+            key="loading"
+            class="record-ai-status"
+            variant="panel"
+            :item-count="3"
+            title="AI 正在整理你的情绪线索"
+            description="会结合你的文字和情绪强度，生成一份更温和的陪伴建议。"
+          />
+
+          <el-card v-else-if="aiResult" key="result" class="ai-advice-card">
+            <div class="ai-header">
+              <h3>🤖 AI 情绪分析</h3>
+              <div
+                v-if="aiResult.mood"
+                class="mood-badge"
+                :style="{ backgroundColor: moodColor }"
+              >
+                <span class="mood-emoji">{{ moodEmoji }}</span>
+                <span class="mood-label">{{ aiResult.mood }}</span>
+              </div>
             </div>
-          </div>
-          <p>{{ aiResult.analysis }}</p>
-          <h4>💡 建议：</h4>
-          <ul>
-            <li v-for="(item, idx) in aiResult.suggestions" :key="idx">
-              {{ item }}
-            </li>
-          </ul>
-        </el-card>
+            <p>{{ aiResult.analysis }}</p>
+            <h4>💡 建议：</h4>
+            <ul>
+              <li v-for="(item, idx) in aiResult.suggestions" :key="idx">
+                {{ item }}
+              </li>
+            </ul>
+          </el-card>
+
+          <SoftEmptyState
+            v-else
+            key="empty"
+            class="record-ai-status"
+            compact
+            title="写下此刻的心情，AI 再陪你往下看"
+            description="先记录一点今天的感受，建议区会在这里给出分析和可执行的小步骤。"
+            action-text="去填写描述"
+            @action="focusMoodTextarea"
+          />
+        </transition>
       </div>
 
       <!-- 提交按钮 -->
@@ -210,6 +234,8 @@ import {
 } from "@/api/mood";
 import { saveAdvice } from "@/api/advice";
 import { ElMessage, ElMessageBox } from "element-plus";
+import SoftEmptyState from "@/components/shared/SoftEmptyState.vue";
+import SoftLoadingState from "@/components/shared/SoftLoadingState.vue";
 
 const DRAFT_KEY = "moodRecordDraft";
 const DEBOUNCE_DELAY = 1000;
@@ -373,6 +399,7 @@ const deletingTag = ref<string | null>(null);
 
 const aiLoading = ref(false);
 const aiResult = ref<AnalyzeMoodResponse | null>(null);
+const moodTextareaRef = ref<HTMLTextAreaElement | null>(null);
 
 // 计算属性：最大频率用于气泡大小计算
 const maxFrequency = computed(() => {
@@ -394,6 +421,14 @@ const moodColor = computed(() => {
   }
   return MOOD_COLOR_MAP[aiResult.value.mood] || MOOD_COLOR_MAP["未知"];
 });
+
+const focusMoodTextarea = () => {
+  moodTextareaRef.value?.focus();
+  moodTextareaRef.value?.scrollIntoView({
+    behavior: "smooth",
+    block: "center",
+  });
+};
 
 // 情绪转盘相关函数
 const getEmoji = (score: number): string => {
@@ -750,7 +785,7 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-@import "@/assets/styles/theme.scss";
+@use "@/assets/styles/theme.scss" as *;
 
 .mood-record {
   padding: 20px;
@@ -965,6 +1000,23 @@ onMounted(() => {
         line-height: 1.6;
       }
     }
+  }
+
+  .record-ai-status {
+    margin-top: 16px;
+  }
+
+  .record-ai-state-enter-active,
+  .record-ai-state-leave-active {
+    transition:
+      opacity 0.24s ease,
+      transform 0.24s ease;
+  }
+
+  .record-ai-state-enter-from,
+  .record-ai-state-leave-to {
+    opacity: 0;
+    transform: translateY(10px);
   }
 
   @keyframes pulse {

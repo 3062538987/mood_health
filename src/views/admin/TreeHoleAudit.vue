@@ -2,7 +2,7 @@
   <div class="tree-hole-audit">
     <div class="container">
       <h2>树洞内容审核</h2>
-      
+
       <div class="stats">
         <div class="stat-card">
           <div class="stat-icon">📋</div>
@@ -52,13 +52,19 @@
           v-for="post in posts"
           :key="post.id"
           class="post-card"
-          :class="{ 'status-0': post.status === 0, 'status-1': post.status === 1, 'status-2': post.status === 2 }"
+          :class="{
+            'status-0': post.status === 0,
+            'status-1': post.status === 1,
+            'status-2': post.status === 2,
+          }"
         >
           <div class="post-header">
             <div class="post-info">
               <span class="post-title">{{ post.title }}</span>
               <span class="post-author">
-                {{ post.is_anonymous ? '匿名用户' : post.username || '未知用户' }}
+                {{
+                  post.is_anonymous ? "匿名用户" : post.username || "未知用户"
+                }}
               </span>
               <span class="post-time">{{ formatTime(post.created_at) }}</span>
             </div>
@@ -85,13 +91,27 @@
       </div>
 
       <div class="pagination">
-        <button @click="changePage(currentPage - 1)" :disabled="currentPage <= 1">上一页</button>
+        <button
+          @click="changePage(currentPage - 1)"
+          :disabled="currentPage <= 1"
+        >
+          上一页
+        </button>
         <span>第 {{ currentPage }} 页</span>
-        <button @click="changePage(currentPage + 1)" :disabled="posts.length < pageSize">下一页</button>
+        <button
+          @click="changePage(currentPage + 1)"
+          :disabled="posts.length < pageSize"
+        >
+          下一页
+        </button>
       </div>
     </div>
 
-    <div v-if="showRejectModal" class="modal-overlay" @click="closeRejectDialog">
+    <div
+      v-if="showRejectModal"
+      class="modal-overlay"
+      @click="closeRejectDialog"
+    >
       <div class="modal-content" @click.stop>
         <h3>拒绝帖子</h3>
         <textarea
@@ -100,8 +120,12 @@
           rows="4"
         ></textarea>
         <div class="modal-actions">
-          <button class="btn btn-cancel" @click="closeRejectDialog">取消</button>
-          <button class="btn btn-confirm" @click="confirmReject">确认拒绝</button>
+          <button class="btn btn-cancel" @click="closeRejectDialog">
+            取消
+          </button>
+          <button class="btn btn-confirm" @click="confirmReject">
+            确认拒绝
+          </button>
         </div>
       </div>
     </div>
@@ -109,9 +133,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { ElMessage } from 'element-plus';
-import { getPendingPosts, auditPost } from '@/api/post';
+import { ref, computed, onMounted } from "vue";
+import { ElMessage } from "element-plus";
+import { getPendingPosts, auditPost } from "@/api/post";
 
 const posts = ref<any[]>([]);
 const loading = ref(false);
@@ -120,7 +144,7 @@ const pageSize = ref(10);
 const statusFilter = ref(0);
 const showRejectModal = ref(false);
 const currentPost = ref<any | null>(null);
-const rejectRemark = ref('');
+const rejectRemark = ref("");
 
 const pendingCount = ref(0);
 const approvedCount = ref(0);
@@ -133,7 +157,7 @@ const loadPosts = async () => {
     posts.value = data;
     updateStats();
   } catch (error) {
-    ElMessage.error('获取待审核帖子失败');
+    ElMessage.error("获取待审核帖子失败");
     console.error(error);
   } finally {
     loading.value = false;
@@ -141,9 +165,9 @@ const loadPosts = async () => {
 };
 
 const updateStats = () => {
-  pendingCount.value = posts.value.filter(p => p.status === 0).length;
-  approvedCount.value = posts.value.filter(p => p.status === 1).length;
-  rejectedCount.value = posts.value.filter(p => p.status === 2).length;
+  pendingCount.value = posts.value.filter((p) => p.status === 0).length;
+  approvedCount.value = posts.value.filter((p) => p.status === 1).length;
+  rejectedCount.value = posts.value.filter((p) => p.status === 2).length;
 };
 
 const changePage = async (page: number) => {
@@ -160,47 +184,51 @@ const formatTime = (date: string) => {
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
 
-  if (minutes < 1) return '刚刚';
+  if (minutes < 1) return "刚刚";
   if (minutes < 60) return `${minutes}分钟前`;
   if (hours < 24) return `${hours}小时前`;
   if (days < 7) return `${days}天前`;
-  return d.toLocaleDateString('zh-CN');
+  return d.toLocaleDateString("zh-CN");
 };
 
 const getStatusText = (status: number) => {
   switch (status) {
-    case 0: return '待审核';
-    case 1: return '已通过';
-    case 2: return '已拒绝';
-    default: return '未知';
+    case 0:
+      return "待审核";
+    case 1:
+      return "已通过";
+    case 2:
+      return "已拒绝";
+    default:
+      return "未知";
   }
 };
 
 const showRejectDialog = (post: any) => {
   currentPost.value = post;
-  rejectRemark.value = '';
+  rejectRemark.value = "";
   showRejectModal.value = true;
 };
 
 const closeRejectDialog = () => {
   showRejectModal.value = false;
   currentPost.value = null;
-  rejectRemark.value = '';
+  rejectRemark.value = "";
 };
 
 const confirmReject = async () => {
   if (!currentPost.value) return;
-  
+
   try {
     await auditPost(currentPost.value.id, {
       status: 2,
-      audit_remark: rejectRemark.value || undefined
+      audit_remark: rejectRemark.value || undefined,
     });
-    ElMessage.success('已拒绝该帖子');
+    ElMessage.success("已拒绝该帖子");
     closeRejectDialog();
     await loadPosts();
   } catch (error) {
-    ElMessage.error('操作失败');
+    ElMessage.error("操作失败");
     console.error(error);
   }
 };
@@ -208,10 +236,10 @@ const confirmReject = async () => {
 const approvePost = async (postId: number) => {
   try {
     await auditPost(postId, { status: 1 });
-    ElMessage.success('已通过该帖子');
+    ElMessage.success("已通过该帖子");
     await loadPosts();
   } catch (error) {
-    ElMessage.error('操作失败');
+    ElMessage.error("操作失败");
     console.error(error);
   }
 };
@@ -220,7 +248,7 @@ onMounted(loadPosts);
 </script>
 
 <style scoped lang="scss">
-@import '@/assets/styles/theme.scss';
+@use "@/assets/styles/theme.scss" as *;
 
 .tree-hole-audit {
   padding: 20px;
