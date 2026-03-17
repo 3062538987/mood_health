@@ -5,16 +5,12 @@
         <h3>{{ post.title }}</h3>
         <p>{{ post.content.slice(0, 100) }}...</p>
         <div class="post-meta">
-          <span>发布者：{{ post.isAnonymous ? "匿名" : post.username }}</span>
+          <span>发布者：{{ post.isAnonymous ? '匿名' : post.username }}</span>
           <span>{{ formatDate(post.createdAt) }}</span>
         </div>
       </div>
       <div class="post-stats">
-        <button
-          class="stat-btn"
-          :class="{ active: post.liked }"
-          @click.stop="handleLike(post)"
-        >
+        <button class="stat-btn" :class="{ active: post.liked }" @click.stop="handleLike(post)">
           <span :class="post.liked ? 'fas fa-heart' : 'far fa-heart'"></span>
           {{ post.likes }}
         </button>
@@ -28,41 +24,41 @@
 </template>
 
 <script setup lang="ts">
-import type { Post } from "@/types/post";
-import { likePost } from "@/api/post";
+import type { Post } from '@/types/post'
+import { likePost } from '@/api/post'
 
 const props = defineProps<{
-  posts: Post[];
-}>();
+  posts: Post[]
+}>()
 
 const emit = defineEmits<{
-  (e: "view-detail", postId: number): void;
-  (e: "like-updated", postId: number, likes: number, liked: boolean): void;
-}>();
+  (e: 'view-detail', postId: number): void
+  (e: 'like-updated', postId: number, likes: number, liked: boolean): void
+}>()
 
 const goToDetail = (postId: number) => {
-  emit("view-detail", postId);
-};
+  emit('view-detail', postId)
+}
 
 const handleLike = async (post: Post) => {
   try {
-    const res = await likePost(post.id);
-    const newLikes = res.like_count;
-    const newLiked = res.liked;
-    emit("like-updated", post.id, newLikes, newLiked);
+    const res = await likePost(post.id)
+    const newLikes = res.like_count
+    const newLiked = res.liked
+    emit('like-updated', post.id, newLikes, newLiked)
   } catch (error) {
-    console.error("点赞失败:", error);
+    console.error('点赞失败:', error)
   }
-};
+}
 
 const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr);
-  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-};
+  const date = new Date(dateStr)
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
+}
 </script>
 
 <style scoped lang="scss">
-@use "@/assets/styles/theme.scss" as *;
+@use '@/assets/styles/theme.scss' as *;
 
 .post-card {
   margin-bottom: 16px;

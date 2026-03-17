@@ -19,43 +19,57 @@
 
       <!-- 音乐列表 -->
       <div class="music-list">
-        <div
-          v-for="music in filteredMusic"
-          :key="music.id"
-          class="music-item"
-          :class="{ active: currentMusic && currentMusic.id === music.id }"
-          @click="playMusic(music)"
-        >
-          <div class="music-info">
-            <h3 class="music-title">{{ music.title }}</h3>
-            <p class="music-artist">{{ music.artist }}</p>
-          </div>
-          <div class="music-duration">{{ music.duration }}</div>
+        <div v-if="isLoadingCatalog" class="loading-skeleton" aria-label="加载中">
+          <div v-for="index in 4" :key="index" class="skeleton-row"></div>
         </div>
+        <transition name="empty-fade" mode="out-in">
+          <RelaxEmptyState
+            v-if="!isLoadingCatalog && filteredMusic.length === 0"
+            key="music-empty"
+            type="music"
+            action-text="去解压中心试试"
+            action-to="/relax/center"
+          />
+          <div v-else key="music-list">
+            <div
+              v-for="music in filteredMusic"
+              :key="music.id"
+              class="music-item"
+              :class="{ active: currentMusic && currentMusic.id === music.id }"
+              @click="playMusic(music)"
+            >
+              <div class="music-info">
+                <h3 class="music-title">{{ music.title }}</h3>
+                <p class="music-artist">{{ music.artist }}</p>
+              </div>
+              <div class="music-duration">{{ music.duration }}</div>
+            </div>
+          </div>
+        </transition>
       </div>
 
       <!-- 播放器 -->
-      <div class="player" v-if="currentMusic">
+      <div v-if="currentMusic" class="player">
         <div class="player-info">
           <h3>{{ currentMusic.title }}</h3>
           <p>{{ currentMusic.artist }}</p>
         </div>
         <div class="player-controls">
-          <button @click="playPrevious" class="control-btn">
+          <button class="control-btn" @click="playPrevious">
             <i class="fas fa-step-backward"></i>
           </button>
-          <button @click="togglePlay" class="control-btn play-btn">
+          <button class="control-btn play-btn" @click="togglePlay">
             <i v-if="isPlaying" class="fas fa-pause"></i>
             <i v-else class="fas fa-play"></i>
           </button>
-          <button @click="playNext" class="control-btn">
+          <button class="control-btn" @click="playNext">
             <i class="fas fa-step-forward"></i>
           </button>
         </div>
         <div class="player-progress">
           <input
-            type="range"
             v-model.number="currentTime"
+            type="range"
             :min="0"
             :max="duration"
             class="progress-bar"
@@ -69,8 +83,8 @@
         <div class="player-volume">
           <i class="fas fa-volume-down"></i>
           <input
-            type="range"
             v-model.number="volume"
+            type="range"
             :min="0"
             :max="1"
             step="0.1"
@@ -95,195 +109,195 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import RelaxEmptyState from '@/components/relax/RelaxEmptyState.vue'
 
 // 音乐分类
 interface Category {
-  id: string;
-  name: string;
-  icon: string;
+  id: string
+  name: string
+  icon: string
 }
 
 // 音乐数据类型
 interface Music {
-  id: number;
-  title: string;
-  artist: string;
-  url: string;
-  duration: string;
-  category: string;
+  id: number
+  title: string
+  artist: string
+  url: string
+  duration: string
+  category: string
 }
 
 const categories = ref<Category[]>([
-  { id: "light", name: "轻音乐", icon: "fas fa-music" },
-  { id: "white", name: "白噪音", icon: "fas fa-volume-up" },
-  { id: "nature", name: "自然之声", icon: "fas fa-leaf" },
-  { id: "meditation", name: "冥想音乐", icon: "fas fa-om" },
-]);
+  { id: 'light', name: '轻音乐', icon: 'fas fa-music' },
+  { id: 'white', name: '白噪音', icon: 'fas fa-volume-up' },
+  { id: 'nature', name: '自然之声', icon: 'fas fa-leaf' },
+  { id: 'meditation', name: '冥想音乐', icon: 'fas fa-om' },
+])
 
 // 模拟音乐数据
 const musicData = ref<Music[]>([
   {
     id: 1,
-    title: "宁静致远",
-    artist: "轻音乐",
-    url: "",
-    duration: "3:45",
-    category: "light",
+    title: '宁静致远',
+    artist: '轻音乐',
+    url: '',
+    duration: '3:45',
+    category: 'light',
   },
   {
     id: 2,
-    title: "雨声",
-    artist: "白噪音",
-    url: "",
-    duration: "5:20",
-    category: "white",
+    title: '雨声',
+    artist: '白噪音',
+    url: '',
+    duration: '5:20',
+    category: 'white',
   },
   {
     id: 3,
-    title: "森林漫步",
-    artist: "自然之声",
-    url: "",
-    duration: "4:15",
-    category: "nature",
+    title: '森林漫步',
+    artist: '自然之声',
+    url: '',
+    duration: '4:15',
+    category: 'nature',
   },
   {
     id: 4,
-    title: "冥想指引",
-    artist: "冥想音乐",
-    url: "",
-    duration: "10:00",
-    category: "meditation",
+    title: '冥想指引',
+    artist: '冥想音乐',
+    url: '',
+    duration: '10:00',
+    category: 'meditation',
   },
   {
     id: 5,
-    title: "钢琴曲",
-    artist: "轻音乐",
-    url: "",
-    duration: "4:30",
-    category: "light",
+    title: '钢琴曲',
+    artist: '轻音乐',
+    url: '',
+    duration: '4:30',
+    category: 'light',
   },
   {
     id: 6,
-    title: "海浪声",
-    artist: "自然之声",
-    url: "",
-    duration: "6:10",
-    category: "nature",
+    title: '海浪声',
+    artist: '自然之声',
+    url: '',
+    duration: '6:10',
+    category: 'nature',
   },
-]);
+])
 
 // 响应式数据
-const activeCategory = ref("light");
-const currentMusic = ref<Music | null>(null);
-const isPlaying = ref(false);
-const currentTime = ref(0);
-const duration = ref(0);
-const volume = ref(0.7);
-const audioRef = ref<HTMLAudioElement | null>(null);
+const activeCategory = ref('light')
+const currentMusic = ref<Music | null>(null)
+const isPlaying = ref(false)
+const currentTime = ref(0)
+const duration = ref(0)
+const volume = ref(0.7)
+const audioRef = ref<HTMLAudioElement | null>(null)
+const isLoadingCatalog = ref(true)
 
 // 计算属性：过滤当前分类的音乐
 const filteredMusic = computed(() => {
-  return musicData.value.filter(
-    (music) => music.category === activeCategory.value,
-  );
-});
+  return musicData.value.filter((music) => music.category === activeCategory.value)
+})
 
 // 方法
 const selectCategory = (categoryId: string) => {
-  activeCategory.value = categoryId;
-};
+  activeCategory.value = categoryId
+}
 
 const playMusic = (music: Music) => {
-  currentMusic.value = music;
+  currentMusic.value = music
   if (audioRef.value) {
     audioRef.value.play().catch((error) => {
-      console.error("播放失败:", error);
-    });
-    isPlaying.value = true;
+      console.error('播放失败:', error)
+    })
+    isPlaying.value = true
   }
-};
+}
 
 const togglePlay = () => {
   if (audioRef.value) {
     if (isPlaying.value) {
-      audioRef.value.pause();
+      audioRef.value.pause()
     } else {
       audioRef.value.play().catch((error) => {
-        console.error("播放失败:", error);
-      });
+        console.error('播放失败:', error)
+      })
     }
-    isPlaying.value = !isPlaying.value;
+    isPlaying.value = !isPlaying.value
   }
-};
+}
 
 const playPrevious = () => {
-  const currentIndex = filteredMusic.value.findIndex(
-    (m) => m.id === currentMusic.value?.id,
-  );
+  const currentIndex = filteredMusic.value.findIndex((m) => m.id === currentMusic.value?.id)
   if (currentIndex > 0) {
-    playMusic(filteredMusic.value[currentIndex - 1]);
+    playMusic(filteredMusic.value[currentIndex - 1])
   }
-};
+}
 
 const playNext = () => {
-  const currentIndex = filteredMusic.value.findIndex(
-    (m) => m.id === currentMusic.value?.id,
-  );
+  const currentIndex = filteredMusic.value.findIndex((m) => m.id === currentMusic.value?.id)
   if (currentIndex < filteredMusic.value.length - 1) {
-    playMusic(filteredMusic.value[currentIndex + 1]);
+    playMusic(filteredMusic.value[currentIndex + 1])
   }
-};
+}
 
 const handleEnded = () => {
-  isPlaying.value = false;
-  playNext();
-};
+  isPlaying.value = false
+  playNext()
+}
 
 const updateTime = () => {
   if (audioRef.value) {
-    currentTime.value = audioRef.value.currentTime;
+    currentTime.value = audioRef.value.currentTime
   }
-};
+}
 
 const updateDuration = () => {
   if (audioRef.value) {
-    duration.value = audioRef.value.duration;
+    duration.value = audioRef.value.duration
   }
-};
+}
 
 const seek = () => {
   if (audioRef.value) {
-    audioRef.value.currentTime = currentTime.value;
+    audioRef.value.currentTime = currentTime.value
   }
-};
+}
 
 const updateVolume = () => {
   if (audioRef.value) {
-    audioRef.value.volume = volume.value;
+    audioRef.value.volume = volume.value
   }
-};
+}
 
 const formatTime = (time: number) => {
-  const minutes = Math.floor(time / 60);
-  const seconds = Math.floor(time % 60);
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-};
+  const minutes = Math.floor(time / 60)
+  const seconds = Math.floor(time % 60)
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
 
 // 生命周期
 onMounted(() => {
   // 初始化时设置音量
   if (audioRef.value) {
-    audioRef.value.volume = volume.value;
+    audioRef.value.volume = volume.value
   }
-});
+  // 给列表一个轻量加载过渡，避免空状态闪烁。
+  setTimeout(() => {
+    isLoadingCatalog.value = false
+  }, 220)
+})
 
 onUnmounted(() => {
   // 组件卸载时停止播放
   if (audioRef.value) {
-    audioRef.value.pause();
+    audioRef.value.pause()
   }
-});
+})
 </script>
 
 <style scoped lang="scss">
@@ -351,6 +365,19 @@ onUnmounted(() => {
     padding: 1rem;
     margin-bottom: 2rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+
+    .loading-skeleton {
+      display: grid;
+      gap: 10px;
+
+      .skeleton-row {
+        height: 72px;
+        border-radius: 12px;
+        background: linear-gradient(90deg, #edf2ff 25%, #f8f9ff 37%, #edf2ff 63%);
+        background-size: 400% 100%;
+        animation: shimmer 1.2s ease-in-out infinite;
+      }
+    }
 
     .music-item {
       display: flex;
@@ -562,6 +589,28 @@ onUnmounted(() => {
         }
       }
     }
+  }
+}
+
+.empty-fade-enter-active,
+.empty-fade-leave-active {
+  transition:
+    opacity 0.24s ease,
+    transform 0.24s ease;
+}
+
+.empty-fade-enter-from,
+.empty-fade-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
   }
 }
 </style>

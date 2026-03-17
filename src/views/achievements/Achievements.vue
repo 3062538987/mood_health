@@ -26,7 +26,7 @@
           <div class="stat-icon">🔥</div>
           <div class="stat-info">
             <h3>最近解锁</h3>
-            <p>{{ lastUnlocked || "暂无" }}</p>
+            <p>{{ lastUnlocked || '暂无' }}</p>
           </div>
         </div>
       </div>
@@ -34,63 +34,64 @@
       <!-- 成就列表 -->
       <div class="achievements-list">
         <h2>所有成就</h2>
-        <div class="achievement-grid">
-          <div
-            v-for="achievement in achievements"
-            :key="achievement.id"
-            class="achievement-card"
-            :class="{
-              unlocked: isUnlocked(achievement.id),
-              locked: !isUnlocked(achievement.id),
-            }"
-            @click="showAchievementDetail(achievement)"
-          >
-            <div class="achievement-icon" :class="achievement.level">
-              {{ getAchievementIcon(achievement.type) }}
-            </div>
-            <div class="achievement-info">
-              <h3 class="achievement-name">{{ achievement.name }}</h3>
-              <p class="achievement-description">
-                {{ achievement.description }}
-              </p>
-              <div class="achievement-level">
-                {{ getLevelName(achievement.level) }}
+        <div v-if="isLoading" class="loading-skeleton" aria-label="加载中">
+          <div v-for="index in 6" :key="index" class="skeleton-card"></div>
+        </div>
+        <transition name="empty-fade" mode="out-in">
+          <RelaxEmptyState
+            v-if="!isLoading && achievements.length === 0"
+            key="achievement-empty"
+            type="achievements"
+            action-text="去解压中心开始放松"
+            action-to="/relax/center"
+          />
+          <div v-else key="achievement-grid" class="achievement-grid">
+            <div
+              v-for="achievement in achievements"
+              :key="achievement.id"
+              class="achievement-card"
+              :class="{
+                unlocked: isUnlocked(achievement.id),
+                locked: !isUnlocked(achievement.id),
+              }"
+              @click="showAchievementDetail(achievement)"
+            >
+              <div class="achievement-icon" :class="achievement.level">
+                {{ getAchievementIcon(achievement.type) }}
               </div>
-              <div
-                v-if="!isUnlocked(achievement.id)"
-                class="achievement-progress"
-              >
-                <div class="progress-bar">
-                  <div
-                    class="progress-fill"
-                    :style="{
-                      width: getProgressPercentage(achievement.id) + '%',
-                    }"
-                  ></div>
+              <div class="achievement-info">
+                <h3 class="achievement-name">{{ achievement.name }}</h3>
+                <p class="achievement-description">
+                  {{ achievement.description }}
+                </p>
+                <div class="achievement-level">
+                  {{ getLevelName(achievement.level) }}
                 </div>
-                <span class="progress-text"
-                  >{{ getCurrentProgress(achievement.id) }}/{{
-                    achievement.threshold
-                  }}</span
-                >
-              </div>
-              <div v-else class="achievement-unlocked">
-                <span class="unlocked-date">
-                  解锁于 {{ formatUnlockDate(achievement.id) }}
-                </span>
+                <div v-if="!isUnlocked(achievement.id)" class="achievement-progress">
+                  <div class="progress-bar">
+                    <div
+                      class="progress-fill"
+                      :style="{
+                        width: getProgressPercentage(achievement.id) + '%',
+                      }"
+                    ></div>
+                  </div>
+                  <span class="progress-text"
+                    >{{ getCurrentProgress(achievement.id) }}/{ { achievement.threshold }}</span
+                  >
+                </div>
+                <div v-else class="achievement-unlocked">
+                  <span class="unlocked-date"> 解锁于 {{ formatUnlockDate(achievement.id) }} </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </transition>
       </div>
     </div>
 
     <!-- 成就详情弹窗 -->
-    <div
-      v-if="selectedAchievement"
-      class="achievement-modal"
-      @click="closeModal"
-    >
+    <div v-if="selectedAchievement" class="achievement-modal" @click="closeModal">
       <div class="modal-content" @click.stop>
         <button class="close-btn" @click="closeModal">×</button>
         <div class="modal-icon" :class="selectedAchievement.level">
@@ -125,101 +126,98 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
-import useAchievementStore from "@/stores/achievementStore";
-import { formatDate } from "@/utils/dateUtil";
-import type { Achievement } from "@/api/achievements";
+import { ref, computed, onMounted } from 'vue'
+import useAchievementStore from '@/stores/achievementStore'
+import { formatDate } from '@/utils/dateUtil'
+import type { Achievement } from '@/api/achievements'
+import RelaxEmptyState from '@/components/relax/RelaxEmptyState.vue'
 
-const achievementStore = useAchievementStore();
-const selectedAchievement = ref<Achievement | null>(null);
+const achievementStore = useAchievementStore()
+const selectedAchievement = ref<Achievement | null>(null)
 
 // 计算属性
-const achievements = computed(() => achievementStore.achievements);
-const userAchievements = computed(() => achievementStore.userAchievements);
-const progress = computed(() => achievementStore.progress);
+const achievements = computed(() => achievementStore.achievements)
+const userAchievements = computed(() => achievementStore.userAchievements)
+const progress = computed(() => achievementStore.progress)
+const isLoading = computed(() => achievementStore.isLoading)
 
-const unlockedCount = computed(() => userAchievements.value.length);
-const totalCount = computed(() => achievements.value.length);
+const unlockedCount = computed(() => userAchievements.value.length)
+const totalCount = computed(() => achievements.value.length)
 const completionRate = computed(() => {
-  if (totalCount.value === 0) return 0;
-  return Math.round((unlockedCount.value / totalCount.value) * 100);
-});
+  if (totalCount.value === 0) return 0
+  return Math.round((unlockedCount.value / totalCount.value) * 100)
+})
 
 const lastUnlocked = computed(() => {
-  if (userAchievements.value.length === 0) return null;
+  if (userAchievements.value.length === 0) return null
   const sorted = [...userAchievements.value].sort(
-    (a, b) =>
-      new Date(b.unlockedAt).getTime() - new Date(a.unlockedAt).getTime(),
-  );
-  return sorted[0].achievement.name;
-});
+    (a, b) => new Date(b.unlockedAt).getTime() - new Date(a.unlockedAt).getTime()
+  )
+  return sorted[0].achievement.name
+})
 
 // 方法
 function isUnlocked(achievementId: string): boolean {
-  return userAchievements.value.some(
-    (ua) => ua.achievementId === achievementId,
-  );
+  return userAchievements.value.some((ua) => ua.achievementId === achievementId)
 }
 
 function getProgress(achievementId: string) {
-  return progress.value.find((p) => p.achievementId === achievementId);
+  return progress.value.find((p) => p.achievementId === achievementId)
 }
 
 function getCurrentProgress(achievementId: string): number {
-  const p = getProgress(achievementId);
-  return p ? p.current : 0;
+  const p = getProgress(achievementId)
+  return p ? p.current : 0
 }
 
 function getProgressPercentage(achievementId: string): number {
-  const achievement = achievements.value.find((a) => a.id === achievementId);
-  if (!achievement) return 0;
-  const current = getCurrentProgress(achievementId);
-  return Math.min(Math.round((current / achievement.threshold) * 100), 100);
+  const achievement = achievements.value.find((a) => a.id === achievementId)
+  if (!achievement) return 0
+  const current = getCurrentProgress(achievementId)
+  return Math.min(Math.round((current / achievement.threshold) * 100), 100)
 }
 
 function formatUnlockDate(achievementId: string): string {
-  const userAchievement = userAchievements.value.find(
-    (ua) => ua.achievementId === achievementId,
-  );
+  const userAchievement = userAchievements.value.find((ua) => ua.achievementId === achievementId)
   if (userAchievement) {
-    return formatDate(new Date(userAchievement.unlockedAt));
+    return formatDate(new Date(userAchievement.unlockedAt))
   }
-  return "";
+  return ''
 }
 
 function getAchievementIcon(type: string): string {
   const iconMap: Record<string, string> = {
-    first_use: "🎉",
-    wooden_fish: "木鱼",
-    meditation: "🧘",
-    game: "🎮",
-    all_activities: "🌟",
-    streak: "🔥",
-  };
-  return iconMap[type] || "🏅";
+    first_use: '🎉',
+    wooden_fish: '木鱼',
+    meditation: '🧘',
+    game: '🎮',
+    all_activities: '🌟',
+    streak: '🔥',
+  }
+  return iconMap[type] || '🏅'
 }
 
 function getLevelName(level: string): string {
   const levelMap: Record<string, string> = {
-    bronze: "青铜",
-    silver: "白银",
-    gold: "黄金",
-  };
-  return levelMap[level] || level;
+    bronze: '青铜',
+    silver: '白银',
+    gold: '黄金',
+  }
+  return levelMap[level] || level
 }
 
 function showAchievementDetail(achievement: Achievement) {
-  selectedAchievement.value = achievement;
+  selectedAchievement.value = achievement
 }
 
 function closeModal() {
-  selectedAchievement.value = null;
+  selectedAchievement.value = null
 }
 
 // 生命周期
 onMounted(async () => {
-  await achievementStore.init();
-});
+  await achievementStore.init()
+})
 </script>
 
 <style scoped lang="scss">
@@ -283,6 +281,20 @@ onMounted(async () => {
       color: #333;
       margin-bottom: 20px;
       text-align: center;
+    }
+
+    .loading-skeleton {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+
+      .skeleton-card {
+        height: 230px;
+        border-radius: 12px;
+        background: linear-gradient(90deg, #edf2ff 25%, #f8f9ff 37%, #edf2ff 63%);
+        background-size: 400% 100%;
+        animation: shimmer 1.2s ease-in-out infinite;
+      }
     }
 
     .achievement-grid {
@@ -544,6 +556,28 @@ onMounted(async () => {
         grid-template-columns: 1fr;
       }
     }
+  }
+}
+
+.empty-fade-enter-active,
+.empty-fade-leave-active {
+  transition:
+    opacity 0.24s ease,
+    transform 0.24s ease;
+}
+
+.empty-fade-enter-from,
+.empty-fade-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
   }
 }
 </style>

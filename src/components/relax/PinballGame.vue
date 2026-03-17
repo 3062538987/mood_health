@@ -3,7 +3,7 @@
     <h3>物理弹球 - 砖块破坏者</h3>
 
     <!-- 游戏设置 -->
-    <div class="game-settings" v-if="!isGameStarted && !gameOver">
+    <div v-if="!isGameStarted && !gameOver" class="game-settings">
       <div class="difficulty-selector">
         <label>选择难度：</label>
         <select v-model="selectedDifficulty">
@@ -12,234 +12,221 @@
           <option value="hard">困难（30块砖）</option>
         </select>
       </div>
-      <button @click="startGame" class="game-btn start-btn">开始游戏</button>
+      <button class="game-btn start-btn" @click="startGame">开始游戏</button>
     </div>
 
     <!-- 游戏界面 -->
-    <div
-      class="game-container"
-      ref="gameContainer"
-      v-if="isGameStarted && !gameOver"
-    >
-      <div class="ball" ref="ball"></div>
-      <div class="paddle" ref="paddle"></div>
+    <div v-if="isGameStarted && !gameOver" ref="gameContainer" class="game-container">
+      <div ref="ball" class="ball"></div>
+      <div ref="paddle" class="paddle"></div>
       <!-- 砖块 -->
       <div
         v-for="(brick, index) in bricks"
         :key="index"
+        ref="brickRefs"
         class="brick"
         :style="{
           left: brick.x + 'px',
           top: brick.y + 'px',
           display: brick.visible ? 'block' : 'none',
         }"
-        ref="brickRefs"
       ></div>
 
       <!-- 分数显示 -->
       <div class="score-display">分数：{{ score }}</div>
-      <div class="bricks-destroyed">
-        已破坏砖块：{{ destroyedBricks }}/{{ totalBricks }}
-      </div>
+      <div class="bricks-destroyed">已破坏砖块：{{ destroyedBricks }}/{{ totalBricks }}</div>
     </div>
 
     <!-- 暂停和关闭按钮 -->
-    <div class="game-controls" v-if="isGameStarted && !gameOver">
-      <button @click="togglePause" class="game-btn pause-btn">
-        {{ isPaused ? "继续" : "暂停" }}
+    <div v-if="isGameStarted && !gameOver" class="game-controls">
+      <button class="game-btn pause-btn" @click="togglePause">
+        {{ isPaused ? '继续' : '暂停' }}
       </button>
-      <button @click="closeGame" class="game-btn close-btn">关闭游戏</button>
+      <button class="game-btn close-btn" @click="closeGame">关闭游戏</button>
     </div>
 
     <!-- 游戏结束 -->
-    <div class="game-over" v-if="gameOver">
+    <div v-if="gameOver" class="game-over">
       <h4>游戏结束！</h4>
       <div class="final-score">解压得分：{{ finalScore }}</div>
       <div class="bricks-stats">共破坏砖块：{{ destroyedBricks }}</div>
       <div class="game-over-buttons">
-        <button @click="restartGame" class="game-btn restart-btn">
-          重新开始
-        </button>
-        <button @click="closeGame" class="game-btn close-btn">关闭游戏</button>
+        <button class="game-btn restart-btn" @click="restartGame">重新开始</button>
+        <button class="game-btn close-btn" @click="closeGame">关闭游戏</button>
       </div>
     </div>
 
     <!-- 提示信息 -->
-    <div class="game-message" v-if="showMessage">
+    <div v-if="showMessage" class="game-message">
       {{ message }}
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
-import useRelaxStore from "@/stores/relaxStore";
-import useAchievementStore from "@/stores/achievementStore";
-import soundManager from "@/utils/sound";
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import useRelaxStore from '@/stores/relaxStore'
+import useAchievementStore from '@/stores/achievementStore'
+import soundManager from '@/utils/sound'
 
 // 游戏容器和元素引用
-const gameContainer = ref<HTMLElement | null>(null);
-const ball = ref<HTMLElement | null>(null);
-const paddle = ref<HTMLElement | null>(null);
-const brickRefs = ref<HTMLElement[]>([]);
+const gameContainer = ref<HTMLElement | null>(null)
+const ball = ref<HTMLElement | null>(null)
+const paddle = ref<HTMLElement | null>(null)
+const brickRefs = ref<HTMLElement[]>([])
 
 // 游戏状态
-const isGameStarted = ref(false);
-const gameOver = ref(false);
-const isPaused = ref(false);
-const selectedDifficulty = ref<"easy" | "medium" | "hard">("easy");
-const score = ref(0);
-const destroyedBricks = ref(0);
-const totalBricks = ref(0);
-const finalScore = ref(0);
-const showMessage = ref(false);
-const message = ref("");
-const startTime = ref(new Date().toISOString());
+const isGameStarted = ref(false)
+const gameOver = ref(false)
+const isPaused = ref(false)
+const selectedDifficulty = ref<'easy' | 'medium' | 'hard'>('easy')
+const score = ref(0)
+const destroyedBricks = ref(0)
+const totalBricks = ref(0)
+const finalScore = ref(0)
+const showMessage = ref(false)
+const message = ref('')
+const startTime = ref(new Date().toISOString())
 
-const relaxStore = useRelaxStore();
-const achievementStore = useAchievementStore();
+const relaxStore = useRelaxStore()
+const achievementStore = useAchievementStore()
 
 // 小球属性
-let ballX = 0;
-let ballY = 0;
-let dx = 2;
-let dy = -2;
-let gameLoop: number | null = null;
+let ballX = 0
+let ballY = 0
+let dx = 2
+let dy = -2
+let gameLoop: number | null = null
 
 // 砖块数据结构
 interface Brick {
-  x: number;
-  y: number;
-  visible: boolean;
+  x: number
+  y: number
+  visible: boolean
 }
 
-const bricks = ref<Brick[]>([]);
+const bricks = ref<Brick[]>([])
 
 // 难度配置
 const difficultyConfig = {
   easy: { bricks: 10, speed: 2 },
   medium: { bricks: 20, speed: 3 },
   hard: { bricks: 30, speed: 4 },
-};
+}
 
 // 显示提示信息
 const showPressureReductionMessage = () => {
-  message.value = `压力-5`;
-  showMessage.value = true;
+  message.value = `压力-5`
+  showMessage.value = true
   setTimeout(() => {
-    showMessage.value = false;
-  }, 1500);
-};
+    showMessage.value = false
+  }, 1500)
+}
 
 // 生成砖块
 const generateBricks = () => {
-  const config = difficultyConfig[selectedDifficulty.value];
-  totalBricks.value = config.bricks;
+  const config = difficultyConfig[selectedDifficulty.value]
+  totalBricks.value = config.bricks
 
-  if (!gameContainer.value) return;
+  if (!gameContainer.value) return
 
-  const containerWidth = gameContainer.value.offsetWidth;
-  const brickWidth = 60;
-  const brickHeight = 25;
-  const padding = 10;
-  const rows = Math.ceil(config.bricks / 5);
-  const cols = 5;
+  const containerWidth = gameContainer.value.offsetWidth
+  const brickWidth = 60
+  const brickHeight = 25
+  const padding = 10
+  const rows = Math.ceil(config.bricks / 5)
+  const cols = 5
 
-  bricks.value = [];
+  bricks.value = []
 
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
-      const index = row * cols + col;
-      if (index >= config.bricks) break;
+      const index = row * cols + col
+      if (index >= config.bricks) break
 
-      const x = col * (brickWidth + padding) + padding;
-      const y = row * (brickHeight + padding) + padding + 40;
+      const x = col * (brickWidth + padding) + padding
+      const y = row * (brickHeight + padding) + padding + 40
 
       bricks.value.push({
         x,
         y,
         visible: true,
-      });
+      })
     }
   }
-};
+}
 
 // 初始化游戏
 onMounted(() => {
   if (gameContainer.value && paddle.value) {
-    paddle.value.style.left = `${gameContainer.value.offsetWidth / 2 - 40}px`;
+    paddle.value.style.left = `${gameContainer.value.offsetWidth / 2 - 40}px`
   }
 
   // 监听鼠标移动控制挡板
-  window.addEventListener("mousemove", (e) => {
-    if (
-      gameContainer.value &&
-      paddle.value &&
-      isGameStarted.value &&
-      !gameOver.value
-    ) {
-      const containerRect = gameContainer.value.getBoundingClientRect();
-      let paddleX = e.clientX - containerRect.left - 40;
-      if (paddleX < 0) paddleX = 0;
+  window.addEventListener('mousemove', (e) => {
+    if (gameContainer.value && paddle.value && isGameStarted.value && !gameOver.value) {
+      const containerRect = gameContainer.value.getBoundingClientRect()
+      let paddleX = e.clientX - containerRect.left - 40
+      if (paddleX < 0) paddleX = 0
       if (paddleX > containerRect.width - 80) {
-        paddleX = containerRect.width - 80;
+        paddleX = containerRect.width - 80
       }
-      paddle.value.style.left = `${paddleX}px`;
+      paddle.value.style.left = `${paddleX}px`
     }
-  });
-});
+  })
+})
 
 // 开始游戏
 const startGame = async () => {
-  isGameStarted.value = true;
-  gameOver.value = false;
-  score.value = 0;
-  destroyedBricks.value = 0;
-  startTime.value = new Date().toISOString(); // 重置开始时间
+  isGameStarted.value = true
+  gameOver.value = false
+  score.value = 0
+  destroyedBricks.value = 0
+  startTime.value = new Date().toISOString() // 重置开始时间
 
   // 等待DOM更新，确保游戏容器和元素已经渲染
-  await nextTick();
+  await nextTick()
 
-  if (!gameContainer.value || !ball.value || !paddle.value) return;
+  if (!gameContainer.value || !ball.value || !paddle.value) return
 
   // 初始化小球位置
-  ballX = gameContainer.value.offsetWidth / 2;
-  ballY = gameContainer.value.offsetHeight - 60;
+  ballX = gameContainer.value.offsetWidth / 2
+  ballY = gameContainer.value.offsetHeight - 60
 
   // 设置小球速度
-  const config = difficultyConfig[selectedDifficulty.value];
-  dx = config.speed * (Math.random() > 0.5 ? 1 : -1);
-  dy = -config.speed;
+  const config = difficultyConfig[selectedDifficulty.value]
+  dx = config.speed * (Math.random() > 0.5 ? 1 : -1)
+  dy = -config.speed
 
   // 生成砖块
-  generateBricks();
+  generateBricks()
 
   // 开始游戏循环
-  if (gameLoop) cancelAnimationFrame(gameLoop);
-  gameLoop = requestAnimationFrame(updateGame);
-};
+  if (gameLoop) cancelAnimationFrame(gameLoop)
+  gameLoop = requestAnimationFrame(updateGame)
+}
 
 // 更新游戏状态
 const updateGame = () => {
-  if (!gameContainer.value || !ball.value || !paddle.value) return;
+  if (!gameContainer.value || !ball.value || !paddle.value) return
 
   if (!isPaused.value) {
     // 更新小球位置
-    ballX += dx;
-    ballY += dy;
+    ballX += dx
+    ballY += dy
 
-    const containerRect = gameContainer.value.getBoundingClientRect();
-    const paddleRect = paddle.value.getBoundingClientRect();
+    const containerRect = gameContainer.value.getBoundingClientRect()
+    const paddleRect = paddle.value.getBoundingClientRect()
 
     // 边界碰撞检测
     if (ballX < 0 || ballX > containerRect.width - 20) {
-      dx = -dx;
-      ballX = ballX < 0 ? 0 : containerRect.width - 20;
+      dx = -dx
+      ballX = ballX < 0 ? 0 : containerRect.width - 20
     }
 
     if (ballY < 0) {
-      dy = -dy;
-      ballY = 0;
+      dy = -dy
+      ballY = 0
     }
 
     // 挡板碰撞检测
@@ -248,22 +235,22 @@ const updateGame = () => {
       ballX > paddleRect.left - containerRect.left &&
       ballX < paddleRect.right - containerRect.left
     ) {
-      dy = -dy;
+      dy = -dy
       // 播放音效
-      soundManager.playSound("paddleHit");
+      soundManager.playSound('paddleHit')
       // 让小球反弹角度与撞击挡板位置有关
-      const hitPosition = (ballX - (paddleRect.left - containerRect.left)) / 80;
-      dx = (hitPosition - 0.5) * 6;
+      const hitPosition = (ballX - (paddleRect.left - containerRect.left)) / 80
+      dx = (hitPosition - 0.5) * 6
     }
 
     // 砖块碰撞检测
     bricks.value.forEach((brick, index) => {
-      if (!brick.visible) return;
+      if (!brick.visible) return
 
-      const brickX = brick.x;
-      const brickY = brick.y;
-      const brickWidth = 60;
-      const brickHeight = 25;
+      const brickX = brick.x
+      const brickY = brick.y
+      const brickWidth = 60
+      const brickHeight = 25
 
       if (
         ballX + 20 > brickX &&
@@ -271,67 +258,67 @@ const updateGame = () => {
         ballY + 20 > brickY &&
         ballY < brickY + brickHeight
       ) {
-        dy = -dy;
+        dy = -dy
         // 播放音效
-        soundManager.playSound("brickBreak");
-        brick.visible = false;
-        destroyedBricks.value++;
-        score.value += 10;
+        soundManager.playSound('brickBreak')
+        brick.visible = false
+        destroyedBricks.value++
+        score.value += 10
 
         // 每破坏10块砖显示压力减少提示
         if (destroyedBricks.value % 10 === 0) {
-          showPressureReductionMessage();
+          showPressureReductionMessage()
         }
 
         // 检查是否所有砖块都被破坏
         if (destroyedBricks.value === totalBricks.value) {
-          endGame();
-          return;
+          endGame()
+          return
         }
       }
-    });
+    })
 
     // 游戏结束条件
     if (ballY > containerRect.height) {
-      endGame();
-      return;
+      endGame()
+      return
     }
 
     // 更新小球位置
-    ball.value.style.left = `${ballX}px`;
-    ball.value.style.top = `${ballY}px`;
+    ball.value.style.left = `${ballX}px`
+    ball.value.style.top = `${ballY}px`
   }
 
   // 只有在游戏未结束时才继续游戏循环
   if (!gameOver.value) {
-    gameLoop = requestAnimationFrame(updateGame);
+    gameLoop = requestAnimationFrame(updateGame)
   }
-};
+}
 
 // 结束游戏
 const endGame = async () => {
-  gameOver.value = true;
-  isGameStarted.value = false;
-  finalScore.value = destroyedBricks.value * 2; // 破坏砖块数 × 2 作为解压得分
+  gameOver.value = true
+  isGameStarted.value = false
+  finalScore.value = destroyedBricks.value * 2 // 破坏砖块数 × 2 作为解压得分
 
   // 播放游戏结束音效
-  soundManager.playSound("gameOver");
+  soundManager.playSound('gameOver')
 
   if (gameLoop) {
-    cancelAnimationFrame(gameLoop);
-    gameLoop = null;
+    cancelAnimationFrame(gameLoop)
+    gameLoop = null
   }
 
   // 确保游戏结束页面保持显示
-  console.log("游戏结束，显示结束页面");
-  await saveRelaxRecord();
-};
+  console.log('游戏结束，显示结束页面')
+  await saveRelaxRecord()
+}
 
 // 保存放松记录
 const saveRelaxRecord = async () => {
-  const endTime = new Date().toISOString();
+  const endTime = new Date().toISOString()
   await relaxStore.saveRecord({
-    activityType: "pinball",
+    activityType: 'pinball',
     startTime: startTime.value,
     endTime: endTime,
     metrics: {
@@ -340,41 +327,41 @@ const saveRelaxRecord = async () => {
       totalBricks: totalBricks.value,
       difficulty: selectedDifficulty.value,
     },
-  });
+  })
   // 检查成就
-  await achievementStore.checkAchievements();
-};
+  await achievementStore.checkAchievements()
+}
 
 // 暂停/继续游戏
 const togglePause = () => {
-  isPaused.value = !isPaused.value;
-};
+  isPaused.value = !isPaused.value
+}
 
 // 关闭游戏
 const closeGame = () => {
-  gameOver.value = false;
-  isGameStarted.value = false;
-  isPaused.value = false;
-  score.value = 0;
-  destroyedBricks.value = 0;
-  finalScore.value = 0;
-  bricks.value = [];
+  gameOver.value = false
+  isGameStarted.value = false
+  isPaused.value = false
+  score.value = 0
+  destroyedBricks.value = 0
+  finalScore.value = 0
+  bricks.value = []
 
   if (gameLoop) {
-    cancelAnimationFrame(gameLoop);
-    gameLoop = null;
+    cancelAnimationFrame(gameLoop)
+    gameLoop = null
   }
-};
+}
 
 // 重新开始游戏
 const restartGame = () => {
-  gameOver.value = false;
-  isGameStarted.value = false;
-  score.value = 0;
-  destroyedBricks.value = 0;
-  finalScore.value = 0;
-  bricks.value = [];
-};
+  gameOver.value = false
+  isGameStarted.value = false
+  score.value = 0
+  destroyedBricks.value = 0
+  finalScore.value = 0
+  bricks.value = []
+}
 </script>
 
 <style scoped lang="scss">

@@ -7,11 +7,13 @@
     </div>
 
     <!-- 聊天内容区 -->
-    <div class="chat-content" ref="chatContent">
+    <div ref="chatContent" class="chat-content">
       <!-- 系统欢迎消息 -->
       <div v-if="messages.length === 0" class="system-message">
         <div class="message-bubble system">
-          <p>你好！我是你的心理咨询陪伴助手，很高兴能为你提供支持和倾听。无论你现在是什么心情，我都在这里陪伴你。</p>
+          <p>
+            你好！我是你的心理咨询陪伴助手，很高兴能为你提供支持和倾听。无论你现在是什么心情，我都在这里陪伴你。
+          </p>
         </div>
       </div>
 
@@ -19,10 +21,7 @@
       <div
         v-for="(message, index) in messages"
         :key="index"
-        :class="[
-          'message-item',
-          message.role === 'user' ? 'user-message' : 'assistant-message'
-        ]"
+        :class="['message-item', message.role === 'user' ? 'user-message' : 'assistant-message']"
       >
         <div class="message-avatar">
           <img
@@ -38,8 +37,18 @@
         </div>
         <div class="message-bubble" :class="message.role">
           <p>{{ message.content }}</p>
-          <div v-if="message.role === 'assistant' && message.riskLevel" class="risk-indicator" :class="message.riskLevel">
-            {{ message.riskLevel === 'high' ? '高风险' : message.riskLevel === 'medium' ? '中风险' : '低风险' }}
+          <div
+            v-if="message.role === 'assistant' && message.riskLevel"
+            class="risk-indicator"
+            :class="message.riskLevel"
+          >
+            {{
+              message.riskLevel === 'high'
+                ? '高风险'
+                : message.riskLevel === 'medium'
+                  ? '中风险'
+                  : '低风险'
+            }}
           </div>
         </div>
       </div>
@@ -75,8 +84,8 @@
       <el-button
         type="primary"
         :loading="isLoading"
-        @click="sendMessage"
         :disabled="!inputMessage.trim() || isLoading"
+        @click="sendMessage"
       >
         发送
       </el-button>
@@ -91,94 +100,98 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick } from 'vue';
-import { ElMessage } from 'element-plus';
-import { Warning } from '@element-plus/icons-vue';
-import { sendCounselingMessage } from '@/api/counseling';
+import { ref, onMounted, watch, nextTick } from 'vue'
+import { ElMessage } from 'element-plus'
+import { Warning } from '@element-plus/icons-vue'
+import { sendCounselingMessage } from '@/api/counseling'
 
 // 定义消息类型
 interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-  riskLevel?: 'low' | 'medium' | 'high';
+  role: 'user' | 'assistant'
+  content: string
+  riskLevel?: 'low' | 'medium' | 'high'
 }
 
 // 响应式数据
-const messages = ref<Message[]>([]);
-const inputMessage = ref('');
-const isLoading = ref(false);
-const chatContent = ref<HTMLElement | null>(null);
+const messages = ref<Message[]>([])
+const inputMessage = ref('')
+const isLoading = ref(false)
+const chatContent = ref<HTMLElement | null>(null)
 
 // 滚动到底部
 const scrollToBottom = async () => {
-  await nextTick();
+  await nextTick()
   if (chatContent.value) {
-    chatContent.value.scrollTop = chatContent.value.scrollHeight;
+    chatContent.value.scrollTop = chatContent.value.scrollHeight
   }
-};
+}
 
 // 监听消息变化，自动滚动到底部
-watch(messages, () => {
-  scrollToBottom();
-}, { deep: true });
+watch(
+  messages,
+  () => {
+    scrollToBottom()
+  },
+  { deep: true }
+)
 
 // 发送消息
 const sendMessage = async () => {
-  const message = inputMessage.value.trim();
-  if (!message || isLoading.value) return;
+  const message = inputMessage.value.trim()
+  if (!message || isLoading.value) return
 
   // 添加用户消息
   messages.value.push({
     role: 'user',
-    content: message
-  });
+    content: message,
+  })
 
-  inputMessage.value = '';
-  isLoading.value = true;
+  inputMessage.value = ''
+  isLoading.value = true
 
   try {
     // 构建上下文
-    const context = messages.value.map(msg => ({
+    const context = messages.value.map((msg) => ({
       role: msg.role,
-      content: msg.content
-    }));
+      content: msg.content,
+    }))
 
     // 调用API
     const response = await sendCounselingMessage({
       message,
-      context: context.slice(-10) // 只保留最近10条消息作为上下文
-    });
+      context: context.slice(-10), // 只保留最近10条消息作为上下文
+    })
 
     // 添加助手回复
     messages.value.push({
       role: 'assistant',
       content: response.response,
-      riskLevel: response.riskLevel
-    });
+      riskLevel: response.riskLevel,
+    })
 
     // 如果有风险提示，显示额外信息
     if (response.hasRiskContent && response.suggestion) {
       ElMessage({
         message: response.suggestion,
         type: 'warning',
-        duration: 5000
-      });
+        duration: 5000,
+      })
     }
   } catch (error: any) {
     ElMessage({
       message: error.message || '发送失败，请稍后重试',
-      type: 'error'
-    });
+      type: 'error',
+    })
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
-};
+}
 
 // 组件挂载时的初始化
 onMounted(() => {
   // 可以在这里添加初始化逻辑
-  scrollToBottom();
-});
+  scrollToBottom()
+})
 </script>
 
 <style scoped lang="scss">
@@ -391,7 +404,9 @@ onMounted(() => {
 }
 
 @keyframes loading {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     transform: scale(0);
   }
   40% {

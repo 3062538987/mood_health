@@ -4,9 +4,7 @@
     <nav v-if="!isAuthPage" class="main-nav">
       <div class="nav-container">
         <div class="nav-links">
-          <router-link to="/" active-class="active">
-            <i class="fas fa-home"></i> 首页
-          </router-link>
+          <router-link to="/" active-class="active"> <i class="fas fa-home"></i> 首页 </router-link>
           <router-link to="/mood" active-class="active">
             <i class="fas fa-smile"></i> 情绪
           </router-link>
@@ -26,7 +24,7 @@
         <div class="nav-user">
           <template v-if="userStore.isLoggedIn">
             <span class="username">{{ userStore.username }}</span>
-            <button @click="handleLogout" class="btn-logout">
+            <button class="btn-logout" @click="handleLogout">
               <i class="fas fa-sign-out-alt"></i> 退出
             </button>
           </template>
@@ -55,43 +53,43 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useUserStore } from "@/stores/userStore";
-import { useMoodStore } from "@/stores/moodStore";
-import AchievementNotification from "@/components/shared/AchievementNotification.vue";
+import { computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/userStore'
+import { useMoodStore } from '@/stores/moodStore'
+import AchievementNotification from '@/components/shared/AchievementNotification.vue'
 
-const route = useRoute();
-const router = useRouter();
-const userStore = useUserStore();
-const moodStore = useMoodStore();
+const route = useRoute()
+const router = useRouter()
+const userStore = useUserStore()
+const moodStore = useMoodStore()
 
 // 判断当前是否是登录/注册页面
 const isAuthPage = computed(() => {
-  return route.path === "/login" || route.path === "/register";
-});
+  return route.path === '/login' || route.path === '/register'
+})
 
 // 计算主题颜色
 const themeColor = computed(() => {
-  const avg = moodStore.recentAvgIntensity;
-  if (avg < 3) return "#B7A9A1"; // 低落时的柔和灰
-  if (avg < 6) return "#A7C7E7"; // 平静时的淡蓝
-  return "#F9D56E"; // 愉悦时的暖黄
-});
+  const avg = moodStore.recentAvgIntensity
+  if (avg < 3) return '#B7A9A1' // 低落时的柔和灰
+  if (avg < 6) return '#A7C7E7' // 平静时的淡蓝
+  return '#F9D56E' // 愉悦时的暖黄
+})
 
 // 退出登录
 const handleLogout = () => {
-  userStore.logout();
-  router.push("/login");
-};
+  userStore.logout()
+  router.push('/login')
+}
 
 // 组件挂载时获取情绪数据
 onMounted(() => {
   if (userStore.isLoggedIn) {
     // 当用户登录时，获取最近的情绪记录
-    moodStore.fetchMoodList({ page: 1, size: 10 });
+    moodStore.fetchMoodList({ page: 1, size: 10 })
   }
-});
+})
 </script>
 
 <style scoped lang="scss">
@@ -151,7 +149,7 @@ onMounted(() => {
       font-weight: 600;
 
       &::after {
-        content: "";
+        content: '';
         position: absolute;
         bottom: 0;
         left: 0;

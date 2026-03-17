@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import morgan from "morgan";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
+import type { CorsOptions } from "cors";
 import { connectDB, query } from "./config/database";
 import authRoutes from "./routes/authRoutes";
 import moodRoutes from "./routes/moodRoutes";
@@ -14,6 +15,8 @@ import questionnaireRoutes from "./routes/questionnaireRoutes";
 import musicRoutes from "./routes/musicRoutes";
 import courseRoutes from "./routes/courseRoutes";
 import aiRoutes from "./routes/aiRoutes";
+import relaxRoutes from "./routes/relaxRoutes";
+import achievementRoutes from "./routes/achievementRoutes";
 import logger from "./utils/logger";
 import redisClient from "./utils/redis.client";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
@@ -21,20 +24,33 @@ import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 dotenv.config();
 
 const app = express();
-
-// 中间件
-app.use(helmet());
-app.use(
-  cors({
-    origin: [
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean)
+  : [
+      "http://localhost:5173",
+      "http://localhost:3000",
       "http://localhost:3001",
       "http://localhost:3002",
       "http://localhost:3003",
-      "http://localhost:5173",
-    ],
-    credentials: true,
-  }),
-);
+    ];
+
+const corsOptions: CorsOptions = {
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+};
+
+// 中间件
+app.use(helmet());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(compression());
 
@@ -64,6 +80,8 @@ app.use("/api/questionnaires", questionnaireRoutes);
 app.use("/api/music", musicRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/relax", relaxRoutes);
+app.use("/api/achievements", achievementRoutes);
 
 // 健康检查接口
 app.get("/health", async (req, res) => {

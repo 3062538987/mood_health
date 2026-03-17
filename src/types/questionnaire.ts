@@ -9,15 +9,15 @@
  */
 export interface Questionnaire {
   /** 问卷ID */
-  id: number;
+  id: number
   /** 问卷标题 */
-  title: string;
+  title: string
   /** 问卷描述 */
-  description: string;
+  description: string
   /** 问题列表（可选） */
-  questions?: Question[];
+  questions?: Question[]
   /** 创建时间 */
-  createdAt: string;
+  createdAt: string
 }
 
 /**
@@ -30,13 +30,13 @@ export interface Questionnaire {
  */
 export interface Question {
   /** 问题ID */
-  id: number;
+  id: number
   /** 问卷ID */
-  questionnaire_id: number;
+  questionnaire_id: number
   /** 问题文本 */
-  question_text: string;
+  question_text: string
   /** 选项列表 */
-  options: string[];
+  options: string[]
 }
 
 /**
@@ -47,9 +47,9 @@ export interface Question {
  */
 export interface Answer {
   /** 问题ID */
-  question_id: number;
+  question_id: number
   /** 答案 */
-  answer: string;
+  answer: string
 }
 
 /**
@@ -60,9 +60,9 @@ export interface Answer {
  */
 export interface SubmitData {
   /** 问卷ID */
-  questionnaire_id: number;
+  questionnaire_id: number
   /** 答案列表 */
-  answers: Answer[];
+  answers: Answer[]
 }
 
 /**
@@ -75,11 +75,11 @@ export interface SubmitData {
  */
 export interface QuestionnaireHistory {
   /** 历史记录ID */
-  id: number;
+  id: number
   /** 问卷ID */
-  questionnaireId: number;
+  questionnaireId: number
   /** 问卷标题 */
-  title: string;
+  title: string
   /** 提交时间 */
-  submittedAt: string;
+  submittedAt: string
 }

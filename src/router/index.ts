@@ -1,222 +1,222 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
-import Home from "@/views/Home.vue";
-import { useUserStore } from "@/stores/userStore";
+import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
+import Home from '@/views/Home.vue'
+import { useUserStore } from '@/stores/userStore'
 import {
   getRouteRedirect,
   GUIDE_ROUTE_PATH,
   initializeUserState,
   shouldRedirectToGuide,
-} from "@/router/guards";
+} from '@/router/guards'
 
 const routes: RouteRecordRaw[] = [
   {
-    path: "/guide",
-    component: () => import("@/views/guide/GuidePage.vue"),
+    path: '/guide',
+    component: () => import('@/views/guide/GuidePage.vue'),
     meta: { public: true },
   },
-  { path: "/", component: Home },
+  { path: '/', component: Home },
   {
-    path: "/login",
-    component: () => import("@/views/auth/Login.vue"),
+    path: '/login',
+    component: () => import('@/views/auth/Login.vue'),
     meta: { public: true, guestOnly: true },
   },
   {
-    path: "/register",
-    component: () => import("@/views/auth/Register.vue"),
+    path: '/register',
+    component: () => import('@/views/auth/Register.vue'),
     meta: { public: true, guestOnly: true },
   },
   {
-    path: "/mood",
-    component: () => import("@/views/mood/MoodLayout.vue"),
-    redirect: "/mood/record",
+    path: '/mood',
+    component: () => import('@/views/mood/MoodLayout.vue'),
+    redirect: '/mood/record',
     meta: {
       subNav: [
-        { path: "/mood/record", name: "情绪记录", icon: "fas fa-pencil-alt" },
-        { path: "/mood/archive", name: "情绪档案", icon: "fas fa-archive" },
-        { path: "/mood/analysis", name: "情绪分析", icon: "fas fa-chart-pie" },
+        { path: '/mood/record', name: '情绪记录', icon: 'fas fa-pencil-alt' },
+        { path: '/mood/archive', name: '情绪档案', icon: 'fas fa-archive' },
+        { path: '/mood/analysis', name: '情绪分析', icon: 'fas fa-chart-pie' },
       ],
     },
     children: [
       {
-        path: "record",
-        component: () => import("@/views/mood/MoodRecord.vue"),
+        path: 'record',
+        component: () => import('@/views/mood/MoodRecord.vue'),
       },
       {
-        path: "archive",
-        component: () => import("@/views/mood/MoodArchive.vue"),
+        path: 'archive',
+        component: () => import('@/views/mood/MoodArchive.vue'),
       },
       {
-        path: "analysis",
-        component: () => import("@/views/mood/MoodAnalysis.vue"),
+        path: 'analysis',
+        component: () => import('@/views/mood/MoodAnalysis.vue'),
       },
     ],
   },
   {
-    path: "/relax",
-    component: () => import("@/views/relax/RelaxLayout.vue"),
-    redirect: "/relax/center",
+    path: '/relax',
+    component: () => import('@/views/relax/RelaxLayout.vue'),
+    redirect: '/relax/center',
     meta: {
       subNav: [
-        { path: "/relax/center", name: "解压中心", icon: "fas fa-headphones" },
-        { path: "/relax/history", name: "放松历史", icon: "fas fa-history" },
+        { path: '/relax/center', name: '解压中心', icon: 'fas fa-headphones' },
+        { path: '/relax/history', name: '放松历史', icon: 'fas fa-history' },
         {
-          path: "/relax/achievements",
-          name: "成就中心",
-          icon: "fas fa-trophy",
+          path: '/relax/achievements',
+          name: '成就中心',
+          icon: 'fas fa-trophy',
         },
-        { path: "/relax/treehole", name: "树洞", icon: "fas fa-tree" },
-        { path: "/relax/music", name: "音乐疗愈", icon: "fas fa-music" },
+        { path: '/relax/treehole', name: '树洞', icon: 'fas fa-tree' },
+        { path: '/relax/music', name: '音乐疗愈', icon: 'fas fa-music' },
       ],
     },
     children: [
       {
-        path: "center",
-        component: () => import("@/views/relax/RelaxCenter.vue"),
+        path: 'center',
+        component: () => import('@/views/relax/RelaxCenter.vue'),
       },
       {
-        path: "history",
-        component: () => import("@/views/relax/RelaxHistory.vue"),
+        path: 'history',
+        component: () => import('@/views/relax/RelaxHistory.vue'),
       },
       {
-        path: "achievements",
-        component: () => import("@/views/achievements/Achievements.vue"),
+        path: 'achievements',
+        component: () => import('@/views/achievements/Achievements.vue'),
       },
       {
-        path: "treehole",
-        name: "TreeHole",
-        component: () => import("@/views/relax/TreeHole.vue"),
+        path: 'treehole',
+        name: 'TreeHole',
+        component: () => import('@/views/relax/TreeHole.vue'),
       },
       {
-        path: "treehole/:id",
-        name: "TreeHoleDetail",
-        component: () => import("@/views/relax/TreeHoleDetail.vue"),
+        path: 'treehole/:id',
+        name: 'TreeHoleDetail',
+        component: () => import('@/views/relax/TreeHoleDetail.vue'),
       },
       {
-        path: "music",
-        component: () => import("@/views/relax/MusicTherapy.vue"),
+        path: 'music',
+        component: () => import('@/views/relax/MusicTherapy.vue'),
       },
     ],
   },
   {
-    path: "/improve",
-    component: () => import("@/views/improve/ImproveLayout.vue"),
-    redirect: "/improve/group",
+    path: '/improve',
+    component: () => import('@/views/improve/ImproveLayout.vue'),
+    redirect: '/improve/group',
     meta: {
       subNav: [
-        { path: "/improve/group", name: "团体辅导", icon: "fas fa-users" },
-        { path: "/improve/knowledge", name: "情绪科普", icon: "fas fa-book" },
+        { path: '/improve/group', name: '团体辅导', icon: 'fas fa-users' },
+        { path: '/improve/knowledge', name: '情绪科普', icon: 'fas fa-book' },
         {
-          path: "/improve/courses",
-          name: "成长课程",
-          icon: "fas fa-graduation-cap",
+          path: '/improve/courses',
+          name: '成长课程',
+          icon: 'fas fa-graduation-cap',
         },
         {
-          path: "/improve/survey",
-          name: "问卷调查",
-          icon: "fas fa-clipboard-list",
+          path: '/improve/survey',
+          name: '问卷调查',
+          icon: 'fas fa-clipboard-list',
         },
       ],
     },
     children: [
       {
-        path: "group",
-        component: () => import("@/views/improve/GroupActivity.vue"),
+        path: 'group',
+        component: () => import('@/views/improve/GroupActivity.vue'),
       },
       {
-        path: "group/:id",
-        name: "ActivityDetail",
-        component: () => import("@/views/improve/ActivityDetail.vue"),
+        path: 'group/:id',
+        name: 'ActivityDetail',
+        component: () => import('@/views/improve/ActivityDetail.vue'),
       },
       {
-        path: "knowledge",
-        component: () => import("@/views/improve/Knowledge.vue"),
+        path: 'knowledge',
+        component: () => import('@/views/improve/Knowledge.vue'),
       },
       {
-        path: "courses",
-        component: () => import("@/views/improve/Courses.vue"),
+        path: 'courses',
+        component: () => import('@/views/improve/Courses.vue'),
       },
       {
-        path: "course/:id",
-        component: () => import("@/views/improve/CourseDetail.vue"),
+        path: 'course/:id',
+        component: () => import('@/views/improve/CourseDetail.vue'),
       },
       {
-        path: "survey",
-        name: "Survey",
-        component: () => import("@/views/improve/Survey.vue"),
+        path: 'survey',
+        name: 'Survey',
+        component: () => import('@/views/improve/Survey.vue'),
       },
       {
-        path: "questionnaire",
-        component: () => import("@/views/improve/QuestionnaireList.vue"),
+        path: 'questionnaire',
+        component: () => import('@/views/improve/QuestionnaireList.vue'),
       },
       {
-        path: "questionnaire/:id",
-        component: () => import("@/views/improve/Questionnaire.vue"),
+        path: 'questionnaire/:id',
+        component: () => import('@/views/improve/Questionnaire.vue'),
       },
       {
-        path: "questionnaire/result",
-        component: () => import("@/views/improve/QuestionnaireResult.vue"),
+        path: 'questionnaire/result',
+        component: () => import('@/views/improve/QuestionnaireResult.vue'),
       },
       {
-        path: "questionnaire/history",
-        component: () => import("@/views/improve/QuestionnaireHistory.vue"),
+        path: 'questionnaire/history',
+        component: () => import('@/views/improve/QuestionnaireHistory.vue'),
       },
     ],
   },
   {
-    path: "/user",
-    component: () => import("@/views/user/UserLayout.vue"),
-    redirect: "/user/profile",
+    path: '/user',
+    component: () => import('@/views/user/UserLayout.vue'),
+    redirect: '/user/profile',
     meta: {
       subNav: [
-        { path: "/user/profile", name: "个人资料", icon: "fas fa-user" },
-        { path: "/user/setting", name: "设置", icon: "fas fa-cog" },
+        { path: '/user/profile', name: '个人资料', icon: 'fas fa-user' },
+        { path: '/user/setting', name: '设置', icon: 'fas fa-cog' },
       ],
     },
     children: [
-      { path: "profile", component: () => import("@/views/user/Profile.vue") },
-      { path: "setting", component: () => import("@/views/user/Setting.vue") },
+      { path: 'profile', component: () => import('@/views/user/Profile.vue') },
+      { path: 'setting', component: () => import('@/views/user/Setting.vue') },
     ],
   },
   {
-    path: "/admin",
-    component: () => import("@/views/admin/TreeHoleAudit.vue"),
+    path: '/admin',
+    component: () => import('@/views/admin/TreeHoleAudit.vue'),
     meta: { adminOnly: true },
   },
   {
-    path: "/counseling",
-    component: () => import("@/views/counseling/Counseling.vue"),
+    path: '/counseling',
+    component: () => import('@/views/counseling/Counseling.vue'),
   },
   {
-    path: "/:pathMatch(.*)*",
-    name: "NotFound",
-    component: () => import("@/views/NotFound.vue"),
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('@/views/NotFound.vue'),
     meta: { public: true },
   },
-];
+]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
-});
+})
 
 router.beforeEach(async (to, from, next) => {
-  const userStore = useUserStore();
+  const userStore = useUserStore()
 
-  await initializeUserState(userStore);
+  await initializeUserState(userStore)
 
   if (shouldRedirectToGuide(to, from)) {
-    next(GUIDE_ROUTE_PATH);
-    return;
+    next(GUIDE_ROUTE_PATH)
+    return
   }
 
-  const redirectPath = getRouteRedirect(to, userStore);
+  const redirectPath = getRouteRedirect(to, userStore)
 
   if (!redirectPath) {
-    next();
-    return;
+    next()
+    return
   }
 
-  next(redirectPath);
-});
+  next(redirectPath)
+})
 
-export default router;
+export default router

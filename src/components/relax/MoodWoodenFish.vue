@@ -6,16 +6,12 @@
       <span class="stats-text">今日累计：{{ dailyCount }} 次</span>
     </div>
 
-    <div
-      class="wooden-fish"
-      @click="tapWoodenFish"
-      :class="{ tapping: isTapping }"
-    >
+    <div class="wooden-fish" :class="{ tapping: isTapping }" @click="tapWoodenFish">
       <div class="fish-body">
         <div class="fish-inner"></div>
       </div>
       <div class="fish-stick"></div>
-      <div class="mood-reduce" v-if="showText">{{ reduceText }}</div>
+      <div v-if="showText" class="mood-reduce">{{ reduceText }}</div>
     </div>
 
     <!-- 目标快捷选择 -->
@@ -34,26 +30,21 @@
       </div>
       <div class="custom-input">
         <input
-          type="number"
           v-model.number="targetCount"
+          type="number"
           min="10"
           max="1000"
           placeholder="自定义"
         />
-        <button @click="setTarget" class="confirm-btn">确定</button>
+        <button class="confirm-btn" @click="setTarget">确定</button>
       </div>
     </div>
 
     <div class="progress">
       <div class="progress-bar">
-        <div
-          class="progress-fill"
-          :style="{ width: progressPercent + '%' }"
-        ></div>
+        <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
       </div>
-      <span class="progress-text"
-        >已敲击：{{ tapCount }}/{{ targetCount }}</span
-      >
+      <span class="progress-text">已敲击：{{ tapCount }}/{{ targetCount }}</span>
     </div>
 
     <!-- 完成弹窗 -->
@@ -70,114 +61,114 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from "vue";
-import useRelaxStore from "@/stores/relaxStore";
-import useAchievementStore from "@/stores/achievementStore";
-import soundManager from "@/utils/sound";
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import useRelaxStore from '@/stores/relaxStore'
+import useAchievementStore from '@/stores/achievementStore'
+import soundManager from '@/utils/sound'
 
-const relaxStore = useRelaxStore();
-const achievementStore = useAchievementStore();
-const tapCount = ref(0);
-const targetCount = ref(100);
-const showText = ref(false);
-const reduceText = ref("");
-const isTapping = ref(false);
-const startTime = ref(new Date().toISOString());
-const showCompleteModal = ref(false);
-const dailyCount = ref(0);
+const relaxStore = useRelaxStore()
+const achievementStore = useAchievementStore()
+const tapCount = ref(0)
+const targetCount = ref(100)
+const showText = ref(false)
+const reduceText = ref('')
+const isTapping = ref(false)
+const startTime = ref(new Date().toISOString())
+const showCompleteModal = ref(false)
+const dailyCount = ref(0)
 
 // 从localStorage加载今日累计次数
 const loadDailyCount = () => {
-  const today = new Date().toDateString();
-  const savedDate = localStorage.getItem("woodenFishDate");
-  const savedCount = localStorage.getItem("woodenFishDailyCount");
+  const today = new Date().toDateString()
+  const savedDate = localStorage.getItem('woodenFishDate')
+  const savedCount = localStorage.getItem('woodenFishDailyCount')
 
   if (savedDate === today && savedCount) {
-    dailyCount.value = parseInt(savedCount, 10);
+    dailyCount.value = parseInt(savedCount, 10)
   } else {
-    dailyCount.value = 0;
-    localStorage.setItem("woodenFishDate", today);
-    localStorage.setItem("woodenFishDailyCount", "0");
+    dailyCount.value = 0
+    localStorage.setItem('woodenFishDate', today)
+    localStorage.setItem('woodenFishDailyCount', '0')
   }
-};
+}
 
 // 保存今日累计次数
 const saveDailyCount = () => {
-  localStorage.setItem("woodenFishDailyCount", dailyCount.value.toString());
-};
+  localStorage.setItem('woodenFishDailyCount', dailyCount.value.toString())
+}
 
 const progressPercent = computed(() => {
-  return Math.min((tapCount.value / targetCount.value) * 100, 100);
-});
+  return Math.min((tapCount.value / targetCount.value) * 100, 100)
+})
 
 // 快捷设置目标
 const setQuickTarget = (num: number) => {
-  targetCount.value = num;
-  setTarget();
-};
+  targetCount.value = num
+  setTarget()
+}
 
 // 关闭弹窗
 const closeModal = () => {
-  showCompleteModal.value = false;
-};
+  showCompleteModal.value = false
+}
 
 const tapWoodenFish = () => {
-  tapCount.value++;
+  tapCount.value++
   // 更新今日累计次数
-  dailyCount.value++;
-  saveDailyCount();
+  dailyCount.value++
+  saveDailyCount()
   // 播放音效
-  soundManager.playSound("woodenFish");
-  showText.value = true;
-  isTapping.value = true;
+  soundManager.playSound('woodenFish')
+  showText.value = true
+  isTapping.value = true
 
-  const messages = ["焦虑-1", "压力-1", "烦恼-1", "紧张-1", "疲惫-1"];
-  reduceText.value = messages[Math.floor(Math.random() * messages.length)];
-
-  setTimeout(() => {
-    showText.value = false;
-  }, 800);
+  const messages = ['焦虑-1', '压力-1', '烦恼-1', '紧张-1', '疲惫-1']
+  reduceText.value = messages[Math.floor(Math.random() * messages.length)]
 
   setTimeout(() => {
-    isTapping.value = false;
-  }, 150);
+    showText.value = false
+  }, 800)
+
+  setTimeout(() => {
+    isTapping.value = false
+  }, 150)
 
   if (tapCount.value === targetCount.value) {
     setTimeout(() => {
-      showCompleteModal.value = true;
-      saveRelaxRecord();
-    }, 200);
+      showCompleteModal.value = true
+      saveRelaxRecord()
+    }, 200)
   }
-};
+}
 
 const saveRelaxRecord = async () => {
-  const endTime = new Date().toISOString();
+  const endTime = new Date().toISOString()
   await relaxStore.saveRecord({
-    activityType: "woodenFish",
+    activityType: 'woodenFish',
     startTime: startTime.value,
     endTime: endTime,
     metrics: {
       tapCount: tapCount.value,
       targetCount: targetCount.value,
     },
-  });
+  })
   // 检查成就
-  await achievementStore.checkAchievements();
+  await achievementStore.checkAchievements()
   // 重置开始时间，以便下次记录
-  startTime.value = new Date().toISOString();
-};
+  startTime.value = new Date().toISOString()
+}
 
 const setTarget = () => {
-  if (targetCount.value < 10) targetCount.value = 10;
-  if (targetCount.value > 1000) targetCount.value = 1000;
+  if (targetCount.value < 10) targetCount.value = 10
+  if (targetCount.value > 1000) targetCount.value = 1000
   // 重置开始时间
-  startTime.value = new Date().toISOString();
-  tapCount.value = 0;
-};
+  startTime.value = new Date().toISOString()
+  tapCount.value = 0
+}
 
 onMounted(() => {
-  loadDailyCount();
-});
+  loadDailyCount()
+})
 </script>
 
 <style scoped lang="scss">
@@ -233,12 +224,7 @@ onMounted(() => {
     .fish-body {
       width: 180px;
       height: 120px;
-      background: linear-gradient(
-        145deg,
-        #d4a574 0%,
-        #b8956c 50%,
-        #9a7b59 100%
-      );
+      background: linear-gradient(145deg, #d4a574 0%, #b8956c 50%, #9a7b59 100%);
       border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
       position: relative;
       box-shadow:
@@ -260,7 +246,7 @@ onMounted(() => {
           0 2px 5px rgba(255, 255, 255, 0.1);
 
         &::before {
-          content: "木";
+          content: '木';
           position: absolute;
           top: 50%;
           left: 50%;

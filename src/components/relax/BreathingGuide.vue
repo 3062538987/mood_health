@@ -3,7 +3,7 @@
     <h3>呼吸同步游戏 - 冥想</h3>
 
     <!-- 游戏设置 -->
-    <div class="game-settings" v-if="!isGameStarted && !gameFinished">
+    <div v-if="!isGameStarted && !gameFinished" class="game-settings">
       <div class="duration-selector">
         <label>选择冥想时长：</label>
         <div class="duration-options">
@@ -11,8 +11,8 @@
             v-for="duration in durations"
             :key="duration"
             :class="{ active: selectedDuration === duration }"
-            @click="selectDuration(duration)"
             class="duration-btn"
+            @click="selectDuration(duration)"
           >
             {{ duration }}分钟
           </button>
@@ -27,9 +27,9 @@
             v-for="pattern in breathingPatterns"
             :key="pattern.id"
             :class="{ active: selectedPattern === pattern.id }"
-            @click="selectPattern(pattern.id)"
             class="pattern-btn"
             :title="pattern.description"
+            @click="selectPattern(pattern.id)"
           >
             {{ pattern.name }}
           </button>
@@ -50,19 +50,17 @@
       <!-- 语音引导开关 -->
       <div class="voice-guide">
         <label class="toggle-label">
-          <input type="checkbox" v-model="voiceGuideEnabled" />
+          <input v-model="voiceGuideEnabled" type="checkbox" />
           <span class="toggle-slider"></span>
           <span class="toggle-text">语音引导</span>
         </label>
       </div>
 
-      <button @click="startBreathing" class="game-btn start-btn">
-        开始冥想
-      </button>
+      <button class="game-btn start-btn" @click="startBreathing">开始冥想</button>
     </div>
 
     <!-- 游戏界面 -->
-    <div class="game-container" v-if="isGameStarted && !gameFinished">
+    <div v-if="isGameStarted && !gameFinished" class="game-container">
       <div class="timer-display">
         <span>{{ formattedTime }}</span>
       </div>
@@ -82,21 +80,18 @@
 
       <div class="breathing-progress">
         <div class="progress-bar">
-          <div
-            class="progress-fill"
-            :style="{ width: progressPercentage + '%' }"
-          ></div>
+          <div class="progress-fill" :style="{ width: progressPercentage + '%' }"></div>
         </div>
       </div>
 
-      <button @click="pauseBreathing" class="game-btn pause-btn">
-        {{ isPaused ? "继续" : "暂停" }}
+      <button class="game-btn pause-btn" @click="pauseBreathing">
+        {{ isPaused ? '继续' : '暂停' }}
       </button>
-      <button @click="stopBreathing" class="game-btn stop-btn">停止</button>
+      <button class="game-btn stop-btn" @click="stopBreathing">停止</button>
     </div>
 
     <!-- 冥想报告 -->
-    <div class="meditation-report" v-if="gameFinished">
+    <div v-if="gameFinished" class="meditation-report">
       <h4>🧘 冥想报告</h4>
       <div class="report-content">
         <div class="report-card main-stats">
@@ -135,9 +130,7 @@
         <div class="report-card rhythm-info">
           <div class="rhythm-stability">
             <span class="label">呼吸节奏稳定性：</span>
-            <span class="value" :class="rhythmClass">{{
-              rhythmStability
-            }}</span>
+            <span class="value" :class="rhythmClass">{{ rhythmStability }}</span>
           </div>
         </div>
 
@@ -159,384 +152,377 @@
           </div>
         </div>
       </div>
-      <button @click="restartGame" class="game-btn restart-btn">
-        🔄 重新开始
-      </button>
+      <button class="game-btn restart-btn" @click="restartGame">🔄 重新开始</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
-import useRelaxStore from "@/stores/relaxStore";
-import useAchievementStore from "@/stores/achievementStore";
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import useRelaxStore from '@/stores/relaxStore'
+import useAchievementStore from '@/stores/achievementStore'
 
 // 游戏状态
-const isGameStarted = ref(false);
-const isPaused = ref(false);
-const gameFinished = ref(false);
-const selectedDuration = ref(3); // 默认3分钟
-const selectedSound = ref("rain");
-const selectedPattern = ref("relax");
-const voiceGuideEnabled = ref(false);
-const startTime = ref(new Date().toISOString());
+const isGameStarted = ref(false)
+const isPaused = ref(false)
+const gameFinished = ref(false)
+const selectedDuration = ref(3) // 默认3分钟
+const selectedSound = ref('rain')
+const selectedPattern = ref('relax')
+const voiceGuideEnabled = ref(false)
+const startTime = ref(new Date().toISOString())
 
-const relaxStore = useRelaxStore();
-const achievementStore = useAchievementStore();
+const relaxStore = useRelaxStore()
+const achievementStore = useAchievementStore()
 
 // 音频元素引用
-const audioElement = ref<HTMLAudioElement | null>(null);
+const audioElement = ref<HTMLAudioElement | null>(null)
 
 // 游戏配置
-const durations = [3, 5, 10]; // 可选时长（分钟）
+const durations = [3, 5, 10] // 可选时长（分钟）
 
 // 呼吸模式配置
 const breathingPatterns = [
   {
-    id: "relax",
-    name: "放松呼吸",
-    description: "4-7-8呼吸法：吸气4秒，屏息7秒，呼气8秒，帮助放松和入睡",
+    id: 'relax',
+    name: '放松呼吸',
+    description: '4-7-8呼吸法：吸气4秒，屏息7秒，呼气8秒，帮助放松和入睡',
     cycle: { inhale: 4, hold: 7, exhale: 8, pause: 0 },
   },
   {
-    id: "box",
-    name: "箱式呼吸",
-    description:
-      "4-4-4-4呼吸法：吸气4秒，屏息4秒，呼气4秒，休息4秒，提升专注力",
+    id: 'box',
+    name: '箱式呼吸',
+    description: '4-4-4-4呼吸法：吸气4秒，屏息4秒，呼气4秒，休息4秒，提升专注力',
     cycle: { inhale: 4, hold: 4, exhale: 4, pause: 4 },
   },
   {
-    id: "energy",
-    name: "活力呼吸",
-    description: "2-0-2-0呼吸法：快速吸气和呼气，提升能量和警觉性",
+    id: 'energy',
+    name: '活力呼吸',
+    description: '2-0-2-0呼吸法：快速吸气和呼气，提升能量和警觉性',
     cycle: { inhale: 2, hold: 0, exhale: 2, pause: 0 },
   },
   {
-    id: "balance",
-    name: "平衡呼吸",
-    description: "5-0-5-0呼吸法：吸气和呼气各5秒，平衡身心状态",
+    id: 'balance',
+    name: '平衡呼吸',
+    description: '5-0-5-0呼吸法：吸气和呼气各5秒，平衡身心状态',
     cycle: { inhale: 5, hold: 0, exhale: 5, pause: 0 },
   },
-];
+]
 
 // 当前呼吸周期
 const breathingCycle = computed(() => {
-  const pattern = breathingPatterns.find((p) => p.id === selectedPattern.value);
-  return pattern ? pattern.cycle : breathingPatterns[0].cycle;
-});
+  const pattern = breathingPatterns.find((p) => p.id === selectedPattern.value)
+  return pattern ? pattern.cycle : breathingPatterns[0].cycle
+})
 
 // 呼吸状态
-const remainingTime = ref(selectedDuration.value * 60);
-const breathingPhase = ref("inhale"); // inhale, hold, exhale, pause
-const breathingCount = ref(0);
-const circleScale = ref(1);
-const sessionStartTime = ref(0);
-const elapsedTime = ref(0);
+const remainingTime = ref(selectedDuration.value * 60)
+const breathingPhase = ref('inhale') // inhale, hold, exhale, pause
+const breathingCount = ref(0)
+const circleScale = ref(1)
+const sessionStartTime = ref(0)
+const elapsedTime = ref(0)
 
 // 游戏循环
-let gameLoop: number | null = null;
-let lastUpdateTime: number = 0; // 用于呼吸动画的时间跟踪
-let timeUpdateTime: number = 0; // 用于时间显示的时间跟踪
-let phaseTimer: number = 0; // 当前呼吸阶段的计时（毫秒）
-let currentPhaseTime: number = 0;
+let gameLoop: number | null = null
+let lastUpdateTime: number = 0 // 用于呼吸动画的时间跟踪
+let timeUpdateTime: number = 0 // 用于时间显示的时间跟踪
+let phaseTimer: number = 0 // 当前呼吸阶段的计时（毫秒）
+let currentPhaseTime: number = 0
 
 // 冥想报告数据
-const focusLevel = ref(0);
-const rhythmStability = ref("");
-const achievement = ref("");
-const actualDuration = ref(0);
-const averageHeartRate = ref(0);
-const inhaleCount = ref(0);
-const exhaleCount = ref(0);
-const breathingRate = ref(0);
+const focusLevel = ref(0)
+const rhythmStability = ref('')
+const achievement = ref('')
+const actualDuration = ref(0)
+const averageHeartRate = ref(0)
+const inhaleCount = ref(0)
+const exhaleCount = ref(0)
+const breathingRate = ref(0)
 
 // 计算属性
 const currentPatternDescription = computed(() => {
-  const pattern = breathingPatterns.find((p) => p.id === selectedPattern.value);
-  return pattern ? pattern.description : "";
-});
+  const pattern = breathingPatterns.find((p) => p.id === selectedPattern.value)
+  return pattern ? pattern.description : ''
+})
 
 const currentPatternName = computed(() => {
-  const pattern = breathingPatterns.find((p) => p.id === selectedPattern.value);
-  return pattern ? pattern.name : "";
-});
+  const pattern = breathingPatterns.find((p) => p.id === selectedPattern.value)
+  return pattern ? pattern.name : ''
+})
 
 const rhythmClass = computed(() => {
-  if (focusLevel.value >= 90) return "excellent";
-  if (focusLevel.value >= 80) return "good";
-  return "normal";
-});
+  if (focusLevel.value >= 90) return 'excellent'
+  if (focusLevel.value >= 80) return 'good'
+  return 'normal'
+})
 
 // 计算属性
 const formattedTime = computed(() => {
-  const minutes = Math.floor(remainingTime.value / 60);
-  const seconds = remainingTime.value % 60;
-  return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-});
+  const minutes = Math.floor(remainingTime.value / 60)
+  const seconds = remainingTime.value % 60
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+})
 
 const progressPercentage = computed(() => {
-  const totalTime = selectedDuration.value * 60;
-  return ((totalTime - remainingTime.value) / totalTime) * 100;
-});
+  const totalTime = selectedDuration.value * 60
+  return ((totalTime - remainingTime.value) / totalTime) * 100
+})
 
 const breathingInstruction = computed(() => {
   switch (breathingPhase.value) {
-    case "inhale":
-      return "吸气";
-    case "hold":
-      return "屏息";
-    case "exhale":
-      return "呼气";
-    case "pause":
-      return "休息";
+    case 'inhale':
+      return '吸气'
+    case 'hold':
+      return '屏息'
+    case 'exhale':
+      return '呼气'
+    case 'pause':
+      return '休息'
     default:
-      return "吸气";
+      return '吸气'
   }
-});
+})
 
 // 选择时长
 const selectDuration = (duration: number) => {
-  selectedDuration.value = duration;
-  remainingTime.value = duration * 60;
-};
+  selectedDuration.value = duration
+  remainingTime.value = duration * 60
+}
 
 // 选择呼吸模式
 const selectPattern = (patternId: string) => {
-  selectedPattern.value = patternId;
-};
+  selectedPattern.value = patternId
+}
 
 // 播放背景音
 const playBackgroundSound = () => {
-  if (selectedSound.value === "none") return;
+  if (selectedSound.value === 'none') return
 
   const soundMap: Record<string, string> = {
-    rain: "/audio/rain.mp3",
-    ocean: "/audio/ocean.mp3",
-    fire: "/audio/fire.mp3",
-  };
+    rain: '/audio/rain.mp3',
+    ocean: '/audio/ocean.mp3',
+    fire: '/audio/fire.mp3',
+  }
 
-  const audioPath = soundMap[selectedSound.value];
-  if (!audioPath) return;
+  const audioPath = soundMap[selectedSound.value]
+  if (!audioPath) return
 
-  audioElement.value = new Audio(audioPath);
-  audioElement.value.loop = true;
-  audioElement.value.volume = 0.3;
+  audioElement.value = new Audio(audioPath)
+  audioElement.value.loop = true
+  audioElement.value.volume = 0.3
   audioElement.value.play().catch((err) => {
-    console.warn("背景音播放失败:", err);
-  });
-};
+    console.warn('背景音播放失败:', err)
+  })
+}
 
 // 停止背景音
 const stopBackgroundSound = () => {
   if (audioElement.value) {
-    audioElement.value.pause();
-    audioElement.value.currentTime = 0;
-    audioElement.value = null;
+    audioElement.value.pause()
+    audioElement.value.currentTime = 0
+    audioElement.value = null
   }
-};
+}
 
 // 语音引导
 const speakGuidance = (text: string) => {
-  if (!voiceGuideEnabled.value) return;
+  if (!voiceGuideEnabled.value) return
 
   // 使用Web Speech API
-  if ("speechSynthesis" in window) {
+  if ('speechSynthesis' in window) {
     // 取消之前的语音
-    window.speechSynthesis.cancel();
+    window.speechSynthesis.cancel()
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "zh-CN";
-    utterance.rate = 0.8;
-    utterance.pitch = 1;
-    window.speechSynthesis.speak(utterance);
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'zh-CN'
+    utterance.rate = 0.8
+    utterance.pitch = 1
+    window.speechSynthesis.speak(utterance)
   }
-};
+}
 
 // 更新呼吸状态
 const updateBreathing = (deltaTime: number) => {
-  if (isPaused.value) return;
+  if (isPaused.value) return
 
-  phaseTimer += deltaTime;
+  phaseTimer += deltaTime
 
   // 更新呼吸计数（转换为秒）
-  breathingCount.value = Math.floor(phaseTimer / 1000);
+  breathingCount.value = Math.floor(phaseTimer / 1000)
 
   // 更新呼吸阶段
   const currentPhaseSeconds =
-    breathingCycle.value[
-      breathingPhase.value as keyof typeof breathingCycle.value
-    ];
+    breathingCycle.value[breathingPhase.value as keyof typeof breathingCycle.value]
   if (breathingCount.value >= currentPhaseSeconds) {
     // 切换到下一个呼吸阶段
-    const previousPhase = breathingPhase.value;
+    const previousPhase = breathingPhase.value
     switch (breathingPhase.value) {
-      case "inhale":
-        breathingPhase.value = "hold";
-        inhaleCount.value++;
-        speakGuidance("屏息");
-        break;
-      case "hold":
-        breathingPhase.value = "exhale";
-        speakGuidance("呼气");
-        break;
-      case "exhale":
-        exhaleCount.value++;
+      case 'inhale':
+        breathingPhase.value = 'hold'
+        inhaleCount.value++
+        speakGuidance('屏息')
+        break
+      case 'hold':
+        breathingPhase.value = 'exhale'
+        speakGuidance('呼气')
+        break
+      case 'exhale':
+        exhaleCount.value++
         if (breathingCycle.value.pause > 0) {
-          breathingPhase.value = "pause";
-          speakGuidance("休息");
+          breathingPhase.value = 'pause'
+          speakGuidance('休息')
         } else {
-          breathingPhase.value = "inhale";
-          speakGuidance("吸气");
+          breathingPhase.value = 'inhale'
+          speakGuidance('吸气')
         }
-        break;
-      case "pause":
-        breathingPhase.value = "inhale";
-        speakGuidance("吸气");
-        break;
+        break
+      case 'pause':
+        breathingPhase.value = 'inhale'
+        speakGuidance('吸气')
+        break
     }
 
     // 重置阶段计时器
-    phaseTimer = 0;
-    breathingCount.value = 0;
+    phaseTimer = 0
+    breathingCount.value = 0
     currentPhaseTime =
-      breathingCycle.value[
-        breathingPhase.value as keyof typeof breathingCycle.value
-      ];
+      breathingCycle.value[breathingPhase.value as keyof typeof breathingCycle.value]
   }
 
   // 更新呼吸球缩放
-  const progress = phaseTimer / 1000 / currentPhaseSeconds;
-  if (breathingPhase.value === "inhale") {
-    circleScale.value = 1 + progress * 0.5; // 膨胀到1.5倍
-  } else if (breathingPhase.value === "exhale") {
-    circleScale.value = 1.5 - progress * 0.5; // 收缩回1倍
+  const progress = phaseTimer / 1000 / currentPhaseSeconds
+  if (breathingPhase.value === 'inhale') {
+    circleScale.value = 1 + progress * 0.5 // 膨胀到1.5倍
+  } else if (breathingPhase.value === 'exhale') {
+    circleScale.value = 1.5 - progress * 0.5 // 收缩回1倍
   }
-};
+}
 
 // 开始冥想
 const startBreathing = () => {
-  isGameStarted.value = true;
-  isPaused.value = false;
-  gameFinished.value = false;
-  remainingTime.value = selectedDuration.value * 60;
-  breathingPhase.value = "inhale";
-  breathingCount.value = 0;
-  circleScale.value = 1;
-  phaseTimer = 0;
-  currentPhaseTime = breathingCycle.value.inhale;
-  startTime.value = new Date().toISOString(); // 重置开始时间
-  sessionStartTime.value = Date.now();
-  lastUpdateTime = 0;
-  timeUpdateTime = 0; // 重置时间更新定时器
+  isGameStarted.value = true
+  isPaused.value = false
+  gameFinished.value = false
+  remainingTime.value = selectedDuration.value * 60
+  breathingPhase.value = 'inhale'
+  breathingCount.value = 0
+  circleScale.value = 1
+  phaseTimer = 0
+  currentPhaseTime = breathingCycle.value.inhale
+  startTime.value = new Date().toISOString() // 重置开始时间
+  sessionStartTime.value = Date.now()
+  lastUpdateTime = 0
+  timeUpdateTime = 0 // 重置时间更新定时器
 
   // 重置呼吸统计
-  inhaleCount.value = 0;
-  exhaleCount.value = 0;
+  inhaleCount.value = 0
+  exhaleCount.value = 0
 
   // 播放背景音
-  playBackgroundSound();
+  playBackgroundSound()
 
   // 播放初始语音引导
-  speakGuidance("开始吸气");
+  speakGuidance('开始吸气')
 
   // 开始游戏循环
-  if (gameLoop) cancelAnimationFrame(gameLoop);
-  gameLoop = requestAnimationFrame(gameStep);
-};
+  if (gameLoop) cancelAnimationFrame(gameLoop)
+  gameLoop = requestAnimationFrame(gameStep)
+}
 
 // 游戏循环步骤
 const gameStep = (timestamp: number) => {
   if (isPaused.value) {
-    gameLoop = requestAnimationFrame(gameStep);
-    return;
+    gameLoop = requestAnimationFrame(gameStep)
+    return
   }
 
   // 计算时间差
   if (lastUpdateTime === 0) {
-    lastUpdateTime = timestamp;
+    lastUpdateTime = timestamp
   }
-  const deltaTime = timestamp - lastUpdateTime;
-  lastUpdateTime = timestamp;
+  const deltaTime = timestamp - lastUpdateTime
+  lastUpdateTime = timestamp
 
-  updateBreathing(deltaTime);
+  updateBreathing(deltaTime)
 
   // 简化时间更新逻辑：每1000毫秒减少1秒
   if (timeUpdateTime === 0) {
-    timeUpdateTime = timestamp;
+    timeUpdateTime = timestamp
   }
 
   if (timestamp - timeUpdateTime >= 1000) {
-    remainingTime.value = Math.max(0, remainingTime.value - 1);
-    timeUpdateTime = timestamp;
+    remainingTime.value = Math.max(0, remainingTime.value - 1)
+    timeUpdateTime = timestamp
   }
 
   // 检查冥想结束
   if (remainingTime.value <= 0) {
-    endBreathing();
-    return;
+    endBreathing()
+    return
   }
 
-  gameLoop = requestAnimationFrame(gameStep);
-};
+  gameLoop = requestAnimationFrame(gameStep)
+}
 
 // 暂停冥想
 const pauseBreathing = () => {
-  isPaused.value = !isPaused.value;
+  isPaused.value = !isPaused.value
 
   // 当恢复时，重置时间更新定时器的基准时间
   if (!isPaused.value) {
-    timeUpdateTime = performance.now();
+    timeUpdateTime = performance.now()
   }
-};
+}
 
 // 停止冥想
 const stopBreathing = () => {
   if (gameLoop) {
-    cancelAnimationFrame(gameLoop);
-    gameLoop = null;
+    cancelAnimationFrame(gameLoop)
+    gameLoop = null
   }
   // 停止背景音
-  stopBackgroundSound();
+  stopBackgroundSound()
   // 停止语音
-  if ("speechSynthesis" in window) {
-    window.speechSynthesis.cancel();
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel()
   }
-  isGameStarted.value = false;
-  gameFinished.value = true;
-  generateMeditationReport();
-  saveRelaxRecord();
-};
+  isGameStarted.value = false
+  gameFinished.value = true
+  generateMeditationReport()
+  saveRelaxRecord()
+}
 
 // 结束冥想
 const endBreathing = async () => {
   if (gameLoop) {
-    cancelAnimationFrame(gameLoop);
-    gameLoop = null;
+    cancelAnimationFrame(gameLoop)
+    gameLoop = null
   }
   // 停止背景音
-  stopBackgroundSound();
+  stopBackgroundSound()
   // 停止语音
-  if ("speechSynthesis" in window) {
-    window.speechSynthesis.cancel();
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel()
   }
-  isGameStarted.value = false;
-  gameFinished.value = true;
+  isGameStarted.value = false
+  gameFinished.value = true
 
   // 计算实际经过时间
-  const totalSeconds = selectedDuration.value * 60;
-  const adjustedElapsedTime = (totalSeconds - remainingTime.value) * 1000;
-  elapsedTime.value = adjustedElapsedTime;
-  actualDuration.value = Math.floor(elapsedTime.value / 60000);
+  const totalSeconds = selectedDuration.value * 60
+  const adjustedElapsedTime = (totalSeconds - remainingTime.value) * 1000
+  elapsedTime.value = adjustedElapsedTime
+  actualDuration.value = Math.floor(elapsedTime.value / 60000)
 
-  generateMeditationReport();
-  await saveRelaxRecord();
-};
+  generateMeditationReport()
+  await saveRelaxRecord()
+}
 
 // 保存放松记录
 const saveRelaxRecord = async () => {
-  const endTime = new Date().toISOString();
+  const endTime = new Date().toISOString()
   await relaxStore.saveRecord({
-    activityType: "breathing",
+    activityType: 'breathing',
     startTime: startTime.value,
     endTime: endTime,
     metrics: {
@@ -545,63 +531,63 @@ const saveRelaxRecord = async () => {
       actualDuration: actualDuration.value,
       selectedDuration: selectedDuration.value,
     },
-  });
+  })
   // 检查成就
-  await achievementStore.checkAchievements();
-};
+  await achievementStore.checkAchievements()
+}
 
 // 生成冥想报告
 const generateMeditationReport = () => {
   // 模拟生成专注度（80-95%）
-  focusLevel.value = Math.floor(Math.random() * 16) + 80;
+  focusLevel.value = Math.floor(Math.random() * 16) + 80
 
   // 模拟平均心率（60-80 bpm）
-  averageHeartRate.value = Math.floor(Math.random() * 21) + 60;
+  averageHeartRate.value = Math.floor(Math.random() * 21) + 60
 
   // 计算呼吸频率（次/分钟）
-  const totalBreaths = inhaleCount.value;
-  const minutes = actualDuration.value || 1;
-  breathingRate.value = Math.round(totalBreaths / minutes);
+  const totalBreaths = inhaleCount.value
+  const minutes = actualDuration.value || 1
+  breathingRate.value = Math.round(totalBreaths / minutes)
 
   // 呼吸节奏稳定性
   if (focusLevel.value >= 90) {
-    rhythmStability.value = "非常稳定";
+    rhythmStability.value = '非常稳定'
   } else if (focusLevel.value >= 80) {
-    rhythmStability.value = "稳定";
+    rhythmStability.value = '稳定'
   } else {
-    rhythmStability.value = "一般";
+    rhythmStability.value = '一般'
   }
 
   // 成就
   if (focusLevel.value >= 95) {
-    achievement.value = "冥想大师！继续保持这等专注！";
+    achievement.value = '冥想大师！继续保持这等专注！'
   } else if (focusLevel.value >= 90) {
-    achievement.value = "太棒了！您的专注力非常出色！";
+    achievement.value = '太棒了！您的专注力非常出色！'
   } else if (focusLevel.value >= 85) {
-    achievement.value = "很好！呼吸节奏保持得不错！";
+    achievement.value = '很好！呼吸节奏保持得不错！'
   } else {
-    achievement.value = "继续练习，专注度会逐渐提升！";
+    achievement.value = '继续练习，专注度会逐渐提升！'
   }
-};
+}
 
 // 重新开始
 const restartGame = () => {
-  gameFinished.value = false;
-};
+  gameFinished.value = false
+}
 
 // 组件卸载时清理
 onUnmounted(() => {
   if (gameLoop) {
-    cancelAnimationFrame(gameLoop);
-    gameLoop = null;
+    cancelAnimationFrame(gameLoop)
+    gameLoop = null
   }
   // 停止背景音
-  stopBackgroundSound();
+  stopBackgroundSound()
   // 停止语音
-  if ("speechSynthesis" in window) {
-    window.speechSynthesis.cancel();
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel()
   }
-});
+})
 </script>
 
 <style scoped lang="scss">
@@ -738,7 +724,7 @@ onUnmounted(() => {
           transition: background 0.3s;
 
           &::before {
-            content: "";
+            content: '';
             position: absolute;
             width: 22px;
             height: 22px;

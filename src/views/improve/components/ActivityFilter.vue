@@ -23,12 +23,7 @@
           clearable
           style="width: 100%"
         >
-          <el-option
-            v-for="loc in locationOptions"
-            :key="loc"
-            :label="loc"
-            :value="loc"
-          />
+          <el-option v-for="loc in locationOptions" :key="loc" :label="loc" :value="loc" />
         </el-select>
       </div>
 
@@ -88,75 +83,74 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from "vue";
-import { Search, RefreshRight } from "@element-plus/icons-vue";
-import type { ActivityFilter } from "@/types/activity";
+import { reactive, watch } from 'vue'
+import { Search, RefreshRight } from '@element-plus/icons-vue'
+import type { ActivityFilter } from '@/types/activity'
 
 interface Props {
-  modelValue: ActivityFilter;
-  locationOptions?: string[];
+  modelValue: ActivityFilter
+  locationOptions?: string[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  locationOptions: () => ["心理咨询中心", "团体辅导室", "线上活动"],
-});
+  locationOptions: () => ['心理咨询中心', '团体辅导室', '线上活动'],
+})
 
 const emit = defineEmits<{
-  "update:modelValue": [filter: ActivityFilter];
-  search: [];
-  reset: [];
-}>();
+  'update:modelValue': [filter: ActivityFilter]
+  search: []
+  reset: []
+}>()
 
 // 本地筛选状态
 const localFilter = reactive({
-  title: props.modelValue.title || "",
-  location: props.modelValue.location || "",
-  dateRange: props.modelValue.startDate && props.modelValue.endDate
-    ? [props.modelValue.startDate, props.modelValue.endDate]
-    : ([] as string[]),
+  title: props.modelValue.title || '',
+  location: props.modelValue.location || '',
+  dateRange:
+    props.modelValue.startDate && props.modelValue.endDate
+      ? [props.modelValue.startDate, props.modelValue.endDate]
+      : ([] as string[]),
   status: props.modelValue.status || ([] as string[]),
-});
+})
 
 // 监听外部变化
 watch(
   () => props.modelValue,
   (newVal) => {
-    localFilter.title = newVal.title || "";
-    localFilter.location = newVal.location || "";
+    localFilter.title = newVal.title || ''
+    localFilter.location = newVal.location || ''
     localFilter.dateRange =
-      newVal.startDate && newVal.endDate
-        ? [newVal.startDate, newVal.endDate]
-        : [];
-    localFilter.status = newVal.status || [];
+      newVal.startDate && newVal.endDate ? [newVal.startDate, newVal.endDate] : []
+    localFilter.status = newVal.status || []
   },
   { deep: true }
-);
+)
 
 // 搜索
 const handleSearch = () => {
-  const filter: ActivityFilter = {};
-  if (localFilter.title) filter.title = localFilter.title;
-  if (localFilter.location) filter.location = localFilter.location;
+  const filter: ActivityFilter = {}
+  if (localFilter.title) filter.title = localFilter.title
+  if (localFilter.location) filter.location = localFilter.location
   if (localFilter.dateRange && localFilter.dateRange.length === 2) {
-    filter.startDate = localFilter.dateRange[0];
-    filter.endDate = localFilter.dateRange[1];
+    filter.startDate = localFilter.dateRange[0]
+    filter.endDate = localFilter.dateRange[1]
   }
   if (localFilter.status && localFilter.status.length > 0) {
-    filter.status = localFilter.status;
+    filter.status = localFilter.status
   }
-  emit("update:modelValue", filter);
-  emit("search");
-};
+  emit('update:modelValue', filter)
+  emit('search')
+}
 
 // 重置
 const handleReset = () => {
-  localFilter.title = "";
-  localFilter.location = "";
-  localFilter.dateRange = [];
-  localFilter.status = [];
-  emit("update:modelValue", {});
-  emit("reset");
-};
+  localFilter.title = ''
+  localFilter.location = ''
+  localFilter.dateRange = []
+  localFilter.status = []
+  emit('update:modelValue', {})
+  emit('reset')
+}
 </script>
 
 <style scoped lang="scss">

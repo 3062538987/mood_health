@@ -1,7 +1,7 @@
 <template>
   <div class="mood-spectrum">
     <h3>选择你的当前情绪</h3>
-    <div class="error-message" v-if="errorMessage">
+    <div v-if="errorMessage" class="error-message">
       {{ errorMessage }}
     </div>
 
@@ -44,7 +44,7 @@
     </div>
 
     <!-- 选中的情绪和占比 -->
-    <div class="selected-moods" v-if="selectedMoods.length > 0">
+    <div v-if="selectedMoods.length > 0" class="selected-moods">
       <h4>已选择的情绪：</h4>
       <div class="selected-list">
         <div
@@ -57,18 +57,16 @@
         >
           <span>{{ item.name }}</span>
           <input
-            type="number"
             v-model.number="manualRatios[item.type]"
+            type="number"
             min="0"
             max="100"
-            @input="updateMoods"
             class="ratio-input"
             placeholder="0"
+            @input="updateMoods"
           />
           <span class="ratio">%</span>
-          <button class="remove-btn" @click.stop="removeMood(item.type)">
-            ×
-          </button>
+          <button class="remove-btn" @click.stop="removeMood(item.type)">×</button>
         </div>
       </div>
     </div>
@@ -78,22 +76,18 @@
       <h4>添加自定义情绪</h4>
       <div class="custom-form">
         <input
-          type="text"
           v-model="customEmotionName"
+          type="text"
           placeholder="输入情绪名称"
           class="custom-name-input"
         />
-        <input
-          type="color"
-          v-model="customEmotionColor"
-          class="custom-color-input"
-        />
-        <button @click="addCustomEmotion" class="add-custom-btn">添加</button>
+        <input v-model="customEmotionColor" type="color" class="custom-color-input" />
+        <button class="add-custom-btn" @click="addCustomEmotion">添加</button>
       </div>
     </div>
 
     <!-- 错误信息 -->
-    <div class="error-message" v-if="errorMessage">{{ errorMessage }}</div>
+    <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
 
     <!-- 提示信息 -->
     <div class="tips">
@@ -103,201 +97,199 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed } from 'vue'
 
 // 定义props和emits
 const props = defineProps<{
-  modelValue: { types: string[]; ratios: number[] };
-}>();
+  modelValue: { types: string[]; ratios: number[] }
+}>()
 
 const emit = defineEmits<{
-  (e: "update:modelValue", value: { types: string[]; ratios: number[] }): void;
-}>();
+  (e: 'update:modelValue', value: { types: string[]; ratios: number[] }): void
+}>()
 
 // 系统预设情绪
 const systemMoods = ref([
-  { type: "angry", name: "愤怒", color: "#FF3A3A", icon: "😠" },
-  { type: "sad", name: "悲伤", color: "#3A86FF", icon: "😔" },
-  { type: "calm", name: "平静", color: "#3AFF47", icon: "😌" },
-  { type: "happy", name: "愉悦", color: "#FFD700", icon: "😊" },
-  { type: "anxious", name: "焦虑", color: "#9D4EDD", icon: "😰" },
-  { type: "irritable", name: "烦躁", color: "#FF7F00", icon: "😫" },
-]);
+  { type: 'angry', name: '愤怒', color: '#FF3A3A', icon: '😠' },
+  { type: 'sad', name: '悲伤', color: '#3A86FF', icon: '😔' },
+  { type: 'calm', name: '平静', color: '#3AFF47', icon: '😌' },
+  { type: 'happy', name: '愉悦', color: '#FFD700', icon: '😊' },
+  { type: 'anxious', name: '焦虑', color: '#9D4EDD', icon: '😰' },
+  { type: 'irritable', name: '烦躁', color: '#FF7F00', icon: '😫' },
+])
 
 // 所有情绪列表（包含系统情绪和自定义情绪）
-const moodList = computed(() => [...systemMoods.value]);
+const moodList = computed(() => [...systemMoods.value])
 
 // 选中的情绪类型
-const selectedMoods = ref<string[]>(props.modelValue?.types || []);
+const selectedMoods = ref<string[]>(props.modelValue?.types || [])
 // 手动输入的情绪占比
-const manualRatios = ref<Record<string, number>>({});
+const manualRatios = ref<Record<string, number>>({})
 // 错误信息
-const errorMessage = ref("");
+const errorMessage = ref('')
 // 自定义情绪输入
-const customEmotionName = ref("");
-const customEmotionColor = ref("#FF6B6B");
+const customEmotionName = ref('')
+const customEmotionColor = ref('#FF6B6B')
 
 // 最终要显示在饼状图上的情绪
-const finalMoods = ref<
-  Array<{ type: string; name: string; color: string; ratio: number }>
->([]);
+const finalMoods = ref<Array<{ type: string; name: string; color: string; ratio: number }>>([])
 
 // 切换情绪选择
 const toggleMood = (type: string) => {
-  const index = selectedMoods.value.indexOf(type);
+  const index = selectedMoods.value.indexOf(type)
   if (index > -1) {
-    selectedMoods.value.splice(index, 1);
-    delete manualRatios.value[type];
-    updateMoods(); // 移除时更新饼图
+    selectedMoods.value.splice(index, 1)
+    delete manualRatios.value[type]
+    updateMoods() // 移除时更新饼图
   } else {
-    selectedMoods.value.push(type);
-    manualRatios.value[type] = 0;
+    selectedMoods.value.push(type)
+    manualRatios.value[type] = 0
     // 只添加到已选列表，不立即更新饼图
   }
-};
+}
 
 // 移除情绪
 const removeMood = (type: string | undefined) => {
-  if (!type) return;
-  const index = selectedMoods.value.indexOf(type);
+  if (!type) return
+  const index = selectedMoods.value.indexOf(type)
   if (index > -1) {
-    selectedMoods.value.splice(index, 1);
-    delete manualRatios.value[type];
-    updateMoods();
+    selectedMoods.value.splice(index, 1)
+    delete manualRatios.value[type]
+    updateMoods()
   }
-};
+}
 
 // 更新情绪占比
 const updateMoods = () => {
   // 计算已输入的占比总和
   const sum = selectedMoods.value.reduce((total, type) => {
-    return total + (manualRatios.value[type] || 0);
-  }, 0);
+    return total + (manualRatios.value[type] || 0)
+  }, 0)
 
   // 检查是否超过100%
   if (sum > 100) {
-    errorMessage.value = "情绪占比总和不能超过100%";
-    return;
+    errorMessage.value = '情绪占比总和不能超过100%'
+    return
   }
-  errorMessage.value = "";
+  errorMessage.value = ''
 
   // 构建最终的类型和占比数组（只包含用户选择的情绪）
-  const finalTypes: string[] = [];
-  const finalRatios: number[] = [];
+  const finalTypes: string[] = []
+  const finalRatios: number[] = []
 
   // 添加所有选中的情绪
   selectedMoods.value.forEach((type) => {
-    finalTypes.push(type);
-    finalRatios.push(manualRatios.value[type] || 0);
-  });
+    finalTypes.push(type)
+    finalRatios.push(manualRatios.value[type] || 0)
+  })
 
   // 验证总和是否超过100%
-  const totalRatio = finalRatios.reduce((sum, ratio) => sum + ratio, 0);
+  const totalRatio = finalRatios.reduce((sum, ratio) => sum + ratio, 0)
   if (totalRatio > 100) {
-    errorMessage.value = "情绪比例总和超过了100%，请重新填写";
+    errorMessage.value = '情绪比例总和超过了100%，请重新填写'
   } else {
-    errorMessage.value = "";
+    errorMessage.value = ''
   }
 
   // 更新finalMoods（只显示占比大于0的情绪）
   const allMoods = finalTypes.map((type, index) => {
-    const mood = moodList.value.find((m) => m.type === type);
+    const mood = moodList.value.find((m) => m.type === type)
     return {
       type,
-      name: mood?.name || "未知",
-      color: mood?.color || "#CCCCCC",
+      name: mood?.name || '未知',
+      color: mood?.color || '#CCCCCC',
       ratio: finalRatios[index],
-    };
-  });
+    }
+  })
 
   // 只保留比例大于0的情绪，同时保持原始顺序
-  finalMoods.value = allMoods.filter((item) => item.ratio > 0);
+  finalMoods.value = allMoods.filter((item) => item.ratio > 0)
 
   // 更新父组件
-  emit("update:modelValue", {
+  emit('update:modelValue', {
     types: finalTypes,
     ratios: finalRatios,
-  });
-};
+  })
+}
 
 // 添加自定义情绪
 const addCustomEmotion = () => {
   if (!customEmotionName.value.trim()) {
-    errorMessage.value = "请输入自定义情绪名称";
-    return;
+    errorMessage.value = '请输入自定义情绪名称'
+    return
   }
 
   // 创建自定义情绪类型
-  const customType = "custom_" + Date.now();
+  const customType = 'custom_' + Date.now()
   systemMoods.value.push({
     type: customType,
     name: customEmotionName.value.trim(),
     color: customEmotionColor.value,
-    icon: "😊",
-  });
+    icon: '😊',
+  })
 
   // 清空输入
-  customEmotionName.value = "";
-  customEmotionColor.value = "#FF6B6B";
+  customEmotionName.value = ''
+  customEmotionColor.value = '#FF6B6B'
 
   // 选中新添加的情绪
-  selectedMoods.value.push(customType);
-  manualRatios.value[customType] = 0;
-  updateMoods();
-};
+  selectedMoods.value.push(customType)
+  manualRatios.value[customType] = 0
+  updateMoods()
+}
 
 // 计算整个饼图的样式（使用单个conic-gradient）
 const getPieStyle = () => {
-  if (finalMoods.value.length === 0) return {};
+  if (finalMoods.value.length === 0) return {}
 
   // 构建conic-gradient的颜色停止点
-  let currentAngle = 0;
-  const gradientStops: string[] = [];
+  let currentAngle = 0
+  const gradientStops: string[] = []
 
   // 添加所有情绪的颜色停止点
   finalMoods.value.forEach((mood) => {
-    const endAngle = currentAngle + (mood.ratio / 100) * 360;
-    gradientStops.push(`${mood.color} ${currentAngle}deg`);
-    gradientStops.push(`${mood.color} ${endAngle}deg`);
-    currentAngle = endAngle;
-  });
+    const endAngle = currentAngle + (mood.ratio / 100) * 360
+    gradientStops.push(`${mood.color} ${currentAngle}deg`)
+    gradientStops.push(`${mood.color} ${endAngle}deg`)
+    currentAngle = endAngle
+  })
 
   return {
-    background: `conic-gradient(${gradientStops.join(", ")})`,
-  };
-};
+    background: `conic-gradient(${gradientStops.join(', ')})`,
+  }
+}
 
 // 计算每个情绪标签的位置
 const getLabelStyle = (index: number) => {
-  if (finalMoods.value.length === 0) return {};
+  if (finalMoods.value.length === 0) return {}
 
   // 计算该情绪段的起始角度和中间角度
-  let startAngle = 0;
+  let startAngle = 0
   for (let i = 0; i < index; i++) {
-    startAngle += (finalMoods.value[i].ratio / 100) * 360;
+    startAngle += (finalMoods.value[i].ratio / 100) * 360
   }
-  const endAngle = startAngle + (finalMoods.value[index].ratio / 100) * 360;
-  const middleAngle = (startAngle + endAngle) / 2;
+  const endAngle = startAngle + (finalMoods.value[index].ratio / 100) * 360
+  const middleAngle = (startAngle + endAngle) / 2
 
   // 将角度转换为弧度
-  const radians = (middleAngle * Math.PI) / 180;
+  const radians = (middleAngle * Math.PI) / 180
 
   // 计算标签的位置（在饼图的边缘区域）
-  const radius = 120; // 增大半径值，确保标签能显示在各自扇形区域的边缘位置
-  const x = Math.cos(radians) * radius;
-  const y = Math.sin(radians) * radius;
+  const radius = 120 // 增大半径值，确保标签能显示在各自扇形区域的边缘位置
+  const x = Math.cos(radians) * radius
+  const y = Math.sin(radians) * radius
 
   // 如果扇形角度太小（小于15度），不显示标签
-  const angleSize = (finalMoods.value[index].ratio / 100) * 360;
+  const angleSize = (finalMoods.value[index].ratio / 100) * 360
   if (angleSize < 15) {
-    return { display: "none" };
+    return { display: 'none' }
   }
 
   return {
     transform: `translate(-50%, -50%) translate(${x}px, ${y}px)`,
     zIndex: 10,
-  };
-};
+  }
+}
 </script>
 
 <style scoped lang="scss">

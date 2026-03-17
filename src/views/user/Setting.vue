@@ -14,11 +14,7 @@
             <p class="setting-description">设置每日情绪记录提醒时间</p>
           </div>
           <div class="setting-control">
-            <select
-              v-model="reminderTime"
-              class="time-select"
-              @change="saveSettings"
-            >
+            <select v-model="reminderTime" class="time-select" @change="saveSettings">
               <option v-for="time in timeOptions" :key="time" :value="time">
                 {{ time }}
               </option>
@@ -34,11 +30,7 @@
           </div>
           <div class="setting-control">
             <label class="toggle-switch">
-              <input
-                type="checkbox"
-                v-model="weeklyReport"
-                @change="saveSettings"
-              />
+              <input v-model="weeklyReport" type="checkbox" @change="saveSettings" />
               <span class="toggle-slider"></span>
             </label>
           </div>
@@ -48,17 +40,11 @@
         <div class="setting-item">
           <div class="setting-info">
             <h4 class="setting-title">解压游戏音效</h4>
-            <p class="setting-description">
-              开启/关闭解压游戏中的音效（如木鱼敲击声）
-            </p>
+            <p class="setting-description">开启/关闭解压游戏中的音效（如木鱼敲击声）</p>
           </div>
           <div class="setting-control">
             <label class="toggle-switch">
-              <input
-                type="checkbox"
-                v-model="gameSound"
-                @change="saveSettings"
-              />
+              <input v-model="gameSound" type="checkbox" @change="saveSettings" />
               <span class="toggle-slider"></span>
             </label>
           </div>
@@ -78,8 +64,8 @@
           <div class="setting-control">
             <label class="toggle-switch">
               <input
-                type="checkbox"
                 v-model="notifications.emotionReminder"
+                type="checkbox"
                 @change="saveNotifications"
               />
               <span class="toggle-slider"></span>
@@ -96,8 +82,8 @@
           <div class="setting-control">
             <label class="toggle-switch">
               <input
-                type="checkbox"
                 v-model="notifications.weeklyReport"
+                type="checkbox"
                 @change="saveNotifications"
               />
               <span class="toggle-slider"></span>
@@ -114,8 +100,8 @@
           <div class="setting-control">
             <label class="toggle-switch">
               <input
-                type="checkbox"
                 v-model="notifications.groupActivity"
+                type="checkbox"
                 @change="saveNotifications"
               />
               <span class="toggle-slider"></span>
@@ -132,8 +118,8 @@
           <div class="setting-control">
             <label class="toggle-switch">
               <input
-                type="checkbox"
                 v-model="notifications.treeHoleReply"
+                type="checkbox"
                 @change="saveNotifications"
               />
               <span class="toggle-slider"></span>
@@ -150,8 +136,8 @@
           <div class="setting-control">
             <label class="toggle-switch">
               <input
-                type="checkbox"
                 v-model="notifications.featureUpdate"
+                type="checkbox"
                 @change="saveNotifications"
               />
               <span class="toggle-slider"></span>
@@ -179,24 +165,17 @@
         <div class="setting-item danger">
           <div class="setting-info">
             <h4 class="setting-title">账号注销</h4>
-            <p class="setting-description">
-              注销后所有个人数据将在7个工作日内永久删除
-            </p>
+            <p class="setting-description">注销后所有个人数据将在7个工作日内永久删除</p>
           </div>
           <div class="setting-control">
-            <button
-              class="action-btn danger-btn"
-              @click="showDeleteAccountConfirm"
-            >
-              注销
-            </button>
+            <button class="action-btn danger-btn" @click="showDeleteAccountConfirm">注销</button>
           </div>
         </div>
       </div>
     </div>
 
     <!-- 隐私声明弹窗 -->
-    <div class="modal-overlay" v-if="showPrivacyModal">
+    <div v-if="showPrivacyModal" class="modal-overlay">
       <div class="modal-content">
         <div class="modal-header">
           <h3>隐私声明</h3>
@@ -204,14 +183,8 @@
         </div>
         <div class="modal-body">
           <h4>数据用途</h4>
-          <p>
-            1.
-            用户情绪记录、个人信息（微信昵称、头像）仅用于提供情绪健康服务，仅用户本人可见。
-          </p>
-          <p>
-            2.
-            问卷调研数据仅用于《项目申请书》相关学术研究，且对个人信息进行匿名化处理。
-          </p>
+          <p>1. 用户情绪记录、个人信息（微信昵称、头像）仅用于提供情绪健康服务，仅用户本人可见。</p>
+          <p>2. 问卷调研数据仅用于《项目申请书》相关学术研究，且对个人信息进行匿名化处理。</p>
 
           <h4>存储期限</h4>
           <p>1. 个人数据将在用户使用期间持续存储。</p>
@@ -222,21 +195,17 @@
           <p>2. 用户可以通过账号注销功能删除所有个人数据。</p>
         </div>
         <div class="modal-footer">
-          <button class="confirm-btn" @click="showPrivacyModal = false">
-            我知道了
-          </button>
+          <button class="confirm-btn" @click="showPrivacyModal = false">我知道了</button>
         </div>
       </div>
     </div>
 
     <!-- 账号注销确认弹窗 -->
-    <div class="modal-overlay" v-if="showDeleteConfirmModal">
+    <div v-if="showDeleteConfirmModal" class="modal-overlay">
       <div class="modal-content">
         <div class="modal-header">
           <h3>账号注销确认</h3>
-          <button class="close-btn" @click="showDeleteConfirmModal = false">
-            ×
-          </button>
+          <button class="close-btn" @click="showDeleteConfirmModal = false">×</button>
         </div>
         <div class="modal-body">
           <div class="warning-icon">⚠️</div>
@@ -244,12 +213,8 @@
           <p>注销后，所有个人数据将在7个工作日内永久删除，此操作不可恢复。</p>
         </div>
         <div class="modal-footer">
-          <button class="cancel-btn" @click="showDeleteConfirmModal = false">
-            取消
-          </button>
-          <button class="confirm-btn danger-btn" @click="deleteAccount">
-            确认注销
-          </button>
+          <button class="cancel-btn" @click="showDeleteConfirmModal = false">取消</button>
+          <button class="confirm-btn danger-btn" @click="deleteAccount">确认注销</button>
         </div>
       </div>
     </div>
@@ -257,14 +222,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
-import { ElMessage } from "element-plus";
-import soundManager from "@/utils/sound";
+import { ref, onMounted, watch } from 'vue'
+import { ElMessage } from 'element-plus'
+import soundManager from '@/utils/sound'
 
 // 个性化设置状态
-const reminderTime = ref("20:00"); // 情绪记录提醒时间
-const weeklyReport = ref(true); // 周报推送开关
-const gameSound = ref(true); // 解压游戏音效开关
+const reminderTime = ref('20:00') // 情绪记录提醒时间
+const weeklyReport = ref(true) // 周报推送开关
+const gameSound = ref(true) // 解压游戏音效开关
 
 // 消息通知设置
 const notifications = ref({
@@ -273,83 +238,81 @@ const notifications = ref({
   groupActivity: true, // 团体辅导活动提醒
   treeHoleReply: true, // 树洞留言回复
   featureUpdate: true, // 功能更新通知
-});
+})
 
 // 弹窗状态
-const showPrivacyModal = ref(false);
-const showDeleteConfirmModal = ref(false);
+const showPrivacyModal = ref(false)
+const showDeleteConfirmModal = ref(false)
 
 // 时间选项（每小时一个选项）
-const timeOptions = ref<string[]>([]);
+const timeOptions = ref<string[]>([])
 
 // 初始化时间选项
 const initTimeOptions = () => {
-  const times = [];
+  const times = []
   for (let hour = 0; hour < 24; hour++) {
-    const time = `${hour.toString().padStart(2, "0")}:00`;
-    times.push(time);
+    const time = `${hour.toString().padStart(2, '0')}:00`
+    times.push(time)
   }
-  timeOptions.value = times;
-};
+  timeOptions.value = times
+}
 
 // 从localStorage加载设置
 onMounted(() => {
-  initTimeOptions();
+  initTimeOptions()
 
   // 加载个性化设置
-  const savedReminderTime = localStorage.getItem("reminderTime");
-  const savedWeeklyReport = localStorage.getItem("weeklyReport");
-  const savedGameSound = localStorage.getItem("gameSound");
+  const savedReminderTime = localStorage.getItem('reminderTime')
+  const savedWeeklyReport = localStorage.getItem('weeklyReport')
+  const savedGameSound = localStorage.getItem('gameSound')
 
   if (savedReminderTime) {
-    reminderTime.value = savedReminderTime;
+    reminderTime.value = savedReminderTime
   }
   if (savedWeeklyReport) {
-    weeklyReport.value = JSON.parse(savedWeeklyReport);
+    weeklyReport.value = JSON.parse(savedWeeklyReport)
   }
   if (savedGameSound) {
-    gameSound.value = JSON.parse(savedGameSound);
+    gameSound.value = JSON.parse(savedGameSound)
   }
 
   // 加载消息通知设置
-  const savedNotifications = localStorage.getItem("notifications");
+  const savedNotifications = localStorage.getItem('notifications')
   if (savedNotifications) {
-    notifications.value = JSON.parse(savedNotifications);
+    notifications.value = JSON.parse(savedNotifications)
   }
-});
+})
 
 // 保存个性化设置
 const saveSettings = () => {
-  localStorage.setItem("reminderTime", reminderTime.value);
-  localStorage.setItem("weeklyReport", JSON.stringify(weeklyReport.value));
-  localStorage.setItem("gameSound", JSON.stringify(gameSound.value));
+  localStorage.setItem('reminderTime', reminderTime.value)
+  localStorage.setItem('weeklyReport', JSON.stringify(weeklyReport.value))
+  localStorage.setItem('gameSound', JSON.stringify(gameSound.value))
   // 更新音效管理器状态
-  soundManager.setSoundEnabled(gameSound.value);
-};
+  soundManager.setSoundEnabled(gameSound.value)
+}
 
 // 保存消息通知设置
 const saveNotifications = () => {
-  localStorage.setItem("notifications", JSON.stringify(notifications.value));
-};
+  localStorage.setItem('notifications', JSON.stringify(notifications.value))
+}
 
 // 显示隐私声明
 const showPrivacyPolicy = () => {
-  showPrivacyModal.value = true;
-};
+  showPrivacyModal.value = true
+}
 
 // 显示账号注销确认
 const showDeleteAccountConfirm = () => {
-  showDeleteConfirmModal.value = true;
-};
+  showDeleteConfirmModal.value = true
+}
 
 // 账号注销
 const deleteAccount = () => {
-  localStorage.clear();
-  showDeleteConfirmModal.value = false;
-  ElMessage.success(
-    "账号注销申请已提交，所有个人数据将在7个工作日内永久删除。",
-  );
-};
+  localStorage.clear()
+  showDeleteConfirmModal.value = false
+  ElMessage.success('账号注销申请已提交，所有个人数据将在7个工作日内永久删除。')
+}
 </script>
 
 <style scoped lang="scss">
@@ -475,7 +438,7 @@ const deleteAccount = () => {
 
     &:before {
       position: absolute;
-      content: "";
+      content: '';
       height: 26px;
       width: 26px;
       left: 4px;

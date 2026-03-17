@@ -15,13 +15,7 @@
         </div>
         <div class="form-group">
           <label for="email">邮箱</label>
-          <input
-            id="email"
-            v-model="form.email"
-            type="email"
-            placeholder="请输入邮箱"
-            required
-          />
+          <input id="email" v-model="form.email" type="email" placeholder="请输入邮箱" required />
         </div>
         <div class="form-group">
           <label for="password">密码</label>
@@ -50,12 +44,8 @@
         <div v-if="userStore.error" class="error-message">
           {{ userStore.error }}
         </div>
-        <button
-          type="submit"
-          :disabled="userStore.loading"
-          class="btn-register"
-        >
-          {{ userStore.loading ? "注册中..." : "注册" }}
+        <button type="submit" :disabled="userStore.loading" class="btn-register">
+          {{ userStore.loading ? '注册中...' : '注册' }}
         </button>
       </form>
       <div class="footer">
@@ -67,47 +57,43 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from "vue";
-import { ElMessage } from "element-plus";
-import { useRouter } from "vue-router";
-import { useUserStore } from "@/stores/userStore";
+import { reactive, ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/userStore'
 
-const router = useRouter();
-const userStore = useUserStore();
-const error = ref("");
+const router = useRouter()
+const userStore = useUserStore()
+const error = ref('')
 
 const form = reactive({
-  username: "",
-  email: "",
-  password: "",
-  confirmPassword: "",
-});
+  username: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
+})
 
 const handleRegister = async () => {
-  error.value = "";
+  error.value = ''
 
   // 前端校验
   if (form.password !== form.confirmPassword) {
-    error.value = "两次输入的密码不一致";
-    return;
+    error.value = '两次输入的密码不一致'
+    return
   }
 
   if (form.password.length < 6) {
-    error.value = "密码长度至少6位";
-    return;
+    error.value = '密码长度至少6位'
+    return
   }
 
-  const success = await userStore.register(
-    form.username,
-    form.password,
-    form.email,
-  );
+  const success = await userStore.register(form.username, form.password, form.email)
 
   if (success) {
-    ElMessage.success("注册成功！请登录");
-    router.push("/login");
+    ElMessage.success('注册成功！请登录')
+    router.push('/login')
   }
-};
+}
 </script>
 
 <style scoped>

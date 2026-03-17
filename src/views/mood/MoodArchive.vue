@@ -20,18 +20,10 @@
           </div>
 
           <!-- 自定义时间范围 -->
-          <div class="custom-time" v-if="selectedTimeFilter === 'custom'">
-            <input
-              type="date"
-              v-model="customStartDate"
-              @change="handleCustomDateChange"
-            />
+          <div v-if="selectedTimeFilter === 'custom'" class="custom-time">
+            <input v-model="customStartDate" type="date" @change="handleCustomDateChange" />
             <span class="date-separator">至</span>
-            <input
-              type="date"
-              v-model="customEndDate"
-              @change="handleCustomDateChange"
-            />
+            <input v-model="customEndDate" type="date" @change="handleCustomDateChange" />
           </div>
         </div>
 
@@ -45,16 +37,10 @@
               :class="{ active: selectedMoodFilters.includes(mood.type) }"
               @click="toggleMoodFilter(mood.type)"
             >
-              <span
-                class="mood-dot"
-                :style="{ backgroundColor: mood.color }"
-              ></span>
+              <span class="mood-dot" :style="{ backgroundColor: mood.color }"></span>
               {{ mood.name }}
             </button>
-            <button
-              :class="{ active: selectedMoodFilters.length === 0 }"
-              @click="clearMoodFilters"
-            >
+            <button :class="{ active: selectedMoodFilters.length === 0 }" @click="clearMoodFilters">
               全部
             </button>
           </div>
@@ -73,11 +59,7 @@
           description="正在为你铺开最近的情绪轨迹，马上就能看到更完整的记录。"
         />
 
-        <div
-          v-else-if="showEmptyState"
-          key="empty"
-          class="timeline-bento-container"
-        >
+        <div v-else-if="showEmptyState" key="empty" class="timeline-bento-container">
           <SoftEmptyState
             title="还没有记录过情绪哦，去记录一下吧～"
             description="每一次小小的记录，都会帮你更温柔地看见自己的情绪轨迹。先写下今天的心情，档案页就会慢慢丰富起来。"
@@ -122,26 +104,16 @@
               <div class="mood-note">{{ truncateText(record.event, 20) }}</div>
 
               <div class="item-actions">
-                <button
-                  class="action-btn edit-btn"
-                  @click.stop="editRecord(record)"
-                >
-                  ✏️
-                </button>
-                <button
-                  class="action-btn delete-btn"
-                  @click.stop="confirmDeleteRecord(record)"
-                >
+                <button class="action-btn edit-btn" @click.stop="editRecord(record)">✏️</button>
+                <button class="action-btn delete-btn" @click.stop="confirmDeleteRecord(record)">
                   🗑️
                 </button>
               </div>
             </div>
           </div>
 
-          <div class="load-more" v-if="hasMore">
-            <el-button type="primary" :loading="isLoading" @click="loadMore">
-              加载更多
-            </el-button>
+          <div v-if="hasMore" class="load-more">
+            <el-button type="primary" :loading="isLoading" @click="loadMore"> 加载更多 </el-button>
           </div>
         </div>
       </transition>
@@ -172,9 +144,7 @@
               ></div>
               <div class="emotion-info">
                 <span class="emotion-name">{{ getMoodName(type) }}</span>
-                <span class="emotion-ratio"
-                  >{{ selectedRecord.moodRatio[idx] || 50 }}%</span
-                >
+                <span class="emotion-ratio">{{ selectedRecord.moodRatio[idx] || 50 }}%</span>
               </div>
             </div>
           </div>
@@ -183,11 +153,7 @@
         <div class="detail-section">
           <h4>触发因素</h4>
           <div class="detail-triggers">
-            <span
-              v-for="tag in getTags(selectedRecord)"
-              :key="tag"
-              class="trigger-tag"
-            >
+            <span v-for="tag in getTags(selectedRecord)" :key="tag" class="trigger-tag">
               {{ tag }}
             </span>
           </div>
@@ -198,7 +164,7 @@
           <p class="detail-note">{{ selectedRecord.event }}</p>
         </div>
 
-        <div class="detail-section" v-if="selectedRecord.intensity">
+        <div v-if="selectedRecord.intensity" class="detail-section">
           <h4>情绪强度</h4>
           <div class="intensity-bar">
             <div
@@ -208,360 +174,348 @@
                 background: getIntensityColor(selectedRecord.intensity),
               }"
             ></div>
-            <span class="intensity-value"
-              >{{ selectedRecord.intensity }}/10</span
-            >
+            <span class="intensity-value">{{ selectedRecord.intensity }}/10</span>
           </div>
         </div>
       </div>
 
       <template #footer>
         <el-button @click="showDetailDialog = false">关闭</el-button>
-        <el-button type="primary" @click="editRecord(selectedRecord!)">
-          编辑
-        </el-button>
+        <el-button type="primary" @click="editRecord(selectedRecord!)"> 编辑 </el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
-import { useRouter } from "vue-router";
-import SoftEmptyState from "@/components/shared/SoftEmptyState.vue";
-import SoftLoadingState from "@/components/shared/SoftLoadingState.vue";
+import { ref, computed, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { useRouter } from 'vue-router'
+import SoftEmptyState from '@/components/shared/SoftEmptyState.vue'
+import SoftLoadingState from '@/components/shared/SoftLoadingState.vue'
 
-import { getMoodRecordList } from "@/api/mood";
-import { MoodRecord } from "@/types/mood";
-import { formatDate as formatDateUtil } from "@/utils/dateUtil";
+import { getMoodRecordList } from '@/api/mood'
+import { MoodRecord } from '@/types/mood'
+import { formatDate as formatDateUtil } from '@/utils/dateUtil'
 
-const router = useRouter();
+const router = useRouter()
 
 // 情绪类型数据
 const moodTypes = [
-  { type: "angry", name: "愤怒", color: "var(--mood-angry)" },
-  { type: "sad", name: "悲伤", color: "var(--mood-sad)" },
-  { type: "calm", name: "平静", color: "var(--mood-calm)" },
-  { type: "happy", name: "愉悦", color: "var(--mood-happy)" },
-  { type: "anxious", name: "焦虑", color: "var(--mood-anxious)" },
-  { type: "irritable", name: "烦躁", color: "var(--mood-neutral)" },
-];
+  { type: 'angry', name: '愤怒', color: 'var(--mood-angry)' },
+  { type: 'sad', name: '悲伤', color: 'var(--mood-sad)' },
+  { type: 'calm', name: '平静', color: 'var(--mood-calm)' },
+  { type: 'happy', name: '愉悦', color: 'var(--mood-happy)' },
+  { type: 'anxious', name: '焦虑', color: 'var(--mood-anxious)' },
+  { type: 'irritable', name: '烦躁', color: 'var(--mood-neutral)' },
+]
 
 // 时间筛选选项
 const timeFilters = [
-  { key: "today", label: "今日" },
-  { key: "thisWeek", label: "本周" },
-  { key: "thisMonth", label: "本月" },
-  { key: "custom", label: "自定义" },
-];
+  { key: 'today', label: '今日' },
+  { key: 'thisWeek', label: '本周' },
+  { key: 'thisMonth', label: '本月' },
+  { key: 'custom', label: '自定义' },
+]
 
 // 状态管理
-const moodRecords = ref<MoodRecord[]>([]);
-const selectedTimeFilter = ref("thisMonth");
-const customStartDate = ref("");
-const customEndDate = ref("");
-const selectedMoodFilters = ref<string[]>([]);
-const currentPage = ref(1);
-const pageSize = ref(20);
-const totalRecords = ref(0);
-const isLoading = ref(false);
-const showDetailDialog = ref(false);
-const selectedRecord = ref<MoodRecord | null>(null);
-const hasFetchedRecords = ref(false);
+const moodRecords = ref<MoodRecord[]>([])
+const selectedTimeFilter = ref('thisMonth')
+const customStartDate = ref('')
+const customEndDate = ref('')
+const selectedMoodFilters = ref<string[]>([])
+const currentPage = ref(1)
+const pageSize = ref(20)
+const totalRecords = ref(0)
+const isLoading = ref(false)
+const showDetailDialog = ref(false)
+const selectedRecord = ref<MoodRecord | null>(null)
+const hasFetchedRecords = ref(false)
 
 const showInitialLoading = computed(
-  () =>
-    !hasFetchedRecords.value ||
-    (isLoading.value && moodRecords.value.length === 0),
-);
+  () => !hasFetchedRecords.value || (isLoading.value && moodRecords.value.length === 0)
+)
 
 const showEmptyState = computed(
-  () =>
-    hasFetchedRecords.value &&
-    !isLoading.value &&
-    filteredRecords.value.length === 0,
-);
+  () => hasFetchedRecords.value && !isLoading.value && filteredRecords.value.length === 0
+)
 
 // 计算属性：是否有更多数据
 const hasMore = computed(() => {
-  return moodRecords.value.length < totalRecords.value;
-});
+  return moodRecords.value.length < totalRecords.value
+})
 
 // 计算属性：筛选后的记录
 const filteredRecords = computed(() => {
-  let records = [...moodRecords.value];
+  let records = [...moodRecords.value]
 
   // 时间筛选
-  const now = new Date();
-  let startDate = new Date(0);
-  let endDate = new Date();
+  const now = new Date()
+  let startDate = new Date(0)
+  let endDate = new Date()
 
   switch (selectedTimeFilter.value) {
-    case "today":
-      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-      break;
-    case "thisWeek":
-      const dayOfWeek = now.getDay() || 7;
-      startDate = new Date(now);
-      startDate.setDate(now.getDate() - dayOfWeek + 1);
-      startDate.setHours(0, 0, 0, 0);
-      endDate = new Date(startDate);
-      endDate.setDate(startDate.getDate() + 7);
-      break;
-    case "thisMonth":
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-      break;
-    case "custom":
+    case 'today':
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+      break
+    case 'thisWeek':
+      const dayOfWeek = now.getDay() || 7
+      startDate = new Date(now)
+      startDate.setDate(now.getDate() - dayOfWeek + 1)
+      startDate.setHours(0, 0, 0, 0)
+      endDate = new Date(startDate)
+      endDate.setDate(startDate.getDate() + 7)
+      break
+    case 'thisMonth':
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+      break
+    case 'custom':
       if (customStartDate.value && customEndDate.value) {
-        startDate = new Date(customStartDate.value);
-        endDate = new Date(customEndDate.value);
-        endDate.setHours(23, 59, 59, 999);
+        startDate = new Date(customStartDate.value)
+        endDate = new Date(customEndDate.value)
+        endDate.setHours(23, 59, 59, 999)
       }
-      break;
+      break
   }
 
   records = records.filter((record) => {
-    const recordDate = new Date(record.createTime);
-    return recordDate >= startDate && recordDate < endDate;
-  });
+    const recordDate = new Date(record.createTime)
+    return recordDate >= startDate && recordDate < endDate
+  })
 
   // 情绪类型筛选
   if (selectedMoodFilters.value.length > 0) {
     records = records.filter((record) =>
-      record.moodType.some((type) => selectedMoodFilters.value.includes(type)),
-    );
+      record.moodType.some((type) => selectedMoodFilters.value.includes(type))
+    )
   }
 
   // 按时间倒序排序
-  return records.sort(
-    (a, b) =>
-      new Date(b.createTime).getTime() - new Date(a.createTime).getTime(),
-  );
-});
+  return records.sort((a, b) => new Date(b.createTime).getTime() - new Date(a.createTime).getTime())
+})
 
 // 获取情绪记录列表
 const fetchMoodRecords = async () => {
   try {
-    isLoading.value = true;
+    isLoading.value = true
     const response = await getMoodRecordList({
       page: currentPage.value,
       size: pageSize.value,
-    });
+    })
     if (currentPage.value === 1) {
-      moodRecords.value = response.list;
+      moodRecords.value = response.list
     } else {
-      moodRecords.value = [...moodRecords.value, ...response.list];
+      moodRecords.value = [...moodRecords.value, ...response.list]
     }
-    totalRecords.value = response.total;
+    totalRecords.value = response.total
   } catch (error) {
-    console.error("获取情绪记录失败", error);
-    ElMessage.error("获取情绪记录失败，请稍后再试");
+    console.error('获取情绪记录失败', error)
+    ElMessage.error('获取情绪记录失败，请稍后再试')
   } finally {
-    hasFetchedRecords.value = true;
-    isLoading.value = false;
+    hasFetchedRecords.value = true
+    isLoading.value = false
   }
-};
+}
 
 // 加载更多
 const loadMore = async () => {
   if (!isLoading.value && hasMore.value) {
-    currentPage.value++;
-    await fetchMoodRecords();
+    currentPage.value++
+    await fetchMoodRecords()
   }
-};
+}
 
 // 设置时间筛选
 const setTimeFilter = (filterKey: string) => {
-  selectedTimeFilter.value = filterKey;
-  if (filterKey !== "custom") {
-    customStartDate.value = "";
-    customEndDate.value = "";
+  selectedTimeFilter.value = filterKey
+  if (filterKey !== 'custom') {
+    customStartDate.value = ''
+    customEndDate.value = ''
   }
-};
+}
 
 // 处理自定义日期变化
 const handleCustomDateChange = () => {
   if (customStartDate.value && customEndDate.value) {
-    const start = new Date(customStartDate.value);
-    const end = new Date(customEndDate.value);
+    const start = new Date(customStartDate.value)
+    const end = new Date(customEndDate.value)
     if (start > end) {
-      customEndDate.value = customStartDate.value;
+      customEndDate.value = customStartDate.value
     }
   }
-};
+}
 
 // 切换情绪类型筛选
 const toggleMoodFilter = (moodType: string) => {
-  const index = selectedMoodFilters.value.indexOf(moodType);
+  const index = selectedMoodFilters.value.indexOf(moodType)
   if (index > -1) {
-    selectedMoodFilters.value.splice(index, 1);
+    selectedMoodFilters.value.splice(index, 1)
   } else {
-    selectedMoodFilters.value.push(moodType);
+    selectedMoodFilters.value.push(moodType)
   }
-};
+}
 
 // 清除情绪类型筛选
 const clearMoodFilters = () => {
-  selectedMoodFilters.value = [];
-};
+  selectedMoodFilters.value = []
+}
 
 // 重置筛选
 const resetFilters = () => {
-  selectedTimeFilter.value = "thisMonth";
-  customStartDate.value = "";
-  customEndDate.value = "";
-  selectedMoodFilters.value = [];
-  currentPage.value = 1;
-  fetchMoodRecords();
-};
+  selectedTimeFilter.value = 'thisMonth'
+  customStartDate.value = ''
+  customEndDate.value = ''
+  selectedMoodFilters.value = []
+  currentPage.value = 1
+  fetchMoodRecords()
+}
 
 // 获取本托项目大小
 const getItemSize = (record: MoodRecord, index: number) => {
   // 基于情绪强度和多种情绪判断重要性
-  const hasMultipleEmotions = record.moodType.length > 1;
-  const highIntensity = record.intensity && record.intensity >= 8;
-  const isImportant = hasMultipleEmotions || highIntensity;
+  const hasMultipleEmotions = record.moodType.length > 1
+  const highIntensity = record.intensity && record.intensity >= 8
+  const isImportant = hasMultipleEmotions || highIntensity
 
   // 前几个记录也显示得更大
-  const isRecent = index < 3;
+  const isRecent = index < 3
 
-  if (isImportant && isRecent) return "large";
-  if (isImportant || isRecent) return "medium";
-  return "small";
-};
+  if (isImportant && isRecent) return 'large'
+  if (isImportant || isRecent) return 'medium'
+  return 'small'
+}
 
 // 获取日期
 const getDay = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.getDate();
-};
+  const date = new Date(dateString)
+  return date.getDate()
+}
 
 const getMonth = (dateString: string) => {
-  const date = new Date(dateString);
+  const date = new Date(dateString)
   const months = [
-    "1月",
-    "2月",
-    "3月",
-    "4月",
-    "5月",
-    "6月",
-    "7月",
-    "8月",
-    "9月",
-    "10月",
-    "11月",
-    "12月",
-  ];
-  return months[date.getMonth()];
-};
+    '1月',
+    '2月',
+    '3月',
+    '4月',
+    '5月',
+    '6月',
+    '7月',
+    '8月',
+    '9月',
+    '10月',
+    '11月',
+    '12月',
+  ]
+  return months[date.getMonth()]
+}
 
 // 获取主要触发因素
 const getMainTrigger = (record: MoodRecord) => {
-  const tags = getTags(record);
-  return tags.length > 0 ? tags[0] : "无";
-};
+  const tags = getTags(record)
+  return tags.length > 0 ? tags[0] : '无'
+}
 
 // 获取标签
 const getTags = (record: MoodRecord) => {
-  const tags: string[] = [];
+  const tags: string[] = []
   if (record.trigger) {
-    tags.push(...record.trigger.split(",").map((t) => t.trim()));
+    tags.push(...record.trigger.split(',').map((t) => t.trim()))
   }
   if (record.tags && Array.isArray(record.tags)) {
-    tags.push(...record.tags);
+    tags.push(...record.tags)
   }
-  return tags.filter((tag) => tag).slice(0, 3);
-};
+  return tags.filter((tag) => tag).slice(0, 3)
+}
 
 // 截断文本
 const truncateText = (text: string, maxLength: number) => {
-  if (!text) return "";
-  return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
-};
+  if (!text) return ''
+  return text.length > maxLength ? text.substring(0, maxLength) + '...' : text
+}
 
 // 格式化日期
 const formatDate = (dateString: string) => {
-  return formatDateUtil(dateString);
-};
+  return formatDateUtil(dateString)
+}
 
 const formatDateDetail = (dateString?: string) => {
-  if (!dateString) return "";
-  return formatDateUtil(dateString);
-};
+  if (!dateString) return ''
+  return formatDateUtil(dateString)
+}
 
 // 获取情绪颜色
 const getMoodColor = (moodType: string) => {
-  const mood = moodTypes.find((m) => m.type === moodType);
-  return mood ? mood.color : "#999";
-};
+  const mood = moodTypes.find((m) => m.type === moodType)
+  return mood ? mood.color : '#999'
+}
 
 // 获取情绪名称
 const getMoodName = (moodType: string) => {
-  const mood = moodTypes.find((m) => m.type === moodType);
-  return mood ? mood.name : moodType;
-};
+  const mood = moodTypes.find((m) => m.type === moodType)
+  return mood ? mood.name : moodType
+}
 
 // 获取强度颜色
 const getIntensityColor = (intensity: number) => {
-  if (intensity <= 3) return "var(--mood-angry)";
-  if (intensity <= 6) return "var(--mood-happy)";
-  return "var(--mood-calm)";
-};
+  if (intensity <= 3) return 'var(--mood-angry)'
+  if (intensity <= 6) return 'var(--mood-happy)'
+  return 'var(--mood-calm)'
+}
 
 // 显示详情
 const showDetail = (record: MoodRecord) => {
-  selectedRecord.value = record;
-  showDetailDialog.value = true;
-};
+  selectedRecord.value = record
+  showDetailDialog.value = true
+}
 
 // 编辑记录
 const editRecord = (record: MoodRecord) => {
-  showDetailDialog.value = false;
+  showDetailDialog.value = false
   router.push({
-    path: "/mood/record",
-    query: { edit: "true", id: record.id },
-  });
-};
+    path: '/mood/record',
+    query: { edit: 'true', id: record.id },
+  })
+}
 
 const goToMoodRecord = () => {
-  router.push("/mood/record");
-};
+  router.push('/mood/record')
+}
 
 // 确认删除记录
 const confirmDeleteRecord = (record: MoodRecord) => {
-  ElMessageBox.confirm("确定要删除这条情绪记录吗？", "删除确认", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning",
+  ElMessageBox.confirm('确定要删除这条情绪记录吗？', '删除确认', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
   })
     .then(async () => {
       try {
-        const index = moodRecords.value.findIndex((r) => r.id === record.id);
+        const index = moodRecords.value.findIndex((r) => r.id === record.id)
         if (index > -1) {
-          moodRecords.value.splice(index, 1);
+          moodRecords.value.splice(index, 1)
         }
-        ElMessage.success("记录删除成功！");
+        ElMessage.success('记录删除成功！')
       } catch (error) {
-        console.error("删除失败", error);
-        ElMessage.error("删除失败，请稍后再试");
+        console.error('删除失败', error)
+        ElMessage.error('删除失败，请稍后再试')
       }
     })
     .catch(() => {
       // 取消删除
-    });
-};
+    })
+}
 
 // 组件挂载时获取数据
 onMounted(() => {
-  fetchMoodRecords();
-});
+  fetchMoodRecords()
+})
 </script>
 
 <style scoped lang="scss">
-@use "@/assets/styles/theme.scss" as *;
+@use '@/assets/styles/theme.scss' as *;
 
 .mood-archive {
   padding: 20px;
@@ -758,11 +712,7 @@ onMounted(() => {
       position: absolute;
       top: 16px;
       right: 16px;
-      background: linear-gradient(
-        135deg,
-        var(--primary-color),
-        var(--secondary-color)
-      );
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
       color: white;
       border-radius: $border-radius-md;
       padding: 8px 12px;
@@ -894,7 +844,7 @@ onMounted(() => {
         font-weight: 600;
         color: var(--text-color);
         margin-bottom: 12px;
-        font-family: "Noto Serif SC", serif;
+        font-family: 'Noto Serif SC', serif;
       }
 
       .detail-emotions {

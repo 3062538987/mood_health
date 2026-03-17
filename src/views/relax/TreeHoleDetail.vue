@@ -1,19 +1,13 @@
 <template>
-  <div class="post-detail" v-if="post">
+  <div v-if="post" class="post-detail">
     <h1>{{ post.title }}</h1>
     <div class="meta">
-      <span
-        >发布者：{{ post.isAnonymous ? "匿名" : post.username || "用户" }}</span
-      >
+      <span>发布者：{{ post.isAnonymous ? '匿名' : post.username || '用户' }}</span>
       <span>{{ formatDate(post.createdAt) }}</span>
     </div>
     <div class="content">{{ post.content }}</div>
     <div class="actions">
-      <button
-        class="like-btn"
-        :class="{ active: post.liked }"
-        @click="handleLike"
-      >
+      <button class="like-btn" :class="{ active: post.liked }" @click="handleLike">
         <span :class="post.liked ? 'fas fa-heart' : 'far fa-heart'"></span>
         {{ post.likes }}
       </button>
@@ -22,7 +16,7 @@
     <!-- 评论列表 -->
     <CommentList
       :comments="comments"
-      :postId="postId"
+      :post-id="postId"
       @submit-comment="handleSubmitComment"
       @comment-updated="handleCommentUpdated"
     />
@@ -30,66 +24,62 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { useRoute } from "vue-router";
-import CommentList from "@/components/treehole/CommentList.vue";
-import { usePosts } from "@/composables/usePosts";
-import { useComments } from "@/composables/useComments";
-import type { Post } from "@/types/post";
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import CommentList from '@/components/treehole/CommentList.vue'
+import { usePosts } from '@/composables/usePosts'
+import { useComments } from '@/composables/useComments'
+import type { Post } from '@/types/post'
 
-const route = useRoute();
-const postId = Number(route.params.id);
-const post = ref<Post | null>(null);
+const route = useRoute()
+const postId = Number(route.params.id)
+const post = ref<Post | null>(null)
 
-const { getPost, likePostById } = usePosts();
-const { comments, loadComments, createNewComment } = useComments();
+const { getPost, likePostById } = usePosts()
+const { comments, loadComments, createNewComment } = useComments()
 
 const loadDetail = async () => {
-  const postData = await getPost(postId);
+  const postData = await getPost(postId)
   if (postData) {
-    post.value = postData;
-    await loadComments(postId);
+    post.value = postData
+    await loadComments(postId)
   }
-};
+}
 
 const handleLike = async () => {
-  const likes = await likePostById(postId);
+  const likes = await likePostById(postId)
   if (likes !== null && post.value) {
-    post.value.likes = likes;
-    post.value.liked = !post.value.liked;
+    post.value.likes = likes
+    post.value.liked = !post.value.liked
   }
-};
+}
 
 const handleSubmitComment = async (content: string, isAnonymous: boolean) => {
-  const success = await createNewComment(postId, content, isAnonymous);
+  const success = await createNewComment(postId, content, isAnonymous)
   if (success) {
-    await loadComments(postId);
+    await loadComments(postId)
   }
-};
+}
 
-const handleCommentUpdated = (
-  commentId: number,
-  likes: number,
-  liked: boolean,
-) => {
-  const comment = comments.value.find((c) => c.id === commentId);
+const handleCommentUpdated = (commentId: number, likes: number, liked: boolean) => {
+  const comment = comments.value.find((c) => c.id === commentId)
   if (comment) {
-    (comment as any).like_count = likes;
-    (comment as any).liked = liked;
+    ;(comment as any).like_count = likes
+    ;(comment as any).liked = liked
   }
-};
+}
 
 const formatDate = (dateStr: string) => {
-  if (!dateStr) return "";
-  const date = new Date(dateStr);
-  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-};
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
+}
 
-onMounted(loadDetail);
+onMounted(loadDetail)
 </script>
 
 <style scoped lang="scss">
-@use "@/assets/styles/theme.scss" as *;
+@use '@/assets/styles/theme.scss' as *;
 
 .post-detail {
   max-width: 800px;

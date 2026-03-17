@@ -13,6 +13,7 @@ import {
   getCommentsByPostId,
   likeComment,
 } from "../models/commentModel";
+import logger from "../utils/logger";
 import {
   filterContent,
   shouldAutoReject,
@@ -74,8 +75,10 @@ export const getPostsHandler = async (req: Request, res: Response) => {
     const posts = await getPosts(page, pageSize);
     res.status(200).json({ code: 0, data: posts });
   } catch (error) {
-    console.error("获取帖子列表失败:", error);
-    res.status(500).json({ code: 500, message: "服务器内部错误" });
+    logger.error("获取帖子列表失败", { error, query: req.query });
+    res
+      .status(500)
+      .json({ code: 500, message: "获取帖子列表失败，请稍后重试" });
   }
 };
 
@@ -100,6 +103,22 @@ export const getPostByIdHandler = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("获取帖子详情失败:", error);
     res.status(500).json({ code: 500, message: "服务器内部错误" });
+  }
+};
+
+export const getCommentsHandler = async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id as string);
+
+    if (isNaN(id)) {
+      return res.status(400).json({ code: 400, message: "无效的帖子ID" });
+    }
+
+    const comments = await getCommentsByPostId(id);
+    res.status(200).json({ code: 0, data: comments });
+  } catch (error) {
+    logger.error("获取评论列表失败", { error, postId: req.params.id });
+    res.status(500).json({ code: 500, message: "获取评论失败，请稍后重试" });
   }
 };
 

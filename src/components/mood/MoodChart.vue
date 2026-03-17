@@ -7,56 +7,56 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from "vue";
-import { init, type EChartsType } from "@/utils/echarts";
-import { MoodTrendResponse } from "@/types/mood";
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { init, type EChartsType } from '@/utils/echarts'
+import { MoodTrendResponse } from '@/types/mood'
 
 interface ChartPoint {
-  date: string;
-  intensity: number;
-  x: number;
-  y: number;
-  note?: string;
-  triggers?: string[];
+  date: string
+  intensity: number
+  x: number
+  y: number
+  note?: string
+  triggers?: string[]
 }
 
 const props = defineProps<{
-  chartData: MoodTrendResponse | null;
-  loading: boolean;
-}>();
+  chartData: MoodTrendResponse | null
+  loading: boolean
+}>()
 
 const emit = defineEmits<{
-  (e: "hover-point", point: ChartPoint): void;
-  (e: "leave-point"): void;
-}>();
+  (e: 'hover-point', point: ChartPoint): void
+  (e: 'leave-point'): void
+}>()
 
-const chartRef = ref<HTMLElement | null>(null);
-const chart = ref<EChartsType | null>(null);
+const chartRef = ref<HTMLElement | null>(null)
+const chart = ref<EChartsType | null>(null)
 
 // 初始化图表
 const initChart = () => {
-  if (!chartRef.value) return;
+  if (!chartRef.value) return
 
   if (!chart.value) {
-    chart.value = init(chartRef.value);
+    chart.value = init(chartRef.value)
   }
 
-  updateChart();
-};
+  updateChart()
+}
 
 // 更新图表
 const updateChart = () => {
-  if (!chart.value || !props.chartData) return;
+  if (!chart.value || !props.chartData) return
 
-  const data = props.chartData;
+  const data = props.chartData
 
   const option = {
     tooltip: {
-      trigger: "axis",
+      trigger: 'axis',
       axisPointer: {
-        type: "cross",
+        type: 'cross',
         label: {
-          backgroundColor: "#6a7985",
+          backgroundColor: '#6a7985',
         },
       },
     },
@@ -65,18 +65,18 @@ const updateChart = () => {
       top: 30,
     },
     grid: {
-      left: "3%",
-      right: "4%",
-      bottom: "3%",
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
       containLabel: true,
     },
     xAxis: {
-      type: "category",
+      type: 'category',
       boundaryGap: false,
       data: data.labels || [],
     },
     yAxis: {
-      type: "value",
+      type: 'value',
       min: 0,
       max: 5,
       interval: 1,
@@ -84,25 +84,25 @@ const updateChart = () => {
     series:
       data.datasets?.map((dataset) => ({
         name: dataset.name,
-        type: "line",
-        stack: "Total",
+        type: 'line',
+        stack: 'Total',
         areaStyle: {},
         emphasis: {
-          focus: "series",
+          focus: 'series',
         },
         data: dataset.data || [],
       })) || [],
-  };
+  }
 
-  chart.value.setOption(option);
+  chart.value.setOption(option)
 
-  chart.value.off("mousemove");
-  chart.value.off("mouseout");
+  chart.value.off('mousemove')
+  chart.value.off('mouseout')
 
-  chart.value.on("mousemove", (params: unknown) => {
-    const point = params as { dataIndex: number; componentType: string };
-    if (point.componentType === "series" && data.data) {
-      const chartData = data.data[point.dataIndex];
+  chart.value.on('mousemove', (params: unknown) => {
+    const point = params as { dataIndex: number; componentType: string }
+    if (point.componentType === 'series' && data.data) {
+      const chartData = data.data[point.dataIndex]
       const chartPoint: ChartPoint = {
         date: chartData.date,
         intensity: chartData.intensity,
@@ -110,41 +110,41 @@ const updateChart = () => {
         y: 0,
         note: chartData.note,
         triggers: chartData.triggers,
-      };
-      emit("hover-point", chartPoint);
+      }
+      emit('hover-point', chartPoint)
     }
-  });
+  })
 
-  chart.value.on("mouseout", () => {
-    emit("leave-point");
-  });
-};
+  chart.value.on('mouseout', () => {
+    emit('leave-point')
+  })
+}
 
 // 监听窗口大小变化
 const handleResize = () => {
-  chart.value?.resize();
-};
+  chart.value?.resize()
+}
 
 // 监听数据变化
 watch(
   () => props.chartData,
   () => {
-    updateChart();
+    updateChart()
   },
-  { deep: true },
-);
+  { deep: true }
+)
 
 // 生命周期钩子
 onMounted(() => {
-  initChart();
-  window.addEventListener("resize", handleResize);
-});
+  initChart()
+  window.addEventListener('resize', handleResize)
+})
 
 // 组件卸载时清理
 onUnmounted(() => {
-  window.removeEventListener("resize", handleResize);
-  chart.value?.dispose();
-});
+  window.removeEventListener('resize', handleResize)
+  chart.value?.dispose()
+})
 </script>
 
 <style scoped lang="scss">

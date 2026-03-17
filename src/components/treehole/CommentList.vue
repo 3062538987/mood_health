@@ -2,102 +2,81 @@
   <div class="comments">
     <h3>评论 ({{ comments.length }})</h3>
     <div class="comment-form">
-      <textarea
-        v-model="newComment"
-        placeholder="写下你的评论..."
-        :maxlength="500"
-      ></textarea>
+      <textarea v-model="newComment" placeholder="写下你的评论..." :maxlength="500"></textarea>
       <div class="form-actions">
         <div class="form-group">
-          <label>
-            <input type="checkbox" v-model="isAnonymous" /> 匿名评论
-          </label>
+          <label> <input v-model="isAnonymous" type="checkbox" /> 匿名评论 </label>
           <span class="char-count">{{ newComment.length }}/500</span>
         </div>
-        <button @click="submitComment" :disabled="!newComment.trim()">
-          发表评论
-        </button>
+        <button :disabled="!newComment.trim()" @click="submitComment">发表评论</button>
       </div>
     </div>
     <div v-for="comment in comments" :key="comment.id" class="comment">
       <div class="comment-header">
-        <strong>{{
-          comment.isAnonymous ? "匿名" : comment.username || "用户"
-        }}</strong>
+        <strong>{{ comment.isAnonymous ? '匿名' : comment.username || '用户' }}</strong>
         <span class="time">{{ formatDate(comment.createdAt) }}</span>
       </div>
       <p>{{ comment.content }}</p>
       <div class="comment-actions">
-        <button
-          class="like-btn"
-          :class="{ active: comment.liked }"
-          @click="handleLike(comment)"
-        >
+        <button class="like-btn" :class="{ active: comment.liked }" @click="handleLike(comment)">
           <span :class="comment.liked ? 'fas fa-heart' : 'far fa-heart'"></span>
           {{ comment.like_count || 0 }}
         </button>
       </div>
     </div>
-    <div v-if="comments.length === 0" class="no-comments">
-      暂无评论，快来抢沙发吧~
-    </div>
+    <div v-if="comments.length === 0" class="no-comments">暂无评论，快来抢沙发吧~</div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { ElMessage } from "element-plus";
-import type { Comment } from "@/types/post";
-import { likeComment } from "@/api/post";
+import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import type { Comment } from '@/types/post'
+import { likeComment } from '@/api/post'
 
 const props = defineProps<{
-  comments: Comment[];
-  postId: number;
-}>();
+  comments: Comment[]
+  postId: number
+}>()
 
-const newComment = ref("");
-const isAnonymous = ref(false);
+const newComment = ref('')
+const isAnonymous = ref(false)
 
 const emit = defineEmits<{
-  (e: "submit-comment", content: string, isAnonymous: boolean): void;
-  (
-    e: "comment-updated",
-    commentId: number,
-    likes: number,
-    liked: boolean,
-  ): void;
-}>();
+  (e: 'submit-comment', content: string, isAnonymous: boolean): void
+  (e: 'comment-updated', commentId: number, likes: number, liked: boolean): void
+}>()
 
 const submitComment = () => {
-  if (!newComment.value.trim()) return;
+  if (!newComment.value.trim()) return
   if (newComment.value.length > 500) {
-    ElMessage.warning("评论内容不能超过500字");
-    return;
+    ElMessage.warning('评论内容不能超过500字')
+    return
   }
-  emit("submit-comment", newComment.value, isAnonymous.value);
-  newComment.value = "";
-  isAnonymous.value = false;
-};
+  emit('submit-comment', newComment.value, isAnonymous.value)
+  newComment.value = ''
+  isAnonymous.value = false
+}
 
 const handleLike = async (comment: Comment) => {
   try {
-    const res = await likeComment(comment.id);
-    emit("comment-updated", comment.id, res.like_count, res.liked);
+    const res = await likeComment(comment.id)
+    emit('comment-updated', comment.id, res.like_count, res.liked)
   } catch (error) {
-    console.error("点赞评论失败:", error);
+    console.error('点赞评论失败:', error)
   }
-};
+}
 
 const formatDate = (dateStr: string) => {
-  if (!dateStr) return "";
-  const date = new Date(dateStr);
-  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-};
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
+}
 </script>
 
 <style scoped lang="scss">
-@use "sass:color";
-@use "@/assets/styles/theme.scss" as *;
+@use 'sass:color';
+@use '@/assets/styles/theme.scss' as *;
 
 .comments {
   margin-top: 30px;

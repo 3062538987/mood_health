@@ -1,10 +1,10 @@
 <template>
   <div v-if="newAchievements.length > 0" class="achievement-notifications">
-    <div 
-      v-for="(achievement, index) in newAchievements" 
+    <div
+      v-for="(achievement, index) in newAchievements"
       :key="achievement.id"
       class="achievement-notification"
-      :class="{ 'show': true }"
+      :class="{ show: true }"
       @click="navigateToAchievements"
     >
       <div class="notification-icon" :class="achievement.achievement.level">
@@ -21,59 +21,63 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import useAchievementStore from '@/stores/achievementStore';
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import useAchievementStore from '@/stores/achievementStore'
 
-const router = useRouter();
-const achievementStore = useAchievementStore();
+const router = useRouter()
+const achievementStore = useAchievementStore()
 
-const newAchievements = computed(() => achievementStore.newAchievements);
+const newAchievements = computed(() => achievementStore.newAchievements)
 
 // 方法
 function getAchievementIcon(type: string): string {
   const iconMap: Record<string, string> = {
-    'first_use': '🎉',
-    'wooden_fish': '木鱼',
-    'meditation': '🧘',
-    'game': '🎮',
-    'all_activities': '🌟',
-    'streak': '🔥'
-  };
-  return iconMap[type] || '🏅';
+    first_use: '🎉',
+    wooden_fish: '木鱼',
+    meditation: '🧘',
+    game: '🎮',
+    all_activities: '🌟',
+    streak: '🔥',
+  }
+  return iconMap[type] || '🏅'
 }
 
 function getLevelName(level: string): string {
   const levelMap: Record<string, string> = {
-    'bronze': '青铜',
-    'silver': '白银',
-    'gold': '黄金'
-  };
-  return levelMap[level] || level;
+    bronze: '青铜',
+    silver: '白银',
+    gold: '黄金',
+  }
+  return levelMap[level] || level
 }
 
 function navigateToAchievements() {
-  router.push('/relax/achievements');
-  achievementStore.clearNewAchievements();
+  router.push('/relax/achievements')
+  achievementStore.clearNewAchievements()
 }
 
 function closeNotification(index: number) {
   // 从新成就列表中移除
-  const updatedAchievements = [...newAchievements.value];
-  updatedAchievements.splice(index, 1);
+  const updatedAchievements = [...newAchievements.value]
+  updatedAchievements.splice(index, 1)
   // 这里需要修改store中的newAchievements，暂时直接调用clearNewAchievements
-  achievementStore.clearNewAchievements();
+  achievementStore.clearNewAchievements()
 }
 
 // 监听新成就
-watch(newAchievements, (newVal) => {
-  if (newVal.length > 0) {
-    // 3秒后自动关闭通知
-    setTimeout(() => {
-      achievementStore.clearNewAchievements();
-    }, 3000);
-  }
-}, { deep: true });
+watch(
+  newAchievements,
+  (newVal) => {
+    if (newVal.length > 0) {
+      // 3秒后自动关闭通知
+      setTimeout(() => {
+        achievementStore.clearNewAchievements()
+      }, 3000)
+    }
+  },
+  { deep: true }
+)
 </script>
 
 <style scoped lang="scss">

@@ -1,11 +1,11 @@
-import request from "@/utils/request";
+import request from '@/utils/request'
 import type {
   Activity,
   CreateActivityData,
   ActivityResponse,
   ActivityFilter,
   ActivityListResponse,
-} from "@/types/activity";
+} from '@/types/activity'
 
 /**
  * 将后端蛇形命名转换为前端驼峰命名
@@ -23,15 +23,13 @@ const convertToCamelCase = (data: ActivityResponse): Activity => {
     imageUrl: data.image_url,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
-  };
-};
+  }
+}
 
 /**
  * 将前端驼峰命名转换为后端蛇形命名
  */
-const convertToSnakeCase = (
-  data: CreateActivityData,
-): Record<string, unknown> => {
+const convertToSnakeCase = (data: CreateActivityData): Record<string, unknown> => {
   return {
     title: data.title,
     description: data.description,
@@ -40,8 +38,8 @@ const convertToSnakeCase = (
     maxParticipants: data.maxParticipants,
     location: data.location,
     imageUrl: data.imageUrl,
-  };
-};
+  }
+}
 
 /**
  * 获取活动列表（支持筛选）
@@ -49,37 +47,37 @@ const convertToSnakeCase = (
 export const getActivities = async (
   page = 1,
   limit = 10,
-  filter: ActivityFilter = {},
+  filter: ActivityFilter = {}
 ): Promise<ActivityListResponse> => {
-  const params: Record<string, unknown> = { page, limit };
+  const params: Record<string, unknown> = { page, limit }
 
-  if (filter.title) params.title = filter.title;
-  if (filter.location) params.location = filter.location;
-  if (filter.startDate) params.startDate = filter.startDate;
-  if (filter.endDate) params.endDate = filter.endDate;
+  if (filter.title) params.title = filter.title
+  if (filter.location) params.location = filter.location
+  if (filter.startDate) params.startDate = filter.startDate
+  if (filter.endDate) params.endDate = filter.endDate
   if (filter.status && filter.status.length > 0) {
-    params.status = filter.status.join(",");
+    params.status = filter.status.join(',')
   }
 
   const response = await request<{
-    data: ActivityResponse[];
+    data: ActivityResponse[]
     pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-    };
+      page: number
+      limit: number
+      total: number
+      totalPages: number
+    }
   }>({
     url: `/api/activities/list`,
-    method: "get",
+    method: 'get',
     params,
-  });
+  })
 
   return {
     data: response.data.map(convertToCamelCase),
     pagination: response.pagination,
-  };
-};
+  }
+}
 
 /**
  * 获取活动详情
@@ -87,10 +85,10 @@ export const getActivities = async (
 export const getActivityDetail = async (id: number): Promise<Activity> => {
   const data = await request<ActivityResponse>({
     url: `/api/activities/detail/${id}`,
-    method: "get",
-  });
-  return convertToCamelCase(data);
-};
+    method: 'get',
+  })
+  return convertToCamelCase(data)
+}
 
 /**
  * 报名活动
@@ -98,58 +96,54 @@ export const getActivityDetail = async (id: number): Promise<Activity> => {
 export const joinActivity = async (id: number): Promise<void> => {
   await request({
     url: `/api/activities/join/${id}`,
-    method: "post",
-  });
-};
+    method: 'post',
+  })
+}
 
 /**
  * 获取我已报名的活动
  */
 export const getMyJoinedActivities = async (): Promise<Activity[]> => {
   const data = await request<ActivityResponse[]>({
-    url: "/api/activities/my-joined",
-    method: "get",
-  });
-  return data.map(convertToCamelCase);
-};
+    url: '/api/activities/my-joined',
+    method: 'get',
+  })
+  return data.map(convertToCamelCase)
+}
 
 /**
  * 创建活动（管理员）
  */
-export const createActivity = async (
-  data: CreateActivityData,
-): Promise<void> => {
+export const createActivity = async (data: CreateActivityData): Promise<void> => {
   await request({
-    url: "/api/activities/create",
-    method: "post",
+    url: '/api/activities/create',
+    method: 'post',
     data: convertToSnakeCase(data),
-  });
-};
+  })
+}
 
 /**
  * 更新活动（管理员）
  */
 export const updateActivity = async (
   id: number,
-  data: Partial<CreateActivityData>,
+  data: Partial<CreateActivityData>
 ): Promise<void> => {
-  const snakeCaseData: Record<string, unknown> = {};
-  if (data.title !== undefined) snakeCaseData.title = data.title;
-  if (data.description !== undefined)
-    snakeCaseData.description = data.description;
-  if (data.startTime !== undefined) snakeCaseData.startTime = data.startTime;
-  if (data.endTime !== undefined) snakeCaseData.endTime = data.endTime;
-  if (data.maxParticipants !== undefined)
-    snakeCaseData.maxParticipants = data.maxParticipants;
-  if (data.location !== undefined) snakeCaseData.location = data.location;
-  if (data.imageUrl !== undefined) snakeCaseData.imageUrl = data.imageUrl;
+  const snakeCaseData: Record<string, unknown> = {}
+  if (data.title !== undefined) snakeCaseData.title = data.title
+  if (data.description !== undefined) snakeCaseData.description = data.description
+  if (data.startTime !== undefined) snakeCaseData.startTime = data.startTime
+  if (data.endTime !== undefined) snakeCaseData.endTime = data.endTime
+  if (data.maxParticipants !== undefined) snakeCaseData.maxParticipants = data.maxParticipants
+  if (data.location !== undefined) snakeCaseData.location = data.location
+  if (data.imageUrl !== undefined) snakeCaseData.imageUrl = data.imageUrl
 
   await request({
     url: `/api/activities/update/${id}`,
-    method: "put",
+    method: 'put',
     data: snakeCaseData,
-  });
-};
+  })
+}
 
 /**
  * 删除活动（管理员）
@@ -157,45 +151,45 @@ export const updateActivity = async (
 export const deleteActivity = async (id: number): Promise<void> => {
   await request({
     url: `/api/activities/delete/${id}`,
-    method: "delete",
-  });
-};
+    method: 'delete',
+  })
+}
 
 /**
  * 参与者信息
  */
 export interface Participant {
-  id: number;
-  username: string;
-  nickname: string;
-  avatar: string;
-  joined_at: string;
+  id: number
+  username: string
+  nickname: string
+  avatar: string
+  joined_at: string
 }
 
 /**
  * 活动详情（包含参与者列表）
  */
 export interface ActivityDetailWithParticipants {
-  activity: Activity;
-  participants: Participant[];
+  activity: Activity
+  participants: Participant[]
 }
 
 /**
  * 获取活动详情（包含参与者列表）
  */
 export const getActivityDetailWithParticipants = async (
-  id: number,
+  id: number
 ): Promise<ActivityDetailWithParticipants> => {
   const response = await request<{
-    activity: ActivityResponse;
-    participants: Participant[];
+    activity: ActivityResponse
+    participants: Participant[]
   }>({
     url: `/api/activities/detail-with-participants/${id}`,
-    method: "get",
-  });
+    method: 'get',
+  })
 
   return {
     activity: convertToCamelCase(response.activity),
     participants: response.participants,
-  };
-};
+  }
+}

@@ -1,12 +1,7 @@
 <template>
-  <div class="sub-nav-container" v-if="items && items.length">
+  <div v-if="items && items.length" class="sub-nav-container">
     <nav class="sub-nav">
-      <router-link
-        v-for="item in items"
-        :key="item.path"
-        :to="item.path"
-        active-class="active"
-      >
+      <router-link v-for="item in items" :key="item.path" :to="item.path" active-class="active">
         <i :class="item.icon"></i> {{ item.name }}
       </router-link>
     </nav>
@@ -17,8 +12,8 @@
 defineProps({
   items: {
     type: Array,
-    default: () => []
-  }
+    default: () => [],
+  },
 })
 </script>
 
@@ -35,7 +30,7 @@ defineProps({
   padding: 0 2rem;
   display: flex;
   gap: 2rem;
-  
+
   a {
     color: #5a6b60;
     text-decoration: none;
@@ -45,15 +40,15 @@ defineProps({
     gap: 0.4rem;
     border-bottom: 2px solid transparent;
     transition: all 0.2s;
-    
+
     &:hover {
-      color: #6B9080;
-      border-bottom-color: #6B9080;
+      color: #6b9080;
+      border-bottom-color: #6b9080;
     }
-    
+
     &.active {
-      color: #6B9080;
-      border-bottom-color: #6B9080;
+      color: #6b9080;
+      border-bottom-color: #6b9080;
       font-weight: 600;
     }
   }

@@ -27,7 +27,7 @@
           {{ userStore.error }}
         </div>
         <button type="submit" :disabled="userStore.loading" class="btn-login">
-          {{ userStore.loading ? "登录中..." : "登录" }}
+          {{ userStore.loading ? '登录中...' : '登录' }}
         </button>
       </form>
       <div class="footer">
@@ -39,24 +39,24 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from "vue";
-import { useRouter } from "vue-router";
-import { useUserStore } from "@/stores/userStore";
+import { reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/userStore'
 
-const router = useRouter();
-const userStore = useUserStore();
+const router = useRouter()
+const userStore = useUserStore()
 
 const form = reactive({
-  username: "",
-  password: "",
-});
+  username: '',
+  password: '',
+})
 
 const handleLogin = async () => {
-  const success = await userStore.login(form.username, form.password);
+  const success = await userStore.login(form.username, form.password)
   if (success) {
-    router.push("/");
+    router.push('/')
   }
-};
+}
 </script>
 
 <style scoped>
@@ -128,7 +128,9 @@ input:focus {
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .btn-login:hover:not(:disabled) {

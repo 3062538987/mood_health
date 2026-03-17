@@ -7,10 +7,10 @@ class StorageUtil {
    */
   setItem<T>(key: string, value: T): void {
     try {
-      const serializedValue = JSON.stringify(value);
-      localStorage.setItem(key, serializedValue);
+      const serializedValue = JSON.stringify(value)
+      localStorage.setItem(key, serializedValue)
     } catch (error) {
-      console.error('存储数据失败:', error);
+      console.error('存储数据失败:', error)
     }
   }
 
@@ -21,14 +21,14 @@ class StorageUtil {
    */
   getItem<T>(key: string): T | null {
     try {
-      const serializedValue = localStorage.getItem(key);
+      const serializedValue = localStorage.getItem(key)
       if (serializedValue === null) {
-        return null;
+        return null
       }
-      return JSON.parse(serializedValue) as T;
+      return JSON.parse(serializedValue) as T
     } catch (error) {
-      console.error('获取数据失败:', error);
-      return null;
+      console.error('获取数据失败:', error)
+      return null
     }
   }
 
@@ -38,9 +38,9 @@ class StorageUtil {
    */
   removeItem(key: string): void {
     try {
-      localStorage.removeItem(key);
+      localStorage.removeItem(key)
     } catch (error) {
-      console.error('删除数据失败:', error);
+      console.error('删除数据失败:', error)
     }
   }
 
@@ -49,11 +49,11 @@ class StorageUtil {
    */
   clear(): void {
     try {
-      localStorage.clear();
+      localStorage.clear()
     } catch (error) {
-      console.error('清空数据失败:', error);
+      console.error('清空数据失败:', error)
     }
   }
 }
 
-export default new StorageUtil();
+export default new StorageUtil()

@@ -6,7 +6,7 @@
     </header>
 
     <!-- 统计卡片 -->
-    <div class="stats-cards" v-if="statistics">
+    <div v-if="statistics" class="stats-cards">
       <div class="stat-card">
         <div class="stat-icon">⏱</div>
         <div class="stat-info">
@@ -34,9 +34,9 @@
     <div class="filter-section">
       <div class="date-filter">
         <label>日期范围：</label>
-        <input type="date" v-model="filter.startDate" />
+        <input v-model="filter.startDate" type="date" />
         <span>至</span>
-        <input type="date" v-model="filter.endDate" />
+        <input v-model="filter.endDate" type="date" />
       </div>
       <div class="activity-filter">
         <label>活动类型：</label>
@@ -49,14 +49,11 @@
           <option value="audio">音频放松</option>
         </select>
       </div>
-      <button @click="applyFilter" class="filter-btn">筛选</button>
+      <button class="filter-btn" @click="applyFilter">筛选</button>
     </div>
 
     <!-- 活动占比图表 -->
-    <div
-      class="chart-section"
-      v-if="statistics && statistics.activityBreakdown.length > 0"
-    >
+    <div v-if="statistics && statistics.activityBreakdown.length > 0" class="chart-section">
       <h3>活动占比</h3>
       <div ref="chartRef" class="chart-container"></div>
     </div>
@@ -64,48 +61,48 @@
     <!-- 记录列表 -->
     <div class="records-list">
       <h3>放松记录</h3>
-      <div v-if="isLoading" class="loading">加载中...</div>
-      <div v-else-if="records.length === 0" class="empty">暂无记录</div>
-      <div v-else class="record-list">
-        <div
-          v-for="record in records"
-          :key="record.id || record.startTime"
-          class="record-item"
-          @click="showRecordDetail(record)"
-        >
-          <div class="record-icon">
-            {{ getActivityIcon(record.activityType) }}
-          </div>
-          <div class="record-info">
-            <h4>{{ getActivityName(record.activityType) }}</h4>
-            <p class="record-time">
-              {{ formatDateTime(record.startTime) }} -
-              {{ formatDateTime(record.endTime) }}
-            </p>
-            <p class="record-duration">
-              时长：{{ formatDuration(getRecordDuration(record)) }}
-            </p>
-            <div class="record-metrics" v-if="record.metrics">
-              <span
-                v-for="(value, key) in record.metrics"
-                :key="key"
-                class="metric-tag"
-              >
-                {{ getMetricLabel(key) }}: {{ value }}
-              </span>
-            </div>
-          </div>
-          <div class="record-arrow">→</div>
-        </div>
+      <div v-if="isLoading" class="loading-skeleton" aria-label="加载中">
+        <div v-for="index in 3" :key="index" class="skeleton-row"></div>
       </div>
+      <transition name="empty-fade" mode="out-in">
+        <RelaxEmptyState
+          v-if="records.length === 0"
+          key="history-empty"
+          type="history"
+          action-text="去解压中心"
+          action-to="/relax/center"
+        />
+        <div v-else key="history-list" class="record-list">
+          <div
+            v-for="record in records"
+            :key="record.id || record.startTime"
+            class="record-item"
+            @click="showRecordDetail(record)"
+          >
+            <div class="record-icon">
+              {{ getActivityIcon(record.activityType) }}
+            </div>
+            <div class="record-info">
+              <h4>{{ getActivityName(record.activityType) }}</h4>
+              <p class="record-time">
+                {{ formatDateTime(record.startTime) }} -
+                {{ formatDateTime(record.endTime) }}
+              </p>
+              <p class="record-duration">时长：{{ formatDuration(getRecordDuration(record)) }}</p>
+              <div v-if="record.metrics" class="record-metrics">
+                <span v-for="(value, key) in record.metrics" :key="key" class="metric-tag">
+                  {{ getMetricLabel(key) }}: {{ value }}
+                </span>
+              </div>
+            </div>
+            <div class="record-arrow">→</div>
+          </div>
+        </div>
+      </transition>
     </div>
 
     <!-- 记录详情弹窗 -->
-    <div
-      v-if="selectedRecord"
-      class="record-detail-modal"
-      @click="closeRecordDetail"
-    >
+    <div v-if="selectedRecord" class="record-detail-modal" @click="closeRecordDetail">
       <div class="modal-content" @click.stop>
         <h3>记录详情</h3>
         <div class="detail-item">
@@ -131,85 +128,82 @@
         <div class="detail-item metrics">
           <label>活动指标：</label>
           <div class="metrics-list">
-            <div
-              v-for="(value, key) in selectedRecord.metrics"
-              :key="key"
-              class="metric-item"
-            >
+            <div v-for="(value, key) in selectedRecord.metrics" :key="key" class="metric-item">
               <span class="metric-key">{{ getMetricLabel(key) }}：</span>
               <span class="metric-value">{{ value }}</span>
             </div>
           </div>
         </div>
-        <button @click="closeRecordDetail" class="close-btn">关闭</button>
+        <button class="close-btn" @click="closeRecordDetail">关闭</button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
-import useRelaxStore from "@/stores/relaxStore";
-import type { RelaxRecord } from "@/api/relax";
-import { init, type EChartsType } from "@/utils/echarts";
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import useRelaxStore from '@/stores/relaxStore'
+import type { RelaxRecord } from '@/api/relax'
+import { init, type EChartsType } from '@/utils/echarts'
+import RelaxEmptyState from '@/components/relax/RelaxEmptyState.vue'
 
-const relaxStore = useRelaxStore();
-const records = ref<RelaxRecord[]>([]);
-const statistics = ref(relaxStore.statistics);
-const isLoading = ref(false);
-const chartRef = ref<HTMLElement | null>(null);
-const chartInstance = ref<EChartsType | null>(null);
-const selectedRecord = ref<RelaxRecord | null>(null);
+const relaxStore = useRelaxStore()
+const records = ref<RelaxRecord[]>([])
+const statistics = ref(relaxStore.statistics)
+const isLoading = ref(false)
+const chartRef = ref<HTMLElement | null>(null)
+const chartInstance = ref<EChartsType | null>(null)
+const selectedRecord = ref<RelaxRecord | null>(null)
 
 const filter = ref({
-  startDate: "",
-  endDate: "",
-  activityType: "",
-});
+  startDate: '',
+  endDate: '',
+  activityType: '',
+})
 
 // 初始化
 onMounted(async () => {
-  relaxStore.init();
-  await loadData();
-  initChart();
-  window.addEventListener("resize", handleResize);
-});
+  relaxStore.init()
+  await loadData()
+  initChart()
+  window.addEventListener('resize', handleResize)
+})
 
 onUnmounted(() => {
-  window.removeEventListener("resize", handleResize);
-  chartInstance.value?.dispose();
-});
+  window.removeEventListener('resize', handleResize)
+  chartInstance.value?.dispose()
+})
 
 // 加载数据
 async function loadData() {
-  isLoading.value = true;
+  isLoading.value = true
   try {
-    await relaxStore.fetchStatistics();
-    await relaxStore.fetchRecords();
-    records.value = relaxStore.records;
-    statistics.value = relaxStore.statistics;
+    await relaxStore.fetchStatistics()
+    await relaxStore.fetchRecords()
+    records.value = relaxStore.records
+    statistics.value = relaxStore.statistics
   } catch (error) {
-    console.error("加载数据失败:", error);
+    console.error('加载数据失败:', error)
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
 }
 
 // 应用筛选
 async function applyFilter() {
-  isLoading.value = true;
+  isLoading.value = true
   try {
     await relaxStore.fetchRecords({
       startDate: filter.value.startDate,
       endDate: filter.value.endDate,
       activityType: filter.value.activityType,
-    });
-    records.value = relaxStore.records;
-    updateChart();
+    })
+    records.value = relaxStore.records
+    updateChart()
   } catch (error) {
-    console.error("筛选数据失败:", error);
+    console.error('筛选数据失败:', error)
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
 }
 
@@ -217,10 +211,10 @@ async function applyFilter() {
 function initChart() {
   nextTick(() => {
     if (chartRef.value) {
-      chartInstance.value = init(chartRef.value);
-      updateChart();
+      chartInstance.value = init(chartRef.value)
+      updateChart()
     }
-  });
+  })
 }
 
 // 更新图表
@@ -229,126 +223,126 @@ function updateChart() {
     const data = statistics.value.activityBreakdown.map((item) => ({
       name: getActivityName(item.type),
       value: item.count,
-    }));
+    }))
 
     const option = {
       tooltip: {
-        trigger: "item",
-        formatter: "{a} <br/>{b}: {c} ({d}%)",
+        trigger: 'item',
+        formatter: '{a} <br/>{b}: {c} ({d}%)',
       },
       legend: {
-        orient: "vertical",
-        left: "left",
+        orient: 'vertical',
+        left: 'left',
         data: data.map((item) => item.name),
       },
       series: [
         {
-          name: "活动类型",
-          type: "pie",
-          radius: "50%",
-          center: ["50%", "50%"],
+          name: '活动类型',
+          type: 'pie',
+          radius: '50%',
+          center: ['50%', '50%'],
           data: data,
           emphasis: {
             itemStyle: {
               shadowBlur: 10,
               shadowOffsetX: 0,
-              shadowColor: "rgba(0, 0, 0, 0.5)",
+              shadowColor: 'rgba(0, 0, 0, 0.5)',
             },
           },
         },
       ],
-    };
+    }
 
-    chartInstance.value.setOption(option);
+    chartInstance.value.setOption(option)
   }
 }
 
 // 显示记录详情
 function showRecordDetail(record: RelaxRecord) {
-  selectedRecord.value = record;
+  selectedRecord.value = record
 }
 
 // 关闭记录详情
 function closeRecordDetail() {
-  selectedRecord.value = null;
+  selectedRecord.value = null
 }
 
 // 格式化日期时间
 function formatDateTime(dateTime: string) {
-  const date = new Date(dateTime);
-  return date.toLocaleString("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const date = new Date(dateTime)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 // 格式化时长
 function formatDuration(milliseconds: number) {
-  const seconds = Math.floor(milliseconds / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
+  const seconds = Math.floor(milliseconds / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
 
   if (hours > 0) {
-    return `${hours}小时${minutes % 60}分钟`;
+    return `${hours}小时${minutes % 60}分钟`
   } else if (minutes > 0) {
-    return `${minutes}分钟${seconds % 60}秒`;
+    return `${minutes}分钟${seconds % 60}秒`
   } else {
-    return `${seconds}秒`;
+    return `${seconds}秒`
   }
 }
 
 // 获取记录时长
 function getRecordDuration(record: RelaxRecord) {
-  const start = new Date(record.startTime).getTime();
-  const end = new Date(record.endTime).getTime();
-  return end - start;
+  const start = new Date(record.startTime).getTime()
+  const end = new Date(record.endTime).getTime()
+  return end - start
 }
 
 // 获取活动图标
 function getActivityIcon(activityType: string) {
   const icons: Record<string, string> = {
-    woodenFish: "🪘",
-    breathing: "🧘",
-    pinball: "🎮",
-    tetris: "🧩",
-    audio: "🎵",
-  };
-  return icons[activityType] || "📅";
+    woodenFish: '🪘',
+    breathing: '🧘',
+    pinball: '🎮',
+    tetris: '🧩',
+    audio: '🎵',
+  }
+  return icons[activityType] || '📅'
 }
 
 // 获取活动名称
 function getActivityName(activityType: string) {
   const names: Record<string, string> = {
-    woodenFish: "木鱼敲击",
-    breathing: "呼吸冥想",
-    pinball: "弹珠消砖",
-    tetris: "俄罗斯方块",
-    audio: "音频放松",
-  };
-  return names[activityType] || activityType;
+    woodenFish: '木鱼敲击',
+    breathing: '呼吸冥想',
+    pinball: '弹珠消砖',
+    tetris: '俄罗斯方块',
+    audio: '音频放松',
+  }
+  return names[activityType] || activityType
 }
 
 // 获取指标标签
 function getMetricLabel(key: string) {
   const labels: Record<string, string> = {
-    tapCount: "敲击次数",
-    focusLevel: "专注度",
-    rhythmStability: "呼吸节奏",
-    actualDuration: "实际时长",
-    finalScore: "解压得分",
-    destroyedBricks: "破坏砖块数",
-    audioType: "音频类型",
-    volume: "音量",
-  };
-  return labels[key] || key;
+    tapCount: '敲击次数',
+    focusLevel: '专注度',
+    rhythmStability: '呼吸节奏',
+    actualDuration: '实际时长',
+    finalScore: '解压得分',
+    destroyedBricks: '破坏砖块数',
+    audioType: '音频类型',
+    volume: '音量',
+  }
+  return labels[key] || key
 }
 
 // 监听窗口大小变化，调整图表
 function handleResize() {
-  chartInstance.value?.resize();
+  chartInstance.value?.resize()
 }
 </script>
 
@@ -532,11 +526,18 @@ function handleResize() {
       font-weight: 600;
     }
 
-    .loading,
-    .empty {
-      text-align: center;
-      padding: 40px 0;
-      color: #7f8c8d;
+    .loading-skeleton {
+      display: grid;
+      gap: 12px;
+      padding: 8px 0 16px;
+
+      .skeleton-row {
+        height: 80px;
+        border-radius: 12px;
+        background: linear-gradient(90deg, #edf2ff 25%, #f8f9ff 37%, #edf2ff 63%);
+        background-size: 400% 100%;
+        animation: shimmer 1.2s ease-in-out infinite;
+      }
     }
 
     .record-list {
@@ -713,6 +714,28 @@ function handleResize() {
         }
       }
     }
+  }
+}
+
+.empty-fade-enter-active,
+.empty-fade-leave-active {
+  transition:
+    opacity 0.24s ease,
+    transform 0.24s ease;
+}
+
+.empty-fade-enter-from,
+.empty-fade-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
   }
 }
 

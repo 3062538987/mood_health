@@ -34,11 +34,7 @@
         <div class="recent-emotions">
           <h4>近期高频情绪</h4>
           <div class="emotion-tags">
-            <div
-              class="emotion-tag"
-              v-for="(count, emotion) in recentEmotions"
-              :key="emotion"
-            >
+            <div v-for="(count, emotion) in recentEmotions" :key="emotion" class="emotion-tag">
               <span class="emotion-name">{{ emotion }}</span>
               <span class="emotion-count">{{ count }}次</span>
             </div>
@@ -71,8 +67,8 @@
             <div class="card-icon">📋</div>
             <h4 class="card-title">情绪调研</h4>
             <p class="card-description">参与情绪健康调研，解锁高级分析报告</p>
-            <div class="card-badge" v-if="!surveyCompleted">未参与</div>
-            <div class="card-badge completed" v-else>已完成</div>
+            <div v-if="!surveyCompleted" class="card-badge">未参与</div>
+            <div v-else class="card-badge completed">已完成</div>
           </div>
 
           <!-- 其他功能入口 -->
@@ -123,39 +119,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
-const router = useRouter();
+const router = useRouter()
 
 // 状态管理
-const surveyCompleted = ref(false); // 问卷完成状态
+const surveyCompleted = ref(false) // 问卷完成状态
 
 // 个人情绪主页数据
-const emotionScore = ref(85); // 情绪健康评分
+const emotionScore = ref(85) // 情绪健康评分
 const recentEmotions = ref({
   // 近期高频情绪
   平静: 4,
   焦虑: 2,
   开心: 3,
   压力: 1,
-});
-const groupActivityCount = ref(2); // 团体辅导参与记录
-const favoriteKnowledgeCount = ref(5); // 收藏的知识点
-const favoriteToolsCount = ref(3); // 收藏的解压工具
+})
+const groupActivityCount = ref(2) // 团体辅导参与记录
+const favoriteKnowledgeCount = ref(5) // 收藏的知识点
+const favoriteToolsCount = ref(3) // 收藏的解压工具
 
 // 前往问卷页面
 const goToSurvey = () => {
-  router.push("/improve/survey");
-};
+  router.push('/improve/survey')
+}
 
 // 模拟从localStorage获取问卷完成状态
 onMounted(() => {
-  const completed = localStorage.getItem("surveyCompleted");
+  const completed = localStorage.getItem('surveyCompleted')
   if (completed) {
-    surveyCompleted.value = JSON.parse(completed);
+    surveyCompleted.value = JSON.parse(completed)
   }
-});
+})
 </script>
 
 <style scoped lang="scss">

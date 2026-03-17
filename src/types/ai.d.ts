@@ -11,10 +11,10 @@
  * @property {string} suggestion - 情绪建议
  */
 export interface MoodAIAnalysisResult {
-  mood: string;
-  confidence: number;
-  emotions: Array<{ tag: string; score: number }>;
-  suggestion: string;
+  mood: string
+  confidence: number
+  emotions: Array<{ tag: string; score: number }>
+  suggestion: string
 }
 
 /**
@@ -25,9 +25,9 @@ export interface MoodAIAnalysisResult {
  * @property {string} trend - 趋势描述
  */
 export interface MoodTrendPrediction {
-  labels: string[];
-  data: number[];
-  trend: string;
+  labels: string[]
+  data: number[]
+  trend: string
 }
 
 /**
@@ -39,10 +39,10 @@ export interface MoodTrendPrediction {
  * @property {string} suggestion - 处理建议
  */
 export interface AIContentFilterResult {
-  isSafe: boolean;
-  detectedIssues: string[];
-  severity: 'low' | 'medium' | 'high';
-  suggestion: string;
+  isSafe: boolean
+  detectedIssues: string[]
+  severity: 'low' | 'medium' | 'high'
+  suggestion: string
 }
 
 /**
@@ -57,13 +57,13 @@ export interface AIContentFilterResult {
  * @property {number} relevance - 相关度（0-1）
  */
 export interface AIRecommendItem {
-  id: string;
-  type: 'music' | 'course' | 'activity';
-  title: string;
-  description: string;
-  url: string;
-  cover: string;
-  relevance: number;
+  id: string
+  type: 'music' | 'course' | 'activity'
+  title: string
+  description: string
+  url: string
+  cover: string
+  relevance: number
 }
 
 /**
@@ -74,7 +74,7 @@ export interface AIRecommendItem {
  * @property {string} explanation - 推荐说明
  */
 export interface AIRecommendResult {
-  items: AIRecommendItem[];
-  strategy: string;
-  explanation: string;
+  items: AIRecommendItem[]
+  strategy: string
+  explanation: string
 }

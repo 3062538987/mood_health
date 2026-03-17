@@ -13,9 +13,9 @@
  * isValidEmail("invalid-email"); // 返回 false
  */
 export const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
 
 /**
  * 手机号校验（中国大陆）
@@ -27,9 +27,9 @@ export const isValidEmail = (email: string): boolean => {
  * isValidPhone("12345"); // 返回 false
  */
 export const isValidPhone = (phone: string): boolean => {
-  const phoneRegex = /^1[3-9]\d{9}$/;
-  return phoneRegex.test(phone);
-};
+  const phoneRegex = /^1[3-9]\d{9}$/
+  return phoneRegex.test(phone)
+}
 
 /**
  * 密码强度校验
@@ -41,26 +41,24 @@ export const isValidPhone = (phone: string): boolean => {
  * getPasswordStrength("password123"); // 返回 'medium'
  * getPasswordStrength("P@ssw0rd123"); // 返回 'strong'
  */
-export const getPasswordStrength = (
-  password: string,
-): "weak" | "medium" | "strong" => {
-  let score = 0;
+export const getPasswordStrength = (password: string): 'weak' | 'medium' | 'strong' => {
+  let score = 0
 
   // 长度检查：密码长度是安全性的重要指标
-  if (password.length >= 8) score++; // 长度至少8位
-  if (password.length >= 12) score++; // 长度达到12位更安全
+  if (password.length >= 8) score++ // 长度至少8位
+  if (password.length >= 12) score++ // 长度达到12位更安全
 
   // 字符类型检查：混合使用不同类型的字符可以增加密码的复杂度
-  if (/\d/.test(password)) score++; // 包含数字
-  if (/[a-z]/.test(password)) score++; // 包含小写字母
-  if (/[A-Z]/.test(password)) score++; // 包含大写字母
-  if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++; // 包含特殊字符
+  if (/\d/.test(password)) score++ // 包含数字
+  if (/[a-z]/.test(password)) score++ // 包含小写字母
+  if (/[A-Z]/.test(password)) score++ // 包含大写字母
+  if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++ // 包含特殊字符
 
   // 根据得分返回密码强度等级
-  if (score <= 2) return "weak"; // 得分<=2：弱密码
-  if (score <= 4) return "medium"; // 得分3-4：中等强度密码
-  return "strong"; // 得分>=5：强密码
-};
+  if (score <= 2) return 'weak' // 得分<=2：弱密码
+  if (score <= 4) return 'medium' // 得分3-4：中等强度密码
+  return 'strong' // 得分>=5：强密码
+}
 
 /**
  * 用户名校验
@@ -74,9 +72,9 @@ export const getPasswordStrength = (
  */
 export const isValidUsername = (username: string): boolean => {
   // 用户名长度 3-20 位，只能包含字母、数字、下划线
-  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
-  return usernameRegex.test(username);
-};
+  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/
+  return usernameRegex.test(username)
+}
 
 /**
  * 验证码校验
@@ -89,21 +87,18 @@ export const isValidUsername = (username: string): boolean => {
  * isValidVerificationCode("12345"); // 返回 false（长度不对）
  * isValidVerificationCode("abc123"); // 返回 false（包含字母）
  */
-export const isValidVerificationCode = (
-  code: string,
-  length: number = 6,
-): boolean => {
-  const codeRegex = new RegExp(`^\d{${length}}$`);
-  return codeRegex.test(code);
-};
+export const isValidVerificationCode = (code: string, length: number = 6): boolean => {
+  const codeRegex = new RegExp(`^\d{${length}}$`)
+  return codeRegex.test(code)
+}
 
 /**
  * 表单校验结果接口
  * 定义表单校验的返回结果格式
  */
 export interface ValidationResult {
-  isValid: boolean; // 表单是否通过校验
-  errors: string[]; // 错误信息列表
+  isValid: boolean // 表单是否通过校验
+  errors: string[] // 错误信息列表
 }
 
 /**
@@ -123,22 +118,22 @@ export interface ValidationResult {
  */
 export const validateForm = <T extends Record<string, unknown>>(
   data: T,
-  rules: Record<keyof T, (value: unknown) => string | null>,
+  rules: Record<keyof T, (value: unknown) => string | null>
 ): ValidationResult => {
-  const errors: string[] = [];
+  const errors: string[] = []
 
   for (const [key, rule] of Object.entries(rules) as [
     keyof T,
     (value: unknown) => string | null,
   ][]) {
-    const error = rule(data[key]);
+    const error = rule(data[key])
     if (error) {
-      errors.push(error);
+      errors.push(error)
     }
   }
 
   return {
     isValid: errors.length === 0,
     errors,
-  };
-};
+  }
+}

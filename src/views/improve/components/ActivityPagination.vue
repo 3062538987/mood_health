@@ -18,58 +18,58 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed } from 'vue'
 
 interface Props {
-  currentPage: number;
-  pageSize: number;
-  total: number;
-  pageSizes?: number[];
-  layout?: string;
-  background?: boolean;
-  pagerCount?: number;
+  currentPage: number
+  pageSize: number
+  total: number
+  pageSizes?: number[]
+  layout?: string
+  background?: boolean
+  pagerCount?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
   pageSizes: () => [12, 24, 48],
-  layout: "total, sizes, prev, pager, next, jumper",
+  layout: 'total, sizes, prev, pager, next, jumper',
   background: true,
   pagerCount: 7,
-});
+})
 
 const emit = defineEmits<{
-  "update:currentPage": [page: number];
-  "update:pageSize": [size: number];
-  "change": [page: number, size: number];
-}>();
+  'update:currentPage': [page: number]
+  'update:pageSize': [size: number]
+  change: [page: number, size: number]
+}>()
 
 // 使用计算属性实现 v-model
 const currentPage = computed({
   get: () => props.currentPage,
   set: (val) => {
-    emit("update:currentPage", val);
+    emit('update:currentPage', val)
   },
-});
+})
 
 const pageSize = computed({
   get: () => props.pageSize,
   set: (val) => {
-    emit("update:pageSize", val);
+    emit('update:pageSize', val)
   },
-});
+})
 
 // 处理每页条数变化
 const handleSizeChange = (size: number) => {
-  emit("update:pageSize", size);
-  emit("update:currentPage", 1);
-  emit("change", 1, size);
-};
+  emit('update:pageSize', size)
+  emit('update:currentPage', 1)
+  emit('change', 1, size)
+}
 
 // 处理页码变化
 const handleCurrentChange = (page: number) => {
-  emit("update:currentPage", page);
-  emit("change", page, props.pageSize);
-};
+  emit('update:currentPage', page)
+  emit('change', page, props.pageSize)
+}
 </script>
 
 <style scoped lang="scss">

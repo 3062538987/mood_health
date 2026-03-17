@@ -1,11 +1,11 @@
 <template>
   <div class="courses-container">
     <h1 class="page-title">成长课程</h1>
-    
+
     <!-- 分类标签 -->
     <div class="category-tabs">
-      <button 
-        v-for="category in categories" 
+      <button
+        v-for="category in categories"
         :key="category"
         :class="['category-tab', { active: activeCategory === category }]"
         @click="setActiveCategory(category)"
@@ -13,11 +13,11 @@
         {{ category }}
       </button>
     </div>
-    
+
     <!-- 课程列表 -->
     <div class="courses-list">
-      <div 
-        v-for="course in courses" 
+      <div
+        v-for="course in courses"
         :key="course.id"
         class="course-card"
         @click="navigateToCourseDetail(course.id)"
@@ -35,13 +35,13 @@
         </div>
       </div>
     </div>
-    
+
     <!-- 加载状态 -->
     <div v-if="loading" class="loading">
       <div class="loading-spinner"></div>
       <p>加载中...</p>
     </div>
-    
+
     <!-- 空状态 -->
     <div v-if="!loading && courses.length === 0" class="empty-state">
       <p>暂无课程</p>
@@ -50,42 +50,42 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
-const router = useRouter();
+const router = useRouter()
 
-const categories = ['全部', '心理知识', '情绪调节', '人际交往'];
-const activeCategory = ref('全部');
-const courses = ref<any[]>([]);
-const loading = ref(true);
+const categories = ['全部', '心理知识', '情绪调节', '人际交往']
+const activeCategory = ref('全部')
+const courses = ref<any[]>([])
+const loading = ref(true)
 
 const setActiveCategory = (category: string) => {
-  activeCategory.value = category;
-  fetchCourses();
-};
+  activeCategory.value = category
+  fetchCourses()
+}
 
 const fetchCourses = async () => {
-  loading.value = true;
+  loading.value = true
   try {
-    const category = activeCategory.value === '全部' ? '' : activeCategory.value;
-    const response = await fetch(`http://localhost:3000/api/courses?category=${category}`);
-    const data = await response.json();
-    courses.value = data;
+    const category = activeCategory.value === '全部' ? '' : activeCategory.value
+    const response = await fetch(`http://localhost:3000/api/courses?category=${category}`)
+    const data = await response.json()
+    courses.value = data
   } catch (error) {
-    console.error('Error fetching courses:', error);
+    console.error('Error fetching courses:', error)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 const navigateToCourseDetail = (courseId: number) => {
-  router.push(`/improve/course/${courseId}`);
-};
+  router.push(`/improve/course/${courseId}`)
+}
 
 onMounted(() => {
-  fetchCourses();
-});
+  fetchCourses()
+})
 </script>
 
 <style scoped>
@@ -121,14 +121,14 @@ onMounted(() => {
 }
 
 .category-tab:hover {
-  border-color: #4CAF50;
-  color: #4CAF50;
+  border-color: #4caf50;
+  color: #4caf50;
 }
 
 .category-tab.active {
-  background: #4CAF50;
+  background: #4caf50;
   color: white;
-  border-color: #4CAF50;
+  border-color: #4caf50;
 }
 
 .courses-list {
@@ -143,7 +143,9 @@ onMounted(() => {
   overflow: hidden;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .course-card:hover {
@@ -216,15 +218,19 @@ onMounted(() => {
   width: 40px;
   height: 40px;
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #4CAF50;
+  border-top: 4px solid #4caf50;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 10px;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .empty-state {
@@ -238,11 +244,11 @@ onMounted(() => {
   .courses-list {
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   }
-  
+
   .category-tabs {
     flex-wrap: wrap;
   }
-  
+
   .category-tab {
     padding: 8px 16px;
     font-size: 13px;

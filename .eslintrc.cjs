@@ -1,0 +1,42 @@
+module.exports = {
+  root: true,
+  env: {
+    browser: true,
+    es2021: true,
+    node: true,
+  },
+  ignorePatterns: [
+    'dist',
+    'coverage',
+    'node_modules',
+    'logs',
+    'mood-health-server',
+    'public/audio',
+  ],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:vue/vue3-recommended',
+    'prettier',
+  ],
+  parser: 'vue-eslint-parser',
+  parserOptions: {
+    parser: '@typescript-eslint/parser',
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+  },
+  plugins: ['@typescript-eslint', 'prettier'],
+  rules: {
+    'prettier/prettier': 'error',
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-unused-vars': 'off',
+    '@typescript-eslint/no-empty-object-type': 'off',
+    'no-case-declarations': 'off',
+    'no-useless-escape': 'off',
+    'vue/multi-word-component-names': 'off',
+    'vue/no-unused-vars': 'off',
+    'vue/require-default-prop': 'off',
+    'vue/no-v-html': 'off',
+    'vue/no-v-model-argument': 'off',
+  },
+}

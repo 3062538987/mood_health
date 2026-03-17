@@ -12,15 +12,15 @@
  * @property {string} createTime - 记录时间
  */
 export interface MoodRecord {
-  id: string;
-  userId: string;
-  intensity: number; // 情绪强度(1-10)
-  moodType: string[]; // 情绪类型，支持多选
-  moodRatio: number[]; // 情绪占比
-  event: string; // 触发事件
-  tags: string[]; // 事件标签
-  trigger: string; // 触发因素
-  createTime: string; // 记录时间
+  id: string
+  userId: string
+  intensity: number // 情绪强度(1-10)
+  moodType: string[] // 情绪类型，支持多选
+  moodRatio: number[] // 情绪占比
+  event: string // 触发事件
+  tags: string[] // 事件标签
+  trigger: string // 触发因素
+  createTime: string // 记录时间
 }
 
 /**
@@ -30,8 +30,8 @@ export interface MoodRecord {
  * @property {number} total - 总记录数
  */
 export interface MoodListResponse {
-  list: MoodRecord[]; // 接口返回的列表数据
-  total: number; // 补充总条数字段
+  list: MoodRecord[] // 接口返回的列表数据
+  total: number // 补充总条数字段
 }
 
 /**
@@ -43,17 +43,17 @@ export interface MoodListResponse {
  * @property {string} summary - 情绪总结
  */
 export interface MoodWeeklyReport {
-  averageIntensity: number;
+  averageIntensity: number
   dailyData: Array<{
-    date: string;
-    averageIntensity: number;
-    triggers?: string[];
-    anxiousRatio?: number;
-    happyRatio?: number;
-    calmRatio?: number;
-  }>;
-  mostFrequentMood: string;
-  summary: string;
+    date: string
+    averageIntensity: number
+    triggers?: string[]
+    anxiousRatio?: number
+    happyRatio?: number
+    calmRatio?: number
+  }>
+  mostFrequentMood: string
+  summary: string
 }
 
 /**
@@ -65,16 +65,16 @@ export interface MoodWeeklyReport {
  * @property {Array<{date: string, intensity: number, moodType?: string[], note?: string, triggers?: string[]}>} data - 详细数据
  */
 export interface MoodTrendResponse {
-  labels: string[];
-  datasets: Array<{ name: string; data: number[] }>;
-  summary: string;
+  labels: string[]
+  datasets: Array<{ name: string; data: number[] }>
+  summary: string
   data?: Array<{
-    date: string;
-    intensity: number;
-    moodType?: string[];
-    note?: string;
-    triggers?: string[];
-  }>;
+    date: string
+    intensity: number
+    moodType?: string[]
+    note?: string
+    triggers?: string[]
+  }>
 }
 
 /**
@@ -84,6 +84,6 @@ export interface MoodTrendResponse {
  * @property {string} label - 情绪类型标签
  */
 export interface MoodTypeEnum {
-  value: string;
-  label: string;
+  value: string
+  label: string
 }

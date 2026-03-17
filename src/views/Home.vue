@@ -71,16 +71,16 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, ref } from 'vue'
 
-const isLoaded = ref(false);
+const isLoaded = ref(false)
 
 onMounted(() => {
   // 添加页面加载动画
   setTimeout(() => {
-    isLoaded.value = true;
-  }, 300);
-});
+    isLoaded.value = true
+  }, 300)
+})
 </script>
 
 <style scoped lang="scss">
@@ -358,18 +358,14 @@ $text-light: #7f8c8d;
     position: relative;
 
     &::after {
-      content: "";
+      content: '';
       position: absolute;
       bottom: -15px;
       left: 50%;
       transform: translateX(-50%);
       width: 80px;
       height: 4px;
-      background: linear-gradient(
-        90deg,
-        var(--primary-color),
-        var(--secondary-color)
-      );
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
       border-radius: 2px;
     }
   }

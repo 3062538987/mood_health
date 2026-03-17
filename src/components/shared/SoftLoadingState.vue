@@ -1,6 +1,6 @@
 <template>
   <section class="soft-loading-state" :class="variantClass" :aria-label="title">
-    <div class="loading-copy" v-if="title || description">
+    <div v-if="title || description" class="loading-copy">
       <h3 v-if="title">{{ title }}</h3>
       <p v-if="description">{{ description }}</p>
     </div>
@@ -32,11 +32,7 @@
       </div>
 
       <div v-if="itemCount > 1" class="insight-grid">
-        <div
-          v-for="index in itemCount - 1"
-          :key="index"
-          class="insight-card shimmer-surface"
-        >
+        <div v-for="index in itemCount - 1" :key="index" class="insight-card shimmer-surface">
           <div class="icon shimmer-block"></div>
           <div class="line long shimmer-block"></div>
           <div class="line short shimmer-block"></div>
@@ -48,24 +44,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed } from 'vue'
 
 const props = withDefaults(
   defineProps<{
-    title?: string;
-    description?: string;
-    variant?: "cards" | "panel";
-    itemCount?: number;
+    title?: string
+    description?: string
+    variant?: 'cards' | 'panel'
+    itemCount?: number
   }>(),
   {
-    title: "正在整理你的情绪内容",
-    description: "界面会以更轻柔的方式出现，请稍等一下。",
-    variant: "panel",
+    title: '正在整理你的情绪内容',
+    description: '界面会以更轻柔的方式出现，请稍等一下。',
+    variant: 'panel',
     itemCount: 3,
-  },
-);
+  }
+)
 
-const variantClass = computed(() => `variant-${props.variant}`);
+const variantClass = computed(() => `variant-${props.variant}`)
 </script>
 
 <style scoped lang="scss">
@@ -82,7 +78,7 @@ h3 {
   margin: 0;
   color: #526662;
   font-size: 1.3rem;
-  font-family: "Noto Serif SC", serif;
+  font-family: 'Noto Serif SC', serif;
 }
 
 p {
@@ -106,25 +102,16 @@ p {
   overflow: hidden;
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.55);
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.95),
-    rgba(247, 241, 236, 0.92)
-  );
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(247, 241, 236, 0.92));
   box-shadow: 0 14px 36px rgba(106, 176, 165, 0.08);
 }
 
 .shimmer-surface::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.6),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
   animation: shimmer 1.7s linear infinite;
 }
 

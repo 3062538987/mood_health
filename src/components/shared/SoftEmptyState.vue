@@ -32,24 +32,24 @@
 <script setup lang="ts">
 withDefaults(
   defineProps<{
-    title: string;
-    description: string;
-    actionText: string;
-    compact?: boolean;
+    title: string
+    description: string
+    actionText: string
+    compact?: boolean
   }>(),
   {
-    actionText: "去看看",
+    actionText: '去看看',
     compact: false,
-  },
-);
+  }
+)
 
 const emit = defineEmits<{
-  action: [];
-}>();
+  action: []
+}>()
 </script>
 
 <style scoped lang="scss">
-@use "@/assets/styles/theme.scss" as *;
+@use '@/assets/styles/theme.scss' as *;
 
 .soft-empty-state {
   display: flex;
@@ -61,11 +61,7 @@ const emit = defineEmits<{
   border-radius: 28px;
   background:
     radial-gradient(circle at top, rgba(243, 166, 131, 0.16), transparent 42%),
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.94),
-      rgba(252, 247, 242, 0.92)
-    );
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(252, 247, 242, 0.92));
   border: 1px solid rgba(231, 111, 81, 0.12);
   box-shadow: 0 20px 48px rgba(106, 176, 165, 0.12);
   text-align: center;
@@ -237,7 +233,7 @@ h3 {
   margin: 0;
   font-size: 1.5rem;
   color: #4d5f5b;
-  font-family: "Noto Serif SC", serif;
+  font-family: 'Noto Serif SC', serif;
 }
 
 p {

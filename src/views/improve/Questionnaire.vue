@@ -13,13 +13,11 @@
             }"
           ></div>
         </div>
-        <div class="progress-text">
-          {{ currentQuestionIndex + 1 }} / {{ questions.length }}
-        </div>
+        <div class="progress-text">{{ currentQuestionIndex + 1 }} / {{ questions.length }}</div>
       </div>
 
       <!-- 问题内容 -->
-      <div class="question-content" v-if="currentQuestion">
+      <div v-if="currentQuestion" class="question-content">
         <h3>{{ currentQuestion.question_text }}</h3>
         <div class="options">
           <div
@@ -36,17 +34,11 @@
 
       <!-- 导航按钮 -->
       <div class="navigation-buttons">
-        <button
-          class="btn secondary"
-          @click="prevQuestion"
-          :disabled="currentQuestionIndex === 0"
-        >
+        <button class="btn secondary" :disabled="currentQuestionIndex === 0" @click="prevQuestion">
           上一题
         </button>
         <button class="btn primary" @click="nextQuestion">
-          {{
-            currentQuestionIndex === questions.length - 1 ? "提交" : "下一题"
-          }}
+          {{ currentQuestionIndex === questions.length - 1 ? '提交' : '下一题' }}
         </button>
       </div>
     </div>
@@ -54,9 +46,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
-import { ElMessage } from "element-plus";
-import { useRouter, useRoute } from "vue-router";
+import { ref, computed, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { useRouter, useRoute } from 'vue-router'
 
 import {
   getQuestionnaireDetail,
@@ -64,102 +56,102 @@ import {
   submitAssessment,
   Questionnaire,
   Question,
-} from "@/api/questionnaire";
+} from '@/api/questionnaire'
 
-const router = useRouter();
-const route = useRoute();
-const questionnaireId = computed(() => parseInt(route.params.id as string));
+const router = useRouter()
+const route = useRoute()
+const questionnaireId = computed(() => parseInt(route.params.id as string))
 
-const questionnaire = ref<Questionnaire | null>(null);
-const questions = ref<Question[]>([]);
-const currentQuestionIndex = ref(0);
-const selectedAnswers = ref<number[]>([]);
+const questionnaire = ref<Questionnaire | null>(null)
+const questions = ref<Question[]>([])
+const currentQuestionIndex = ref(0)
+const selectedAnswers = ref<number[]>([])
 
 // 当前问题
 const currentQuestion = computed(() => {
-  return questions.value[currentQuestionIndex.value];
-});
+  return questions.value[currentQuestionIndex.value]
+})
 
 // 当前选中的答案
 const selectedAnswer = computed({
   get: () => selectedAnswers.value[currentQuestionIndex.value] ?? -1,
   set: (value) => {
-    selectedAnswers.value[currentQuestionIndex.value] = value;
+    selectedAnswers.value[currentQuestionIndex.value] = value
   },
-});
+})
 
 // 获取量表详情和问题
 const fetchQuestionnaireData = async () => {
   try {
     // 获取量表详情
-    const detailRes = await getQuestionnaireDetail(questionnaireId.value);
-    questionnaire.value = (detailRes as { data: Questionnaire }).data;
+    const detailRes = await getQuestionnaireDetail(questionnaireId.value)
+    questionnaire.value = (detailRes as { data: Questionnaire }).data
 
     // 获取问题列表
-    const questionsRes = await getQuestionnaireQuestions(questionnaireId.value);
-    questions.value = (questionsRes as { data: Question[] }).data;
+    const questionsRes = await getQuestionnaireQuestions(questionnaireId.value)
+    questions.value = (questionsRes as { data: Question[] }).data
 
     // 初始化答案数组
-    selectedAnswers.value = new Array(questions.value.length).fill(-1);
+    selectedAnswers.value = new Array(questions.value.length).fill(-1)
   } catch (error) {
-    console.error("获取量表数据失败", error);
+    console.error('获取量表数据失败', error)
   }
-};
+}
 
 // 选择答案
 const selectAnswer = (index: number) => {
-  selectedAnswer.value = index;
-};
+  selectedAnswer.value = index
+}
 
 // 上一题
 const prevQuestion = () => {
   if (currentQuestionIndex.value > 0) {
-    currentQuestionIndex.value--;
+    currentQuestionIndex.value--
   }
-};
+}
 
 // 下一题或提交
 const nextQuestion = async () => {
   if (selectedAnswer.value === -1) {
-    ElMessage.warning("请选择一个答案");
-    return;
+    ElMessage.warning('请选择一个答案')
+    return
   }
 
   if (currentQuestionIndex.value < questions.value.length - 1) {
-    currentQuestionIndex.value++;
+    currentQuestionIndex.value++
   } else {
     try {
       const res = await submitAssessment({
         questionnaire_id: questionnaireId.value,
         answers: selectedAnswers.value,
-      });
+      })
       const data = (
         res as {
-          data: { score: number; result_text: string };
+          data: { score: number; result_text: string }
         }
-      ).data;
+      ).data
       router.push({
-        path: "/improve/questionnaire/result",
+        path: '/improve/questionnaire/result',
         query: {
           score: data.score.toString(),
           result: encodeURIComponent(data.result_text),
-          title: encodeURIComponent(questionnaire.value?.title || ""),
+          title: encodeURIComponent(questionnaire.value?.title || ''),
         },
-      });
+      })
     } catch (error) {
-      ElMessage.error("提交答案失败，请稍后重试");
-      console.error("提交答案失败", error);
+      ElMessage.error('提交答案失败，请稍后重试')
+      console.error('提交答案失败', error)
     }
   }
-};
+}
 
 onMounted(() => {
-  fetchQuestionnaireData();
-});
+  fetchQuestionnaireData()
+})
 </script>
 
 <style scoped lang="scss">
-@use "@/assets/styles/theme.scss" as *;
+@use '@/assets/styles/theme.scss' as *;
 
 .questionnaire {
   padding: 20px;

@@ -9,12 +9,12 @@
  * @property {string} [created_at] - 创建时间（可选）
  */
 export interface User {
-  id: number;
-  username: string;
-  email: string;
-  role?: string;
-  avatar?: string;
-  created_at?: string;
+  id: number
+  username: string
+  email: string
+  role?: string
+  avatar?: string
+  created_at?: string
 }
 
 /**
@@ -24,8 +24,8 @@ export interface User {
  * @property {string} password - 密码
  */
 export interface LoginRequest {
-  username: string;
-  password: string;
+  username: string
+  password: string
 }
 
 /**
@@ -36,9 +36,9 @@ export interface LoginRequest {
  * @property {string} email - 邮箱
  */
 export interface RegisterRequest {
-  username: string;
-  password: string;
-  email: string;
+  username: string
+  password: string
+  email: string
 }
 
 /**
@@ -48,6 +48,6 @@ export interface RegisterRequest {
  * @property {User} user - 用户信息
  */
 export interface LoginResponse {
-  token: string;
-  user: User;
+  token: string
+  user: User
 }

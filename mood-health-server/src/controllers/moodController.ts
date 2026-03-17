@@ -25,6 +25,7 @@ import {
   getAdviceHistoryByUser,
 } from "../models/adviceModel";
 import { clearMoodCache } from "../utils/cache";
+import logger from "../utils/logger";
 
 export const recordMood = async (req: AuthRequest, res: Response) => {
   try {
@@ -355,11 +356,53 @@ export const saveAdviceHandler = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ code: 400, message: "建议列表不能为空" });
     }
 
-    await createAdviceHistory(userId, moodRecordId, analysis, suggestions);
+    const normalizedMoodRecordId =
+      moodRecordId === undefined || moodRecordId === null
+        ? undefined
+        : Number(moodRecordId);
+    if (
+      normalizedMoodRecordId !== undefined &&
+      (!Number.isInteger(normalizedMoodRecordId) || normalizedMoodRecordId <= 0)
+    ) {
+      return res
+        .status(400)
+        .json({ code: 400, message: "moodRecordId 必须是正整数" });
+    }
+
+    await createAdviceHistory(
+      userId,
+      normalizedMoodRecordId,
+      analysis,
+      suggestions,
+    );
     res.status(201).json({ code: 0, message: "保存成功" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ code: 500, message: "服务器错误" });
+    const err = error as {
+      message?: string;
+      originalError?: { info?: { message?: string } };
+    };
+    const dbMessage =
+      err.originalError?.info?.message || err.message || "未知异常";
+
+    logger.error("saveAdviceHandler 执行失败", {
+      userId: req.user?.userId,
+      body: {
+        moodRecordId: req.body?.moodRecordId,
+        analysisLength:
+          typeof req.body?.analysis === "string" ? req.body.analysis.length : 0,
+        suggestionsCount: Array.isArray(req.body?.suggestions)
+          ? req.body.suggestions.length
+          : 0,
+      },
+      dbMessage,
+      error,
+    });
+
+    const message =
+      dbMessage.includes("FOREIGN KEY") || dbMessage.includes("REFERENCE")
+        ? "关联的心情记录不存在，无法保存建议"
+        : "AI 建议保存失败，请稍后重试";
+    res.status(500).json({ code: 500, message });
   }
 };
 
@@ -375,7 +418,23 @@ export const getAdviceHistoryHandler = async (
     const result = await getAdviceHistoryByUser(userId, page, pageSize);
     res.json({ code: 0, data: result });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ code: 500, message: "服务器错误" });
+    const err = error as {
+      message?: string;
+      originalError?: { info?: { message?: string } };
+    };
+    const dbMessage =
+      err.originalError?.info?.message || err.message || "未知异常";
+
+    logger.error("getAdviceHistoryHandler 执行失败", {
+      userId: req.user?.userId,
+      page: req.query.page,
+      pageSize: req.query.pageSize,
+      dbMessage,
+      error,
+    });
+
+    res
+      .status(500)
+      .json({ code: 500, message: "AI 建议历史获取失败，请稍后重试" });
   }
 };

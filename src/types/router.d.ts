@@ -1,16 +1,16 @@
-import "vue-router";
+import 'vue-router'
 
-declare module "vue-router" {
+declare module 'vue-router' {
   interface RouteMeta {
-    public?: boolean;
-    guestOnly?: boolean;
-    adminOnly?: boolean;
+    public?: boolean
+    guestOnly?: boolean
+    adminOnly?: boolean
     subNav?: {
-      path: string;
-      name: string;
-      icon: string;
-    }[];
+      path: string
+      name: string
+      icon: string
+    }[]
   }
 }
 
-export {};
+export {}

@@ -4,11 +4,7 @@
     <div v-if="!currentQuestionnaire">
       <h2>请选择一个问卷</h2>
       <ul>
-        <li
-          v-for="q in questionnaires"
-          :key="q.id"
-          @click="selectQuestionnaire(q)"
-        >
+        <li v-for="q in questionnaires" :key="q.id" @click="selectQuestionnaire(q)">
           {{ q.title }}
         </li>
       </ul>
@@ -25,10 +21,10 @@
         <div v-if="question.options && question.options.length > 0">
           <label v-for="(opt, optIndex) in question.options" :key="optIndex">
             <input
+              v-model="answers[question.id]"
               type="radio"
               :name="'q' + question.id"
               :value="opt"
-              v-model="answers[question.id]"
             />
             {{ opt }}
           </label>
@@ -44,50 +40,45 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { ElMessage } from "element-plus";
-import {
-  getQuestionnaires,
-  getQuestionnaireDetail,
-  submitAssessment,
-} from "@/api/questionnaire";
-import type { Questionnaire, SubmitData } from "@/types/questionnaire";
+import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { getQuestionnaires, getQuestionnaireDetail, submitAssessment } from '@/api/questionnaire'
+import type { Questionnaire, SubmitData } from '@/types/questionnaire'
 
-const questionnaires = ref<Questionnaire[]>([]);
-const currentQuestionnaire = ref<Questionnaire | null>(null);
-const answers = ref<Record<number, any>>({}); // 使用对象存储，key为questionId
+const questionnaires = ref<Questionnaire[]>([])
+const currentQuestionnaire = ref<Questionnaire | null>(null)
+const answers = ref<Record<number, any>>({}) // 使用对象存储，key为questionId
 
 onMounted(async () => {
   try {
-    const res = await getQuestionnaires();
-    questionnaires.value = res as Questionnaire[];
+    const res = await getQuestionnaires()
+    questionnaires.value = res as Questionnaire[]
   } catch (error) {
-    console.error("加载问卷列表失败", error);
+    console.error('加载问卷列表失败', error)
   }
-});
+})
 
 const selectQuestionnaire = async (q: Questionnaire) => {
   // 如果需要完整题目，可调用详情接口
   try {
-    const res = await getQuestionnaireDetail(q.id);
-    currentQuestionnaire.value = res as Questionnaire;
-    answers.value = {}; // 重置答案
+    const res = await getQuestionnaireDetail(q.id)
+    currentQuestionnaire.value = res as Questionnaire
+    answers.value = {} // 重置答案
   } catch (error) {
-    console.error("加载问卷详情失败", error);
+    console.error('加载问卷详情失败', error)
   }
-};
+}
 
 const submitSurvey = async () => {
-  if (!currentQuestionnaire.value || !currentQuestionnaire.value.questions)
-    return;
+  if (!currentQuestionnaire.value || !currentQuestionnaire.value.questions) return
   // 简单验证：所有问题都需回答（可根据需要加强）
-  const allQuestions = currentQuestionnaire.value.questions;
+  const allQuestions = currentQuestionnaire.value.questions
   const missing = allQuestions.some(
-    (q) => answers.value[q.id] === undefined || answers.value[q.id] === "",
-  );
+    (q) => answers.value[q.id] === undefined || answers.value[q.id] === ''
+  )
   if (missing) {
-    ElMessage.warning("请回答所有问题");
-    return;
+    ElMessage.warning('请回答所有问题')
+    return
   }
   try {
     const submitData: SubmitData = {
@@ -96,24 +87,24 @@ const submitSurvey = async () => {
         question_id: Number(questionId),
         answer: answer.toString(),
       })),
-    };
-    await submitAssessment(submitData as any);
-    ElMessage.success("提交成功");
-    currentQuestionnaire.value = null;
+    }
+    await submitAssessment(submitData as any)
+    ElMessage.success('提交成功')
+    currentQuestionnaire.value = null
   } catch (error) {
-    ElMessage.error("提交失败，请稍后重试");
-    console.error("提交失败", error);
+    ElMessage.error('提交失败，请稍后重试')
+    console.error('提交失败', error)
   }
-};
+}
 
 const cancelSurvey = () => {
-  currentQuestionnaire.value = null;
-};
+  currentQuestionnaire.value = null
+}
 </script>
 
 <style scoped lang="scss">
-@use "sass:color";
-@use "@/assets/styles/theme.scss" as *;
+@use 'sass:color';
+@use '@/assets/styles/theme.scss' as *;
 
 .survey-page {
   max-width: 600px;

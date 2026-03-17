@@ -7,7 +7,7 @@
 
     <AudioPlayer />
 
-    <div class="relax-modes">
+    <div v-if="relaxModes.length > 0" class="relax-modes">
       <div
         v-for="mode in relaxModes"
         :key="mode.id"
@@ -22,6 +22,15 @@
         </div>
       </div>
     </div>
+    <transition name="empty-fade" mode="out-in">
+      <RelaxEmptyState
+        v-if="relaxModes.length === 0"
+        key="center-empty"
+        type="center"
+        action-text="去音乐疗愈"
+        action-to="/relax/music"
+      />
+    </transition>
 
     <div class="relax-content">
       <transition name="fade" mode="out-in">
@@ -34,50 +43,51 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import MoodWoodenFish from "@/components/relax/MoodWoodenFish.vue";
-import BreathingGuide from "@/components/relax/BreathingGuide.vue";
-import PinballGame from "@/components/relax/PinballGame.vue";
-import TetrisGame from "@/components/relax/TetrisGame.vue";
-import AudioPlayer from "@/components/relax/AudioPlayer.vue";
+import { ref, computed } from 'vue'
+import MoodWoodenFish from '@/components/relax/MoodWoodenFish.vue'
+import BreathingGuide from '@/components/relax/BreathingGuide.vue'
+import PinballGame from '@/components/relax/PinballGame.vue'
+import TetrisGame from '@/components/relax/TetrisGame.vue'
+import AudioPlayer from '@/components/relax/AudioPlayer.vue'
+import RelaxEmptyState from '@/components/relax/RelaxEmptyState.vue'
 
-const activeMode = ref("wooden-fish");
+const activeMode = ref('wooden-fish')
 
 const relaxModes = [
   {
-    id: "wooden-fish",
-    name: "木鱼敲击",
-    icon: "🪘",
-    description: "敲击木鱼，释放焦虑",
+    id: 'wooden-fish',
+    name: '木鱼敲击',
+    icon: '🪘',
+    description: '敲击木鱼，释放焦虑',
     component: MoodWoodenFish,
   },
   {
-    id: "breathing",
-    name: "呼吸冥想",
-    icon: "🧘",
-    description: "跟随呼吸，放松身心",
+    id: 'breathing',
+    name: '呼吸冥想',
+    icon: '🧘',
+    description: '跟随呼吸，放松身心',
     component: BreathingGuide,
   },
   {
-    id: "pinball",
-    name: "弹珠消砖",
-    icon: "🎮",
-    description: "打碎砖块，击碎压力",
+    id: 'pinball',
+    name: '弹珠消砖',
+    icon: '🎮',
+    description: '打碎砖块，击碎压力',
     component: PinballGame,
   },
   {
-    id: "tetris",
-    name: "俄罗斯方块",
-    icon: "🧩",
-    description: "经典游戏，转移注意力",
+    id: 'tetris',
+    name: '俄罗斯方块',
+    icon: '🧩',
+    description: '经典游戏，转移注意力',
     component: TetrisGame,
   },
-];
+]
 
 const currentComponent = computed(() => {
-  const mode = relaxModes.find((m) => m.id === activeMode.value);
-  return mode ? mode.component : MoodWoodenFish;
-});
+  const mode = relaxModes.find((m) => m.id === activeMode.value)
+  return mode ? mode.component : MoodWoodenFish
+})
 </script>
 
 <style scoped lang="scss">
@@ -185,6 +195,19 @@ const currentComponent = computed(() => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.empty-fade-enter-active,
+.empty-fade-leave-active {
+  transition:
+    opacity 0.24s ease,
+    transform 0.24s ease;
+}
+
+.empty-fade-enter-from,
+.empty-fade-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
 }
 
 @media (max-width: 768px) {

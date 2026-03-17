@@ -22,7 +22,7 @@
     </div>
     <div class="form-group checkbox-group">
       <label class="checkbox-label">
-        <input type="checkbox" v-model="newPost.isAnonymous" />
+        <input v-model="newPost.isAnonymous" type="checkbox" />
         <span>匿名发布</span>
       </label>
     </div>
@@ -54,9 +54,9 @@
 
     <button
       class="btn primary"
-      @click="submitPost"
       :disabled="isLoading || !isValid"
       :class="{ 'btn-loading': isLoading }"
+      @click="submitPost"
     >
       <span v-if="isLoading">
         <i class="fas fa-spinner fa-spin"></i>
@@ -68,54 +68,50 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { ElMessage } from "element-plus";
-import type { CreatePostData } from "@/types/post";
+import { ref, computed } from 'vue'
+import { ElMessage } from 'element-plus'
+import type { CreatePostData } from '@/types/post'
 import {
   submitTreeHoleAndGetReply,
   validateTreeHoleContent,
   checkSensitiveContent,
-} from "@/api/treehole";
+} from '@/api/treehole'
 
 const newPost = ref<CreatePostData>({
-  title: "",
-  content: "",
+  title: '',
+  content: '',
   isAnonymous: false,
-});
+})
 
-const isLoading = ref(false);
-const gentleReply = ref("");
-const isFallback = ref(false);
-const sensitiveWarning = ref("");
+const isLoading = ref(false)
+const gentleReply = ref('')
+const isFallback = ref(false)
+const sensitiveWarning = ref('')
 
 const emit = defineEmits<{
-  (e: "submit", post: CreatePostData): void;
-}>();
+  (e: 'submit', post: CreatePostData): void
+}>()
 
 /**
  * 表单是否有效
  */
 const isValid = computed(() => {
-  return (
-    newPost.value.title.trim() &&
-    newPost.value.content.trim() &&
-    !sensitiveWarning.value
-  );
-});
+  return newPost.value.title.trim() && newPost.value.content.trim() && !sensitiveWarning.value
+})
 
 /**
  * 处理内容输入
  * 实时检查敏感词
  */
 const handleContentInput = () => {
-  const content = newPost.value.content;
+  const content = newPost.value.content
 
   if (checkSensitiveContent(content)) {
-    sensitiveWarning.value = "内容包含敏感信息，请修改后重试";
+    sensitiveWarning.value = '内容包含敏感信息，请修改后重试'
   } else {
-    sensitiveWarning.value = "";
+    sensitiveWarning.value = ''
   }
-};
+}
 
 /**
  * 发布帖子并获取温柔回复
@@ -123,57 +119,57 @@ const handleContentInput = () => {
 const submitPost = async () => {
   // 表单验证
   if (!newPost.value.title.trim() || !newPost.value.content.trim()) {
-    ElMessage.warning("标题和内容不能为空");
-    return;
+    ElMessage.warning('标题和内容不能为空')
+    return
   }
 
   // 敏感词检查
   if (sensitiveWarning.value) {
-    ElMessage.warning(sensitiveWarning.value);
-    return;
+    ElMessage.warning(sensitiveWarning.value)
+    return
   }
 
   // 内容验证
-  const validationError = validateTreeHoleContent(newPost.value.content);
+  const validationError = validateTreeHoleContent(newPost.value.content)
   if (validationError) {
-    ElMessage.warning(validationError);
-    return;
+    ElMessage.warning(validationError)
+    return
   }
 
-  isLoading.value = true;
-  gentleReply.value = "";
+  isLoading.value = true
+  gentleReply.value = ''
 
   try {
     // 获取温柔回复
     const replyResponse = await submitTreeHoleAndGetReply(
       newPost.value.content,
-      undefined, // 用户ID可以从用户状态中获取
-    );
+      undefined // 用户ID可以从用户状态中获取
+    )
 
-    gentleReply.value = replyResponse.reply;
-    isFallback.value = replyResponse.is_fallback;
+    gentleReply.value = replyResponse.reply
+    isFallback.value = replyResponse.is_fallback
 
     // 触发提交事件
-    emit("submit", newPost.value);
+    emit('submit', newPost.value)
 
     // 重置表单
-    newPost.value = { title: "", content: "", isAnonymous: false };
-    sensitiveWarning.value = "";
+    newPost.value = { title: '', content: '', isAnonymous: false }
+    sensitiveWarning.value = ''
 
     // 显示成功提示
-    ElMessage.success("发布成功！树洞给你回复了温暖的话语");
+    ElMessage.success('发布成功！树洞给你回复了温暖的话语')
   } catch (error: any) {
-    console.error("发布失败:", error);
-    ElMessage.error(error.message || "发布失败，请稍后重试");
+    console.error('发布失败:', error)
+    ElMessage.error(error.message || '发布失败，请稍后重试')
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
-};
+}
 </script>
 
 <style scoped lang="scss">
-@use "sass:color";
-@use "@/assets/styles/theme.scss" as *;
+@use 'sass:color';
+@use '@/assets/styles/theme.scss' as *;
 
 .create-post {
   margin-bottom: 30px;
@@ -253,7 +249,7 @@ const submitPost = async () => {
       color: $text-color;
       font-size: $font-size-md;
 
-      input[type="checkbox"] {
+      input[type='checkbox'] {
         width: auto;
         margin: 0;
       }
@@ -330,7 +326,7 @@ const submitPost = async () => {
 
           &::before,
           &::after {
-            content: "";
+            content: '';
             width: 20px;
             height: 20px;
             position: absolute;

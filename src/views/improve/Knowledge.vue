@@ -35,13 +35,9 @@
 
       <!-- 知识内容列表 -->
       <div class="knowledge-grid">
-        <div
-          v-for="item in filteredKnowledge"
-          :key="item.id"
-          class="knowledge-card"
-        >
+        <div v-for="item in filteredKnowledge" :key="item.id" class="knowledge-card">
           <!-- 视频内容 -->
-          <div class="card-media" v-if="item.type === 'video'">
+          <div v-if="item.type === 'video'" class="card-media">
             <div class="video-placeholder">
               <div class="play-button">▶</div>
               <div class="video-duration">{{ item.duration }}</div>
@@ -53,15 +49,13 @@
             <h3 class="card-title">{{ item.title }}</h3>
             <p class="card-description">{{ item.description }}</p>
             <div class="card-meta">
-              <span class="content-type-badge">{{
-                item.type === "video" ? "视频" : "文字"
-              }}</span>
+              <span class="content-type-badge">{{ item.type === 'video' ? '视频' : '文字' }}</span>
               <button
                 class="favorite-btn"
                 :class="{ favorited: isFavorited(item.id) }"
                 @click="toggleFavorite(item.id)"
               >
-                {{ isFavorited(item.id) ? "❤" : "🤍" }}
+                {{ isFavorited(item.id) ? '❤' : '🤍' }}
               </button>
             </div>
           </div>
@@ -69,7 +63,7 @@
       </div>
 
       <!-- 空状态 -->
-      <div class="empty-state" v-if="filteredKnowledge.length === 0">
+      <div v-if="filteredKnowledge.length === 0" class="empty-state">
         <p>暂无相关知识内容</p>
       </div>
     </div>
@@ -77,144 +71,143 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed } from 'vue'
 
 // 知识分类定义
 interface KnowledgeCategory {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
+  id: string
+  name: string
+  description: string
+  icon: string
 }
 
 // 知识内容定义
 interface KnowledgeItem {
-  id: string;
-  categoryId: string;
-  title: string;
-  description: string;
-  type: "text" | "video";
-  duration?: string; // 视频时长
-  content: string; // 具体内容或视频链接
+  id: string
+  categoryId: string
+  title: string
+  description: string
+  type: 'text' | 'video'
+  duration?: string // 视频时长
+  content: string // 具体内容或视频链接
 }
 
 // 状态管理
-const selectedCategory = ref("perception"); // 默认选中情绪知觉
-const selectedType = ref<"all" | "text" | "video">("all"); // 默认显示所有类型
-const favorites = ref<string[]>([]); // 收藏的知识id列表
+const selectedCategory = ref('perception') // 默认选中情绪知觉
+const selectedType = ref<'all' | 'text' | 'video'>('all') // 默认显示所有类型
+const favorites = ref<string[]>([]) // 收藏的知识id列表
 
 // 分类数据
 const categories: KnowledgeCategory[] = [
   {
-    id: "perception",
-    name: "情绪知觉",
-    description: "认识你的情绪密码",
-    icon: "🔍",
+    id: 'perception',
+    name: '情绪知觉',
+    description: '认识你的情绪密码',
+    icon: '🔍',
   },
   {
-    id: "experience",
-    name: "情绪体验",
-    description: "感受情绪的变化",
-    icon: "💭",
+    id: 'experience',
+    name: '情绪体验',
+    description: '感受情绪的变化',
+    icon: '💭',
   },
   {
-    id: "control",
-    name: "情绪控制",
-    description: "掌握情绪的开关",
-    icon: "⚡",
+    id: 'control',
+    name: '情绪控制',
+    description: '掌握情绪的开关',
+    icon: '⚡',
   },
   {
-    id: "regulation",
-    name: "情绪调节",
-    description: "提升情绪管理能力",
-    icon: "🌱",
+    id: 'regulation',
+    name: '情绪调节',
+    description: '提升情绪管理能力',
+    icon: '🌱',
   },
-];
+]
 
 // 内容类型
-const contentTypes: ("all" | "text" | "video")[] = ["all", "text", "video"];
+const contentTypes: ('all' | 'text' | 'video')[] = ['all', 'text', 'video']
 const typeLabels = {
-  all: "全部",
-  text: "文字",
-  video: "视频",
-};
+  all: '全部',
+  text: '文字',
+  video: '视频',
+}
 
 // 模拟知识数据
 const knowledgeItems: KnowledgeItem[] = [
   // 情绪知觉 - 基础理论
   {
-    id: "perception-001",
-    categoryId: "perception",
-    title: "情绪是什么？——心理学中的情绪三要素",
-    description: "了解情绪的认知、生理和行为三个要素",
-    type: "text",
-    content: "情绪是由认知评估、生理变化和行为反应三个要素组成的...",
+    id: 'perception-001',
+    categoryId: 'perception',
+    title: '情绪是什么？——心理学中的情绪三要素',
+    description: '了解情绪的认知、生理和行为三个要素',
+    type: 'text',
+    content: '情绪是由认知评估、生理变化和行为反应三个要素组成的...',
   },
   {
-    id: "perception-002",
-    categoryId: "perception",
-    title: "情绪ABC理论：改变想法，改变情绪",
-    description: "用动画演示情绪ABC理论的应用过程",
-    type: "video",
-    duration: "2:15",
-    content: "video-url-001",
+    id: 'perception-002',
+    categoryId: 'perception',
+    title: '情绪ABC理论：改变想法，改变情绪',
+    description: '用动画演示情绪ABC理论的应用过程',
+    type: 'video',
+    duration: '2:15',
+    content: 'video-url-001',
   },
 
   // 情绪体验 - 实用技巧
   {
-    id: "experience-001",
-    categoryId: "experience",
-    title: "正念呼吸三步法：缓解即时焦虑",
-    description: "简单有效的呼吸技巧，快速平静情绪",
-    type: "text",
-    content: "第一步：深吸一口气，数4秒...",
+    id: 'experience-001',
+    categoryId: 'experience',
+    title: '正念呼吸三步法：缓解即时焦虑',
+    description: '简单有效的呼吸技巧，快速平静情绪',
+    type: 'text',
+    content: '第一步：深吸一口气，数4秒...',
   },
 
   // 情绪控制 - 案例解析
   {
-    id: "control-001",
-    categoryId: "control",
-    title: "案例：小明因朋友圈感到自卑，如何应对？",
-    description: "分析社交媒体对情绪的影响及应对方法",
-    type: "text",
-    content: "小明看到朋友圈里别人的成功感到自卑...",
+    id: 'control-001',
+    categoryId: 'control',
+    title: '案例：小明因朋友圈感到自卑，如何应对？',
+    description: '分析社交媒体对情绪的影响及应对方法',
+    type: 'text',
+    content: '小明看到朋友圈里别人的成功感到自卑...',
   },
 
   // 情绪调节 - 视频内容
   {
-    id: "regulation-001",
-    categoryId: "regulation",
-    title: "用动画演示情绪调节的5个步骤",
-    description: "通过动画直观学习情绪调节技巧",
-    type: "video",
-    duration: "1:45",
-    content: "video-url-002",
+    id: 'regulation-001',
+    categoryId: 'regulation',
+    title: '用动画演示情绪调节的5个步骤',
+    description: '通过动画直观学习情绪调节技巧',
+    type: 'video',
+    duration: '1:45',
+    content: 'video-url-002',
   },
-];
+]
 
 // 筛选知识内容
 const filteredKnowledge = computed(() => {
   return knowledgeItems.filter((item) => {
-    const categoryMatch = selectedCategory.value === item.categoryId;
-    const typeMatch =
-      selectedType.value === "all" || selectedType.value === item.type;
-    return categoryMatch && typeMatch;
-  });
-});
+    const categoryMatch = selectedCategory.value === item.categoryId
+    const typeMatch = selectedType.value === 'all' || selectedType.value === item.type
+    return categoryMatch && typeMatch
+  })
+})
 
 // 收藏功能
 const isFavorited = (id: string) => {
-  return favorites.value.includes(id);
-};
+  return favorites.value.includes(id)
+}
 
 const toggleFavorite = (id: string) => {
-  const index = favorites.value.indexOf(id);
+  const index = favorites.value.indexOf(id)
   if (index > -1) {
-    favorites.value.splice(index, 1);
+    favorites.value.splice(index, 1)
   } else {
-    favorites.value.push(id);
+    favorites.value.push(id)
   }
-};
+}
 </script>
 
 <style scoped lang="scss">

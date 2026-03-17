@@ -15,14 +15,8 @@
       </div>
 
       <!-- 错误提示 -->
-      <el-empty
-        v-else-if="error"
-        description="加载失败，请稍后重试"
-        :image-size="200"
-      >
-        <el-button type="primary" @click="loadActivityDetail"
-          >重新加载</el-button
-        >
+      <el-empty v-else-if="error" description="加载失败，请稍后重试" :image-size="200">
+        <el-button type="primary" @click="loadActivityDetail">重新加载</el-button>
       </el-empty>
 
       <!-- 活动详情内容 -->
@@ -43,12 +37,7 @@
                   <el-icon :size="64"><Picture /></el-icon>
                   <span>暂无图片</span>
                 </div>
-                <el-tag
-                  :type="statusConfig.type"
-                  effect="dark"
-                  class="status-tag"
-                  size="large"
-                >
+                <el-tag :type="statusConfig.type" effect="dark" class="status-tag" size="large">
                   {{ statusConfig.label }}
                 </el-tag>
               </div>
@@ -72,7 +61,7 @@
               <!-- 活动描述 -->
               <div class="activity-description">
                 <h3>活动介绍</h3>
-                <p>{{ activity.description || "暂无描述" }}</p>
+                <p>{{ activity.description || '暂无描述' }}</p>
               </div>
 
               <!-- 报名信息 -->
@@ -80,8 +69,7 @@
                 <div class="info-header">
                   <h3>报名信息</h3>
                   <el-tag :type="isFull ? 'danger' : 'success'" effect="plain">
-                    {{ activity.currentParticipants }} /
-                    {{ activity.maxParticipants }} 人
+                    {{ activity.currentParticipants }} / {{ activity.maxParticipants }} 人
                   </el-tag>
                 </div>
                 <el-progress
@@ -91,8 +79,7 @@
                   :show-text="false"
                 />
                 <p class="progress-text">
-                  已报名 {{ activity.currentParticipants }} 人，剩余名额
-                  {{ remainingSlots }} 人
+                  已报名 {{ activity.currentParticipants }} 人，剩余名额 {{ remainingSlots }} 人
                 </p>
               </div>
 
@@ -115,21 +102,11 @@
                   >
                     登录后报名
                   </el-button>
-                  <el-button
-                    v-else-if="isJoined"
-                    type="success"
-                    size="large"
-                    disabled
-                  >
+                  <el-button v-else-if="isJoined" type="success" size="large" disabled>
                     <el-icon><Check /></el-icon>已报名
                   </el-button>
-                  <el-button
-                    v-else-if="isFull || isEnded"
-                    type="info"
-                    size="large"
-                    disabled
-                  >
-                    {{ isFull ? "名额已满" : "活动已结束" }}
+                  <el-button v-else-if="isFull || isEnded" type="info" size="large" disabled>
+                    {{ isFull ? '名额已满' : '活动已结束' }}
                   </el-button>
                   <el-button
                     v-else
@@ -138,7 +115,7 @@
                     :loading="joining"
                     @click="handleJoin"
                   >
-                    {{ joining ? "报名中..." : "立即报名" }}
+                    {{ joining ? '报名中...' : '立即报名' }}
                   </el-button>
                 </template>
               </div>
@@ -154,9 +131,7 @@
                     <el-icon><User /></el-icon>
                     报名人员
                   </span>
-                  <el-tag type="info" size="small"
-                    >{{ participants.length }} 人</el-tag
-                  >
+                  <el-tag type="info" size="small">{{ participants.length }} 人</el-tag>
                 </div>
               </template>
 
@@ -166,11 +141,7 @@
                   :key="participant.id"
                   class="participant-item"
                 >
-                  <el-avatar
-                    :size="40"
-                    :src="participant.avatar"
-                    :icon="UserFilled"
-                  />
+                  <el-avatar :size="40" :src="participant.avatar" :icon="UserFilled" />
                   <div class="participant-info">
                     <span class="participant-name">
                       {{ participant.nickname || participant.username }}
@@ -202,10 +173,7 @@
                 </div>
                 <div class="stat-item">
                   <span class="stat-label">剩余名额</span>
-                  <span
-                    class="stat-value"
-                    :class="{ 'text-danger': remainingSlots <= 5 }"
-                  >
+                  <span class="stat-value" :class="{ 'text-danger': remainingSlots <= 5 }">
                     {{ remainingSlots }}
                   </span>
                 </div>
@@ -227,12 +195,8 @@
       <p>确定要删除这个活动吗？此操作不可恢复。</p>
       <template #footer>
         <el-button @click="showDeleteModal = false">取消</el-button>
-        <el-button
-          type="danger"
-          :loading="deleting"
-          @click="deleteActivityConfirm"
-        >
-          {{ deleting ? "删除中..." : "删除" }}
+        <el-button type="danger" :loading="deleting" @click="deleteActivityConfirm">
+          {{ deleting ? '删除中...' : '删除' }}
         </el-button>
       </template>
     </el-dialog>
@@ -240,9 +204,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { ElMessage } from "element-plus";
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import {
   ArrowLeft,
   Picture,
@@ -254,172 +218,164 @@ import {
   User,
   UserFilled,
   DataLine,
-} from "@element-plus/icons-vue";
-import { useUserStore } from "@/stores/userStore";
-import type { Activity } from "@/types/activity";
-import type { Participant } from "@/api/activityApi";
-import {
-  getActivityDetailWithParticipants,
-  joinActivity,
-  deleteActivity,
-} from "@/api/activityApi";
-import { getActivityStatus } from "@/utils/activityStatus";
+} from '@element-plus/icons-vue'
+import { useUserStore } from '@/stores/userStore'
+import type { Activity } from '@/types/activity'
+import type { Participant } from '@/api/activityApi'
+import { getActivityDetailWithParticipants, joinActivity, deleteActivity } from '@/api/activityApi'
+import { getActivityStatus } from '@/utils/activityStatus'
 
-const route = useRoute();
-const router = useRouter();
-const userStore = useUserStore();
+const route = useRoute()
+const router = useRouter()
+const userStore = useUserStore()
 
-const isAdmin = computed(() => userStore.isAdmin);
-const isLoggedIn = computed(() => userStore.isLoggedIn);
+const isAdmin = computed(() => userStore.isAdmin)
+const isLoggedIn = computed(() => userStore.isLoggedIn)
 
 // 活动数据
-const activity = ref<Activity | null>(null);
-const participants = ref<Participant[]>([]);
-const loading = ref(false);
-const error = ref(false);
-const joining = ref(false);
-const deleting = ref(false);
-const showDeleteModal = ref(false);
+const activity = ref<Activity | null>(null)
+const participants = ref<Participant[]>([])
+const loading = ref(false)
+const error = ref(false)
+const joining = ref(false)
+const deleting = ref(false)
+const showDeleteModal = ref(false)
 
 // 计算属性
 const statusConfig = computed(() => {
-  if (!activity.value) return { label: "", type: "info" as const };
-  return getActivityStatus(activity.value).config;
-});
+  if (!activity.value) return { label: '', type: 'info' as const }
+  return getActivityStatus(activity.value).config
+})
 
 const isFull = computed(() => {
-  if (!activity.value) return false;
-  return activity.value.currentParticipants >= activity.value.maxParticipants;
-});
+  if (!activity.value) return false
+  return activity.value.currentParticipants >= activity.value.maxParticipants
+})
 
 const isEnded = computed(() => {
-  if (!activity.value) return false;
-  return new Date(activity.value.endTime).getTime() < Date.now();
-});
+  if (!activity.value) return false
+  return new Date(activity.value.endTime).getTime() < Date.now()
+})
 
 const isJoined = computed(() => {
-  if (!activity.value) return false;
-  return participants.value.some((p) => p.id === userStore.user?.id);
-});
+  if (!activity.value) return false
+  return participants.value.some((p) => p.id === userStore.user?.id)
+})
 
 const registrationProgress = computed(() => {
-  if (!activity.value) return 0;
-  return Math.round(
-    (activity.value.currentParticipants / activity.value.maxParticipants) * 100,
-  );
-});
+  if (!activity.value) return 0
+  return Math.round((activity.value.currentParticipants / activity.value.maxParticipants) * 100)
+})
 
 const remainingSlots = computed(() => {
-  if (!activity.value) return 0;
-  return activity.value.maxParticipants - activity.value.currentParticipants;
-});
+  if (!activity.value) return 0
+  return activity.value.maxParticipants - activity.value.currentParticipants
+})
 
 const registrationRate = computed(() => {
-  if (!activity.value) return 0;
-  return Math.round(
-    (activity.value.currentParticipants / activity.value.maxParticipants) * 100,
-  );
-});
+  if (!activity.value) return 0
+  return Math.round((activity.value.currentParticipants / activity.value.maxParticipants) * 100)
+})
 
 // 初始化
 onMounted(() => {
-  loadActivityDetail();
-});
+  loadActivityDetail()
+})
 
 // 加载活动详情
 const loadActivityDetail = async () => {
-  const id = parseInt(route.params.id as string);
+  const id = parseInt(route.params.id as string)
   if (isNaN(id)) {
-    error.value = true;
-    return;
+    error.value = true
+    return
   }
 
-  loading.value = true;
-  error.value = false;
+  loading.value = true
+  error.value = false
   try {
-    const response = await getActivityDetailWithParticipants(id);
-    activity.value = response.activity;
-    participants.value = response.participants;
+    const response = await getActivityDetailWithParticipants(id)
+    activity.value = response.activity
+    participants.value = response.participants
   } catch {
-    error.value = true;
+    error.value = true
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 // 报名
 const handleJoin = async () => {
-  if (!activity.value || joining.value) return;
+  if (!activity.value || joining.value) return
 
-  joining.value = true;
+  joining.value = true
   try {
-    await joinActivity(activity.value.id);
-    ElMessage.success("报名成功！");
-    loadActivityDetail();
+    await joinActivity(activity.value.id)
+    ElMessage.success('报名成功！')
+    loadActivityDetail()
   } catch {
     // 错误已由拦截器处理
   } finally {
-    joining.value = false;
+    joining.value = false
   }
-};
+}
 
 // 编辑活动
 const editActivity = () => {
-  if (!activity.value) return;
+  if (!activity.value) return
   // 可以跳转到编辑页面或打开编辑弹窗
-  ElMessage.info("编辑功能开发中...");
-};
+  ElMessage.info('编辑功能开发中...')
+}
 
 // 确认删除
 const confirmDelete = () => {
-  showDeleteModal.value = true;
-};
+  showDeleteModal.value = true
+}
 
 // 删除活动
 const deleteActivityConfirm = async () => {
-  if (!activity.value) return;
-  deleting.value = true;
+  if (!activity.value) return
+  deleting.value = true
   try {
-    await deleteActivity(activity.value.id);
-    ElMessage.success("删除成功！");
-    router.push("/improve/group-activity");
+    await deleteActivity(activity.value.id)
+    ElMessage.success('删除成功！')
+    router.push('/improve/group-activity')
   } catch {
     // 错误已由拦截器处理
   } finally {
-    deleting.value = false;
-    showDeleteModal.value = false;
+    deleting.value = false
+    showDeleteModal.value = false
   }
-};
+}
 
 // 格式化日期时间
 const formatDateTime = (dateStr: string) => {
-  const date = new Date(dateStr);
-  return date.toLocaleString("zh-CN", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
+  const date = new Date(dateStr)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
 
 // 格式化时间
 const formatTime = (dateStr: string) => {
-  const date = new Date(dateStr);
-  return date.toLocaleTimeString("zh-CN", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
+  const date = new Date(dateStr)
+  return date.toLocaleTimeString('zh-CN', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
 
 // 格式化日期
 const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("zh-CN", {
-    month: "short",
-    day: "numeric",
-  });
-};
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('zh-CN', {
+    month: 'short',
+    day: 'numeric',
+  })
+}
 </script>
 
 <style scoped lang="scss">

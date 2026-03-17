@@ -1,1315 +1,838 @@
 <template>
-  <div class="mood-record">
-    <div class="container">
-      <h2>情绪记录页面</h2>
-
-      <!-- 情绪转盘 -->
-      <div class="form-group">
-        <label>情绪强度</label>
-        <div class="emotion-wheel-container">
-          <div
-            class="emotion-wheel"
-            :style="{ transform: `rotate(${rotationAngle}deg)` }"
-          >
-            <div class="wheel-bg"></div>
-            <div class="emotion-face" :class="getEmotionClass(currentScore)">
-              {{ getEmoji(currentScore) }}
-            </div>
-            <div
-              v-for="n in 10"
-              :key="n"
-              class="wheel-segment"
-              :style="getSegmentStyle(n)"
-              @click="setIntensity(n)"
-            >
-              <span class="segment-number">{{ n }}</span>
-            </div>
-          </div>
-          <div class="intensity-labels">
-            <span class="label-low">😞 低落</span>
-            <span class="label-mid">😐 平稳</span>
-            <span class="label-high">😊 愉悦</span>
-          </div>
-          <input
-            type="range"
-            v-model.number="currentScore"
-            min="1"
-            max="10"
-            class="intensity-slider"
-            @input="updateRotation"
-          />
+  <div class="mood-record-page">
+    <div class="page-shell">
+      <section class="hero-panel">
+        <div>
+          <p class="eyebrow">Mood Record</p>
+          <h1>把今天的情绪，温柔但清楚地记下来</h1>
+          <p class="hero-copy">
+            先记录情绪，再决定要不要解决它。这里会帮你把感受、触发因素和 AI
+            建议整理成一条更顺滑的路径。
+          </p>
         </div>
-      </div>
 
-      <!-- 情绪描述 -->
-      <div class="form-group">
-        <label>情绪描述</label>
-        <textarea
-          ref="moodTextareaRef"
-          v-model="moodContent"
-          rows="3"
-          placeholder="请描述你当前的情绪状态..."
-          :maxlength="200"
-        ></textarea>
-        <div class="form-hint">{{ moodContent.length }}/200</div>
-      </div>
-
-      <!-- 动态气泡云情绪类型选择器 -->
-      <div class="form-group">
-        <label>情绪类型</label>
-        <div class="emotion-cloud">
-          <div
-            v-for="type in moodTypes"
-            :key="type.id"
-            class="emotion-bubble"
-            :class="{
-              selected: selectedMood.types.includes(type.id),
-              merging: isMerging && selectedMood.types.includes(type.id),
-            }"
-            :style="getBubbleStyle(type)"
-            @click="toggleMoodType(type)"
-          >
-            <span class="bubble-emoji">{{ type.emoji }}</span>
-            <span class="bubble-name">{{ type.name }}</span>
-            <span v-if="type.frequency > 0" class="frequency-dot"></span>
-          </div>
+        <div class="hero-metrics">
+          <article>
+            <strong>{{ formProgress }}%</strong>
+            <span>记录完成度</span>
+          </article>
+          <article>
+            <strong>{{ selectedMoodMeta.length }}</strong>
+            <span>已选情绪</span>
+          </article>
+          <article>
+            <strong>{{ selectedTriggers.length }}</strong>
+            <span>触发因素</span>
+          </article>
         </div>
-      </div>
+      </section>
 
-      <!-- 智能标签推荐触发因素 -->
-      <div class="form-group">
-        <label>触发因素</label>
-        <div class="trigger-input-container">
-          <input
-            v-model="triggerText"
-            placeholder="今天发生了什么？"
-            @input="suggestTriggers"
-            @keydown.enter.prevent="addCustomTrigger"
-            class="trigger-input"
-          />
-          <div class="suggestion-chips" v-if="suggestions.length > 0">
-            <span
-              v-for="sug in suggestions"
-              :key="sug"
-              class="chip"
-              @click="addTrigger(sug)"
-            >
-              {{ sug }} <span class="chip-add">+</span>
-            </span>
-          </div>
-          <div class="selected-triggers">
-            <span
-              v-for="tag in selectedTriggers"
-              :key="tag"
-              class="trigger-tag"
-              :class="{ 'delete-item': deletingTag === tag }"
-              :style="{ backgroundColor: getTriggerColor(tag) }"
-              @click="removeTrigger(tag)"
-            >
-              {{ tag }} <span class="remove-btn">✕</span>
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 情绪标签 -->
-      <div class="form-group">
-        <label>情绪标签</label>
-        <div class="tags-container">
-          <div
-            v-for="tag in availableTags"
-            :key="tag"
-            :class="{
-              active: selectedTags.includes(tag),
-              'delete-item': deletingTag === tag,
-            }"
-            class="tag-item"
-            @click="toggleTag(tag)"
-          >
-            {{ tag }}
-          </div>
-        </div>
-      </div>
-
-      <!-- 草稿状态 -->
-      <div class="draft-status" v-if="hasDraft">
-        <span class="draft-indicator">📝 草稿已自动保存</span>
-        <button class="clear-draft-btn" @click="handleClearDraft">
-          清除草稿
-        </button>
-      </div>
-
-      <!-- AI 情绪建议 -->
-      <div class="form-group">
-        <el-button
-          type="primary"
-          :loading="aiLoading"
-          @click="debouncedGetAdvice"
-          class="ai-advice-btn"
-        >
-          获取 AI 情绪建议
-        </el-button>
-
-        <transition name="record-ai-state" mode="out-in">
-          <SoftLoadingState
-            v-if="aiLoading"
-            key="loading"
-            class="record-ai-status"
-            variant="panel"
-            :item-count="3"
-            title="AI 正在整理你的情绪线索"
-            description="会结合你的文字和情绪强度，生成一份更温和的陪伴建议。"
-          />
-
-          <el-card v-else-if="aiResult" key="result" class="ai-advice-card">
-            <div class="ai-header">
-              <h3>🤖 AI 情绪分析</h3>
-              <div
-                v-if="aiResult.mood"
-                class="mood-badge"
-                :style="{ backgroundColor: moodColor }"
-              >
-                <span class="mood-emoji">{{ moodEmoji }}</span>
-                <span class="mood-label">{{ aiResult.mood }}</span>
+      <div class="content-grid">
+        <main class="editor-column">
+          <section class="panel intensity-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">情绪强度</p>
+                <h2>今天的情绪能量大概在哪个刻度</h2>
+              </div>
+              <div class="intensity-badge" :class="intensityTone.className">
+                <span>{{ intensityTone.emoji }}</span>
+                <strong>{{ intensity }}/10</strong>
+                <small>{{ intensityTone.label }}</small>
               </div>
             </div>
-            <p>{{ aiResult.analysis }}</p>
-            <h4>💡 建议：</h4>
-            <ul>
-              <li v-for="(item, idx) in aiResult.suggestions" :key="idx">
+
+            <div class="intensity-scale" role="list" aria-label="情绪强度刻度">
+              <button
+                v-for="level in 10"
+                :key="level"
+                type="button"
+                class="scale-dot"
+                :class="{
+                  active: level <= intensity,
+                  current: level === intensity,
+                }"
+                @click="intensity = level"
+              >
+                {{ level }}
+              </button>
+            </div>
+
+            <input
+              v-model.number="intensity"
+              class="intensity-slider"
+              type="range"
+              min="1"
+              max="10"
+            />
+
+            <div class="scale-labels">
+              <span>低落</span>
+              <span>平稳</span>
+              <span>高能量</span>
+            </div>
+          </section>
+
+          <section class="panel writing-panel">
+            <div class="panel-head compact">
+              <div>
+                <p class="eyebrow">情绪描述</p>
+                <h2>先说说，今天发生了什么</h2>
+              </div>
+              <span class="count-chip">{{ characterCount }}/300</span>
+            </div>
+
+            <div v-if="hasDraft" class="inline-draft-tip">
+              <div class="tip-text">
+                <strong>检测到未完成草稿</strong>
+                <small>最近保存：{{ draftSavedAtText }}，可随时恢复，不会打断当前输入。</small>
+              </div>
+              <div class="tip-actions">
+                <button type="button" class="tip-btn ghost" @click="store.discardDraft">
+                  放弃草稿
+                </button>
+                <button type="button" class="tip-btn" @click="store.restoreDraft">恢复草稿</button>
+              </div>
+            </div>
+
+            <textarea
+              ref="moodTextareaRef"
+              v-model="moodContent"
+              rows="6"
+              placeholder="可以从一件小事开始：今天什么时候开始觉得不舒服，或哪一刻突然轻松了？"
+            ></textarea>
+
+            <div class="ai-entry-row">
+              <button
+                type="button"
+                class="inline-ai-btn"
+                :class="{ loading: aiLoading }"
+                @click="handleGenerateAdvice"
+              >
+                {{ aiLoading ? 'AI 正在整理建议...' : '让 AI 先陪我梳理一下' }}
+              </button>
+              <p>按钮前置在描述区下方，写完就能立刻得到回应。</p>
+            </div>
+
+            <transition name="soft-fade" mode="out-in">
+              <div v-if="autoRecommendations.length > 0" class="auto-recommend-list">
+                <span class="tip-label">AI 已根据你的输入做了预匹配</span>
+                <button
+                  v-for="item in autoRecommendations"
+                  :key="item"
+                  type="button"
+                  class="auto-pill"
+                  @click="appendRecommendation(item)"
+                >
+                  {{ item }}
+                </button>
+              </div>
+            </transition>
+          </section>
+
+          <section class="panel">
+            <MoodTypeGroup
+              :options="moodOptions"
+              :selected-ids="selectedMoodTypes"
+              :max-select="3"
+              @toggle="store.toggleMoodType"
+            />
+          </section>
+
+          <section class="panel trigger-panel">
+            <div class="panel-head compact">
+              <div>
+                <p class="eyebrow">触发因素</p>
+                <h2>给今天的情绪加几个关键词</h2>
+              </div>
+            </div>
+
+            <div class="trigger-box">
+              <input
+                v-model="triggerInput"
+                class="trigger-input"
+                type="text"
+                placeholder="比如：考试、熬夜、家庭、朋友、工作..."
+                @keydown.enter.prevent="store.addTrigger(triggerInput)"
+              />
+              <button type="button" class="add-trigger-btn" @click="store.addTrigger(triggerInput)">
+                添加
+              </button>
+            </div>
+
+            <div v-if="filteredTriggerSuggestions.length > 0" class="trigger-suggestion-row">
+              <button
+                v-for="item in filteredTriggerSuggestions"
+                :key="item"
+                type="button"
+                class="suggestion-chip"
+                @click="store.addTrigger(item)"
+              >
+                + {{ item }}
+              </button>
+            </div>
+
+            <div v-if="selectedTriggers.length > 0" class="selected-trigger-list">
+              <button
+                v-for="item in selectedTriggers"
+                :key="item"
+                type="button"
+                class="selected-trigger"
+                @click="store.removeTrigger(item)"
+              >
                 {{ item }}
-              </li>
-            </ul>
-          </el-card>
+                <span>×</span>
+              </button>
+            </div>
+          </section>
 
-          <SoftEmptyState
-            v-else
-            key="empty"
-            class="record-ai-status"
-            compact
-            title="写下此刻的心情，AI 再陪你往下看"
-            description="先记录一点今天的感受，建议区会在这里给出分析和可执行的小步骤。"
-            action-text="去填写描述"
-            @action="focusMoodTextarea"
+          <section class="panel">
+            <MoodTagGroup
+              :tags="tagOptions"
+              :selected-tags="selectedTags"
+              @toggle="store.toggleTag"
+            />
+          </section>
+
+          <section class="panel action-panel">
+            <div class="draft-banner" :class="{ visible: hasDraft }">
+              <span>草稿已自动保存</span>
+              <small>如果中途离开，这段内容会在 24 小时内等你回来。</small>
+            </div>
+
+            <div class="action-row">
+              <button type="button" class="ghost-action" @click="store.resetForm">
+                清空当前记录
+              </button>
+              <button
+                type="button"
+                class="submit-action"
+                :class="{ success: isSubmittingSuccess }"
+                :disabled="!canSubmit"
+                @click="handleSubmit"
+              >
+                {{ isSubmitting ? '正在提交...' : '保存这次情绪记录' }}
+              </button>
+            </div>
+          </section>
+        </main>
+
+        <aside class="ai-column">
+          <AiSuggestCard
+            :loading="aiLoading"
+            :history-loading="historyLoading"
+            :can-generate="canAskAi"
+            :service-unavailable="isAiTemporarilyDisabled"
+            :disabled-seconds="aiCooldownSeconds"
+            :service-message="aiServiceMessage"
+            :result="aiResult"
+            :auto-recommendations="autoRecommendations"
+            :history="aiHistory"
+            :mood-meta="currentAiMoodMeta"
+            @generate="handleGenerateAdvice"
+            @copy="handleCopyAdvice"
+            @apply-all="handleApplyAllTriggers"
+            @apply-one="handleApplySingleTrigger"
+            @use-history="store.hydrateAdviceFromHistory"
           />
-        </transition>
+        </aside>
       </div>
-
-      <!-- 提交按钮 -->
-      <button
-        class="submit-btn"
-        :class="{ 'submit-success': isSubmittingSuccess }"
-        @click="handleSubmitMoodRecord"
-        :disabled="isSubmitting"
-      >
-        {{ isSubmitting ? "提交中..." : "提交记录" }}
-      </button>
     </div>
-
-    <!-- 草稿恢复对话框 -->
-    <el-dialog
-      v-model="showDraftDialog"
-      title="发现未完成的草稿"
-      width="400px"
-      :close-on-click-modal="false"
-    >
-      <p>检测到您之前有未提交的情绪记录草稿，是否恢复？</p>
-      <template #footer>
-        <el-button @click="handleDiscardDraft">放弃草稿</el-button>
-        <el-button type="primary" @click="handleRestoreDraft"
-          >恢复草稿</el-button
-        >
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from "vue";
-import { useDebounceFn } from "@vueuse/core";
-import {
-  submitMoodRecord as addMoodRecord,
-  analyzeMoodWithRetry,
-  type AnalyzeMoodResponse,
-} from "@/api/mood";
-import { saveAdvice } from "@/api/advice";
-import { ElMessage, ElMessageBox } from "element-plus";
-import SoftEmptyState from "@/components/shared/SoftEmptyState.vue";
-import SoftLoadingState from "@/components/shared/SoftLoadingState.vue";
+import { computed, onMounted, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { ElMessage } from 'element-plus'
+import AiSuggestCard from '@/components/mood/AiSuggestCard.vue'
+import MoodTagGroup from '@/components/mood/MoodTagGroup.vue'
+import MoodTypeGroup from '@/components/mood/MoodTypeGroup.vue'
+import { useMoodRecordStore } from '@/stores/moodRecordStore'
 
-const DRAFT_KEY = "moodRecordDraft";
-const DEBOUNCE_DELAY = 1000;
-const SUBMIT_DEBOUNCE_DELAY = 300;
+const store = useMoodRecordStore()
+const moodTextareaRef = ref<HTMLTextAreaElement | null>(null)
 
-// 情绪类型数据
-interface MoodType {
-  id: string;
-  name: string;
-  emoji: string;
-  color: string;
-  frequency: number;
-}
+const {
+  moodOptions,
+  tagOptions,
+  selectedMoodTypes,
+  moodContent,
+  intensity,
+  triggerInput,
+  selectedTriggers,
+  selectedTags,
+  aiResult,
+  aiLoading,
+  aiHistory,
+  historyLoading,
+  autoRecommendations,
+  hasDraft,
+  isSubmitting,
+  isSubmittingSuccess,
+  selectedMoodMeta,
+  filteredTriggerSuggestions,
+  characterCount,
+  formProgress,
+  canAskAi,
+  isAiTemporarilyDisabled,
+  aiCooldownSeconds,
+  aiServiceMessage,
+  currentAiMoodMeta,
+  draftSavedAtText,
+} = storeToRefs(store)
 
-// 草稿数据类型
-interface MoodDraft {
-  selectedMood: { types: string[]; ratios: number[] };
-  moodContent: string;
-  currentScore: number;
-  selectedTags: string[];
-  selectedTriggers: string[];
-  savedAt: number;
-}
-
-// 情绪标签到图标的映射
-const MOOD_EMOJI_MAP: Record<string, string> = {
-  开心: "😊",
-  焦虑: "😰",
-  抑郁: "😢",
-  平静: "😌",
-  愤怒: "😠",
-  疲惫: "😴",
-  紧张: "😟",
-  兴奋: "🤩",
-  未知: "❓",
-};
-
-// 情绪标签到颜色的映射
-const MOOD_COLOR_MAP: Record<string, string> = {
-  开心: "#FFD166",
-  焦虑: "#FF6B6B",
-  抑郁: "#4D96FF",
-  平静: "#95E1D3",
-  愤怒: "#EF476F",
-  疲惫: "#78C0A8",
-  紧张: "#FF8E72",
-  兴奋: "#FF6B9D",
-  未知: "#CCCCCC",
-};
-
-const moodTypes: MoodType[] = [
-  {
-    id: "happy",
-    name: "快乐",
-    emoji: "😊",
-    color: "var(--mood-happy)",
-    frequency: 15,
-  },
-  {
-    id: "sad",
-    name: "悲伤",
-    emoji: "😢",
-    color: "var(--mood-sad)",
-    frequency: 8,
-  },
-  {
-    id: "angry",
-    name: "愤怒",
-    emoji: "😠",
-    color: "var(--mood-angry)",
-    frequency: 5,
-  },
-  {
-    id: "anxious",
-    name: "焦虑",
-    emoji: "😰",
-    color: "var(--mood-anxious)",
-    frequency: 12,
-  },
-  {
-    id: "calm",
-    name: "平静",
-    emoji: "😌",
-    color: "var(--mood-calm)",
-    frequency: 20,
-  },
-  { id: "excited", name: "兴奋", emoji: "🤩", color: "#FF6B9D", frequency: 10 },
-  {
-    id: "tired",
-    name: "疲惫",
-    emoji: "😴",
-    color: "var(--mood-neutral)",
-    frequency: 18,
-  },
-  { id: "grateful", name: "感恩", emoji: "🥰", color: "#C77DFF", frequency: 7 },
-];
-
-// 触发因素推荐数据
-const commonTriggers = [
-  "考试",
-  "熬夜",
-  "约会",
-  "运动",
-  "美食",
-  "工作",
-  "学习",
-  "社交",
-  "家庭",
-  "天气",
-  "音乐",
-  "电影",
-];
-
-const triggerColors: Record<string, string> = {
-  考试: "#FF6B6B",
-  熬夜: "#4ECDC4",
-  约会: "#FF8B94",
-  运动: "#95E1D3",
-  美食: "#F38181",
-  工作: "#AA96DA",
-  学习: "#FCBAD3",
-  社交: "#A8D8EA",
-  家庭: "#FFD93D",
-  天气: "#6BCB77",
-  音乐: "#4D96FF",
-  电影: "#FF6B9D",
-};
-
-// 响应式数据
-const selectedMood = ref<{ types: string[]; ratios: number[] }>({
-  types: [],
-  ratios: [],
-});
-const moodContent = ref("");
-const currentScore = ref(5);
-const rotationAngle = ref(0);
-const isMerging = ref(false);
-
-const triggerText = ref("");
-const suggestions = ref<string[]>([]);
-const selectedTriggers = ref<string[]>([]);
-
-const availableTags = [
-  "焦虑",
-  "开心",
-  "疲惫",
-  "平静",
-  "愤怒",
-  "沮丧",
-  "兴奋",
-  "紧张",
-];
-const selectedTags = ref<string[]>([]);
-
-const isSubmitting = ref(false);
-const isSubmittingSuccess = ref(false);
-const hasDraft = ref(false);
-const showDraftDialog = ref(false);
-const isInitialized = ref(false);
-const deletingTag = ref<string | null>(null);
-
-const aiLoading = ref(false);
-const aiResult = ref<AnalyzeMoodResponse | null>(null);
-const moodTextareaRef = ref<HTMLTextAreaElement | null>(null);
-
-// 计算属性：最大频率用于气泡大小计算
-const maxFrequency = computed(() => {
-  return Math.max(...moodTypes.map((t) => t.frequency));
-});
-
-// 计算属性：情绪图标
-const moodEmoji = computed(() => {
-  if (!aiResult.value || !aiResult.value.mood) {
-    return MOOD_EMOJI_MAP["未知"];
+const intensityTone = computed(() => {
+  if (intensity.value <= 3) {
+    return { emoji: '🌧️', label: '偏低能量', className: 'low' }
   }
-  return MOOD_EMOJI_MAP[aiResult.value.mood] || MOOD_EMOJI_MAP["未知"];
-});
-
-// 计算属性：情绪颜色
-const moodColor = computed(() => {
-  if (!aiResult.value || !aiResult.value.mood) {
-    return MOOD_COLOR_MAP["未知"];
+  if (intensity.value <= 7) {
+    return { emoji: '🌤️', label: '中段平衡', className: 'mid' }
   }
-  return MOOD_COLOR_MAP[aiResult.value.mood] || MOOD_COLOR_MAP["未知"];
-});
+  return { emoji: '✨', label: '高能量', className: 'high' }
+})
 
-const focusMoodTextarea = () => {
-  moodTextareaRef.value?.focus();
+const canSubmit = computed(() => !isSubmitting.value)
+
+const focusTextarea = () => {
+  moodTextareaRef.value?.focus()
   moodTextareaRef.value?.scrollIntoView({
-    behavior: "smooth",
-    block: "center",
-  });
-};
+    behavior: 'smooth',
+    block: 'center',
+  })
+}
 
-// 情绪转盘相关函数
-const getEmoji = (score: number): string => {
-  const emojis = ["😞", "😔", "😟", "😕", "😐", "🙂", "😊", "😄", "😁", "🤩"];
-  return emojis[score - 1] || "😐";
-};
-
-const getEmotionClass = (score: number): string => {
-  if (score <= 3) return "low";
-  if (score <= 6) return "medium";
-  return "high";
-};
-
-const getSegmentStyle = (n: number) => {
-  const angle = (n - 1) * 36;
-  const colors = [
-    "#FF6B6B",
-    "#FF8E72",
-    "#FFB347",
-    "#FFD166",
-    "#FFE66D",
-    "#C7F464",
-    "#95E1D3",
-    "#6BCB77",
-    "#4D96FF",
-    "#9B59B6",
-  ];
-  return {
-    transform: `rotate(${angle}deg)`,
-    background: `linear-gradient(to right, ${colors[n - 1]}22, ${colors[n - 1]}44)`,
-  };
-};
-
-const setIntensity = (n: number) => {
-  currentScore.value = n;
-  updateRotation();
-};
-
-const updateRotation = () => {
-  rotationAngle.value = (currentScore.value - 1) * 36;
-};
-
-// 气泡云相关函数
-const getBubbleStyle = (type: MoodType) => {
-  const size = 60 + (type.frequency / maxFrequency.value) * 40;
-  return {
-    "--bubble-size": `${size}px`,
-    "--bubble-color": type.color,
-  };
-};
-
-const toggleMoodType = (type: MoodType) => {
-  const index = selectedMood.value.types.indexOf(type.id);
-  if (index > -1) {
-    selectedMood.value.types.splice(index, 1);
-    selectedMood.value.ratios.splice(index, 1);
-  } else {
-    if (selectedMood.value.types.length < 3) {
-      selectedMood.value.types.push(type.id);
-      selectedMood.value.ratios.push(50);
-      // 触发合并动画
-      if (selectedMood.value.types.length > 1) {
-        isMerging.value = true;
-        setTimeout(() => {
-          isMerging.value = false;
-        }, 500);
-      }
-    } else {
-      ElMessage.warning("最多选择3种情绪类型");
-    }
-  }
-};
-
-// 智能标签推荐相关函数
-const suggestTriggers = () => {
-  if (triggerText.value.length < 1) {
-    suggestions.value = [];
-    return;
-  }
-  const input = triggerText.value.toLowerCase();
-  suggestions.value = commonTriggers
-    .filter(
-      (t) =>
-        t.toLowerCase().includes(input) && !selectedTriggers.value.includes(t),
-    )
-    .slice(0, 5);
-};
-
-const addTrigger = (trigger: string) => {
-  if (!selectedTriggers.value.includes(trigger)) {
-    selectedTriggers.value.push(trigger);
-  }
-  triggerText.value = "";
-  suggestions.value = [];
-};
-
-const addCustomTrigger = () => {
-  if (triggerText.value.trim()) {
-    addTrigger(triggerText.value.trim());
-  }
-};
-
-const removeTrigger = (trigger: string) => {
-  deletingTag.value = trigger;
-  setTimeout(() => {
-    const index = selectedTriggers.value.indexOf(trigger);
-    if (index > -1) {
-      selectedTriggers.value.splice(index, 1);
-    }
-    deletingTag.value = null;
-  }, 300);
-};
-
-const getTriggerColor = (trigger: string): string => {
-  return triggerColors[trigger] || "#6AB0A5";
-};
-
-// 标签相关函数
-const toggleTag = (tag: string) => {
-  const index = selectedTags.value.indexOf(tag);
-  if (index > -1) {
-    deletingTag.value = tag;
-    setTimeout(() => {
-      selectedTags.value.splice(index, 1);
-      deletingTag.value = null;
-    }, 300);
-  } else {
-    selectedTags.value.push(tag);
-  }
-};
-
-// 表单验证和提交
-const validateForm = (): boolean => {
-  if (selectedMood.value.types.length === 0) {
-    ElMessage.error("请选择至少一种情绪类型");
-    return false;
-  }
-  if (!moodContent.value.trim()) {
-    ElMessage.error("请填写情绪描述");
-    return false;
-  }
-  if (moodContent.value.length > 200) {
-    ElMessage.error("情绪描述不能超过200字");
-    return false;
-  }
-  return true;
-};
-
-const doSubmit = async () => {
-  if (!validateForm()) {
-    return;
-  }
-
+const handleGenerateAdvice = async () => {
   try {
-    isSubmitting.value = true;
-    await addMoodRecord({
-      moodType: selectedMood.value.types,
-      moodRatio: selectedMood.value.ratios,
-      event: moodContent.value,
-      tags: [...selectedTags.value, ...selectedTriggers.value],
-      trigger: selectedTriggers.value.join(","),
-      intensity: currentScore.value,
-    });
-    ElMessage.success("记录提交成功！");
-    isSubmittingSuccess.value = true;
-    setTimeout(() => {
-      isSubmittingSuccess.value = false;
-      resetForm();
-    }, 600);
+    const isDisabled = Boolean(isAiTemporarilyDisabled?.value)
+    const cooldownSeconds = aiCooldownSeconds?.value ?? 0
+    const content = (moodContent?.value ?? '').trim()
+    const canAsk = Boolean(canAskAi?.value)
+
+    if (isDisabled) {
+      ElMessage.warning(`AI 服务恢复中，请 ${cooldownSeconds} 秒后再试`)
+      return
+    }
+
+    if (!content) {
+      const textareaEl =
+        moodTextareaRef.value ||
+        (document.querySelector('.writing-panel textarea') as HTMLTextAreaElement | null)
+      textareaEl?.focus()
+      textareaEl?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      ElMessage.info('请先输入情绪描述，再获取 AI 建议')
+      return
+    }
+
+    if (!canAsk) {
+      focusTextarea()
+      ElMessage.info('先补几句描述，AI 才能给出更贴近的建议')
+      return
+    }
+
+    const result = await store.requestAiAdvice()
+    if (!result.ok && result.code === 'REQUEST_FAILED') {
+      console.warn('AI 请求失败', result.message)
+    }
   } catch (error) {
-    console.error("提交失败", error);
-    ElMessage.error("提交失败，请稍后再试");
-  } finally {
-    isSubmitting.value = false;
+    console.error('handleGenerateAdvice 执行异常', error)
+    ElMessage.error('获取 AI 建议失败，请稍后重试')
   }
-};
+}
 
-const handleSubmitMoodRecord = useDebounceFn(doSubmit, SUBMIT_DEBOUNCE_DELAY);
+const appendRecommendation = (text: string) => {
+  moodContent.value = [moodContent.value.trim(), text].filter(Boolean).join('\n')
+}
 
-const resetForm = () => {
-  selectedMood.value = { types: [], ratios: [] };
-  moodContent.value = "";
-  currentScore.value = 5;
-  rotationAngle.value = 0;
-  selectedTags.value = [];
-  selectedTriggers.value = [];
-  triggerText.value = "";
-  suggestions.value = [];
-  aiResult.value = null;
-  clearDraft();
-};
-
-// 草稿相关函数
-const saveDraft = () => {
-  if (!isInitialized.value) return;
-
-  const hasContent =
-    selectedMood.value.types.length > 0 ||
-    moodContent.value.trim() ||
-    selectedTags.value.length > 0 ||
-    selectedTriggers.value.length > 0;
-
-  if (!hasContent) {
-    hasDraft.value = false;
-    return;
+const handleCopyAdvice = async () => {
+  if (!store.copyableAdviceText) {
+    return
   }
 
-  const draft = {
-    selectedMood: selectedMood.value,
-    moodContent: moodContent.value,
-    currentScore: currentScore.value,
-    selectedTags: [...selectedTags.value],
-    selectedTriggers: [...selectedTriggers.value],
-    savedAt: Date.now(),
-  };
-  localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-  hasDraft.value = true;
-};
-
-const debouncedSaveDraft = useDebounceFn(saveDraft, DEBOUNCE_DELAY);
-
-const loadDraft = () => {
-  const draftStr = localStorage.getItem(DRAFT_KEY);
-  if (draftStr) {
-    try {
-      return JSON.parse(draftStr);
-    } catch (error) {
-      console.error("加载草稿失败", error);
-      return null;
-    }
-  }
-  return null;
-};
-
-const applyDraft = (draft: MoodDraft) => {
-  selectedMood.value = draft.selectedMood || { types: [], ratios: [] };
-  moodContent.value = draft.moodContent || "";
-  currentScore.value = draft.currentScore || 5;
-  selectedTags.value = draft.selectedTags || [];
-  selectedTriggers.value = draft.selectedTriggers || [];
-  hasDraft.value = true;
-  updateRotation();
-};
-
-const clearDraft = () => {
-  localStorage.removeItem(DRAFT_KEY);
-  hasDraft.value = false;
-};
-
-const handleClearDraft = async () => {
   try {
-    await ElMessageBox.confirm("确定要清除当前草稿吗？", "提示", {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
-      type: "warning",
-    });
-    resetForm();
-    ElMessage.success("草稿已清除");
-  } catch {
-    // 用户取消
+    await navigator.clipboard.writeText(store.copyableAdviceText)
+    ElMessage.success('AI 建议已复制')
+  } catch (error) {
+    console.error('复制 AI 建议失败', error)
+    ElMessage.error('复制失败，请稍后重试')
   }
-};
+}
 
-const handleRestoreDraft = () => {
-  const draft = loadDraft();
-  if (draft) {
-    applyDraft(draft);
-    ElMessage.success("草稿已恢复");
+const handleApplyAllTriggers = () => {
+  const appendedCount = store.applyAiSuggestionsToTriggers()
+  if (appendedCount > 0) {
+    ElMessage.success(`已补入 ${appendedCount} 个触发因素`)
+    return
   }
-  showDraftDialog.value = false;
-};
+  ElMessage.info('当前建议里没有可回填的触发因素')
+}
 
-const handleDiscardDraft = () => {
-  clearDraft();
-  showDraftDialog.value = false;
-};
-
-const handleGetAdvice = async () => {
-  if (!moodContent.value.trim()) {
-    ElMessage.warning("请先记录今天的情绪描述");
-    return;
+const handleApplySingleTrigger = (index: number) => {
+  const appendedCount = store.applyAiSuggestionsToTriggers(index)
+  if (appendedCount > 0) {
+    ElMessage.success('这条建议已回填到触发因素')
+    return
   }
-  if (aiLoading.value) {
-    ElMessage.warning("正在获取建议，请稍候");
-    return;
-  }
-  aiLoading.value = true;
-  try {
-    const res = await analyzeMoodWithRetry({
-      content: moodContent.value,
-      mood_level: currentScore.value,
-    });
-    aiResult.value = res;
+  ElMessage.info('这条建议暂时没有可提取的触发因素')
+}
 
-    try {
-      await saveAdvice({
-        analysis: res.analysis,
-        suggestions: res.suggestions,
-      });
-    } catch (saveError) {
-      console.error("保存 AI 建议失败:", saveError);
-    }
-  } catch (error: any) {
-    if (error.response) {
-      if (error.response.status === 429) {
-        ElMessage.error("请求太频繁，请稍后再试");
-      } else if (error.response.status >= 500) {
-        ElMessage.error("服务器繁忙，请稍后重试");
-      } else {
-        ElMessage.error(
-          `获取建议失败: ${error.response.data?.detail || error.response.data?.message || "未知错误"}`,
-        );
-      }
-    } else if (error.code === "ECONNABORTED") {
-      ElMessage.error("请求超时，请检查网络");
-    } else if (error.message && error.message.includes("Network Error")) {
-      ElMessage.error("网络连接失败，请检查网络设置");
-    } else if (error.message) {
-      ElMessage.error(error.message);
-    } else {
-      ElMessage.error("获取建议失败，请稍后重试");
-    }
-    console.error("AI 分析错误:", error);
-  } finally {
-    aiLoading.value = false;
-  }
-};
+const handleSubmit = async () => {
+  console.log('点击了保存按钮')
+  await store.submitRecord()
+}
 
-const debouncedGetAdvice = useDebounceFn(handleGetAdvice, 500);
-
-// 监听数据变化自动保存草稿
-watch(
-  [selectedMood, moodContent, currentScore, selectedTags, selectedTriggers],
-  () => {
-    debouncedSaveDraft();
-  },
-  { deep: true },
-);
-
-// 组件挂载
 onMounted(() => {
-  const draft = loadDraft();
-  if (draft) {
-    const hoursSinceSaved = (Date.now() - draft.savedAt) / (1000 * 60 * 60);
-    if (hoursSinceSaved < 24) {
-      showDraftDialog.value = true;
-    } else {
-      clearDraft();
-    }
-  }
-  isInitialized.value = true;
-  updateRotation();
-});
+  store.initializePage()
+})
 </script>
 
 <style scoped lang="scss">
-@use "@/assets/styles/theme.scss" as *;
+.mood-record-page {
+  min-height: 100%;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(129, 140, 248, 0.2), transparent 28%),
+    radial-gradient(circle at right 20%, rgba(196, 181, 253, 0.22), transparent 24%),
+    linear-gradient(180deg, #f6f7ff 0%, #f4f5fb 100%);
+}
 
-.mood-record {
-  padding: 20px;
+.page-shell {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 1.2rem;
+}
 
-  .container {
-    max-width: 800px;
-    margin: 0 auto;
+.hero-panel,
+.panel {
+  border-radius: 22px;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 24px 60px rgba(99, 102, 241, 0.08);
+}
+
+.hero-panel {
+  padding: 1.6rem;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1.5fr 1fr;
+}
+
+.eyebrow {
+  margin: 0 0 0.45rem;
+  color: #7c7fb7;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+h1,
+h2 {
+  margin: 0;
+  color: #1f2347;
+}
+
+h1 {
+  font-size: clamp(1.9rem, 3vw, 2.6rem);
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: 1.18rem;
+}
+
+.hero-copy {
+  margin: 0.8rem 0 0;
+  max-width: 46rem;
+  color: #586080;
+  line-height: 1.8;
+}
+
+.hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.85rem;
+}
+
+.hero-metrics article {
+  display: grid;
+  align-content: center;
+  gap: 0.28rem;
+  padding: 1rem;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.09), rgba(255, 255, 255, 0.88));
+}
+
+.hero-metrics strong {
+  font-size: 1.5rem;
+  color: #6366f1;
+}
+
+.hero-metrics span {
+  color: #6d7295;
+  font-size: 0.9rem;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.95fr);
+  gap: 1.2rem;
+  align-items: start;
+}
+
+.editor-column,
+.ai-column {
+  display: grid;
+  gap: 1rem;
+}
+
+.ai-column {
+  position: sticky;
+  top: 20px;
+}
+
+.panel {
+  padding: 1.25rem;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+  margin-bottom: 1rem;
+}
+
+.panel-head.compact {
+  align-items: center;
+}
+
+.intensity-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.intensity-badge {
+  min-width: 116px;
+  padding: 0.8rem 0.9rem;
+  border-radius: 16px;
+  display: grid;
+  justify-items: center;
+  background: rgba(99, 102, 241, 0.08);
+  color: #4d5378;
+}
+
+.intensity-badge.low {
+  background: rgba(148, 163, 184, 0.16);
+}
+
+.intensity-badge.mid {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.intensity-badge.high {
+  background: rgba(129, 140, 248, 0.14);
+}
+
+.intensity-badge strong {
+  font-size: 1.35rem;
+}
+
+.intensity-badge small,
+.scale-labels,
+.count-chip,
+.ai-entry-row p,
+.draft-banner small {
+  color: #71789a;
+}
+
+.intensity-scale {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 0.45rem;
+}
+
+.scale-dot {
+  min-height: 44px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.08);
+  color: #66708f;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.scale-dot.active {
+  background: rgba(99, 102, 241, 0.18);
+  color: #4850d8;
+}
+
+.scale-dot.current {
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.22);
+}
+
+.intensity-slider {
+  width: 100%;
+  accent-color: #6366f1;
+}
+
+.scale-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.92rem;
+}
+
+textarea,
+.trigger-input {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(99, 102, 241, 0.14);
+  background: rgba(248, 249, 255, 0.95);
+  color: #2d345c;
+  padding: 1rem;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 156px;
+  line-height: 1.75;
+}
+
+textarea:focus,
+.trigger-input:focus {
+  border-color: rgba(99, 102, 241, 0.38);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.08);
+  background: #fff;
+}
+
+.count-chip {
+  padding: 0.42rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.08);
+  font-size: 0.86rem;
+}
+
+.inline-draft-tip {
+  margin-bottom: 0.9rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid rgba(99, 102, 241, 0.18);
+  background: rgba(99, 102, 241, 0.06);
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.tip-text {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.tip-text strong {
+  color: #4048b7;
+  font-size: 0.92rem;
+}
+
+.tip-text small {
+  color: #626b90;
+}
+
+.tip-actions {
+  display: flex;
+  gap: 0.55rem;
+}
+
+.tip-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 0.52rem 0.78rem;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+}
+
+.tip-btn.ghost {
+  color: #4b537b;
+  background: rgba(99, 102, 241, 0.12);
+}
+
+.ai-entry-row {
+  margin-top: 0.95rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  align-items: center;
+}
+
+.inline-ai-btn,
+.add-trigger-btn,
+.ghost-action,
+.submit-action,
+.auto-pill,
+.suggestion-chip,
+.selected-trigger {
+  border: none;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.inline-ai-btn,
+.submit-action {
+  padding: 0.9rem 1.15rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  color: #fff;
+  box-shadow: 0 16px 26px rgba(99, 102, 241, 0.18);
+}
+
+.inline-ai-btn.loading,
+.submit-action:disabled {
+  opacity: 0.75;
+}
+
+.auto-recommend-list {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.tip-label {
+  color: #6366f1;
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.auto-pill,
+.suggestion-chip,
+.selected-trigger,
+.ghost-action,
+.add-trigger-btn {
+  padding: 0.74rem 0.95rem;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.08);
+  color: #53597f;
+}
+
+.auto-pill:hover,
+.suggestion-chip:hover,
+.selected-trigger:hover,
+.ghost-action:hover,
+.inline-ai-btn:hover,
+.submit-action:hover,
+.add-trigger-btn:hover {
+  transform: translateY(-1px);
+}
+
+.trigger-box {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.7rem;
+}
+
+.trigger-suggestion-row,
+.selected-trigger-list,
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.selected-trigger {
+  background: rgba(99, 102, 241, 0.14);
+  color: #454db8;
+  font-weight: 700;
+}
+
+.selected-trigger span {
+  margin-left: 0.35rem;
+}
+
+.draft-banner {
+  display: none;
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.draft-banner.visible {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.ghost-action {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.submit-action.success {
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+}
+
+.soft-fade-enter-active,
+.soft-fade-leave-active {
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+}
+
+.soft-fade-enter-from,
+.soft-fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+@media (max-width: 1024px) {
+  .content-grid,
+  .hero-panel {
+    grid-template-columns: 1fr;
   }
 
-  .form-group {
-    margin-bottom: 28px;
-
-    label {
-      display: block;
-      margin-bottom: 16px;
-      font-weight: 600;
-      color: var(--text-color);
-      font-size: $font-size-lg;
-      font-family: "Noto Serif SC", serif;
-    }
-
-    textarea {
-      width: 100%;
-      padding: 16px;
-      border: 1px solid var(--border-color);
-      border-radius: $border-radius-lg;
-      resize: vertical;
-      font-size: $font-size-md;
-      transition: all 0.3s ease;
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(8px);
-
-      &:focus {
-        outline: none;
-        border-color: var(--theme-color, var(--primary-color));
-        box-shadow: 0 0 0 3px rgba(106, 176, 165, 0.1);
-      }
-    }
-
-    .form-hint {
-      font-size: $font-size-sm;
-      color: var(--text-light-color);
-      text-align: right;
-      margin-top: 8px;
-    }
+  .ai-column {
+    position: static;
   }
+}
 
-  // 情绪转盘样式
-  .emotion-wheel-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-
-    .emotion-wheel {
-      position: relative;
-      width: 280px;
-      height: 280px;
-      border-radius: 50%;
-      transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-      cursor: pointer;
-
-      .wheel-bg {
-        position: absolute;
-        inset: 0;
-        border-radius: 50%;
-        background: conic-gradient(
-          from 0deg,
-          #ff6b6b 0deg 36deg,
-          #ff8e72 36deg 72deg,
-          #ffb347 72deg 108deg,
-          #ffd166 108deg 144deg,
-          #ffe66d 144deg 180deg,
-          #c7f464 180deg 216deg,
-          #95e1d3 216deg 252deg,
-          #6bcb77 252deg 288deg,
-          #4d96ff 288deg 324deg,
-          #9b59b6 324deg 360deg
-        );
-        opacity: 0.3;
-      }
-
-      .emotion-face {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 48px;
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(10px);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-
-        &.low {
-          background: linear-gradient(135deg, #ff6b6b20, #ff8e7230);
-        }
-        &.medium {
-          background: linear-gradient(135deg, #ffd16620, #ffe66d30);
-        }
-        &.high {
-          background: linear-gradient(135deg, #6bcb7720, #95e1d330);
-        }
-      }
-
-      .wheel-segment {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 50%;
-        height: 2px;
-        transform-origin: left center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-
-        &:hover {
-          height: 4px;
-        }
-
-        .segment-number {
-          position: absolute;
-          right: 20px;
-          top: 50%;
-          transform: translateY(-50%);
-          font-size: 14px;
-          font-weight: 600;
-          color: var(--text-color);
-        }
-      }
-    }
-
-    .intensity-labels {
-      display: flex;
-      justify-content: space-between;
-      width: 100%;
-      max-width: 280px;
-      font-size: $font-size-sm;
-      color: var(--text-light-color);
-    }
-
-    .intensity-slider {
-      width: 100%;
-      max-width: 280px;
-      cursor: pointer;
-    }
-  }
-
-  // AI 建议卡片样式
-  .ai-advice-card {
-    margin-top: 16px;
-    border-radius: $border-radius-lg;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-
-    .ai-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-
-      h3 {
-        margin: 0;
-        font-size: $font-size-lg;
-        color: var(--primary-color);
-      }
-
-      .mood-badge {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
-        border-radius: $border-radius-full;
-        background: var(--primary-color);
-        color: white;
-        font-weight: 600;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        animation: pulse 2s infinite;
-
-        .mood-emoji {
-          font-size: 24px;
-        }
-
-        .mood-label {
-          font-size: $font-size-md;
-        }
-      }
-    }
-
-    p {
-      margin: 12px 0;
-      color: var(--text-color);
-      line-height: 1.6;
-    }
-
-    h4 {
-      margin: 16px 0 8px 0;
-      font-size: $font-size-md;
-      color: var(--primary-color);
-    }
-
-    ul {
-      margin: 0;
-      padding-left: 20px;
-
-      li {
-        margin: 8px 0;
-        color: var(--text-color);
-        line-height: 1.6;
-      }
-    }
-  }
-
-  .record-ai-status {
-    margin-top: 16px;
-  }
-
-  .record-ai-state-enter-active,
-  .record-ai-state-leave-active {
-    transition:
-      opacity 0.24s ease,
-      transform 0.24s ease;
-  }
-
-  .record-ai-state-enter-from,
-  .record-ai-state-leave-to {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  @keyframes pulse {
-    0%,
-    100% {
-      transform: scale(1);
-    }
-    50% {
-      transform: scale(1.05);
-    }
-  }
-
-  // 其他样式保持不变...
-  .emotion-cloud {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    justify-content: center;
-    padding: 20px;
-    background: rgba(255, 255, 255, 0.5);
-    border-radius: $border-radius-lg;
-    backdrop-filter: blur(8px);
-
-    .emotion-bubble {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: var(--bubble-size);
-      height: var(--bubble-size);
-      border-radius: 50%;
-      background: var(--bubble-color);
-      cursor: pointer;
-      transition: all 0.3s ease;
-      position: relative;
-
-      &:hover {
-        transform: scale(1.1);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-      }
-
-      &.selected {
-        box-shadow: 0 0 0 4px var(--primary-color);
-        transform: scale(1.15);
-      }
-
-      &.merging {
-        animation: merge 0.5s ease;
-      }
-
-      .bubble-emoji {
-        font-size: 28px;
-        margin-bottom: 4px;
-      }
-
-      .bubble-name {
-        font-size: 12px;
-        font-weight: 500;
-        color: var(--text-color);
-      }
-
-      .frequency-dot {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--primary-color);
-      }
-    }
-  }
-
-  @keyframes merge {
-    0% {
-      transform: scale(1);
-    }
-    50% {
-      transform: scale(1.2);
-    }
-    100% {
-      transform: scale(1.15);
-    }
-  }
-
-  .trigger-input-container {
-    position: relative;
-
-    .trigger-input {
-      width: 100%;
-      padding: 12px 16px;
-      border: 1px solid var(--border-color);
-      border-radius: $border-radius-md;
-      font-size: $font-size-md;
-      transition: all 0.3s ease;
-
-      &:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(106, 176, 165, 0.1);
-      }
-    }
-
-    .suggestion-chips {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: white;
-      border-radius: $border-radius-md;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      padding: 8px;
-      z-index: 10;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 4px;
-
-      .chip {
-        padding: 6px 12px;
-        background: var(--primary-color);
-        color: white;
-        border-radius: $border-radius-full;
-        cursor: pointer;
-        font-size: $font-size-sm;
-        transition: all 0.3s ease;
-
-        &:hover {
-          background: var(--primary-color-dark);
-          transform: translateY(-2px);
-        }
-
-        .chip-add {
-          margin-left: 4px;
-          font-weight: 600;
-        }
-      }
-    }
-
-    .selected-triggers {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 12px;
-
-      .trigger-tag {
-        padding: 6px 12px;
-        border-radius: $border-radius-full;
-        color: white;
-        font-size: $font-size-sm;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-
-        &:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        &.delete-item {
-          animation: fadeOut 0.3s ease;
-        }
-
-        .remove-btn {
-          font-size: 12px;
-          opacity: 0.7;
-        }
-      }
-    }
-  }
-
-  @keyframes fadeOut {
-    to {
-      opacity: 0;
-      transform: scale(0.8);
-    }
-  }
-
-  .tags-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-
-    .tag-item {
-      padding: 8px 16px;
-      border: 1px solid var(--border-color);
-      border-radius: $border-radius-full;
-      background: rgba(255, 255, 255, 0.7);
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-size: $font-size-sm;
-
-      &:hover {
-        border-color: var(--primary-color);
-        background: rgba(106, 176, 165, 0.1);
-      }
-
-      &.active {
-        background: var(--primary-color);
-        color: white;
-        border-color: var(--primary-color);
-      }
-
-      &.delete-item {
-        animation: fadeOut 0.3s ease;
-      }
-    }
-  }
-
-  .draft-status {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    background: rgba(255, 193, 7, 0.1);
-    border: 1px solid rgba(255, 193, 7, 0.3);
-    border-radius: $border-radius-md;
-
-    .draft-indicator {
-      font-size: $font-size-sm;
-      color: #f57c00;
-    }
-
-    .clear-draft-btn {
-      padding: 6px 12px;
-      background: transparent;
-      border: 1px solid #f57c00;
-      color: #f57c00;
-      border-radius: $border-radius-sm;
-      cursor: pointer;
-      font-size: $font-size-sm;
-      transition: all 0.3s ease;
-
-      &:hover {
-        background: #f57c00;
-        color: white;
-      }
-    }
-  }
-
-  .ai-advice-btn {
-    width: 100%;
-    padding: 12px;
-    font-size: $font-size-md;
-    font-weight: 600;
-    border-radius: $border-radius-md;
-  }
-
-  .submit-btn {
-    width: 100%;
+@media (max-width: 768px) {
+  .mood-record-page {
     padding: 16px;
-    background: linear-gradient(
-      135deg,
-      var(--primary-color),
-      var(--primary-color-dark)
-    );
-    color: white;
-    border: none;
-    border-radius: $border-radius-lg;
-    font-size: $font-size-lg;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(106, 176, 165, 0.3);
-
-    &:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(106, 176, 165, 0.4);
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    &.submit-success {
-      background: linear-gradient(135deg, #6bcb77, #95e1d3);
-      animation: successPulse 0.6s ease;
-    }
   }
 
-  @keyframes successPulse {
-    0% {
-      transform: scale(1);
-    }
-    50% {
-      transform: scale(1.05);
-    }
-    100% {
-      transform: scale(1);
-    }
+  .hero-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-head,
+  .trigger-box,
+  .action-row,
+  .inline-draft-tip {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .intensity-scale {
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 </style>

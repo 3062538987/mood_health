@@ -14,29 +14,29 @@
  */
 export interface Post {
   /** 帖子ID */
-  id: number;
+  id: number
   /** 用户ID */
-  userId: number;
+  userId: number
   /** 用户名 */
-  username: string;
+  username: string
   /** 帖子标题 */
-  title: string;
+  title: string
   /** 帖子内容 */
-  content: string;
+  content: string
   /** 是否匿名 */
-  isAnonymous: boolean;
+  isAnonymous: boolean
   /** 点赞数 */
-  likes: number;
+  likes: number
   /** 当前用户是否点赞（可选） */
-  liked?: boolean;
+  liked?: boolean
   /** 点赞数（可选，用于树洞组件） */
-  like_count?: number;
+  like_count?: number
   /** 评论数（可选） */
-  commentCount?: number;
+  commentCount?: number
   /** 创建时间 */
-  createdAt: string;
+  createdAt: string
   /** 评论列表（可选） */
-  comments?: Comment[];
+  comments?: Comment[]
 }
 
 /**
@@ -52,23 +52,23 @@ export interface Post {
  */
 export interface Comment {
   /** 评论ID */
-  id: number;
+  id: number
   /** 帖子ID */
-  postId: number;
+  postId: number
   /** 用户ID */
-  userId: number;
+  userId: number
   /** 用户名 */
-  username: string;
+  username: string
   /** 评论内容 */
-  content: string;
+  content: string
   /** 是否匿名 */
-  isAnonymous: boolean;
+  isAnonymous: boolean
   /** 创建时间 */
-  createdAt: string;
+  createdAt: string
   /** 当前用户是否点赞（可选） */
-  liked?: boolean;
+  liked?: boolean
   /** 点赞数（可选） */
-  like_count?: number;
+  like_count?: number
 }
 
 /**
@@ -80,11 +80,11 @@ export interface Comment {
  */
 export interface CreatePostData {
   /** 帖子标题 */
-  title: string;
+  title: string
   /** 帖子内容 */
-  content: string;
+  content: string
   /** 是否匿名 */
-  isAnonymous: boolean;
+  isAnonymous: boolean
 }
 
 /**
@@ -96,11 +96,11 @@ export interface CreatePostData {
  */
 export interface CreateCommentData {
   /** 帖子ID */
-  postId: number;
+  postId: number
   /** 评论内容 */
-  content: string;
+  content: string
   /** 是否匿名 */
-  isAnonymous: boolean;
+  isAnonymous: boolean
 }
 
 /**
@@ -111,7 +111,7 @@ export interface CreateCommentData {
  */
 export interface PostListResponse {
   /** 帖子列表 */
-  list: Post[];
+  list: Post[]
   /** 总记录数 */
-  total: number;
+  total: number
 }

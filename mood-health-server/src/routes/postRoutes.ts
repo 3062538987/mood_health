@@ -4,6 +4,7 @@ import {
   createPostHandler,
   getPostsHandler,
   getPostByIdHandler,
+  getCommentsHandler,
   likePostHandler,
   createCommentHandler,
   likeCommentHandler,
@@ -55,6 +56,9 @@ router.get("/", getPostsHandler);
 
 // 获取帖子详情（含评论）（公开）
 router.get("/:id", getPostByIdHandler);
+
+// 获取评论列表（公开）
+router.get("/:id/comments", getCommentsHandler);
 
 // 点赞帖子（需要认证）
 router.post("/:id/like", authenticate, likePostHandler);

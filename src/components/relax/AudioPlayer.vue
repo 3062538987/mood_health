@@ -11,109 +11,99 @@
       </div>
 
       <div class="playback-controls">
-        <button @click="togglePlay" class="play-btn">
-          {{ isPlaying ? "⏸" : "▶" }}
+        <button class="play-btn" @click="togglePlay">
+          {{ isPlaying ? '⏸' : '▶' }}
         </button>
 
         <div class="volume-control">
           <span class="volume-icon">🔊</span>
           <input
+            v-model.number="volume"
             type="range"
             min="0"
             max="100"
-            v-model.number="volume"
-            @input="adjustVolume"
             class="volume-slider"
+            @input="adjustVolume"
           />
         </div>
 
         <div class="loop-control">
-          <input
-            type="checkbox"
-            id="loop"
-            v-model="isLoop"
-            @change="toggleLoop"
-          />
+          <input id="loop" v-model="isLoop" type="checkbox" @change="toggleLoop" />
           <label for="loop">循环播放</label>
         </div>
       </div>
     </div>
 
-    <audio
-      ref="audioElement"
-      @ended="handleEnded"
-      class="audio-element"
-    ></audio>
+    <audio ref="audioElement" class="audio-element" @ended="handleEnded"></audio>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
-import useRelaxStore from "@/stores/relaxStore";
-import useAchievementStore from "@/stores/achievementStore";
+import { ref, onMounted, onUnmounted } from 'vue'
+import useRelaxStore from '@/stores/relaxStore'
+import useAchievementStore from '@/stores/achievementStore'
 
-const audioElement = ref<HTMLAudioElement | null>(null);
-const selectedAudio = ref("rain");
-const isPlaying = ref(false);
-const volume = ref(50);
-const isLoop = ref(true);
-const startTime = ref(new Date().toISOString());
+const audioElement = ref<HTMLAudioElement | null>(null)
+const selectedAudio = ref('rain')
+const isPlaying = ref(false)
+const volume = ref(50)
+const isLoop = ref(true)
+const startTime = ref(new Date().toISOString())
 
-const relaxStore = useRelaxStore();
-const achievementStore = useAchievementStore();
+const relaxStore = useRelaxStore()
+const achievementStore = useAchievementStore()
 
 const audioFiles = {
-  rain: "/audio/rain.mp3",
-  ocean: "/audio/ocean.mp3",
-  fire: "/audio/fire.mp3",
-};
+  rain: '/audio/rain.mp3',
+  ocean: '/audio/ocean.mp3',
+  fire: '/audio/fire.mp3',
+}
 
 const changeAudio = () => {
   if (audioElement.value) {
-    audioElement.value.src =
-      audioFiles[selectedAudio.value as keyof typeof audioFiles];
+    audioElement.value.src = audioFiles[selectedAudio.value as keyof typeof audioFiles]
     if (isPlaying.value) {
-      audioElement.value.play().catch((err) => console.error("播放失败:", err));
+      audioElement.value.play().catch((err) => console.error('播放失败:', err))
     }
   }
-};
+}
 
 const togglePlay = async () => {
   if (audioElement.value) {
     if (isPlaying.value) {
-      audioElement.value.pause();
-      await saveRelaxRecord();
+      audioElement.value.pause()
+      await saveRelaxRecord()
     } else {
-      startTime.value = new Date().toISOString(); // 重置开始时间
-      audioElement.value.play().catch((err) => console.error("播放失败:", err));
+      startTime.value = new Date().toISOString() // 重置开始时间
+      audioElement.value.play().catch((err) => console.error('播放失败:', err))
     }
-    isPlaying.value = !isPlaying.value;
+    isPlaying.value = !isPlaying.value
   }
-};
+}
 
 const adjustVolume = () => {
   if (audioElement.value) {
-    audioElement.value.volume = volume.value / 100;
+    audioElement.value.volume = volume.value / 100
   }
-};
+}
 
 const toggleLoop = () => {
   if (audioElement.value) {
-    audioElement.value.loop = isLoop.value;
+    audioElement.value.loop = isLoop.value
   }
-};
+}
 
 const handleEnded = async () => {
   if (!isLoop.value) {
-    isPlaying.value = false;
-    await saveRelaxRecord();
+    isPlaying.value = false
+    await saveRelaxRecord()
   }
-};
+}
 
 const saveRelaxRecord = async () => {
-  const endTime = new Date().toISOString();
+  const endTime = new Date().toISOString()
   await relaxStore.saveRecord({
-    activityType: "audio",
+    activityType: 'audio',
     startTime: startTime.value,
     endTime: endTime,
     metrics: {
@@ -121,26 +111,25 @@ const saveRelaxRecord = async () => {
       volume: volume.value,
       isLoop: isLoop.value,
     },
-  });
+  })
   // 检查成就
-  await achievementStore.checkAchievements();
-};
+  await achievementStore.checkAchievements()
+}
 
 onMounted(() => {
   if (audioElement.value) {
-    audioElement.value.src =
-      audioFiles[selectedAudio.value as keyof typeof audioFiles];
-    audioElement.value.volume = volume.value / 100;
-    audioElement.value.loop = isLoop.value;
+    audioElement.value.src = audioFiles[selectedAudio.value as keyof typeof audioFiles]
+    audioElement.value.volume = volume.value / 100
+    audioElement.value.loop = isLoop.value
   }
-});
+})
 
 onUnmounted(async () => {
   if (audioElement.value && isPlaying.value) {
-    audioElement.value.pause();
-    await saveRelaxRecord();
+    audioElement.value.pause()
+    await saveRelaxRecord()
   }
-});
+})
 </script>
 
 <style scoped lang="scss">
@@ -285,7 +274,7 @@ onUnmounted(async () => {
         align-items: center;
         gap: 6px;
 
-        input[type="checkbox"] {
+        input[type='checkbox'] {
           width: 16px;
           height: 16px;
           cursor: pointer;

@@ -30,9 +30,7 @@
         </div>
 
         <div class="action-buttons">
-          <button class="btn secondary" @click="backToList">
-            返回量表列表
-          </button>
+          <button class="btn secondary" @click="backToList">返回量表列表</button>
           <button class="btn primary" @click="retryAssessment">重新测试</button>
         </div>
       </div>
@@ -41,59 +39,51 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 
-const router = useRouter();
-const route = useRoute();
+const router = useRouter()
+const route = useRoute()
 
 // 格式化日期
 const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleString("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
+  const date = new Date(dateString)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
 
-const title = ref(
-  route.query.title
-    ? decodeURIComponent(route.query.title as string)
-    : "心理测评",
-);
-const score = ref(route.query.score ? (route.query.score as string) : "0");
-const result = ref(
-  route.query.result ? decodeURIComponent(route.query.result as string) : "",
-);
-const testDate = ref(
-  route.query.date ? formatDate(route.query.date as string) : "",
-);
+const title = ref(route.query.title ? decodeURIComponent(route.query.title as string) : '心理测评')
+const score = ref(route.query.score ? (route.query.score as string) : '0')
+const result = ref(route.query.result ? decodeURIComponent(route.query.result as string) : '')
+const testDate = ref(route.query.date ? formatDate(route.query.date as string) : '')
 
 // 返回量表列表
 const backToList = () => {
-  router.push("/improve/questionnaire");
-};
+  router.push('/improve/questionnaire')
+}
 
 // 重新测试
 const retryAssessment = () => {
   // 这里应该根据实际情况跳转到对应的量表页面
   // 暂时返回列表页
-  router.push("/improve/questionnaire");
-};
+  router.push('/improve/questionnaire')
+}
 
 onMounted(() => {
   // 如果没有结果数据，跳回列表页
   if (!result.value) {
-    router.push("/improve/questionnaire");
+    router.push('/improve/questionnaire')
   }
-});
+})
 </script>
 
 <style scoped lang="scss">
-@use "@/assets/styles/theme.scss" as *;
+@use '@/assets/styles/theme.scss' as *;
 
 .questionnaire-result {
   padding: 20px;
@@ -179,7 +169,7 @@ onMounted(() => {
           position: relative;
           color: $text-light-color;
           &::before {
-            content: "•";
+            content: '•';
             color: $primary-color;
             font-weight: bold;
             position: absolute;

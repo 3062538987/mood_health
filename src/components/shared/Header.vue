@@ -2,11 +2,9 @@
   <header class="sub-header">
     <div class="header-container">
       <div class="logo">
-        <router-link to="/">
-          <i class="fas fa-brain"></i> 情绪健康管理平台
-        </router-link>
+        <router-link to="/"> <i class="fas fa-brain"></i> 情绪健康管理平台 </router-link>
       </div>
-      <nav class="sub-nav" v-if="subNavItems.length > 0">
+      <nav v-if="subNavItems.length > 0" class="sub-nav">
         <router-link
           v-for="item in subNavItems"
           :key="item.path"
@@ -44,15 +42,15 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 interface SubNavItem {
-  path: string;
-  name: string;
-  icon: string;
+  path: string
+  name: string
+  icon: string
 }
 
 const route = useRoute()
 const subNavItems = computed<SubNavItem[]>(() => {
   // 查找当前路由匹配的父路由中第一个包含 subNav 的路由
-  const matched = route.matched.find(record => record.meta?.subNav)
+  const matched = route.matched.find((record) => record.meta?.subNav)
   return (matched?.meta?.subNav as SubNavItem[]) || []
 })
 </script>

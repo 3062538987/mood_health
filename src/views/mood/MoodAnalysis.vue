@@ -28,11 +28,7 @@
               description="会把你的记录转成图表和洞察，先给界面一点时间。"
             />
 
-            <div
-              v-else-if="showTrendEmpty"
-              key="trend-empty"
-              class="analysis-state-shell"
-            >
+            <div v-else-if="showTrendEmpty" key="trend-empty" class="analysis-state-shell">
               <SoftEmptyState
                 title="还没有足够的情绪记录可供分析"
                 description="先去记录几次心情，趋势图和 AI 洞察会在这里逐步长出来。"
@@ -44,7 +40,7 @@
             <div v-else key="trend-content" class="trend-content">
               <!-- 沉浸式叙事图表 -->
               <div class="narrative-chart">
-                <div class="chart-container" ref="chartContainer">
+                <div ref="chartContainer" class="chart-container">
                   <MoodChart
                     :chart-data="chartData"
                     :loading="isLoading"
@@ -53,11 +49,7 @@
                   />
 
                   <!-- 悬浮信息卡片 -->
-                  <div
-                    v-if="hoveredPoint"
-                    class="hover-card"
-                    :style="hoverCardStyle"
-                  >
+                  <div v-if="hoveredPoint" class="hover-card" :style="hoverCardStyle">
                     <div class="hover-date">
                       {{ formatDate(hoveredPoint.date) }}
                     </div>
@@ -77,15 +69,12 @@
                       {{ truncateText(hoveredPoint.note, 50) }}
                     </div>
                     <div
-                      v-if="
-                        hoveredPoint.triggers &&
-                        hoveredPoint.triggers.length > 0
-                      "
+                      v-if="hoveredPoint.triggers && hoveredPoint.triggers.length > 0"
                       class="hover-triggers"
                     >
                       <span class="trigger-icon">🎯</span>
                       <span class="trigger-text">
-                        {{ hoveredPoint.triggers.join(", ") }}
+                        {{ hoveredPoint.triggers.join(', ') }}
                       </span>
                     </div>
                   </div>
@@ -106,10 +95,7 @@
                     <h4 class="insight-title">{{ insight.title }}</h4>
                     <p class="insight-description">{{ insight.description }}</p>
                     <div class="insight-action">
-                      <button
-                        class="action-btn"
-                        @click="applySuggestion(insight.suggestion)"
-                      >
+                      <button class="action-btn" @click="applySuggestion(insight.suggestion)">
                         {{ insight.actionText }}
                       </button>
                     </div>
@@ -132,10 +118,7 @@
                 description="会把之前保存的建议按时间串起来，方便你回看。"
               />
 
-              <el-timeline
-                v-else-if="adviceHistory.length > 0"
-                key="history-list"
-              >
+              <el-timeline v-else-if="adviceHistory.length > 0" key="history-list">
                 <el-timeline-item
                   v-for="item in adviceHistory"
                   :key="item.id"
@@ -145,11 +128,7 @@
                   <div class="advice-item">
                     <h4 class="advice-analysis">{{ item.analysis }}</h4>
                     <div class="advice-suggestions">
-                      <p
-                        v-for="(s, idx) in item.suggestions"
-                        :key="idx"
-                        class="suggestion-item"
-                      >
+                      <p v-for="(s, idx) in item.suggestions" :key="idx" class="suggestion-item">
                         💡 {{ s }}
                       </p>
                     </div>
@@ -175,448 +154,442 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
-import { useRouter } from "vue-router";
-import { ElMessage } from "element-plus";
-import { getMoodTrend, getMoodWeeklyReport } from "@/api/mood";
-import { getAdviceHistory, type AdviceHistoryItem } from "@/api/advice";
-import { MoodTrendResponse, MoodWeeklyReport } from "@/types/mood";
-import MoodChart from "@/components/mood/MoodChart.vue";
-import SoftEmptyState from "@/components/shared/SoftEmptyState.vue";
-import SoftLoadingState from "@/components/shared/SoftLoadingState.vue";
-import { formatDate as formatDateUtil } from "@/utils/dateUtil";
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { getMoodTrend, getMoodWeeklyReport } from '@/api/mood'
+import { getAdviceHistorySafe, type AdviceHistoryItem } from '@/api/advice'
+import { MoodTrendResponse, MoodWeeklyReport } from '@/types/mood'
+import MoodChart from '@/components/mood/MoodChart.vue'
+import SoftEmptyState from '@/components/shared/SoftEmptyState.vue'
+import SoftLoadingState from '@/components/shared/SoftLoadingState.vue'
+import { formatDate as formatDateUtil } from '@/utils/dateUtil'
 
-const router = useRouter();
-const activeTab = ref("trend");
-const adviceHistory = ref<AdviceHistoryItem[]>([]);
-const adviceLoading = ref(false);
-const hasFetchedAdvice = ref(false);
+const router = useRouter()
+const activeTab = ref('trend')
+const adviceHistory = ref<AdviceHistoryItem[]>([])
+const adviceLoading = ref(false)
+const hasFetchedAdvice = ref(false)
 
 // 时间范围选项
-const timeRanges: { label: string; value: "week" | "month" | "quarter" }[] = [
-  { label: "近一周", value: "week" },
-  { label: "近一月", value: "month" },
-  { label: "近一季度", value: "quarter" },
-];
+const timeRanges: { label: string; value: 'week' | 'month' | 'quarter' }[] = [
+  { label: '近一周', value: 'week' },
+  { label: '近一月', value: 'month' },
+  { label: '近一季度', value: 'quarter' },
+]
 
 interface ChartPoint {
-  date: string;
-  intensity: number;
-  x: number;
-  y: number;
-  note?: string;
-  triggers?: string[];
+  date: string
+  intensity: number
+  x: number
+  y: number
+  note?: string
+  triggers?: string[]
 }
 
 interface Insight {
-  type: "pattern" | "warning" | "positive";
-  emoji: string;
-  title: string;
-  description: string;
-  suggestion: string;
-  actionText: string;
+  type: 'pattern' | 'warning' | 'positive'
+  emoji: string
+  title: string
+  description: string
+  suggestion: string
+  actionText: string
 }
 
-const selectedRange = ref<"week" | "month" | "quarter">("week");
-const isLoading = ref(false);
-const hasFetchedTrend = ref(false);
-const chartData = ref<MoodTrendResponse | null>(null);
-const weeklyData = ref<MoodWeeklyReport | null>(null);
-const hoveredPoint = ref<ChartPoint | null>(null);
-const chartContainer = ref<HTMLElement>();
-const insights = ref<Insight[]>([]);
+const selectedRange = ref<'week' | 'month' | 'quarter'>('week')
+const isLoading = ref(false)
+const hasFetchedTrend = ref(false)
+const chartData = ref<MoodTrendResponse | null>(null)
+const weeklyData = ref<MoodWeeklyReport | null>(null)
+const hoveredPoint = ref<ChartPoint | null>(null)
+const chartContainer = ref<HTMLElement>()
+const insights = ref<Insight[]>([])
 
 const hasTrendData = computed(() => {
-  return Boolean(chartData.value?.data?.length);
-});
+  return Boolean(chartData.value?.data?.length)
+})
 
 const showTrendLoading = computed(() => {
-  return !hasFetchedTrend.value || (isLoading.value && !hasTrendData.value);
-});
+  return !hasFetchedTrend.value || (isLoading.value && !hasTrendData.value)
+})
 
 const showTrendEmpty = computed(() => {
-  return hasFetchedTrend.value && !isLoading.value && !hasTrendData.value;
-});
+  return hasFetchedTrend.value && !isLoading.value && !hasTrendData.value
+})
 
 const showHistoryLoading = computed(() => {
-  return (
-    !hasFetchedAdvice.value ||
-    (adviceLoading.value && adviceHistory.value.length === 0)
-  );
-});
+  return !hasFetchedAdvice.value || (adviceLoading.value && adviceHistory.value.length === 0)
+})
 
 // 计算属性：平均情绪强度
 const averageIntensity = computed(() => {
-  if (!chartData.value || !chartData.value.data) return 0;
-  const values = chartData.value.data.map((d) => d.intensity || 0);
-  return values.length > 0
-    ? values.reduce((a, b) => a + b, 0) / values.length
-    : 0;
-});
+  if (!chartData.value || !chartData.value.data) return 0
+  const values = chartData.value.data.map((d) => d.intensity || 0)
+  return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0
+})
 
 // 计算属性：情绪稳定性
 const moodStability = computed(() => {
-  if (!chartData.value || !chartData.value.data) return 0;
-  const values = chartData.value.data.map((d) => d.intensity || 0);
-  if (values.length === 0) return 0;
+  if (!chartData.value || !chartData.value.data) return 0
+  const values = chartData.value.data.map((d) => d.intensity || 0)
+  if (values.length === 0) return 0
 
-  const avg = averageIntensity.value;
-  const variance =
-    values.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) /
-    values.length;
-  const stdDev = Math.sqrt(variance);
+  const avg = averageIntensity.value
+  const variance = values.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / values.length
+  const stdDev = Math.sqrt(variance)
 
   // 标准差越小，稳定性越高
-  const stability = Math.max(0, 100 - (stdDev / 5) * 100);
-  return Math.round(stability);
-});
+  const stability = Math.max(0, 100 - (stdDev / 5) * 100)
+  return Math.round(stability)
+})
 
 // 计算属性：最常见情绪
 const mostFrequentMood = computed(() => {
-  if (!chartData.value || !chartData.value.data) return "无数据";
+  if (!chartData.value || !chartData.value.data) return '无数据'
 
-  const moodCounts: Record<string, number> = {};
+  const moodCounts: Record<string, number> = {}
   chartData.value.data.forEach((d) => {
     if (d.moodType && d.moodType.length > 0) {
       d.moodType.forEach((type: string) => {
-        moodCounts[type] = (moodCounts[type] || 0) + 1;
-      });
+        moodCounts[type] = (moodCounts[type] || 0) + 1
+      })
     }
-  });
+  })
 
-  let maxCount = 0;
-  let mostFrequent = "无数据";
+  let maxCount = 0
+  let mostFrequent = '无数据'
 
   const moodNames: Record<string, string> = {
-    happy: "快乐",
-    sad: "悲伤",
-    angry: "愤怒",
-    anxious: "焦虑",
-    calm: "平静",
-    irritable: "烦躁",
-  };
+    happy: '快乐',
+    sad: '悲伤',
+    angry: '愤怒',
+    anxious: '焦虑',
+    calm: '平静',
+    irritable: '烦躁',
+  }
 
   Object.entries(moodCounts).forEach(([type, count]) => {
     if (count > maxCount) {
-      maxCount = count;
-      mostFrequent = moodNames[type] || type;
+      maxCount = count
+      mostFrequent = moodNames[type] || type
     }
-  });
+  })
 
-  return mostFrequent;
-});
+  return mostFrequent
+})
 
 // 计算属性：悬浮卡片样式
 const hoverCardStyle = computed(() => {
-  if (!hoveredPoint.value || !chartContainer.value) return {};
+  if (!hoveredPoint.value || !chartContainer.value) return {}
 
   return {
     top: `${hoveredPoint.value.y}px`,
     left: `${hoveredPoint.value.x}px`,
-  };
-});
+  }
+})
 
 // 选择时间范围
-const selectRange = (range: "week" | "month" | "quarter") => {
-  selectedRange.value = range;
-  fetchMoodData(range);
-};
+const selectRange = (range: 'week' | 'month' | 'quarter') => {
+  selectedRange.value = range
+  fetchMoodData(range)
+}
 
 // 获取情绪数据
-const fetchMoodData = async (range: "week" | "month" | "quarter") => {
+const fetchMoodData = async (range: 'week' | 'month' | 'quarter') => {
   try {
-    isLoading.value = true;
+    isLoading.value = true
 
     // 获取趋势数据
-    const trendData = await getMoodTrend(range);
-    chartData.value = trendData;
+    const trendData = await getMoodTrend(range)
+    chartData.value = trendData
 
     // 获取周报数据（用于生成洞察）
-    const weeklyReport = await getMoodWeeklyReport();
-    weeklyData.value = weeklyReport;
+    const weeklyReport = await getMoodWeeklyReport()
+    weeklyData.value = weeklyReport
 
     // 生成AI洞察
-    insights.value = generateInsights(weeklyReport, trendData);
+    insights.value = generateInsights(weeklyReport, trendData)
   } catch (error) {
-    ElMessage.error("获取情绪数据失败，请稍后重试");
-    console.error("获取情绪数据失败", error);
+    ElMessage.error('获取情绪数据失败，请稍后重试')
+    console.error('获取情绪数据失败', error)
   } finally {
-    isLoading.value = false;
-    hasFetchedTrend.value = true;
+    isLoading.value = false
+    hasFetchedTrend.value = true
   }
-};
+}
 
 // 获取 AI 建议历史
 const fetchAdviceHistory = async () => {
   try {
-    adviceLoading.value = true;
-    const res = await getAdviceHistory({ page: 1, pageSize: 20 });
-    adviceHistory.value = res.list;
+    adviceLoading.value = true
+    const res = await getAdviceHistorySafe({ page: 1, pageSize: 20 })
+    if (res.ok) {
+      adviceHistory.value = res.data.list
+      return
+    }
+
+    adviceHistory.value = []
+    ElMessage.warning(res.message || '获取建议历史失败，请稍后重试')
   } catch (error) {
-    ElMessage.error("获取建议历史失败，请稍后重试");
-    console.error("获取建议历史失败", error);
+    adviceHistory.value = []
+    ElMessage.error('获取建议历史失败，请稍后重试')
+    console.error('获取建议历史失败', error)
   } finally {
-    adviceLoading.value = false;
-    hasFetchedAdvice.value = true;
+    adviceLoading.value = false
+    hasFetchedAdvice.value = true
   }
-};
+}
 
 // 生成AI洞察
 const generateInsights = (
   weeklyData: MoodWeeklyReport | null,
-  trendData: MoodTrendResponse | null,
+  trendData: MoodTrendResponse | null
 ): Insight[] => {
-  const insights: Insight[] = [];
+  const insights: Insight[] = []
 
-  if (
-    !weeklyData ||
-    !weeklyData.dailyData ||
-    weeklyData.dailyData.length === 0
-  ) {
+  if (!weeklyData || !weeklyData.dailyData || weeklyData.dailyData.length === 0) {
     return [
       {
-        type: "pattern",
-        emoji: "📊",
-        title: "开始记录情绪",
-        description: "记录更多情绪数据，我们将为您提供个性化的情绪分析和建议。",
-        suggestion: "record",
-        actionText: "开始记录",
+        type: 'pattern',
+        emoji: '📊',
+        title: '开始记录情绪',
+        description: '记录更多情绪数据，我们将为您提供个性化的情绪分析和建议。',
+        suggestion: 'record',
+        actionText: '开始记录',
       },
-    ];
+    ]
   }
 
-  const dailyData = weeklyData.dailyData;
+  const dailyData = weeklyData.dailyData
 
   // 分析1：周中情绪低谷
-  const dayAverages: Record<number, number> = {};
+  const dayAverages: Record<number, number> = {}
   dailyData.forEach((item) => {
-    const day = new Date(item.date).getDay();
-    dayAverages[day] = (dayAverages[day] || 0) + (item.averageIntensity || 0);
-  });
+    const day = new Date(item.date).getDay()
+    dayAverages[day] = (dayAverages[day] || 0) + (item.averageIntensity || 0)
+  })
 
-  const dayCounts: Record<number, number> = {};
+  const dayCounts: Record<number, number> = {}
   dailyData.forEach((item) => {
-    const day = new Date(item.date).getDay();
-    dayCounts[day] = (dayCounts[day] || 0) + 1;
-  });
+    const day = new Date(item.date).getDay()
+    dayCounts[day] = (dayCounts[day] || 0) + 1
+  })
 
-  const dayNames = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
-  let lowestDay = 0;
-  let lowestAvg = Infinity;
+  const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+  let lowestDay = 0
+  let lowestAvg = Infinity
 
   Object.entries(dayAverages).forEach(([dayStr, total]) => {
-    const day = parseInt(dayStr);
-    const avg = total / dayCounts[day];
+    const day = parseInt(dayStr)
+    const avg = total / dayCounts[day]
     if (avg < lowestAvg) {
-      lowestAvg = avg;
-      lowestDay = day;
+      lowestAvg = avg
+      lowestDay = day
     }
-  });
+  })
 
   if (lowestAvg < 4) {
     insights.push({
-      type: "warning",
-      emoji: "😌",
+      type: 'warning',
+      emoji: '😌',
       title: `每周${dayNames[lowestDay]}情绪最低落`,
       description: `过去4周，${dayNames[lowestDay]}平均情绪值比其他天低${Math.round(((4 - lowestAvg) / 4) * 100)}%。可能与当天的课程压力或工作安排有关。`,
-      suggestion: "relax",
-      actionText: "试试${dayNames[lowestDay]}下午安排放松活动",
-    });
+      suggestion: 'relax',
+      actionText: '试试${dayNames[lowestDay]}下午安排放松活动',
+    })
   }
 
   // 分析2：情绪波动
-  const intensities = dailyData.map((d) => d.averageIntensity || 0);
-  const avg = intensities.reduce((a, b) => a + b, 0) / intensities.length;
+  const intensities = dailyData.map((d) => d.averageIntensity || 0)
+  const avg = intensities.reduce((a, b) => a + b, 0) / intensities.length
   const variance =
-    intensities.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) /
-    intensities.length;
-  const stdDev = Math.sqrt(variance);
+    intensities.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / intensities.length
+  const stdDev = Math.sqrt(variance)
 
   if (stdDev > 1.5) {
     insights.push({
-      type: "warning",
-      emoji: "📊",
-      title: "情绪波动较大",
+      type: 'warning',
+      emoji: '📊',
+      title: '情绪波动较大',
       description: `最近一周情绪标准差为${stdDev.toFixed(1)}，表明情绪波动较为明显。建议关注情绪变化规律，寻找稳定的情绪调节方式。`,
-      suggestion: "meditation",
-      actionText: "尝试冥想练习",
-    });
+      suggestion: 'meditation',
+      actionText: '尝试冥想练习',
+    })
   }
 
   // 分析3：考试前焦虑
-  const examKeywords = ["考试", "测试", "测验", "复习"];
-  let examAnxietyCount = 0;
-  let examAnxietyIncrease = 0;
+  const examKeywords = ['考试', '测试', '测验', '复习']
+  let examAnxietyCount = 0
+  let examAnxietyIncrease = 0
 
   dailyData.forEach((item) => {
     const hasExamTrigger = item.triggers?.some((t: string) =>
-      examKeywords.some((keyword) => t.includes(keyword)),
-    );
+      examKeywords.some((keyword) => t.includes(keyword))
+    )
 
     if (hasExamTrigger && item.anxiousRatio && item.anxiousRatio > 30) {
-      examAnxietyCount++;
-      examAnxietyIncrease += item.anxiousRatio;
+      examAnxietyCount++
+      examAnxietyIncrease += item.anxiousRatio
     }
-  });
+  })
 
   if (examAnxietyCount >= 2) {
-    const avgAnxiety = examAnxietyIncrease / examAnxietyCount;
+    const avgAnxiety = examAnxietyIncrease / examAnxietyCount
     insights.push({
-      type: "warning",
-      emoji: "🔍",
-      title: "考试前焦虑上升",
+      type: 'warning',
+      emoji: '🔍',
+      title: '考试前焦虑上升',
       description: `检测到你在考试前3天焦虑情绪显著增加，平均焦虑水平为${avgAnxiety.toFixed(0)}%。这是正常的反应，但可以提前准备。`,
-      suggestion: "exam",
-      actionText: "查看考前放松指南",
-    });
+      suggestion: 'exam',
+      actionText: '查看考前放松指南',
+    })
   }
 
   // 分析4：积极情绪
   const positiveDays = dailyData.filter(
-    (d) => (d.happyRatio || 0) > 40 || (d.calmRatio || 0) > 40,
-  ).length;
+    (d) => (d.happyRatio || 0) > 40 || (d.calmRatio || 0) > 40
+  ).length
 
-  const positiveRatio = (positiveDays / dailyData.length) * 100;
+  const positiveRatio = (positiveDays / dailyData.length) * 100
 
   if (positiveRatio > 60) {
     insights.push({
-      type: "positive",
-      emoji: "🌟",
-      title: "情绪状态良好",
+      type: 'positive',
+      emoji: '🌟',
+      title: '情绪状态良好',
       description: `最近一周有${positiveRatio.toFixed(0)}%的时间情绪积极，这是一个很好的状态！继续保持积极的生活态度。`,
-      suggestion: "share",
-      actionText: "分享你的快乐",
-    });
+      suggestion: 'share',
+      actionText: '分享你的快乐',
+    })
   }
 
   // 分析5：睡眠与情绪
-  const sleepKeywords = ["熬夜", "失眠", "睡眠"];
-  let sleepMoodImpact = 0;
-  let sleepRecords = 0;
+  const sleepKeywords = ['熬夜', '失眠', '睡眠']
+  let sleepMoodImpact = 0
+  let sleepRecords = 0
 
   dailyData.forEach((item) => {
     const hasSleepTrigger = item.triggers?.some((t: string) =>
-      sleepKeywords.some((keyword) => t.includes(keyword)),
-    );
+      sleepKeywords.some((keyword) => t.includes(keyword))
+    )
 
     if (hasSleepTrigger) {
-      sleepRecords++;
+      sleepRecords++
       if (item.averageIntensity && item.averageIntensity < 4) {
-        sleepMoodImpact++;
+        sleepMoodImpact++
       }
     }
-  });
+  })
 
   if (sleepRecords > 0 && sleepMoodImpact / sleepRecords > 0.5) {
     insights.push({
-      type: "warning",
-      emoji: "😴",
-      title: "睡眠影响情绪",
+      type: 'warning',
+      emoji: '😴',
+      title: '睡眠影响情绪',
       description: `检测到睡眠问题与低情绪状态相关联。改善睡眠质量可能有助于提升整体情绪。`,
-      suggestion: "sleep",
-      actionText: "查看睡眠建议",
-    });
+      suggestion: 'sleep',
+      actionText: '查看睡眠建议',
+    })
   }
 
   // 如果没有足够的洞察，添加默认洞察
   if (insights.length === 0) {
     insights.push({
-      type: "pattern",
-      emoji: "📊",
-      title: "持续记录情绪",
-      description: "继续记录情绪数据，我们将为您提供更准确的个性化分析和建议。",
-      suggestion: "record",
-      actionText: "继续记录",
-    });
+      type: 'pattern',
+      emoji: '📊',
+      title: '持续记录情绪',
+      description: '继续记录情绪数据，我们将为您提供更准确的个性化分析和建议。',
+      suggestion: 'record',
+      actionText: '继续记录',
+    })
   }
 
-  return insights.slice(0, 3);
-};
+  return insights.slice(0, 3)
+}
 
 // 处理图表悬浮
 const handleHoverPoint = (point: ChartPoint) => {
-  hoveredPoint.value = point;
-};
+  hoveredPoint.value = point
+}
 
 // 处理离开图表点
 const handleLeavePoint = () => {
-  hoveredPoint.value = null;
-};
+  hoveredPoint.value = null
+}
 
 // 应用建议
 const applySuggestion = (suggestion: string) => {
   switch (suggestion) {
-    case "record":
-      router.push("/mood/record");
-      break;
-    case "relax":
+    case 'record':
+      router.push('/mood/record')
+      break
+    case 'relax':
       // 跳转到放松中心
-      window.location.href = "/relax";
-      break;
-    case "meditation":
+      window.location.href = '/relax'
+      break
+    case 'meditation':
       // 跳转到冥想练习
-      window.location.href = "/relax?tab=breathing";
-      break;
-    case "exam":
+      window.location.href = '/relax?tab=breathing'
+      break
+    case 'exam':
       ElMessage({
         message:
-          "考前放松指南：\n1. 提前3天开始调整作息\n2. 适当运动释放压力\n3. 尝试深呼吸练习\n4. 保持积极心态",
-        type: "info",
+          '考前放松指南：\n1. 提前3天开始调整作息\n2. 适当运动释放压力\n3. 尝试深呼吸练习\n4. 保持积极心态',
+        type: 'info',
         duration: 5000,
-      });
-      break;
-    case "share":
+      })
+      break
+    case 'share':
       ElMessage({
-        message:
-          "分享你的快乐：\n与朋友分享积极的情绪可以增强幸福感，也可以激励他人！",
-        type: "success",
+        message: '分享你的快乐：\n与朋友分享积极的情绪可以增强幸福感，也可以激励他人！',
+        type: 'success',
         duration: 3000,
-      });
-      break;
-    case "sleep":
+      })
+      break
+    case 'sleep':
       ElMessage({
         message:
-          "睡眠建议：\n1. 保持规律作息\n2. 睡前避免使用电子设备\n3. 创造舒适的睡眠环境\n4. 避免咖啡因和重餐",
-        type: "info",
+          '睡眠建议：\n1. 保持规律作息\n2. 睡前避免使用电子设备\n3. 创造舒适的睡眠环境\n4. 避免咖啡因和重餐',
+        type: 'info',
         duration: 5000,
-      });
-      break;
+      })
+      break
     default:
-      console.log("Unknown suggestion:", suggestion);
+      console.log('Unknown suggestion:', suggestion)
   }
-};
+}
 
 const goToMoodRecord = () => {
-  router.push("/mood/record");
-};
+  router.push('/mood/record')
+}
 
 // 格式化日期
 const formatDate = (dateString: string) => {
-  return formatDateUtil(dateString);
-};
+  return formatDateUtil(dateString)
+}
 
 // 截断文本
 const truncateText = (text: string, maxLength: number) => {
-  if (!text) return "";
-  return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
-};
+  if (!text) return ''
+  return text.length > maxLength ? text.substring(0, maxLength) + '...' : text
+}
 
 // 获取强度颜色
 const getIntensityColor = (intensity: number) => {
-  if (intensity <= 3) return "var(--mood-angry)";
-  if (intensity <= 6) return "var(--mood-happy)";
-  return "var(--mood-calm)";
-};
+  if (intensity <= 3) return 'var(--mood-angry)'
+  if (intensity <= 6) return 'var(--mood-happy)'
+  return 'var(--mood-calm)'
+}
 
 // 生命周期钩子
 onMounted(() => {
-  fetchMoodData(selectedRange.value);
-  fetchAdviceHistory();
-});
+  fetchMoodData(selectedRange.value)
+  fetchAdviceHistory()
+})
 </script>
 
 <style scoped lang="scss">
-@use "@/assets/styles/theme.scss" as *;
+@use '@/assets/styles/theme.scss' as *;
 
 .mood-analysis {
   padding: 20px;
@@ -630,7 +603,7 @@ onMounted(() => {
     margin-bottom: 24px;
     text-align: center;
     color: var(--primary-color);
-    font-family: "Noto Serif SC", serif;
+    font-family: 'Noto Serif SC', serif;
     font-weight: 700;
   }
 
@@ -752,7 +725,7 @@ onMounted(() => {
         .intensity-value {
           font-size: $font-size-xl;
           font-weight: 700;
-          font-family: "Noto Serif SC", serif;
+          font-family: 'Noto Serif SC', serif;
         }
       }
 
@@ -827,17 +800,13 @@ onMounted(() => {
     overflow: hidden;
 
     &::before {
-      content: "";
+      content: '';
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       height: 4px;
-      background: linear-gradient(
-        90deg,
-        var(--primary-color),
-        var(--secondary-color)
-      );
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
       opacity: 0;
       transition: opacity 0.3s ease;
     }
@@ -880,7 +849,7 @@ onMounted(() => {
         font-weight: 600;
         color: var(--text-color);
         margin: 0;
-        font-family: "Noto Serif SC", serif;
+        font-family: 'Noto Serif SC', serif;
       }
 
       .insight-description {
@@ -977,7 +946,7 @@ onMounted(() => {
         font-size: $font-size-xxl;
         font-weight: 700;
         color: var(--primary-color);
-        font-family: "Noto Serif SC", serif;
+        font-family: 'Noto Serif SC', serif;
         line-height: 1;
         margin-bottom: 4px;
       }
