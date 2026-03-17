@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import { buildAiApiUrl } from '@/utils/apiBase'
 import {
   MoodRecord,
   MoodListResponse,
@@ -41,7 +42,7 @@ export interface AnalyzeMoodResponse {
 
 export const analyzeMoodLegacy = (data: AnalyzeMoodRequest) => {
   return request<AnalyzeMoodResponse>({
-    url: 'http://localhost:8000/api/analyze-mood',
+    url: buildAiApiUrl('/api/analyze-mood'),
     method: 'post',
     data,
     timeout: 30000,

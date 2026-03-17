@@ -52,6 +52,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { buildApiUrl } from '@/utils/apiBase'
 
 const router = useRouter()
 
@@ -69,7 +70,9 @@ const fetchCourses = async () => {
   loading.value = true
   try {
     const category = activeCategory.value === '全部' ? '' : activeCategory.value
-    const response = await fetch(`http://localhost:3000/api/courses?category=${category}`)
+    const response = await fetch(
+      buildApiUrl(`/api/courses?category=${encodeURIComponent(category)}`)
+    )
     const data = await response.json()
     courses.value = data
   } catch (error) {

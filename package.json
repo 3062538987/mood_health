@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
+    "demo:init": "powershell -ExecutionPolicy Bypass -File init-demo-data.ps1",
     "lint": "eslint . --ext .vue,.js,.ts --fix",
     "format": "prettier --write \"src/**/*.{vue,ts,js}\"",
     "test": "vitest",

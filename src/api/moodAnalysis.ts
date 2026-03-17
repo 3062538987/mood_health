@@ -1,5 +1,6 @@
 import { debounce } from '@/utils/debounce'
 import request from '@/utils/request'
+import { buildAiApiUrl } from '@/utils/apiBase'
 
 export interface MoodAnalysisRequest {
   content: string
@@ -79,7 +80,7 @@ export const analyzeMood = async (data: MoodAnalysisRequest): Promise<MoodAnalys
 
   try {
     const response = await request<MoodAnalysisResponse>({
-      url: 'http://localhost:8000/api/analyze-mood',
+      url: buildAiApiUrl('/api/analyze-mood'),
       method: 'post',
       data: {
         content: data.content.trim(),

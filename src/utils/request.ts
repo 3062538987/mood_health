@@ -6,6 +6,7 @@ import axios, {
 } from 'axios'
 import { ElMessage, ElLoading } from 'element-plus'
 import router from '@/router'
+import { getApiBaseUrl } from '@/utils/apiBase'
 
 interface ErrorResponse {
   message?: string
@@ -24,6 +25,8 @@ interface AxiosErrorResponse {
 // 全局loading计数器
 let loadingCount = 0
 let loadingInstance: ReturnType<typeof ElLoading.service> | null = null
+const apiBaseUrl = getApiBaseUrl()
+const apiBaseUsesApiPrefix = apiBaseUrl.endsWith('/api')
 
 // 开启loading
 const startLoading = () => {
@@ -50,7 +53,7 @@ const endLoading = () => {
 
 // 创建 axios 实例
 const service = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/',
+  baseURL: apiBaseUrl,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -61,6 +64,10 @@ const service = axios.create({
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     startLoading()
+
+    if (apiBaseUsesApiPrefix && config.url?.startsWith('/api/')) {
+      config.url = config.url.slice(4)
+    }
 
     const token = localStorage.getItem('token')
     if (token) {

@@ -1,53 +1,50 @@
-import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
+import { Request, Response, NextFunction } from 'express'
+import jwt from 'jsonwebtoken'
+import dotenv from 'dotenv'
 
-dotenv.config();
+dotenv.config()
 
 // 扩展 Request 类型，添加 user 属性
 export interface AuthRequest extends Request {
-  user?: { userId: number; username: string; role: string };
+  user?: { userId: number; username: string; role: string }
 }
 
-export const authenticate = (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
-  const authHeader = req.headers.authorization;
+export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
+  const jwtSecret = process.env.JWT_SECRET
+  const authHeader = req.headers.authorization
   if (!authHeader) {
-    return res.status(401).json({ message: "未提供认证令牌" });
+    return res.status(401).json({ message: '未提供认证令牌' })
   }
 
-  const token = authHeader.split(" ")[1]; // Bearer <token>
-  if (!token) {
-    return res.status(401).json({ message: "令牌格式错误" });
+  const [scheme, token] = authHeader.split(' ')
+  if (scheme !== 'Bearer' || !token) {
+    return res.status(401).json({ message: '令牌格式错误' })
+  }
+
+  if (!jwtSecret) {
+    return res.status(500).json({ message: '服务配置错误' })
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
-      userId: number;
-      username: string;
-      role: string;
-    };
-    req.user = decoded;
-    next();
+    const decoded = jwt.verify(token, jwtSecret) as {
+      userId: number
+      username: string
+      role: string
+    }
+    req.user = decoded
+    next()
   } catch (error) {
-    return res.status(401).json({ message: "无效或过期令牌" });
+    return res.status(401).json({ message: '无效或过期令牌' })
   }
-};
+}
 
 // 管理员权限检查
-export const requireAdmin = (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
   if (!req.user) {
-    return res.status(401).json({ message: "未登录" });
+    return res.status(401).json({ message: '未登录' })
   }
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ message: "需要管理员权限" });
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: '需要管理员权限' })
   }
-  next();
-};
+  next()
+}

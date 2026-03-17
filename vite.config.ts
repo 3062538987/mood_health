@@ -1,5 +1,4 @@
-import { defineConfig } from 'vite'
-import { loadEnv } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -49,7 +48,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [vue()],
-    base: env.VITE_BASE_URL || env.BASE_URL || '/',
+    base: env.VITE_BASE_URL || '/',
     css: {
       preprocessorOptions: {
         scss: {

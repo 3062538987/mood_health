@@ -53,6 +53,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { buildApiUrl } from '@/utils/apiBase'
 
 const route = useRoute()
 const router = useRouter()
@@ -64,7 +65,7 @@ const fetchCourseDetail = async () => {
   loading.value = true
   try {
     const courseId = route.params.id
-    const response = await fetch(`http://localhost:3000/api/courses/${courseId}`)
+    const response = await fetch(buildApiUrl(`/api/courses/${courseId}`))
     const data = await response.json()
     course.value = data
   } catch (error) {

@@ -6,6 +6,7 @@
 
 import request from '@/utils/request'
 import { ElMessage } from 'element-plus'
+import { buildAiApiUrl } from '@/utils/apiBase'
 
 /**
  * 温柔回复请求参数
@@ -49,7 +50,7 @@ export const generateGentleReply = async (
 
   try {
     const response = await request<GentleReplyResponse>({
-      url: 'http://localhost:8000/treehole/gentle-reply',
+      url: buildAiApiUrl('/treehole/gentle-reply'),
       method: 'post',
       data: {
         content: data.content.trim(),
@@ -112,7 +113,7 @@ export const generateGentleReplyWithRetry = async (
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const response = await request<GentleReplyResponse>({
-        url: 'http://localhost:3000/api/treehole/gentle-reply',
+        url: buildAiApiUrl('/treehole/gentle-reply'),
         method: 'post',
         data: {
           content: data.content.trim(),

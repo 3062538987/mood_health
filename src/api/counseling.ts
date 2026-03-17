@@ -56,7 +56,7 @@ export const sendCounselingMessage = async (
 
   try {
     const response = await request<CounselingResponse>({
-      url: 'http://localhost:3000/api/ai/counseling',
+      url: '/api/ai/counseling',
       method: 'post',
       data: {
         message: data.message.trim(),
