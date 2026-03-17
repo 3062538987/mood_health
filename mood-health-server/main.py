@@ -15,7 +15,7 @@ from slowapi.util import get_remote_address
 from api_response import register_health_routes, setup_exception_handlers
 from assessment import register_legacy_routes, router as assessment_router
 from common import get_logger, settings
-from db import redis_client
+from db import check_redis_health, close_redis_connection
 
 logger = get_logger(__name__)
 
@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"调试模式: {settings.DEBUG}")
     
     # 检查 Redis 连接
-    if redis_client.is_connected():
+    if check_redis_health().get("connected", False):
         logger.info("Redis 连接正常")
     else:
         logger.warning("Redis 未连接，缓存功能将不可用")
@@ -46,7 +46,7 @@ async def lifespan(app: FastAPI):
     
     # 关闭
     logger.info("应用关闭中...")
-    redis_client.close()
+    close_redis_connection()
     logger.info("应用关闭完成")
 
 

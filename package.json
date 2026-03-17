@@ -11,6 +11,7 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "start-all": "powershell -ExecutionPolicy Bypass -File start-project.ps1",
+    "start-all:check": "powershell -ExecutionPolicy Bypass -File start-all-with-check.ps1",
     "start-all:concurrent": "npx concurrently \"npm --prefix . run dev\" \"npm --prefix mood-health-server run dev\" \"python -m uvicorn mood-health-server.main:app --host 0.0.0.0 --port 8000\""
   },
   "dependencies": {

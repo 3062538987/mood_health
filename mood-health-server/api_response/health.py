@@ -28,7 +28,14 @@ async def check_redis_health() -> Dict[str, Any]:
         Dict: Redis 健康状态信息
     """
     try:
-        is_connected = redis_client.is_connected()
+        is_connected = False
+        if redis_client is not None:
+            if hasattr(redis_client, "is_connected"):
+                checker = getattr(redis_client, "is_connected")
+                is_connected = checker() if callable(checker) else bool(checker)
+            else:
+                redis_client.ping()
+                is_connected = True
         return {
             "status": "healthy" if is_connected else "unhealthy",
             "connected": is_connected

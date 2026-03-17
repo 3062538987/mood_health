@@ -7,7 +7,7 @@ API 响应模块
 from datetime import datetime
 from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 T = TypeVar("T")
 
@@ -149,6 +149,8 @@ class HealthStatus(BaseModel):
     
     # 详细信息
     components: Optional[Dict[str, Any]] = Field(default=None, description="各组件详细状态")
+
+    model_config = ConfigDict(protected_namespaces=())
     
     @classmethod
     def healthy(cls, **kwargs) -> "HealthStatus":
