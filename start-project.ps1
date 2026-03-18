@@ -1,94 +1,122 @@
 <#
-启动脚本（PowerShell）
-功能：
-- 检查 Node.js / npm / Python
-- 检查并安装 Python 包：uvicorn, fastapi
-- 检查 Ollama（提示，不强制）
-- 在新窗口中分别启动前端（npm run dev）、后端（mood-health-server npm run dev）和 AI 服务（uvicorn ollama_server:app）
+One-click startup with local PM2 (path-agnostic).
+- No global pm2 requirement
+- No absolute paths
+- Uses node to execute local PM2 entry script
 #>
 
-# 配置：根据你的路径修改（已使用你提供的路径）
-$root = "D:\\桌面\\Code\\大学生情绪健康\\mood-health-web"
-$frontendDir = $root
+[CmdletBinding()]
+param(
+    [switch]$Clean
+)
+
+$ErrorActionPreference = "Stop"
+
+$root = Split-Path -Parent $PSCommandPath
 $backendDir = Join-Path $root "mood-health-server"
+$ecosystem = Join-Path $backendDir "ecosystem.config.js"
+$logDir = Join-Path $backendDir "logs"
+$pm2Entry = Join-Path $root "node_modules\pm2\bin\pm2"
 
-function Fail([string]$msg){ Write-Error $msg; exit 1 }
-
-function Check-Command([string]$name){
-    return (Get-Command $name -ErrorAction SilentlyContinue) -ne $null
+function Fail([string]$msg) {
+    Write-Error $msg
+    exit 1
 }
 
-Write-Host "检查系统依赖..."
-if (-not (Check-Command node)) { Fail "Node.js 未找到，请安装并将 node 添加到 PATH。" }
-if (-not (Check-Command npm)) { Fail "npm 未找到，请安装 Node.js/npm 并确保 npm 在 PATH。" }
+function Test-Command([string]$name) {
+    return $null -ne (Get-Command $name -ErrorAction SilentlyContinue)
+}
 
-# 找到 Python 可执行文件（优先项目虚拟环境，其次系统 python/py）
+function Invoke-Pm2 {
+    param(
+        [Parameter(ValueFromRemainingArguments = $true)]
+        [string[]]$Args
+    )
+    & node $pm2Entry @Args
+}
+
+if (-not (Test-Path $backendDir)) { Fail "Backend directory not found: $backendDir" }
+if (-not (Test-Path $ecosystem)) { Fail "PM2 ecosystem not found: $ecosystem" }
+
+Write-Host "[1/6] Checking dependencies..."
+if (-not (Test-Command node)) { Fail "Node.js is not available in PATH" }
+if (-not (Test-Command npm)) { Fail "npm is not available in PATH" }
+
 $pythonCmd = $null
-# 常见项目虚拟环境路径
 $venvCandidates = @(
-    Join-Path $root ".venv\Scripts\python.exe",
-    Join-Path $root "venv\Scripts\python.exe",
-    Join-Path $root "env\Scripts\python.exe"
+    (Join-Path $root "venv\Scripts\python.exe"),
+    (Join-Path $root ".venv\Scripts\python.exe"),
+    (Join-Path $root "env\Scripts\python.exe")
 )
 foreach ($p in $venvCandidates) {
-    if (Test-Path $p) { $pythonCmd = $p; Write-Host "使用项目虚拟环境 Python: $pythonCmd"; break }
-}
-if (-not $pythonCmd) {
-    if (Check-Command python) { $pythonCmd = (Get-Command python).Source }
-    elseif (Check-Command py) { $pythonCmd = (Get-Command py).Source }
-}
-if (-not $pythonCmd) { Fail "Python 未找到，请安装并将 python/py 添加到 PATH，或在项目根创建虚拟环境 (.venv)。" }
-
-Write-Host "使用 Python: $pythonCmd"
-
-function Ensure-PyPkg([string]$pkg){
-    Write-Host "检查 Python 包：$pkg ..."
-    & $pythonCmd -m pip show $pkg > $null 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "$pkg 未安装，尝试通过 pip 安装..."
-        & $pythonCmd -m pip install $pkg
-        if ($LASTEXITCODE -ne 0) { Fail "自动安装 $pkg 失败，请手动安装：$pythonCmd -m pip install $pkg" }
-    } else {
-        Write-Host "$pkg 已安装"
+    if (Test-Path $p) {
+        $pythonCmd = $p
+        break
     }
 }
+if (-not $pythonCmd) {
+    if (Test-Command python) { $pythonCmd = (Get-Command python).Source }
+    elseif (Test-Command py) { $pythonCmd = (Get-Command py).Source }
+}
+if (-not $pythonCmd) { Fail "Python is not available. Install it or create a project venv." }
+Write-Host "Python: $pythonCmd"
 
-Ensure-PyPkg uvicorn
-Ensure-PyPkg fastapi
+Write-Host "[2/6] Ensuring local PM2..."
+if (-not (Test-Path $pm2Entry)) {
+    npm install --save-dev pm2
+}
+if (-not (Test-Path $pm2Entry)) {
+    Fail "Local PM2 not found after install. Check npm install logs."
+}
+Write-Host "PM2 entry: node node_modules/pm2/bin/pm2"
 
-# 检查 Ollama（可选）
-if (-not (Check-Command ollama)) {
-    Write-Warning "未检测到 Ollama，可选服务。若需使用，请安装 Ollama 并拉取模型 deepseek-r1:1.5b（或本地替代）。脚本将继续启动其他服务。"
-} else {
-    Write-Host "检测到 Ollama，可用来运行本地模型（若需要）。"
+Write-Host "[3/6] Building Node backend..."
+Push-Location $backendDir
+try {
+    npm run build
+}
+finally {
+    Pop-Location
+}
+if (-not (Test-Path (Join-Path $backendDir "dist\app.js"))) {
+    Fail "Build output missing: dist/app.js"
+}
+if (-not (Test-Path $logDir)) {
+    New-Item -ItemType Directory -Path $logDir | Out-Null
 }
 
-Write-Host "准备在新终端中启动服务..."
+$env:PYTHON_EXECUTABLE = $pythonCmd
+$env:PYTHONUTF8 = "1"
 
-# 启动前端（新 PowerShell 窗口）
-Start-Process -FilePath "powershell" -ArgumentList @(
-    "-NoExit",
-    "-Command",
-    "Set-Location -LiteralPath '$frontendDir'; Write-Host '启动前端: http://localhost:5173'; npm run dev"
-) -WorkingDirectory $frontendDir
+Write-Host "[4/6] Starting PM2 services..."
+Push-Location $backendDir
+try {
+    if ($Clean) {
+        Invoke-Pm2 delete mood-health-server,mood-ai-server | Out-Null
+    }
+    Invoke-Pm2 startOrRestart $ecosystem --update-env
+}
+finally {
+    Pop-Location
+}
 
-# 启动后端（新 PowerShell 窗口）
-Start-Process -FilePath "powershell" -ArgumentList @(
-    "-NoExit",
-    "-Command",
-    "Set-Location -LiteralPath '$backendDir'; Write-Host '启动后端: http://localhost:5000'; npm run dev"
-) -WorkingDirectory $backendDir
+Write-Host "[5/6] Configuring log rotation..."
+$logrotateInstalled = (Invoke-Pm2 module:list) | Select-String "pm2-logrotate"
+if (-not $logrotateInstalled) {
+    Invoke-Pm2 install pm2-logrotate | Out-Null
+}
+Invoke-Pm2 set pm2-logrotate:max_size 20M | Out-Null
+Invoke-Pm2 set pm2-logrotate:retain 14 | Out-Null
+Invoke-Pm2 set pm2-logrotate:compress true | Out-Null
+Invoke-Pm2 set pm2-logrotate:dateFormat "YYYY-MM-DD_HH-mm-ss" | Out-Null
+Invoke-Pm2 set pm2-logrotate:workerInterval 30 | Out-Null
 
-# 启动 AI 服务（新 PowerShell 窗口）
-Start-Process -FilePath "powershell" -ArgumentList @(
-    "-NoExit",
-    "-Command",
-    "Set-Location -LiteralPath '$backendDir'; Write-Host '启动 AI 服务: http://localhost:8000'; & '$pythonCmd' -m uvicorn main:app --host 0.0.0.0 --port 8000"
-) -WorkingDirectory $backendDir
+Write-Host "[6/6] Saving PM2 state and printing status..."
+Invoke-Pm2 save | Out-Null
+Invoke-Pm2 status
 
-Write-Host "已在新窗口中启动所有服务。访问地址："
-Write-Host "- 前端: http://localhost:5173"
-Write-Host "- 后端: http://localhost:5000"
-Write-Host "- AI 服务: http://localhost:8000"
-
-Write-Host "如果你希望将它们合并到一个终端窗口运行，请使用 start-all-concurrently.ps1（需要 npx concurrently）。"
+Write-Host ""
+Write-Host "Done. Acceptance checks:"
+Write-Host "  netstat -ano | findstr :3000"
+Write-Host "  netstat -ano | findstr :8000"
+Write-Host "  curl.exe -i http://localhost:3000/health"

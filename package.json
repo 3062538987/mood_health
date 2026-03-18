@@ -14,8 +14,10 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "start-all": "powershell -ExecutionPolicy Bypass -File start-project.ps1",
-    "start-all:check": "powershell -ExecutionPolicy Bypass -File start-all-with-check.ps1",
-    "start-all:concurrent": "npx concurrently \"npm --prefix . run dev\" \"npm --prefix mood-health-server run dev\" \"python -m uvicorn mood-health-server.main:app --host 0.0.0.0 --port 8000\""
+    "start-all:clean": "powershell -ExecutionPolicy Bypass -File start-project.ps1 -Clean",
+    "pm2:status": "node ./node_modules/pm2/bin/pm2 status",
+    "pm2:logs": "node ./node_modules/pm2/bin/pm2 logs",
+    "pm2:stop": "node ./node_modules/pm2/bin/pm2 delete mood-health-server mood-ai-server"
   },
   "dependencies": {
     "@vueuse/core": "^14.2.1",
@@ -39,6 +41,7 @@
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-vue": "^9.33.0",
     "happy-dom": "^14.0.0",
+    "pm2": "^5.4.2",
     "prettier": "^3.8.1",
     "sass": "^1.94.2",
     "sass-embedded": "^1.98.0",

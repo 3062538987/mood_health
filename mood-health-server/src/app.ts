@@ -17,6 +17,8 @@ import courseRoutes from './routes/courseRoutes'
 import aiRoutes from './routes/aiRoutes'
 import relaxRoutes from './routes/relaxRoutes'
 import achievementRoutes from './routes/achievementRoutes'
+import auditRoutes from './routes/auditRoutes'
+import managementRoutes from './routes/managementRoutes'
 import logger, { summarizeRequestBody } from './utils/logger'
 import redisClient from './utils/redis.client'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler'
@@ -124,8 +126,11 @@ app.use('/api/questionnaires', questionnaireRoutes)
 app.use('/api/music', musicRoutes)
 app.use('/api/courses', courseRoutes)
 app.use('/api/ai', aiRoutes)
+app.use('/ai', aiRoutes)
 app.use('/api/relax', relaxRoutes)
 app.use('/api/achievements', achievementRoutes)
+app.use('/api/audit', auditRoutes)
+app.use('/api', managementRoutes)
 
 // 健康检查接口
 app.get('/health', async (req, res) => {
@@ -171,6 +176,7 @@ app.use(errorHandler)
 
 // 启动服务器
 const PORT = process.env.PORT || 3000
+const HOST = process.env.HOST || '127.0.0.1'
 
 const startServer = async () => {
   try {
@@ -178,8 +184,8 @@ const startServer = async () => {
     await connectDB()
 
     // 再启动服务器
-    app.listen(PORT, () => {
-      console.log(`🚀 服务器运行在 http://localhost:${PORT}`)
+    app.listen(Number(PORT), HOST, () => {
+      console.log(`🚀 服务器运行在 http://${HOST}:${PORT}`)
       console.log(`📊 健康检查: http://localhost:${PORT}/health`)
       console.log(`🔐 认证路由: http://localhost:${PORT}/api/auth`)
       console.log(`📋 问卷路由: http://localhost:${PORT}/api/questionnaires`)

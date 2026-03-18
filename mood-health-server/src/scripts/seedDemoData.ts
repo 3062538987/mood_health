@@ -6,7 +6,7 @@ import { hashPassword } from '../utils/password'
 
 dotenv.config()
 
-type DemoUserRole = 'admin' | 'user'
+type DemoUserRole = 'super_admin' | 'admin' | 'user'
 
 interface DemoUserConfig {
   username: string
@@ -44,28 +44,64 @@ if (!DEFAULT_PASSWORD) {
 
 const demoUsers: DemoUserConfig[] = [
   {
-    username: 'student_demo1',
-    email: 'student_demo1@example.com',
-    role: 'user',
-    displayName: '测试学生账号 1',
+    username: 'super_admin_test1',
+    email: 'super_admin_test1@example.com',
+    role: 'super_admin',
+    displayName: '测试超级管理员账号 1',
   },
   {
-    username: 'student_demo2',
-    email: 'student_demo2@example.com',
-    role: 'user',
-    displayName: '测试学生账号 2',
+    username: 'super_admin_test2',
+    email: 'super_admin_test2@example.com',
+    role: 'super_admin',
+    displayName: '测试超级管理员账号 2',
   },
   {
-    username: 'admin_demo1',
-    email: 'admin_demo1@example.com',
+    username: 'admin_test1',
+    email: 'admin_test1@example.com',
     role: 'admin',
     displayName: '测试管理员账号 1',
   },
   {
-    username: 'admin_demo2',
-    email: 'admin_demo2@example.com',
+    username: 'admin_test2',
+    email: 'admin_test2@example.com',
     role: 'admin',
     displayName: '测试管理员账号 2',
+  },
+  {
+    username: 'admin_test3',
+    email: 'admin_test3@example.com',
+    role: 'admin',
+    displayName: '测试管理员账号 3',
+  },
+  {
+    username: 'admin_test4',
+    email: 'admin_test4@example.com',
+    role: 'admin',
+    displayName: '测试管理员账号 4',
+  },
+  {
+    username: 'student_test1',
+    email: 'student_test1@example.com',
+    role: 'user',
+    displayName: '测试学生账号 1',
+  },
+  {
+    username: 'student_test2',
+    email: 'student_test2@example.com',
+    role: 'user',
+    displayName: '测试学生账号 2',
+  },
+  {
+    username: 'student_test3',
+    email: 'student_test3@example.com',
+    role: 'user',
+    displayName: '测试学生账号 3',
+  },
+  {
+    username: 'student_test4',
+    email: 'student_test4@example.com',
+    role: 'user',
+    displayName: '测试学生账号 4',
   },
 ]
 
@@ -814,10 +850,11 @@ const printSummary = (accounts: Array<{ username: string; role: string }>) => {
     console.log(`- ${account.username} (${account.role}) / ${DEFAULT_PASSWORD}`)
   })
   console.log('\n已写入演示数据：')
-  console.log('- 2 个管理员账号')
-  console.log('- 2 个测试学生账号')
-  console.log('- student_demo1 最近 7 天情绪记录')
-  console.log('- student_demo2 最近 4 天情绪记录')
+  console.log('- 2 个超级管理员账号')
+  console.log('- 4 个普通管理员账号')
+  console.log('- 4 个测试学生账号')
+  console.log('- student_test1 最近 7 天情绪记录')
+  console.log('- student_test2 最近 4 天情绪记录')
   console.log('- 5 条树洞帖子，其中 1 条待审核')
   console.log('- 3 个未来活动，2 个学生账号各报名 1 个')
   console.log('- 1 条问卷结果记录与答案明细')
@@ -838,8 +875,8 @@ const main = async () => {
     }
     console.log('✅ 演示账号创建/更新完成')
 
-    const studentOne = accounts.find((account) => account.username === 'student_demo1')
-    const studentTwo = accounts.find((account) => account.username === 'student_demo2')
+    const studentOne = accounts.find((account) => account.username === 'student_test1')
+    const studentTwo = accounts.find((account) => account.username === 'student_test2')
 
     if (!studentOne || !studentTwo) {
       throw new Error('未能创建测试学生账号')

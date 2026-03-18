@@ -42,7 +42,7 @@ export interface AnalyzeMoodResponse {
 
 export const analyzeMoodLegacy = (data: AnalyzeMoodRequest) => {
   return request<AnalyzeMoodResponse>({
-    url: buildAiApiUrl('/api/analyze-mood'),
+    url: buildAiApiUrl('/analyze-mood'),
     method: 'post',
     data,
     timeout: 30000,

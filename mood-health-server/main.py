@@ -16,6 +16,7 @@ from api_response import register_health_routes, setup_exception_handlers
 from assessment import register_legacy_routes, router as assessment_router
 from common import get_logger, settings
 from db import check_redis_health, close_redis_connection
+from treehole.router import router as treehole_router
 
 logger = get_logger(__name__)
 
@@ -110,6 +111,14 @@ def create_app() -> FastAPI:
     # 注册向后兼容的路由
     register_legacy_routes(app)
     logger.debug("向后兼容路由已注册")
+
+    # 挂载 treehole 路由
+    app.include_router(
+        treehole_router,
+        prefix="",
+        tags=["树洞AI"]
+    )
+    logger.debug("TreeHole 路由已挂载: /treehole")
     
     # 注册健康检查路由
     register_health_routes(app)

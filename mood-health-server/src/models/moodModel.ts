@@ -705,10 +705,18 @@ export const getWeeklyReport = async (userId: number) => {
   return result.recordset;
 };
 
-export const findMoodById = async (id: number): Promise<Mood | null> => {
-  const result = await pool.request().input("id", sql.Int, id).query(`
+export const findMoodById = async (
+  id: number,
+  userId?: number,
+): Promise<Mood | null> => {
+  const request = pool.request().input("id", sql.Int, id);
+  if (userId !== undefined) {
+    request.input("userId", sql.Int, userId);
+  }
+
+  const result = await request.query(`
       SELECT id, user_id, mood_type, intensity, note_encrypted, tags, [trigger], record_date, created_at, updated_at
-      FROM moods WHERE id = @id
+      FROM moods WHERE id = @id ${userId === undefined ? "" : "AND user_id = @userId"}
     `);
   if (result.recordset.length === 0) return null;
   const row = result.recordset[0];
@@ -720,10 +728,16 @@ export const findMoodById = async (id: number): Promise<Mood | null> => {
 
 export const findMoodWithRelationsById = async (
   id: number,
+  userId?: number,
 ): Promise<MoodWithRelations | null> => {
-  const moodResult = await pool.request().input("id", sql.Int, id).query(`
+  const moodRequest = pool.request().input("id", sql.Int, id);
+  if (userId !== undefined) {
+    moodRequest.input("userId", sql.Int, userId);
+  }
+
+  const moodResult = await moodRequest.query(`
       SELECT id, user_id, mood_type, intensity, note_encrypted, tags, [trigger], record_date, created_at, updated_at
-      FROM moods WHERE id = @id
+      FROM moods WHERE id = @id ${userId === undefined ? "" : "AND user_id = @userId"}
     `);
 
   if (moodResult.recordset.length === 0) return null;
@@ -773,17 +787,26 @@ export const updateMood = async (
   note: string,
   tags: string,
   trigger: string,
+  userId?: number,
 ) => {
   const encryptedNote = encryptField(note);
 
-  const result = await pool
+  const whereClause = userId === undefined ? "WHERE id = @id" : "WHERE id = @id AND user_id = @userId";
+
+  const request = pool
     .request()
     .input("id", sql.Int, id)
     .input("moodType", sql.NVarChar, moodType)
     .input("intensity", sql.Int, intensity)
     .input("note", sql.NVarChar(sql.MAX), encryptedNote)
     .input("tags", sql.NVarChar, tags)
-    .input("trigger", sql.NVarChar, trigger).query(`
+    .input("trigger", sql.NVarChar, trigger);
+
+  if (userId !== undefined) {
+    request.input("userId", sql.Int, userId);
+  }
+
+  const result = await request.query(`
       UPDATE moods
       SET mood_type = @moodType,
           intensity = @intensity,
@@ -791,9 +814,9 @@ export const updateMood = async (
           tags = @tags,
           [trigger] = @trigger,
           updated_at = GETDATE()
-      WHERE id = @id
+      ${whereClause}
     `);
-  return result;
+  return result.rowsAffected[0] > 0;
 };
 
 export const updateMoodWithRelations = async (
@@ -802,7 +825,8 @@ export const updateMoodWithRelations = async (
   note: string,
   tagIds: number[],
   trigger: string,
-): Promise<void> => {
+  userId?: number,
+): Promise<boolean> => {
   const transaction = pool.transaction();
   await transaction.begin();
 
@@ -817,21 +841,32 @@ export const updateMoodWithRelations = async (
 
     const encryptedNote = encryptField(note);
 
-    await transaction
+    const updateRequest = transaction
       .request()
       .input("id", sql.Int, id)
       .input("moodType", sql.NVarChar, moodTypeStr)
       .input("intensity", sql.Int, avgIntensity)
       .input("note", sql.NVarChar(sql.MAX), encryptedNote)
-      .input("trigger", sql.NVarChar, trigger).query(`
+      .input("trigger", sql.NVarChar, trigger);
+
+    if (userId !== undefined) {
+      updateRequest.input("userId", sql.Int, userId);
+    }
+
+    const updateResult = await updateRequest.query(`
         UPDATE moods
         SET mood_type = @moodType,
             intensity = @intensity,
             note_encrypted = @note,
             [trigger] = @trigger,
             updated_at = GETDATE()
-        WHERE id = @id
+        WHERE id = @id ${userId === undefined ? "" : "AND user_id = @userId"}
       `);
+
+    if (updateResult.rowsAffected[0] === 0) {
+      await transaction.rollback();
+      return false;
+    }
 
     await transaction.request().input("moodId", sql.Int, id).query(`
       DELETE FROM mood_emotions WHERE mood_id = @moodId
@@ -863,18 +898,23 @@ export const updateMoodWithRelations = async (
     }
 
     await transaction.commit();
+    return true;
   } catch (error) {
     await transaction.rollback();
     throw error;
   }
 };
 
-export const deleteMood = async (id: number) => {
-  const result = await pool
-    .request()
-    .input("id", sql.Int, id)
-    .query("DELETE FROM moods WHERE id = @id");
-  return result;
+export const deleteMood = async (id: number, userId?: number) => {
+  const request = pool.request().input("id", sql.Int, id);
+  const whereClause = userId === undefined ? "WHERE id = @id" : "WHERE id = @id AND user_id = @userId";
+
+  if (userId !== undefined) {
+    request.input("userId", sql.Int, userId);
+  }
+
+  const result = await request.query(`DELETE FROM moods ${whereClause}`);
+  return result.rowsAffected[0] > 0;
 };
 
 export const getMoodTrend = async (userId: number, range: string) => {

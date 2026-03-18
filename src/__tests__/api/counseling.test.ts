@@ -44,7 +44,7 @@ describe('心理咨询API测试', () => {
       })
 
       expect(mockRequest).toHaveBeenCalledWith({
-        url: 'http://localhost:8000/api/ai/counseling',
+        url: '/ai/counseling',
         method: 'post',
         data: {
           message: '我最近感到很焦虑，不知道该怎么办',
@@ -128,7 +128,7 @@ describe('心理咨询API测试', () => {
       })
 
       expect(mockRequest).toHaveBeenCalledWith({
-        url: 'http://localhost:8000/api/ai/counseling',
+        url: '/ai/counseling',
         method: 'post',
         data: {
           message: '项目 deadlines 快到了，我担心完成不了',

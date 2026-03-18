@@ -2,7 +2,6 @@ import { ref, computed } from 'vue'
 import { useUserStore } from '@/stores/userStore'
 import useRelaxStore from '@/stores/relaxStore'
 import { debounce } from '@/utils/debounce'
-import request from '@/utils/request'
 import type { AIRecommendResult, AIRecommendItem } from '@/types/ai'
 
 /**
@@ -39,15 +38,16 @@ export function useAIRecommend() {
         recentActivities: getRecentActivities(),
       }
 
-      // 调用后端AI接口
-      const response = await request<AIRecommendResult>({
-        url: '/api/ai/recommend',
-        method: 'post',
-        data: recommendParams,
-      })
+      // P0下线: 后端暂无 /api/ai/recommend，保留结构并走本地推荐
+      // const response = await request<AIRecommendResult>({
+      //   url: buildAiApiUrl('/recommend'),
+      //   method: 'post',
+      //   data: recommendParams,
+      // })
 
-      recommendResult.value = response
-      return response
+      const fallback = getLocalRecommendations(recommendParams.mood, recommendParams.limit)
+      recommendResult.value = fallback
+      return fallback
     } catch (err) {
       error.value = '推荐获取失败，请稍后重试'
       console.error('AI recommendation error:', err)
@@ -258,15 +258,17 @@ export function useAIRecommend() {
   const saveRecommendationClick = async (item: AIRecommendItem) => {
     try {
       if (userStore.isLoggedIn) {
-        await request({
-          url: '/api/ai/recommend/click',
-          method: 'post',
-          data: {
-            itemId: item.id,
-            itemType: item.type,
-            userId: userStore.user?.id,
-          },
-        })
+        // P0下线: 后端暂无 /api/ai/recommend/click，暂不发请求
+        // await request({
+        //   url: buildAiApiUrl('/recommend/click'),
+        //   method: 'post',
+        //   data: {
+        //     itemId: item.id,
+        //     itemType: item.type,
+        //     userId: userStore.user?.id,
+        //   },
+        // })
+        void item
       }
     } catch (err) {
       console.error('Save recommendation click error:', err)

@@ -176,7 +176,7 @@ describe('情绪识别功能测试', () => {
 
       expect(axios.post).toHaveBeenCalledTimes(1)
       expect(axios.post).toHaveBeenCalledWith(
-        'http://localhost:8000/api/analyze-mood',
+        '/ai/analyze-mood',
         expect.objectContaining({
           content: '第三次调用',
           mood_level: 7,
@@ -228,7 +228,7 @@ describe('情绪识别功能测试', () => {
 
       expect(axios.post).toHaveBeenCalledTimes(1)
       expect(axios.post).toHaveBeenCalledWith(
-        'http://localhost:8000/api/analyze-mood',
+        '/ai/analyze-mood',
         expect.objectContaining({
           content: '第二次调用',
           mood_level: 6,

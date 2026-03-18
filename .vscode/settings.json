@@ -1,0 +1,7 @@
+{
+  "python.terminal.useEnvFile": true,
+  "python.envFile": "${workspaceFolder}/mood-health-server/.env",
+  "terminal.integrated.env.windows": {
+    "PYTHONUTF8": "1"
+  }
+}

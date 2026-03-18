@@ -101,10 +101,10 @@ export default defineConfig(({ mode }) => {
           target: 'http://localhost:3000',
           changeOrigin: true,
         },
-        '/api/ai': {
+        '/ai': {
           target: 'http://localhost:8000',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/ai/, '/api'),
+          rewrite: (path) => path.replace(/^\/ai/, '/api'),
         },
       },
     },

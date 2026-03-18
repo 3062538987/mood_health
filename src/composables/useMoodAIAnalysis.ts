@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { debounce } from '@/utils/debounce'
 import request from '@/utils/request'
+import { buildAiApiUrl } from '@/utils/apiBase'
 import type { MoodAIAnalysisResult, MoodTrendPrediction } from '@/types/ai'
 
 /**
@@ -28,7 +29,7 @@ export function useMoodAIAnalysis() {
 
       // 调用后端AI接口
       const response = await request<MoodAIAnalysisResult>({
-        url: '/api/ai/analyze-mood',
+        url: buildAiApiUrl('/analyze-mood'),
         method: 'post',
         data: {
           text: sanitizedText,
@@ -63,7 +64,7 @@ export function useMoodAIAnalysis() {
     try {
       // 调用后端AI接口
       const response = await request<MoodTrendPrediction>({
-        url: '/api/ai/predict-mood-trend',
+        url: buildAiApiUrl('/predict-mood-trend'),
         method: 'post',
         data: {
           historicalData,

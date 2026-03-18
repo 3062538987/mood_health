@@ -1,5 +1,4 @@
 import { debounce } from './debounce'
-import request from './request'
 import type { AIContentFilterResult } from '@/types/ai'
 
 /**
@@ -123,16 +122,16 @@ export const filterContent = async (content: string): Promise<AIContentFilterRes
     // 数据脱敏处理
     const sanitizedContent = sanitizeContent(content)
 
-    // 调用后端AI接口
-    const response = await request<AIContentFilterResult>({
-      url: '/api/ai/content-filter',
-      method: 'post',
-      data: {
-        content: sanitizedContent,
-      },
-    })
+    // P0下线: 后端暂无 /api/ai/content-filter，保留结构并走本地审核
+    // const response = await request<AIContentFilterResult>({
+    //   url: buildAiApiUrl('/content-filter'),
+    //   method: 'post',
+    //   data: {
+    //     content: sanitizedContent,
+    //   },
+    // })
 
-    return response
+    return getLocalContentFilter(sanitizedContent)
   } catch (error) {
     console.error('AI content filter error:', error)
     // 本地fallback方案

@@ -1,9 +1,40 @@
-import pool from "../config/database";
-import {
-  hashPassword,
-  comparePassword as comparePasswordUtil,
-} from "../utils/password";
-import sql from "mssql";
+import pool from '../config/database'
+import { hashPassword, comparePassword as comparePasswordUtil } from '../utils/password'
+import sql from 'mssql'
+
+/**
+ * 用户角色类型
+ */
+export type UserRole = 'user' | 'admin' | 'super_admin'
+
+const USER_ROLES: readonly UserRole[] = ['user', 'admin', 'super_admin']
+
+/**
+ * 判断输入值是否为合法角色
+ * @param {unknown} role - 待校验角色
+ * @returns {role is UserRole} 是否为合法角色
+ */
+export const isValidUserRole = (role: unknown): role is UserRole => {
+  return typeof role === 'string' && USER_ROLES.includes(role as UserRole)
+}
+
+/**
+ * 判断是否为超级管理员
+ * @param {unknown} role - 待校验角色
+ * @returns {boolean} 是否为超级管理员
+ */
+export const isSuperAdmin = (role: unknown): boolean => {
+  return role === 'super_admin'
+}
+
+/**
+ * 判断是否具备管理员权限（admin 或 super_admin）
+ * @param {unknown} role - 待校验角色
+ * @returns {boolean} 是否具备管理员权限
+ */
+export const isAdmin = (role: unknown): boolean => {
+  return role === 'admin' || role === 'super_admin'
+}
 
 /**
  * 用户接口
@@ -18,14 +49,14 @@ import sql from "mssql";
  * @property {Date} updated_at - 更新时间
  */
 export interface User {
-  id: number;
-  username: string;
-  password: string;
-  email: string;
-  avatar?: string;
-  role: string;
-  created_at: Date;
-  updated_at: Date;
+  id: number
+  username: string
+  password: string
+  email: string
+  avatar?: string
+  role: UserRole
+  created_at: Date
+  updated_at: Date
 }
 
 /**
@@ -35,40 +66,34 @@ export interface User {
  * @param {string} email - 邮箱
  * @returns {Promise<number>} - 新用户的ID
  */
-export const createUser = async (
-  username: string,
-  password: string,
-  email: string,
-) => {
+export const createUser = async (username: string, password: string, email: string) => {
   // 对密码进行加密
-  const hashedPassword = await hashPassword(password);
+  const hashedPassword = await hashPassword(password)
   // 插入用户数据并返回新用户ID
   const result = await pool
     .request()
-    .input("username", sql.NVarChar, username)
-    .input("password", sql.NVarChar, hashedPassword)
-    .input("email", sql.NVarChar, email).query(`
+    .input('username', sql.NVarChar, username)
+    .input('password', sql.NVarChar, hashedPassword)
+    .input('email', sql.NVarChar, email).query(`
       INSERT INTO users (username, password, email)
       OUTPUT INSERTED.id
       VALUES (@username, @password, @email)
-    `);
-  return result.recordset[0].id; // 返回新用户的ID
-};
+    `)
+  return result.recordset[0].id // 返回新用户的ID
+}
 
 /**
  * 根据用户名查找用户
  * @param {string} username - 用户名
  * @returns {Promise<User | null>} - 用户对象或null
  */
-export const findUserByUsername = async (
-  username: string,
-): Promise<User | null> => {
+export const findUserByUsername = async (username: string): Promise<User | null> => {
   const result = await pool
     .request()
-    .input("username", sql.NVarChar, username)
-    .query("SELECT * FROM users WHERE username = @username");
-  return result.recordset.length ? result.recordset[0] : null;
-};
+    .input('username', sql.NVarChar, username)
+    .query('SELECT * FROM users WHERE username = @username')
+  return result.recordset.length ? result.recordset[0] : null
+}
 
 /**
  * 根据邮箱查找用户
@@ -78,45 +103,41 @@ export const findUserByUsername = async (
 export const findUserByEmail = async (email: string): Promise<User | null> => {
   const result = await pool
     .request()
-    .input("email", sql.NVarChar, email)
-    .query("SELECT * FROM users WHERE email = @email");
-  return result.recordset.length ? result.recordset[0] : null;
-};
+    .input('email', sql.NVarChar, email)
+    .query('SELECT * FROM users WHERE email = @email')
+  return result.recordset.length ? result.recordset[0] : null
+}
 
 /**
  * 根据ID查找用户（返回不包含密码的字段）
  * @param {number} id - 用户ID
  * @returns {Promise<Omit<User, "password"> | null>} - 不含密码的用户对象或null
  */
-export const findUserById = async (
-  id: number,
-): Promise<Omit<User, "password"> | null> => {
-  const result = await pool.request().input("id", sql.Int, id).query(`
+export const findUserById = async (id: number): Promise<Omit<User, 'password'> | null> => {
+  const result = await pool.request().input('id', sql.Int, id).query(`
       SELECT id, username, email, avatar, role, created_at, updated_at
       FROM users
       WHERE id = @id
-    `);
-  return result.recordset.length ? result.recordset[0] : null;
-};
+    `)
+  return result.recordset.length ? result.recordset[0] : null
+}
 
 /**
  * 更新用户角色
  * @param {number} id - 用户ID
- * @param {string} role - 新角色
+ * @param {UserRole} role - 新角色
  * @returns {Promise<sql.IProcedureResult<any>>} - 数据库操作结果
  */
-export const updateUserRole = async (id: number, role: string) => {
-  const result = await pool
-    .request()
-    .input("id", sql.Int, id)
-    .input("role", sql.NVarChar, role).query(`
+export const updateUserRole = async (id: number, role: UserRole) => {
+  const result = await pool.request().input('id', sql.Int, id).input('role', sql.NVarChar, role)
+    .query(`
       UPDATE users
       SET role = @role,
           updated_at = GETDATE()
       WHERE id = @id
-    `);
-  return result;
-};
+    `)
+  return result
+}
 
 /**
  * 密码比对
@@ -124,9 +145,6 @@ export const updateUserRole = async (id: number, role: string) => {
  * @param {string} hashedPassword - 加密后的密码
  * @returns {Promise<boolean>} - 密码是否匹配
  */
-export const comparePassword = async (
-  password: string,
-  hashedPassword: string,
-) => {
-  return comparePasswordUtil(password, hashedPassword);
-};
+export const comparePassword = async (password: string, hashedPassword: string) => {
+  return comparePasswordUtil(password, hashedPassword)
+}

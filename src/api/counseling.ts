@@ -4,6 +4,7 @@
  */
 
 import request from '@/utils/request'
+import { buildAiApiUrl } from '@/utils/apiBase'
 
 /**
  * 心理咨询请求接口
@@ -56,7 +57,7 @@ export const sendCounselingMessage = async (
 
   try {
     const response = await request<CounselingResponse>({
-      url: '/api/ai/counseling',
+      url: buildAiApiUrl('/counseling'),
       method: 'post',
       data: {
         message: data.message.trim(),

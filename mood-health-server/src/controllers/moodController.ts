@@ -189,12 +189,8 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
     const { moodType, intensity, note, tags, trigger, emotions, tagIds } =
       req.body;
 
-    const mood = await findMoodById(moodId);
-    if (!mood) {
-      return res.status(404).json({ code: 404, message: "记录不存在" });
-    }
-    if (mood.user_id !== userId) {
-      return res.status(403).json({ code: 403, message: "无权操作此记录" });
+    if (!Number.isInteger(moodId) || moodId <= 0) {
+      return res.status(400).json({ code: 400, message: "无效的记录 ID" });
     }
 
     if (emotions && Array.isArray(emotions) && emotions.length > 0) {
@@ -206,13 +202,19 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
         }
       }
 
-      await updateMoodWithRelations(
+      const updated = await updateMoodWithRelations(
         moodId,
         emotions,
         note || "",
         tagIds || [],
         trigger || "",
+        userId,
       );
+
+      if (!updated) {
+        return res.status(404).json({ code: 404, message: "记录不存在" });
+      }
+
       await clearMoodCache(userId);
       return res.json({ code: 0, message: "更新成功" });
     }
@@ -220,14 +222,20 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
     const moodTypeStr = Array.isArray(moodType) ? moodType.join(",") : moodType;
     const tagsStr = Array.isArray(tags) ? tags.join(",") : tags || "";
 
-    await updateMood(
+    const updated = await updateMood(
       moodId,
       moodTypeStr || mood.mood_type,
       intensity || mood.intensity,
       note || "",
       tagsStr,
       trigger || "",
+      userId,
     );
+
+    if (!updated) {
+      return res.status(404).json({ code: 404, message: "记录不存在" });
+    }
+
     await clearMoodCache(userId);
     res.json({ code: 0, message: "更新成功" });
   } catch (error) {
@@ -241,15 +249,16 @@ export const deleteMoodHandler = async (req: AuthRequest, res: Response) => {
     const userId = req.user!.userId;
     const moodId = parseInt(req.params.id as string);
 
-    const mood = await findMoodById(moodId);
-    if (!mood) {
-      return res.status(404).json({ code: 404, message: "记录不存在" });
-    }
-    if (mood.user_id !== userId) {
-      return res.status(403).json({ code: 403, message: "无权操作此记录" });
+    if (!Number.isInteger(moodId) || moodId <= 0) {
+      return res.status(400).json({ code: 400, message: "无效的记录 ID" });
     }
 
-    await deleteMood(moodId);
+    const deleted = await deleteMood(moodId, userId);
+
+    if (!deleted) {
+      return res.status(404).json({ code: 404, message: "记录不存在" });
+    }
+
     await clearMoodCache(userId);
     res.json({ code: 0, message: "删除成功" });
   } catch (error) {

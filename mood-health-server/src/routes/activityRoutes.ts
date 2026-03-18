@@ -1,7 +1,8 @@
-import { Router } from "express";
-import { body } from "express-validator";
-import { authenticate, requireAdmin } from "../middleware/auth";
-import { validateRequest } from "../middleware/validateRequest";
+import { Router } from 'express'
+import { body } from 'express-validator'
+import { authenticate, requireAdmin, requirePermission } from '../middleware/auth'
+import { validateRequest } from '../middleware/validateRequest'
+import { auditOperation } from '../utils/operationLogger'
 import {
   getActivityList,
   getActivityDetail,
@@ -11,54 +12,71 @@ import {
   createActivityHandler,
   updateActivityHandler,
   deleteActivityHandler,
-} from "../controllers/activityController";
+} from '../controllers/activityController'
 
-const router = Router();
+const router = Router()
 
-router.get("/list", getActivityList);
-router.get("/detail/:id", getActivityDetail);
-router.get("/detail-with-participants/:id", getActivityDetailWithParticipants);
+router.get('/list', getActivityList)
+router.get('/detail/:id', getActivityDetail)
+router.get('/detail-with-participants/:id', getActivityDetailWithParticipants)
 
-router.post("/join/:id", authenticate, joinActivityHandler);
-router.get("/my-joined", authenticate, getMyJoinedActivities);
+router.post('/join/:id', authenticate, joinActivityHandler)
+router.get('/my-joined', authenticate, getMyJoinedActivities)
 
 router.post(
-  "/create",
+  '/create',
   authenticate,
   requireAdmin,
+  requirePermission('activity.manage'),
+  auditOperation({
+    permissionCode: 'activity.manage',
+    operationType: 'ACTIVITY_CREATE',
+  }),
   [
-    body("title").notEmpty().withMessage("活动标题不能为空"),
-    body("description").notEmpty().withMessage("活动描述不能为空"),
-    body("startTime").isISO8601().withMessage("开始时间格式不正确"),
-    body("endTime").isISO8601().withMessage("结束时间格式不正确"),
-    body("location").notEmpty().withMessage("活动地点不能为空"),
-    body("maxParticipants")
-      .isInt({ min: 1 })
-      .withMessage("最大参与人数必须是正整数"),
+    body('title').notEmpty().withMessage('活动标题不能为空'),
+    body('description').notEmpty().withMessage('活动描述不能为空'),
+    body('startTime').isISO8601().withMessage('开始时间格式不正确'),
+    body('endTime').isISO8601().withMessage('结束时间格式不正确'),
+    body('location').notEmpty().withMessage('活动地点不能为空'),
+    body('maxParticipants').isInt({ min: 1 }).withMessage('最大参与人数必须是正整数'),
   ],
   validateRequest,
-  createActivityHandler,
-);
+  createActivityHandler
+)
 
 router.put(
-  "/update/:id",
+  '/update/:id',
   authenticate,
   requireAdmin,
+  requirePermission('activity.manage'),
+  auditOperation({
+    permissionCode: 'activity.manage',
+    operationType: 'ACTIVITY_UPDATE',
+    getTargetId: (req) => (typeof req.params.id === 'string' ? req.params.id : null),
+  }),
   [
-    body("title").optional().notEmpty().withMessage("活动标题不能为空"),
-    body("description").optional().notEmpty().withMessage("活动描述不能为空"),
-    body("startTime").optional().isISO8601().withMessage("开始时间格式不正确"),
-    body("endTime").optional().isISO8601().withMessage("结束时间格式不正确"),
-    body("location").optional().notEmpty().withMessage("活动地点不能为空"),
-    body("maxParticipants")
-      .optional()
-      .isInt({ min: 1 })
-      .withMessage("最大参与人数必须是正整数"),
+    body('title').optional().notEmpty().withMessage('活动标题不能为空'),
+    body('description').optional().notEmpty().withMessage('活动描述不能为空'),
+    body('startTime').optional().isISO8601().withMessage('开始时间格式不正确'),
+    body('endTime').optional().isISO8601().withMessage('结束时间格式不正确'),
+    body('location').optional().notEmpty().withMessage('活动地点不能为空'),
+    body('maxParticipants').optional().isInt({ min: 1 }).withMessage('最大参与人数必须是正整数'),
   ],
   validateRequest,
-  updateActivityHandler,
-);
+  updateActivityHandler
+)
 
-router.delete("/delete/:id", authenticate, requireAdmin, deleteActivityHandler);
+router.delete(
+  '/delete/:id',
+  authenticate,
+  requireAdmin,
+  requirePermission('activity.manage'),
+  auditOperation({
+    permissionCode: 'activity.manage',
+    operationType: 'ACTIVITY_DELETE',
+    getTargetId: (req) => (typeof req.params.id === 'string' ? req.params.id : null),
+  }),
+  deleteActivityHandler
+)
 
-export default router;
+export default router

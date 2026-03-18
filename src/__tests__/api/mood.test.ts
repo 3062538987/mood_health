@@ -34,7 +34,7 @@ describe('analyzeMood', () => {
     expect(result.analysis).toBe('用户情绪积极，工作成就感强')
     expect(result.suggestions).toHaveLength(2)
     expect(axios.post).toHaveBeenCalledWith(
-      'http://localhost:8000/api/analyze-mood',
+      '/ai/analyze-mood',
       { content: '今天心情很好', mood_level: 5 },
       { timeout: 30000 }
     )
@@ -73,7 +73,7 @@ describe('analyzeMood', () => {
     })
 
     expect(axios.post).toHaveBeenCalledWith(
-      'http://localhost:8000/api/analyze-mood',
+      '/ai/analyze-mood',
       expect.objectContaining({
         content: '今天感到有些焦虑',
         mood_level: 2,

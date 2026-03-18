@@ -26,9 +26,9 @@ class Settings(BaseSettings):
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
     
     # API服务配置
-    HOST: str = os.getenv("HOST", "0.0.0.0")
+    HOST: str = os.getenv("HOST", "127.0.0.1")
     PORT: int = int(os.getenv("PORT", "8000"))
-    API_HOST: str = os.getenv("API_HOST", "0.0.0.0")
+    API_HOST: str = os.getenv("API_HOST", "127.0.0.1")
     API_PORT: int = int(os.getenv("API_PORT", "8000"))
     API_PREFIX: str = "/api/v1"
     

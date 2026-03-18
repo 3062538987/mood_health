@@ -80,7 +80,7 @@ export const analyzeMood = async (data: MoodAnalysisRequest): Promise<MoodAnalys
 
   try {
     const response = await request<MoodAnalysisResponse>({
-      url: buildAiApiUrl('/api/analyze-mood'),
+      url: buildAiApiUrl('/analyze-mood'),
       method: 'post',
       data: {
         content: data.content.trim(),

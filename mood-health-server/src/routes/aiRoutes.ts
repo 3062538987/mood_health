@@ -1,26 +1,65 @@
 /**
- * AI路由
- * 定义标准化AI接口协议（RESTful），接口路径统一前缀/api/ai
+ * AI 路由（转发模式）
+ * Node 层不再执行 AI 推理，仅将请求转发给 Python FastAPI AI 服务。
  */
 
-import express from "express";
-import aiController from "../controllers/aiController";
-import { authenticate } from "../middleware/auth";
+import express, { Request, Response } from 'express'
+import axios from 'axios'
 
-const router = express.Router();
+const router = express.Router()
 
-/**
- * AI接口路由
- * 所有接口路径统一前缀：/api/ai
- */
+const getAiServiceBaseUrl = () => {
+  const rawBaseUrl =
+    process.env.AI_SERVICE_BASE_URL || process.env.AI_API_BASE_URL || 'http://127.0.0.1:8000'
+  return rawBaseUrl.replace(/\/+$/, '')
+}
 
-// 情绪分析相关接口
-router.post("/analyze-mood", aiController.analyzeMood);
-router.post("/predict-mood-trend", aiController.predictMoodTrend);
-router.post("/analyze-user-mood", authenticate, aiController.analyzeUserMood); // 需要登录
+const buildTargetUrl = (path: string) => `${getAiServiceBaseUrl()}/api${path}`
 
-// 心理咨询相关接口
-router.post("/counseling", aiController.counseling);
-router.post("/counseling-with-context", aiController.counseling);
+const filterForwardHeaders = (headers: Request['headers']) => {
+  const result: Record<string, string> = {}
 
-export default router;
+  Object.entries(headers).forEach(([key, value]) => {
+    if (!value) {
+      return
+    }
+
+    const lowerKey = key.toLowerCase()
+    if (['host', 'content-length', 'connection'].includes(lowerKey)) {
+      return
+    }
+
+    result[key] = Array.isArray(value) ? value.join(', ') : String(value)
+  })
+
+  return result
+}
+
+router.use(async (req: Request, res: Response) => {
+  const targetUrl = buildTargetUrl(req.path)
+
+  try {
+    const response = await axios.request({
+      method: req.method,
+      url: targetUrl,
+      params: req.query,
+      data: req.body,
+      headers: filterForwardHeaders(req.headers),
+      timeout: Number(process.env.AI_PROXY_TIMEOUT_MS || 45000),
+      validateStatus: () => true,
+    })
+
+    res.status(response.status).json(response.data)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'AI 转发失败'
+    res.status(502).json({
+      code: 502,
+      message: 'AI 服务暂时不可用',
+      detail: message,
+      target: targetUrl,
+      timestamp: new Date().toISOString(),
+    })
+  }
+})
+
+export default router
