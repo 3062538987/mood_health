@@ -1,14 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import counselingService from "../../../src/utils/ai/counselingService";
 import { CounselingRequest } from "../../../src/models/aiModel";
 
 describe("心理咨询服务测试", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    jest.restoreAllMocks();
   });
 
   describe("validateRequest", () => {
@@ -96,12 +95,12 @@ describe("心理咨询服务测试", () => {
     });
 
     it("应该处理异常情况并返回兜底响应", async () => {
-      // 模拟服务内部错误
-      const mockGenerateResponse = vi.spyOn(
-        counselingService,
-        "generateResponse",
+      // 模拟内部 AI 生成失败，验证 generateResponse 的 catch 兜底行为
+      const mockSimulateResponse = jest.spyOn(
+        counselingService as any,
+        "simulateAIResponse",
       );
-      mockGenerateResponse.mockRejectedValue(new Error("Test error"));
+      mockSimulateResponse.mockRejectedValue(new Error("Test error"));
 
       const request: CounselingRequest = {
         message: "我感到很焦虑",
@@ -115,7 +114,7 @@ describe("心理咨询服务测试", () => {
         riskLevel: "low",
       });
 
-      mockGenerateResponse.mockRestore();
+      mockSimulateResponse.mockRestore();
     });
 
     it("应该根据情绪类型生成相应的回复", async () => {

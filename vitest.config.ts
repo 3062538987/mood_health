@@ -11,6 +11,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
+    include: ['src/__tests__/**/*.test.ts'],
+    exclude: ['mood-health-server/**', 'node_modules/**', 'dist/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

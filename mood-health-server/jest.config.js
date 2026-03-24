@@ -20,7 +20,6 @@ module.exports = {
       statements: 50,
     },
   },
-  setupFilesAfterEnv: ["<rootDir>/tests/setup.ts"],
   testTimeout: 30000,
   transform: {
     "^.+\\.ts$": [

@@ -1,300 +1,150 @@
 # 测试指南
 
-本文档描述了大学生情绪健康管理平台的测试方法和流程。
+本文档描述当前仓库的测试入口、执行顺序与常见验证场景。
 
-## 测试类型
+命令以 `docs/COMMANDS.md` 为统一索引；本文件聚焦测试语义与回归范围。
 
-1. **前端单元测试**：使用 Vitest 测试前端组件和函数
-2. **后端压力测试**：使用 Locust 和 wrk 测试 API 性能
+## 1. 测试分层
 
-## 前端单元测试
+- 前端单元测试：Vitest（位于 `src/__tests__`）
+- 后端单元测试：Jest（位于 `mood-health-server/tests`）
+- 接口与联调冒烟：通过本地启动后手工/脚本验证
+- 压力测试：Locust 与 wrk
 
-### 安装依赖
-
-```bash
-cd mood-health-web
-npm install
-```
-
-### 运行测试
+## 2. 快速命令（根目录）
 
 ```bash
-# 运行所有测试
-npm test
+# 前端单测（watch）
+npm run test
 
-# 运行测试并打开 UI 界面
-npm run test:ui
+# 前端单测（单次）
+npm run test:run
 
-# 运行测试并生成覆盖率报告
+# 前端覆盖率
 npm run test:coverage
+
+# 前后端一起跑
+npm run test:all
 ```
 
-### 测试文件结构
+`test:all` 等价于：
 
-```
-mood-health-web/
-├── src/
-│   ├── __tests__/
-│   │   ├── api/
-│   │   │   └── mood.test.ts      # API 函数测试
-│   │   └── components/           # 组件测试
-│   └── api/
-│       └── mood.ts               # 被测试的函数
-└── vitest.config.ts              # Vitest 配置
-```
+1. `npm run test:run`
+2. `npm --prefix mood-health-server run test`（稳定测试集）
 
-### 测试示例
-
-```typescript
-import { describe, it, expect, vi } from 'vitest'
-import { analyzeMood } from '@/api/mood'
-
-describe('analyzeMood', () => {
-  it('should return analysis result', async () => {
-    const result = await analyzeMood({
-      content: '今天心情很好',
-      mood_level: 5,
-    })
-
-    expect(result).toHaveProperty('analysis')
-    expect(result).toHaveProperty('suggestions')
-  })
-})
-```
-
-### 测试覆盖率
-
-运行 `npm run test:coverage` 后，覆盖率报告会生成在 `coverage/` 目录。
-
-打开 `coverage/index.html` 查看详细报告。
-
-## 后端压力测试
-
-### 使用 Locust
-
-#### 安装 Locust
+## 3. 前端测试
 
 ```bash
-pip install locust
+npm install
+npm run test:run
 ```
 
-#### 运行测试
+UI 模式：
 
-**Web UI 模式**：
+```bash
+npm run test:ui
+```
+
+覆盖率报告默认在 `coverage/`。
+
+## 4. 后端测试
+
+```bash
+npm --prefix mood-health-server install
+npm --prefix mood-health-server run test
+```
+
+需要数据库依赖的集成测试：
+
+```bash
+npm --prefix mood-health-server run test:integration
+```
+
+其他后端测试命令：
+
+```bash
+npm --prefix mood-health-server run test:coverage
+npm --prefix mood-health-server run test:watch
+npm --prefix mood-health-server run test:role-permissions
+```
+
+## 5. 联调冒烟建议流程
+
+```bash
+npm run doctor
+npm run start-all
+npm run dev:all
+```
+
+建议至少验证：
+
+- 登录注册链路
+- 情绪记录与情绪分析
+- 活动报名/取消报名
+- 树洞发帖与评论
+- AI 分析接口响应
+
+## 6. 压力测试
+
+### Locust
 
 ```bash
 cd mood-health-server
+pip install locust
 locust -f locustfile.py --host=http://localhost:3000
 ```
 
-然后访问 http://localhost:8089，在 Web UI 中配置用户数和启动速率。
-
-**命令行模式**：
+命令行模式示例：
 
 ```bash
-# 测试 Node.js 后端（50 用户，运行 2 分钟）
-locust -f locustfile.py --host=http://localhost:3000 \
-    --headless -u 50 -r 5 -t 120s --only-summary
-
-# 测试 AI 服务（10 用户，运行 1 分钟）
-locust -f locustfile.py --host=http://localhost:8000 \
-    --headless -u 10 -r 2 -t 60s --only-summary AIAnalysisUser
+locust -f locustfile.py --host=http://localhost:3000 --headless -u 50 -r 5 -t 120s --only-summary
+locust -f locustfile.py --host=http://localhost:8000 --headless -u 10 -r 2 -t 60s --only-summary AIAnalysisUser
 ```
 
-#### 测试场景
-
-Locust 测试脚本包含以下用户行为：
-
-**MoodHealthUser（Node.js 后端）**：
-
-- 获取情绪列表（权重 10）
-- 创建情绪记录（权重 5）
-- 获取情绪周报（权重 3）
-- 获取情绪趋势（权重 3）
-- 更新情绪记录（权重 2）
-- 删除情绪记录（权重 1）
-- 获取树洞帖子（权重 5）
-- 发布树洞帖子（权重 2）
-- 获取活动列表（权重 3）
-- 获取问卷列表（权重 2）
-
-**AIAnalysisUser（AI 服务）**：
-
-- AI 情绪分析（权重 10）
-- 健康检查（权重 1）
-
-### 使用 wrk
-
-#### 安装 wrk
-
-```bash
-# Ubuntu/Debian
-sudo apt-get install wrk
-
-# macOS
-brew install wrk
-
-# Windows
-# 从 https://github.com/wg/wrk/releases 下载
-```
-
-#### 运行测试
+### wrk
 
 ```bash
 cd mood-health-server
-
-# 给脚本添加执行权限
 chmod +x scripts/stress_test.sh
-
-# 运行测试（需要先替换 YOUR_TOKEN）
 ./scripts/stress_test.sh
 ```
 
-#### 单独测试某个接口
+Windows 无原生 `chmod`，可在 WSL/Git Bash 运行，或直接执行 wrk 单命令。
 
-```bash
-# 测试获取情绪列表
-wrk -t4 -c100 -d60s \
-    -H "Authorization: Bearer YOUR_TOKEN" \
-    "http://localhost:3000/api/moods?page=1&pageSize=20"
+## 7. 团体辅导最小回归清单
 
-# 测试 AI 分析（使用 Lua 脚本）
-wrk -t4 -c10 -d30s \
-    -H "Content-Type: application/json" \
-    -s scripts/analyze_mood.lua \
-    "http://localhost:8000/api/analyze-mood"
-```
+角色：未登录、普通用户、管理员。
 
-### 性能指标
+列表页 `/improve/group`：
 
-测试完成后，关注以下指标：
+1. 刷新与状态 Tab 切换正常。
+2. 未登录点击报名跳转登录。
+3. 已登录用户可报名/取消报名，状态同步到“我的活动记录”。
+4. 管理员可见创建/编辑/删除，普通用户不可见。
 
-- **Requests/sec**：每秒处理的请求数
-- **Latency**：请求响应时间（平均、中位数、P90、P99）
-- **Error Rate**：错误率
+详情页 `/improve/group/:id`：
 
-### 性能基准
+1. 报名状态展示正确。
+2. 取消报名后 UI 状态正确回退。
+3. 管理员编辑跳转行为正确。
+4. 管理员删除后返回列表页。
 
-建议的性能基准：
+接口回归：
 
-| 接口         | 目标 RPS | 平均延迟 | P99 延迟 |
-| ------------ | -------- | -------- | -------- |
-| 获取情绪列表 | > 500    | < 100ms  | < 300ms  |
-| 创建情绪记录 | > 200    | < 150ms  | < 500ms  |
-| 获取情绪周报 | > 300    | < 100ms  | < 300ms  |
-| AI 情绪分析  | > 10     | < 3s     | < 5s     |
+- `POST /api/activities/join/:id`
+- `POST /api/activities/cancel/:id`
+- `GET /api/activities/my-joined`
 
-## 测试最佳实践
+## 8. 常见问题
 
-### 单元测试
+1. 后端测试启动失败
 
-1. **隔离测试**：使用 mock 隔离外部依赖
-2. **边界测试**：测试边界条件和异常情况
-3. **描述性命名**：测试名称应清楚描述测试内容
-4. **独立性**：每个测试应独立运行，不依赖其他测试
+- 先执行 `npm --prefix mood-health-server run build`，确认 TypeScript 可编译。
 
-### 压力测试
+2. `test:all` 在后端阶段失败
 
-1. **渐进加压**：从少量用户开始，逐步增加
-2. **监控资源**：测试时监控服务器 CPU、内存、网络
-3. **真实场景**：模拟真实的用户行为模式
-4. **多次测试**：多次运行测试以获得稳定结果
+- 单独执行 `npm --prefix mood-health-server run test` 查看详细错误。
 
-## 团体辅导最小回归清单
+3. 压测报 401
 
-以下清单用于快速验证团体辅导列表页和详情页关键交互是否可用。
-
-### 角色准备
-
-1. 未登录用户
-2. 普通用户（已报名至少 1 场）
-3. 管理员用户
-
-### 列表页回归（/improve/group）
-
-1. 点击“刷新”可以重新拉取列表，页面无报错。
-2. 切换状态 Tab（全部/进行中/即将开始/已结束/已满）后列表刷新正常。
-3. 普通用户未登录时，点击“登录后报名”会跳转登录页。
-4. 普通用户已登录时：
-
-- 未报名活动点击“立即报名”后，人数与“我的活动记录”同步更新。
-- 已报名活动显示“已报名”和“取消报名”按钮。
-- 点击“取消报名”成功后，卡片状态和“我的活动记录”同步更新。
-
-5. “我的活动记录”中：
-
-- 点击“查看详情”可跳转详情页。
-- 点击“取消报名”可取消，已结束活动应禁用取消。
-
-6. 管理员可见“创建活动/编辑/删除”，普通用户不可见。
-
-### 详情页回归（/improve/group/:id）
-
-1. 普通用户未登录时显示“登录后报名”。
-2. 普通用户已报名时显示“已报名”和“取消报名”。
-3. 点击“取消报名”后，状态更新为未报名或返回可报名状态。
-4. 管理员点击“编辑活动”应跳回列表并自动打开对应活动的编辑弹窗。
-5. 管理员删除活动成功后应跳转到 /improve/group。
-
-### 接口回归
-
-1. POST /api/activities/join/:id 报名成功/重复报名错误文案正确。
-2. POST /api/activities/cancel/:id 取消报名成功/未报名错误文案正确。
-3. GET /api/activities/my-joined 数据与前端展示一致。
-
-## 持续集成
-
-可以将测试集成到 CI/CD 流程中：
-
-```yaml
-# GitHub Actions 示例
-name: Test
-
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: |
-          cd mood-health-web
-          npm install
-
-      - name: Run unit tests
-        run: |
-          cd mood-health-web
-          npm test
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v2
-```
-
-## 故障排查
-
-### 测试失败
-
-1. 检查依赖是否正确安装
-2. 检查测试环境配置
-3. 查看错误日志定位问题
-
-### 性能不达标
-
-1. 检查数据库查询是否优化
-2. 检查是否有 N+1 查询问题
-3. 考虑添加缓存
-4. 检查服务器资源配置
-
-### AI 服务超时
-
-1. 检查 Ollama 服务是否正常运行
-2. 检查模型是否已加载
-3. 考虑使用更快的模型
-4. 增加 Redis 缓存命中率
+- 检查 token、鉴权头与测试账号初始化是否完成（可运行 `npm run demo:init:all`）。

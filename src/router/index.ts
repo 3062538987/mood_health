@@ -199,6 +199,27 @@ const router = createRouter({
   routes,
 })
 
+router.onError((error) => {
+  const message = String(error?.message || '')
+  const isChunkLoadError =
+    message.includes('Failed to fetch dynamically imported module') ||
+    message.includes('Importing a module script failed') ||
+    message.includes('Loading chunk')
+
+  if (!isChunkLoadError) {
+    return
+  }
+
+  const hasRetried = sessionStorage.getItem('router-chunk-reload') === '1'
+  if (hasRetried) {
+    sessionStorage.removeItem('router-chunk-reload')
+    return
+  }
+
+  sessionStorage.setItem('router-chunk-reload', '1')
+  window.location.reload()
+})
+
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
 

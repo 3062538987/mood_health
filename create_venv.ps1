@@ -1,54 +1,84 @@
-<#
-  一键创建虚拟环境脚本
-  执行后会在当前目录生成.venv文件夹，并安装项目核心依赖
-#>
+param(
+    [switch]$NoPause
+)
 
-Write-Color([string]"==================== 创建虚拟环境 ====================") -Color Cyan
+$ErrorActionPreference = "Stop"
 
-# 检查Python是否安装
+function Write-Info([string]$Message) {
+    Write-Host "[INFO] $Message"
+}
+
+function Write-Ok([string]$Message) {
+    Write-Host "[OK] $Message" -ForegroundColor Green
+}
+
+function Write-Warn([string]$Message) {
+    Write-Host "[WARN] $Message" -ForegroundColor Yellow
+}
+
+function Fail([string]$Message) {
+    Write-Error $Message
+    if (-not $NoPause) {
+        Read-Host "Press Enter to exit"
+    }
+    exit 1
+}
+
+$root = Split-Path -Parent $PSCommandPath
+$venvPath = Join-Path $root ".venv"
+$pythonExe = Join-Path $venvPath "Scripts\python.exe"
+$requirementsRoot = Join-Path $root "requirements.txt"
+$requirementsBackend = Join-Path $root "mood-health-server\requirements.txt"
+
+Write-Info "Checking Python availability"
+$pythonCommand = Get-Command python -ErrorAction SilentlyContinue
+if (-not $pythonCommand) {
+    Fail "Python not found in PATH. Install Python 3.8+ first."
+}
+
+Write-Info "Creating virtual environment at .venv"
+Push-Location $root
 try {
-    python --version | Out-Null
-} catch {
-    Write-Color([string]"❌ 未检测到Python，请先安装Python并添加到环境变量！") -Color Red
-    Read-Host "按任意键退出"
-    exit 1
+    & python -m venv .venv
+}
+finally {
+    Pop-Location
 }
 
-# 1. 创建.venv虚拟环境
-Write-Color([string]"🔧 正在创建虚拟环境 .venv...") -Color Yellow
-python -m venv .venv
-
-# 检查是否创建成功
-if (-not (Test-Path ".venv")) {
-    Write-Color([string]"❌ 虚拟环境创建失败！") -Color Red
-    Read-Host "按任意键退出"
-    exit 1
+if (-not (Test-Path $pythonExe)) {
+    Fail "Virtual environment creation failed: $pythonExe not found"
 }
-Write-Color([string]"✅ .venv 文件夹已创建") -Color Green
+Write-Ok "Virtual environment ready: $venvPath"
 
-# 2. 激活虚拟环境并安装核心依赖
-Write-Color([string]"🔧 正在激活环境并安装依赖...") -Color Yellow
-.\.venv\Scripts\Activate.ps1
+Write-Info "Upgrading pip"
+& $pythonExe -m pip install --upgrade pip
+if ($LASTEXITCODE -ne 0) {
+    Fail "Failed to upgrade pip"
+}
 
-# 更新pip
-python -m pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple
+if (Test-Path $requirementsBackend) {
+    Write-Info "Installing backend requirements from mood-health-server/requirements.txt"
+    & $pythonExe -m pip install -r $requirementsBackend
+    if ($LASTEXITCODE -ne 0) {
+        Fail "Failed to install backend requirements"
+    }
+    Write-Ok "Backend requirements installed"
+} elseif (Test-Path $requirementsRoot) {
+    Write-Warn "Backend requirements not found, fallback to root requirements.txt"
+    & $pythonExe -m pip install -r $requirementsRoot
+    if ($LASTEXITCODE -ne 0) {
+        Fail "Failed to install root requirements"
+    }
+    Write-Ok "Root requirements installed"
+} else {
+    Write-Warn "No requirements.txt found. Skipped package installation."
+}
 
-# 安装项目核心依赖（含CUDA版PyTorch）
-pip install modelscope==1.9.5 transformers==4.35.2 accelerate==0.24.1 fastapi uvicorn -i https://pypi.tuna.tsinghua.edu.cn/simple
-pip install torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 --index-url https://download.pytorch.org/whl/cu118
+Write-Info "Python executable"
+& $pythonExe -c "import sys; print(sys.executable)"
 
-# 导出依赖清单
-pip freeze > requirements.txt
+Write-Ok "Python environment setup completed"
 
-Write-Color([string]"✅ 所有依赖安装完成，requirements.txt已生成") -Color Green
-
-# 3. 验证环境
-Write-Color([string]"🔧 验证PyTorch + CUDA...") -Color Yellow
-python -c "import torch; 
-print('PyTorch版本:', torch.__version__);
-print('CUDA是否可用:', torch.cuda.is_available());
-print('✅ 环境创建完成！')"
-
-Write-Color([string]"======================================================") -Color Cyan
-Write-Color([string]"👉 后续维护请运行 venv_manage.ps1 脚本") -Color Yellow
-Read-Host "按任意键退出"
+if (-not $NoPause) {
+    Read-Host "Press Enter to exit"
+}
