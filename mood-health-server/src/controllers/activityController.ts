@@ -58,15 +58,21 @@ export const getActivityList = async (req: Request, res: Response) => {
       getActivitiesCount(filter),
     ])
 
+    const pagination = {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    }
+
     const response = {
       code: 0,
-      data: activities,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
+      data: {
+        list: activities,
+        pagination,
       },
+      // 兼容仍直接读取 response.pagination 的调用方
+      pagination,
     }
 
     // 无筛选条件时缓存结果

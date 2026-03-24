@@ -46,20 +46,20 @@ mood-health-web/
 ### 测试示例
 
 ```typescript
-import { describe, it, expect, vi } from 'vitest';
-import { analyzeMood } from '@/api/mood';
+import { describe, it, expect, vi } from 'vitest'
+import { analyzeMood } from '@/api/mood'
 
 describe('analyzeMood', () => {
   it('should return analysis result', async () => {
     const result = await analyzeMood({
       content: '今天心情很好',
       mood_level: 5,
-    });
+    })
 
-    expect(result).toHaveProperty('analysis');
-    expect(result).toHaveProperty('suggestions');
-  });
-});
+    expect(result).toHaveProperty('analysis')
+    expect(result).toHaveProperty('suggestions')
+  })
+})
 ```
 
 ### 测试覆盖率
@@ -106,6 +106,7 @@ locust -f locustfile.py --host=http://localhost:8000 \
 Locust 测试脚本包含以下用户行为：
 
 **MoodHealthUser（Node.js 后端）**：
+
 - 获取情绪列表（权重 10）
 - 创建情绪记录（权重 5）
 - 获取情绪周报（权重 3）
@@ -118,6 +119,7 @@ Locust 测试脚本包含以下用户行为：
 - 获取问卷列表（权重 2）
 
 **AIAnalysisUser（AI 服务）**：
+
 - AI 情绪分析（权重 10）
 - 健康检查（权重 1）
 
@@ -175,12 +177,12 @@ wrk -t4 -c10 -d30s \
 
 建议的性能基准：
 
-| 接口 | 目标 RPS | 平均延迟 | P99 延迟 |
-|------|----------|----------|----------|
-| 获取情绪列表 | > 500 | < 100ms | < 300ms |
-| 创建情绪记录 | > 200 | < 150ms | < 500ms |
-| 获取情绪周报 | > 300 | < 100ms | < 300ms |
-| AI 情绪分析 | > 10 | < 3s | < 5s |
+| 接口         | 目标 RPS | 平均延迟 | P99 延迟 |
+| ------------ | -------- | -------- | -------- |
+| 获取情绪列表 | > 500    | < 100ms  | < 300ms  |
+| 创建情绪记录 | > 200    | < 150ms  | < 500ms  |
+| 获取情绪周报 | > 300    | < 100ms  | < 300ms  |
+| AI 情绪分析  | > 10     | < 3s     | < 5s     |
 
 ## 测试最佳实践
 
@@ -198,6 +200,48 @@ wrk -t4 -c10 -d30s \
 3. **真实场景**：模拟真实的用户行为模式
 4. **多次测试**：多次运行测试以获得稳定结果
 
+## 团体辅导最小回归清单
+
+以下清单用于快速验证团体辅导列表页和详情页关键交互是否可用。
+
+### 角色准备
+
+1. 未登录用户
+2. 普通用户（已报名至少 1 场）
+3. 管理员用户
+
+### 列表页回归（/improve/group）
+
+1. 点击“刷新”可以重新拉取列表，页面无报错。
+2. 切换状态 Tab（全部/进行中/即将开始/已结束/已满）后列表刷新正常。
+3. 普通用户未登录时，点击“登录后报名”会跳转登录页。
+4. 普通用户已登录时：
+
+- 未报名活动点击“立即报名”后，人数与“我的活动记录”同步更新。
+- 已报名活动显示“已报名”和“取消报名”按钮。
+- 点击“取消报名”成功后，卡片状态和“我的活动记录”同步更新。
+
+5. “我的活动记录”中：
+
+- 点击“查看详情”可跳转详情页。
+- 点击“取消报名”可取消，已结束活动应禁用取消。
+
+6. 管理员可见“创建活动/编辑/删除”，普通用户不可见。
+
+### 详情页回归（/improve/group/:id）
+
+1. 普通用户未登录时显示“登录后报名”。
+2. 普通用户已报名时显示“已报名”和“取消报名”。
+3. 点击“取消报名”后，状态更新为未报名或返回可报名状态。
+4. 管理员点击“编辑活动”应跳回列表并自动打开对应活动的编辑弹窗。
+5. 管理员删除活动成功后应跳转到 /improve/group。
+
+### 接口回归
+
+1. POST /api/activities/join/:id 报名成功/重复报名错误文案正确。
+2. POST /api/activities/cancel/:id 取消报名成功/未报名错误文案正确。
+3. GET /api/activities/my-joined 数据与前端展示一致。
+
 ## 持续集成
 
 可以将测试集成到 CI/CD 流程中：
@@ -213,22 +257,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
           node-version: '18'
-      
+
       - name: Install dependencies
         run: |
           cd mood-health-web
           npm install
-      
+
       - name: Run unit tests
         run: |
           cd mood-health-web
           npm test
-      
+
       - name: Upload coverage
         uses: codecov/codecov-action@v2
 ```

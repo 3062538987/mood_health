@@ -102,9 +102,21 @@
                   >
                     登录后报名
                   </el-button>
-                  <el-button v-else-if="isJoined" type="success" size="large" disabled>
-                    <el-icon><Check /></el-icon>已报名
-                  </el-button>
+                  <template v-else-if="isJoined">
+                    <el-button type="success" size="large" plain>
+                      <el-icon><Check /></el-icon>已报名
+                    </el-button>
+                    <el-button
+                      type="danger"
+                      size="large"
+                      plain
+                      :loading="cancelling"
+                      :disabled="isEnded"
+                      @click="handleCancelJoin"
+                    >
+                      {{ isEnded ? '活动已结束' : '取消报名' }}
+                    </el-button>
+                  </template>
                   <el-button v-else-if="isFull || isEnded" type="info" size="large" disabled>
                     {{ isFull ? '名额已满' : '活动已结束' }}
                   </el-button>
@@ -222,7 +234,12 @@ import {
 import { useUserStore } from '@/stores/userStore'
 import type { Activity } from '@/types/activity'
 import type { Participant } from '@/api/activityApi'
-import { getActivityDetailWithParticipants, joinActivity, deleteActivity } from '@/api/activityApi'
+import {
+  cancelJoinActivity,
+  getActivityDetailWithParticipants,
+  joinActivity,
+  deleteActivity,
+} from '@/api/activityApi'
 import { getActivityStatus } from '@/utils/activityStatus'
 
 const route = useRoute()
@@ -238,6 +255,7 @@ const participants = ref<Participant[]>([])
 const loading = ref(false)
 const error = ref(false)
 const joining = ref(false)
+const cancelling = ref(false)
 const deleting = ref(false)
 const showDeleteModal = ref(false)
 
@@ -322,8 +340,27 @@ const handleJoin = async () => {
 // 编辑活动
 const editActivity = () => {
   if (!activity.value) return
-  // 可以跳转到编辑页面或打开编辑弹窗
-  ElMessage.info('编辑功能开发中...')
+  router.push({
+    path: '/improve/group',
+    query: {
+      edit: String(activity.value.id),
+    },
+  })
+}
+
+const handleCancelJoin = async () => {
+  if (!activity.value || cancelling.value) return
+
+  cancelling.value = true
+  try {
+    await cancelJoinActivity(activity.value.id)
+    ElMessage.success('已取消报名')
+    await loadActivityDetail()
+  } catch {
+    // 错误已由拦截器处理
+  } finally {
+    cancelling.value = false
+  }
 }
 
 // 确认删除
@@ -338,7 +375,7 @@ const deleteActivityConfirm = async () => {
   try {
     await deleteActivity(activity.value.id)
     ElMessage.success('删除成功！')
-    router.push('/improve/group-activity')
+    router.push('/improve/group')
   } catch {
     // 错误已由拦截器处理
   } finally {

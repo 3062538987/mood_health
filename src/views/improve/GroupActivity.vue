@@ -207,9 +207,20 @@
                     <el-button v-if="!isLoggedIn" type="primary" @click="goToLogin">
                       登录后报名
                     </el-button>
-                    <el-button v-else-if="isJoined(activity.id)" type="success" disabled>
-                      已报名
-                    </el-button>
+                    <template v-else-if="isJoined(activity.id)">
+                      <el-button type="success" plain @click="goToDetail(activity.id)">
+                        已报名
+                      </el-button>
+                      <el-button
+                        type="danger"
+                        plain
+                        :loading="cancellingActivityId === activity.id"
+                        :disabled="isCancelDisabled(activity)"
+                        @click="handleCancelJoin(activity.id)"
+                      >
+                        {{ isCancelDisabled(activity) ? '活动已结束' : '取消报名' }}
+                      </el-button>
+                    </template>
                     <el-button v-else-if="isJoinDisabled(activity)" plain disabled>
                       {{ getJoinDisabledText(activity) }}
                     </el-button>
@@ -269,13 +280,25 @@
 
       <div v-else class="joined-list">
         <article v-for="activity in myJoinedActivities" :key="activity.id" class="joined-item">
-          <div>
+          <div class="joined-item-main">
             <h3>{{ activity.title }}</h3>
             <p>{{ formatDateTime(activity.startTime) }} · {{ activity.location }}</p>
           </div>
-          <el-tag :type="formatStatusLabel(activity).type" effect="light" round>
-            {{ formatStatusLabel(activity).label }}
-          </el-tag>
+          <div class="joined-item-actions">
+            <el-tag :type="formatStatusLabel(activity).type" effect="light" round>
+              {{ formatStatusLabel(activity).label }}
+            </el-tag>
+            <el-button text @click="goToDetail(activity.id)">查看详情</el-button>
+            <el-button
+              type="danger"
+              text
+              :loading="cancellingActivityId === activity.id"
+              :disabled="isCancelDisabled(activity)"
+              @click="handleCancelJoin(activity.id)"
+            >
+              {{ isCancelDisabled(activity) ? '活动已结束' : '取消报名' }}
+            </el-button>
+          </div>
         </article>
       </div>
     </section>
@@ -379,7 +402,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { Calendar, Location, Plus, Refresh, User } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { useUserStore } from '@/stores/userStore'
@@ -391,9 +414,11 @@ import type {
   PaginationInfo,
 } from '@/types/activity'
 import {
+  cancelJoinActivity,
   createActivity,
   deleteActivity,
   getActivities,
+  getActivityDetail,
   getMyJoinedActivities,
   joinActivity,
   updateActivity,
@@ -403,6 +428,7 @@ import { getActivityStatus } from '@/utils/activityStatus'
 type StatusTabKey = 'all' | ActivityStatus
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 
 const isAdmin = computed(() => userStore.isAdmin)
@@ -416,6 +442,7 @@ const joinedLoading = ref(false)
 const joinedError = ref('')
 const submitting = ref(false)
 const joiningActivityId = ref<number | null>(null)
+const cancellingActivityId = ref<number | null>(null)
 
 const joinedSectionRef = ref<HTMLElement | null>(null)
 const showModal = ref(false)
@@ -702,6 +729,12 @@ const submitActivity = async () => {
 const closeModal = () => {
   showModal.value = false
   resetForm()
+
+  if (route.query.edit) {
+    const nextQuery = { ...route.query }
+    delete nextQuery.edit
+    void router.replace({ query: nextQuery })
+  }
 }
 
 const resetForm = () => {
@@ -727,6 +760,11 @@ const isJoinDisabled = (activity: Activity) => {
   return status === 'full' || status === 'ended'
 }
 
+const isCancelDisabled = (activity: Activity) => {
+  const status = getActivityStatus(activity).status
+  return status === 'ended'
+}
+
 const getJoinDisabledText = (activity: Activity) => {
   const status = getActivityStatus(activity).status
   if (status === 'full') {
@@ -749,6 +787,59 @@ const handleJoin = async (activityId: number) => {
     ElMessage.error('报名失败，请稍后重试')
   } finally {
     joiningActivityId.value = null
+  }
+}
+
+const handleCancelJoin = async (activityId: number) => {
+  cancellingActivityId.value = activityId
+  try {
+    await cancelJoinActivity(activityId)
+    ElMessage.success('已取消报名')
+    await Promise.allSettled([loadActivities(), loadMyJoinedActivities()])
+  } catch (error) {
+    console.error('取消报名失败', error)
+    ElMessage.error('取消报名失败，请稍后重试')
+  } finally {
+    cancellingActivityId.value = null
+  }
+}
+
+const getEditIdFromQuery = (): number | null => {
+  const raw = route.query.edit
+  const value = Array.isArray(raw) ? raw[0] : raw
+
+  if (!value) {
+    return null
+  }
+
+  const id = parseInt(value, 10)
+  if (Number.isNaN(id) || id <= 0) {
+    return null
+  }
+
+  return id
+}
+
+const openEditDialogFromQuery = async () => {
+  if (!isAdmin.value) {
+    return
+  }
+
+  const editId = getEditIdFromQuery()
+  if (!editId) {
+    return
+  }
+
+  if (showModal.value && isEditing.value && editingActivityId.value === editId) {
+    return
+  }
+
+  try {
+    const activity = await getActivityDetail(editId)
+    editActivity(activity)
+  } catch (error) {
+    console.error('加载编辑活动详情失败', error)
+    ElMessage.error('打开编辑窗口失败，请稍后重试')
   }
 }
 
@@ -825,8 +916,16 @@ watch(
   }
 )
 
+watch(
+  () => route.query.edit,
+  () => {
+    void openEditDialogFromQuery()
+  }
+)
+
 onMounted(async () => {
   await Promise.allSettled([loadActivities(), loadMyJoinedActivities()])
+  await openEditDialogFromQuery()
 })
 </script>
 
@@ -1265,6 +1364,18 @@ onMounted(async () => {
   border-radius: 18px;
   background: rgba(252, 248, 255, 0.94);
   border: 1px solid rgba(233, 224, 246, 0.84);
+}
+
+.joined-item-main {
+  min-width: 0;
+}
+
+.joined-item-actions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .joined-item h3 {

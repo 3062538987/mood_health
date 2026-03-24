@@ -7,6 +7,10 @@ import type {
   ActivityListResponse,
 } from '@/types/activity'
 
+const noBlockingLoadingConfig = {
+  showLoading: false,
+}
+
 /**
  * 将后端蛇形命名转换为前端驼峰命名
  */
@@ -59,23 +63,45 @@ export const getActivities = async (
     params.status = filter.status.join(',')
   }
 
-  const response = await request<{
-    data: ActivityResponse[]
-    pagination: {
-      page: number
-      limit: number
-      total: number
-      totalPages: number
-    }
-  }>({
+  const response = await request<
+    | ActivityResponse[]
+    | {
+        list?: ActivityResponse[]
+        data?: ActivityResponse[]
+        pagination?: {
+          page: number
+          limit: number
+          total: number
+          totalPages: number
+        }
+      }
+  >({
     url: `/api/activities/list`,
     method: 'get',
     params,
+    ...noBlockingLoadingConfig,
   })
 
+  // request 拦截器会返回 res.data，活动列表接口现统一为 { list, pagination }
+  // 这里同时兼容旧结构，避免历史缓存或旧返回导致页面报错。
+  const list = Array.isArray(response) ? response : (response.list ?? response.data ?? [])
+  const pagination = Array.isArray(response)
+    ? {
+        page,
+        limit,
+        total: list.length,
+        totalPages: Math.max(1, Math.ceil(list.length / Math.max(limit, 1))),
+      }
+    : (response.pagination ?? {
+        page,
+        limit,
+        total: list.length,
+        totalPages: Math.max(1, Math.ceil(list.length / Math.max(limit, 1))),
+      })
+
   return {
-    data: response.data.map(convertToCamelCase),
-    pagination: response.pagination,
+    data: list.map(convertToCamelCase),
+    pagination,
   }
 }
 
@@ -86,6 +112,7 @@ export const getActivityDetail = async (id: number): Promise<Activity> => {
   const data = await request<ActivityResponse>({
     url: `/api/activities/detail/${id}`,
     method: 'get',
+    ...noBlockingLoadingConfig,
   })
   return convertToCamelCase(data)
 }
@@ -97,6 +124,7 @@ export const joinActivity = async (id: number): Promise<void> => {
   await request({
     url: `/api/activities/join/${id}`,
     method: 'post',
+    ...noBlockingLoadingConfig,
   })
 }
 
@@ -107,6 +135,7 @@ export const cancelJoinActivity = async (id: number): Promise<void> => {
   await request({
     url: `/api/activities/cancel/${id}`,
     method: 'post',
+    ...noBlockingLoadingConfig,
   })
 }
 
@@ -117,6 +146,7 @@ export const getMyJoinedActivities = async (): Promise<Activity[]> => {
   const data = await request<ActivityResponse[]>({
     url: '/api/activities/my-joined',
     method: 'get',
+    ...noBlockingLoadingConfig,
   })
   return data.map(convertToCamelCase)
 }
@@ -129,6 +159,7 @@ export const createActivity = async (data: CreateActivityData): Promise<void> =>
     url: '/api/activities/create',
     method: 'post',
     data: convertToSnakeCase(data),
+    ...noBlockingLoadingConfig,
   })
 }
 
@@ -152,6 +183,7 @@ export const updateActivity = async (
     url: `/api/activities/update/${id}`,
     method: 'put',
     data: snakeCaseData,
+    ...noBlockingLoadingConfig,
   })
 }
 
@@ -162,6 +194,7 @@ export const deleteActivity = async (id: number): Promise<void> => {
   await request({
     url: `/api/activities/delete/${id}`,
     method: 'delete',
+    ...noBlockingLoadingConfig,
   })
 }
 
@@ -196,6 +229,7 @@ export const getActivityDetailWithParticipants = async (
   }>({
     url: `/api/activities/detail-with-participants/${id}`,
     method: 'get',
+    ...noBlockingLoadingConfig,
   })
 
   return {

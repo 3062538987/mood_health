@@ -22,6 +22,11 @@ interface AxiosErrorResponse {
   message?: string
 }
 
+type RequestConfigWithLoading = InternalAxiosRequestConfig & {
+  _withLoading?: boolean
+  showLoading?: boolean
+}
+
 // 全局loading计数器
 let loadingCount = 0
 let loadingInstance: ReturnType<typeof ElLoading.service> | null = null
@@ -63,7 +68,11 @@ const service = axios.create({
 // 请求拦截器
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    startLoading()
+    const typedConfig = config as RequestConfigWithLoading
+    if (typedConfig.showLoading !== false) {
+      startLoading()
+      typedConfig._withLoading = true
+    }
 
     if (apiBaseUsesApiPrefix && config.url?.startsWith('/api/')) {
       config.url = config.url.slice(4)
@@ -85,7 +94,10 @@ service.interceptors.request.use(
 // 响应拦截器
 service.interceptors.response.use(
   (response: AxiosResponse) => {
-    endLoading()
+    const responseConfig = response.config as RequestConfigWithLoading
+    if (responseConfig._withLoading) {
+      endLoading()
+    }
 
     const res = response.data
 
@@ -102,7 +114,10 @@ service.interceptors.response.use(
     }
   },
   (error: AxiosError<ErrorResponse>) => {
-    endLoading()
+    const errorConfig = error.config as RequestConfigWithLoading | undefined
+    if (errorConfig?._withLoading) {
+      endLoading()
+    }
 
     console.error('API Error:', error)
 
