@@ -35,48 +35,48 @@ npm run pm2:status
 
 ## 1. 项目根命令
 
-| 场景                    | 命令                      | 说明                                                   |
-| ----------------------- | ------------------------- | ------------------------------------------------------ |
-| 安装依赖                | `npm run setup`           | 安装根目录和 `mood-health-server` 的 Node 依赖         |
-| Python 环境（Windows）  | `npm run setup:python`    | 调用 `create_venv.ps1` 创建 `.venv` 并安装 Python 依赖 |
-| 环境自检                | `npm run doctor`          | 检查命令可用性、关键文件、端口连通性                   |
-| 严格自检                | `npm run doctor:strict`   | Warning 也视为失败                                     |
-| 开发（前端）            | `npm run dev`             | 启动 Vite 开发服务                                     |
-| 开发（前后端并行）      | `npm run dev:all`         | 同时启动前端 Vite 和后端 nodemon                       |
-| 开发重置并启动（Windows） | `npm run dev:reset`       | 清理 3001/3000/8000 占用并启动 `dev:all`              |
+| 场景                      | 命令                      | 说明                                                   |
+| ------------------------- | ------------------------- | ------------------------------------------------------ |
+| 安装依赖                  | `npm run setup`           | 安装根目录和 `mood-health-server` 的 Node 依赖         |
+| Python 环境（Windows）    | `npm run setup:python`    | 调用 `create_venv.ps1` 创建 `.venv` 并安装 Python 依赖 |
+| 环境自检                  | `npm run doctor`          | 检查命令可用性、关键文件、端口连通性                   |
+| 严格自检                  | `npm run doctor:strict`   | Warning 也视为失败                                     |
+| 开发（前端）              | `npm run dev`             | 启动 Vite 开发服务                                     |
+| 开发（前后端并行）        | `npm run dev:all`         | 同时启动前端 Vite 和后端 nodemon                       |
+| 开发重置并启动（Windows） | `npm run dev:reset`       | 清理 3001/3000/8000 占用并启动 `dev:all`               |
 | 仅清理开发端口（Windows） | `npm run dev:reset:clean` | 仅清理 3001/3000/8000 占用，不启动服务                 |
-| 构建（前端）            | `npm run build`           | 前端构建                                               |
-| 构建（前后端）          | `npm run build:all`       | 前端 + 后端构建                                        |
-| 测试（前端 watch）      | `npm run test`            | Vitest watch 模式                                      |
-| 测试（前端单次）        | `npm run test:run`        | Vitest 单次执行                                        |
-| 测试（前端覆盖率）      | `npm run test:coverage`   | Vitest 覆盖率                                          |
-| 测试（前后端）          | `npm run test:all`        | 前端单次 + 后端 Jest                                   |
-| 演示数据（基础）        | `npm run demo:init`       | 初始化基础演示数据                                     |
-| 演示数据（全量）        | `npm run demo:init:all`   | 初始化并验证演示账号                                   |
-| 数据初始化别名          | `npm run db:init`         | 等价于 `demo:init:all`                                 |
-| 启动服务（Windows）     | `npm run start-all`       | 执行 `start-project.ps1`                               |
-| 启动服务（Linux/macOS） | `npm run start-all:linux` | 执行 `start-project.sh`                                |
-| 启动前检查（Windows）   | `npm run start-all:check` | 先 `doctor` 再 `start-all`                             |
-| 清理后重启（Windows）   | `npm run start-all:clean` | 先删 PM2 进程再重启                                    |
-| PM2 状态                | `npm run pm2:status`      | 查看 PM2 进程状态                                      |
-| PM2 日志                | `npm run pm2:logs`        | 查看 PM2 日志                                          |
-| PM2 停止                | `npm run pm2:stop`        | 删除 `mood-health-server` 和 `mood-ai-server`          |
+| 构建（前端）              | `npm run build`           | 前端构建                                               |
+| 构建（前后端）            | `npm run build:all`       | 前端 + 后端构建                                        |
+| 测试（前端 watch）        | `npm run test`            | Vitest watch 模式                                      |
+| 测试（前端单次）          | `npm run test:run`        | Vitest 单次执行                                        |
+| 测试（前端覆盖率）        | `npm run test:coverage`   | Vitest 覆盖率                                          |
+| 测试（前后端）            | `npm run test:all`        | 前端单次 + 后端 Jest                                   |
+| 演示数据（基础）          | `npm run demo:init`       | 初始化基础演示数据                                     |
+| 演示数据（全量）          | `npm run demo:init:all`   | 初始化并验证演示账号                                   |
+| 数据初始化别名            | `npm run db:init`         | 等价于 `demo:init:all`                                 |
+| 启动服务（Windows）       | `npm run start-all`       | 执行 `start-project.ps1`                               |
+| 启动服务（Linux/macOS）   | `npm run start-all:linux` | 执行 `start-project.sh`                                |
+| 启动前检查（Windows）     | `npm run start-all:check` | 先 `doctor` 再 `start-all`                             |
+| 清理后重启（Windows）     | `npm run start-all:clean` | 先删 PM2 进程再重启                                    |
+| PM2 状态                  | `npm run pm2:status`      | 查看 PM2 进程状态                                      |
+| PM2 日志                  | `npm run pm2:logs`        | 查看 PM2 日志                                          |
+| PM2 停止                  | `npm run pm2:stop`        | 删除 `mood-health-server` 和 `mood-ai-server`          |
 
 ## 2. 后端命令（mood-health-server）
 
-| 场景         | 命令                                                        | 说明                        |
-| ------------ | ----------------------------------------------------------- | --------------------------- |
-| 开发         | `npm --prefix mood-health-server run dev`                   | nodemon + ts-node           |
-| 构建         | `npm --prefix mood-health-server run build`                 | TypeScript 编译到 `dist/`   |
-| 生产启动     | `npm --prefix mood-health-server run start`                 | 启动 `dist/app.js`          |
-| 后端自检     | `npm --prefix mood-health-server run doctor`                | 检查 `dist/app.js` 是否存在 |
+| 场景         | 命令                                                        | 说明                           |
+| ------------ | ----------------------------------------------------------- | ------------------------------ |
+| 开发         | `npm --prefix mood-health-server run dev`                   | nodemon + ts-node              |
+| 构建         | `npm --prefix mood-health-server run build`                 | TypeScript 编译到 `dist/`      |
+| 生产启动     | `npm --prefix mood-health-server run start`                 | 启动 `dist/app.js`             |
+| 后端自检     | `npm --prefix mood-health-server run doctor`                | 检查 `dist/app.js` 是否存在    |
 | 测试（稳定） | `npm --prefix mood-health-server run test`                  | 默认稳定测试集（无数据库依赖） |
-| 集成测试     | `npm --prefix mood-health-server run test:integration`      | 需要数据库环境               |
-| 测试覆盖率   | `npm --prefix mood-health-server run test:coverage`         | Jest 覆盖率                 |
-| 测试观察     | `npm --prefix mood-health-server run test:watch`            | Jest watch                  |
-| 角色权限测试 | `npm --prefix mood-health-server run test:role-permissions` | 权限脚本测试                |
-| 种子数据     | `npm --prefix mood-health-server run seed:demo -- 123456`   | 初始化演示用户和数据        |
-| 全量种子     | `npm --prefix mood-health-server run seed:demo:all`         | 初始化并验证演示账号        |
+| 集成测试     | `npm --prefix mood-health-server run test:integration`      | 需要数据库环境                 |
+| 测试覆盖率   | `npm --prefix mood-health-server run test:coverage`         | Jest 覆盖率                    |
+| 测试观察     | `npm --prefix mood-health-server run test:watch`            | Jest watch                     |
+| 角色权限测试 | `npm --prefix mood-health-server run test:role-permissions` | 权限脚本测试                   |
+| 种子数据     | `npm --prefix mood-health-server run seed:demo -- 123456`   | 初始化演示用户和数据           |
+| 全量种子     | `npm --prefix mood-health-server run seed:demo:all`         | 初始化并验证演示账号           |
 
 ## 3. 操作系统相关命令
 

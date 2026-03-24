@@ -1,17 +1,12 @@
 module.exports = {
-  preset: "ts-jest",
-  testEnvironment: "node",
-  roots: ["<rootDir>/tests", "<rootDir>/src"],
-  testMatch: ["**/*.test.ts"],
-  moduleFileExtensions: ["ts", "js", "json"],
-  collectCoverageFrom: [
-    "src/**/*.ts",
-    "!src/app.ts",
-    "!src/scripts/**/*.ts",
-    "!src/types/**/*.ts",
-  ],
-  coverageDirectory: "coverage",
-  coverageReporters: ["text", "lcov", "html"],
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  roots: ['<rootDir>/tests', '<rootDir>/src'],
+  testMatch: ['**/*.test.ts'],
+  moduleFileExtensions: ['ts', 'js', 'json'],
+  collectCoverageFrom: ['src/**/*.ts', '!src/app.ts', '!src/scripts/**/*.ts', '!src/types/**/*.ts'],
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov', 'html'],
   coverageThreshold: {
     global: {
       branches: 50,
@@ -22,12 +17,12 @@ module.exports = {
   },
   testTimeout: 30000,
   transform: {
-    "^.+\\.ts$": [
-      "ts-jest",
+    '^.+\\.ts$': [
+      'ts-jest',
       {
         tsconfig: {
-          target: "ES2020",
-          module: "commonjs",
+          target: 'ES2020',
+          module: 'commonjs',
           strict: true,
           esModuleInterop: true,
           skipLibCheck: true,
@@ -35,9 +30,9 @@ module.exports = {
           resolveJsonModule: true,
           declaration: true,
           sourceMap: true,
-          types: ["jest", "node"],
+          types: ['jest', 'node'],
         },
       },
     ],
   },
-};
+}
