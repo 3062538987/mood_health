@@ -187,6 +187,11 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
     const moodTypeStr = Array.isArray(moodType) ? moodType.join(',') : moodType
     const tagsStr = Array.isArray(tags) ? tags.join(',') : tags || ''
 
+    const mood = await findMoodById(moodId, userId)
+    if (!mood) {
+      return res.status(404).json({ code: 404, message: '记录不存在' })
+    }
+
     const updated = await updateMood(
       moodId,
       moodTypeStr || mood.mood_type,

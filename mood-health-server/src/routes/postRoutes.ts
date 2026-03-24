@@ -9,9 +9,10 @@ import {
   createCommentHandler,
   likeCommentHandler,
   getPendingPostsHandler,
+  getPostAuditStatsHandler,
   auditPostHandler,
 } from '../controllers/postController'
-import { authenticate, requirePermission, requireRole } from '../middleware/auth'
+import { authenticate, requirePermission } from '../middleware/auth'
 import { validateRequest } from '../middleware/validateRequest'
 import { auditOperation } from '../utils/operationLogger'
 
@@ -22,7 +23,6 @@ const router = express.Router()
 router.get(
   '/admin/pending',
   authenticate,
-  requireRole(['admin']),
   requirePermission('post.audit.pending.read'),
   auditOperation({
     permissionCode: 'post.audit.pending.read',
@@ -31,11 +31,21 @@ router.get(
   getPendingPostsHandler
 )
 
+router.get(
+  '/admin/stats',
+  authenticate,
+  requirePermission('post.audit.pending.read'),
+  auditOperation({
+    permissionCode: 'post.audit.pending.read',
+    operationType: 'POST_AUDIT_STATS_READ',
+  }),
+  getPostAuditStatsHandler
+)
+
 // 审核帖子（需要管理员权限）
 router.post(
   '/admin/audit/:id',
   authenticate,
-  requireRole(['admin']),
   requirePermission('post.audit'),
   auditOperation({
     permissionCode: 'post.audit',

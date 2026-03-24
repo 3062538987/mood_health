@@ -38,6 +38,11 @@
           <h3>个人中心</h3>
           <p>管理个人资料和设置</p>
         </router-link>
+        <router-link v-if="isAdmin" to="/admin" class="feature-card">
+          <i class="fas fa-shield-alt"></i>
+          <h3>管理后台</h3>
+          <p>审核内容与管理平台配置</p>
+        </router-link>
       </div>
 
       <!-- 特色服务介绍 -->
@@ -71,9 +76,12 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useUserStore } from '@/stores/userStore'
 
 const isLoaded = ref(false)
+const userStore = useUserStore()
+const isAdmin = computed(() => userStore.isAdmin)
 
 onMounted(() => {
   // 添加页面加载动画
@@ -262,7 +270,7 @@ $text-light: #7f8c8d;
   }
 }
 
-.feature-card {
+.feature-grid > :is(.feature-card, a, button) {
   background: rgba(255, 255, 255, 0.95);
   border-radius: 20px;
   padding: 2rem 1rem;
@@ -270,17 +278,18 @@ $text-light: #7f8c8d;
   text-decoration: none;
   color: #4a4a4a;
   box-shadow: var(--shadow-sm);
-  transition:
-    transform 0.3s,
-    box-shadow 0.3s;
+  transition: all 0.3s ease;
   animation: fadeInUp 0.6s ease both;
+  border: none;
+  cursor: pointer;
 
   @media (prefers-color-scheme: dark) {
     background: rgba(40, 45, 52, 0.95);
     color: #e0e0e0;
   }
 
-  i {
+  i,
+  .feature-icon {
     font-size: 3rem;
     color: var(--primary-color);
     margin-bottom: 1rem;
@@ -304,21 +313,44 @@ $text-light: #7f8c8d;
   }
 
   &:hover {
-    transform: translateY(-5px);
+    transform: translateY(-10px);
     box-shadow: var(--shadow-md);
   }
 
   &:nth-child(1) {
     animation-delay: 0.1s;
+
+    &:hover {
+      box-shadow: 0 12px 28px rgba(66, 185, 131, 0.28);
+      border: 1px solid rgba(66, 185, 131, 0.45);
+    }
   }
+
   &:nth-child(2) {
     animation-delay: 0.2s;
+
+    &:hover {
+      box-shadow: 0 12px 28px rgba(102, 126, 234, 0.28);
+      border: 1px solid rgba(102, 126, 234, 0.45);
+    }
   }
+
   &:nth-child(3) {
     animation-delay: 0.3s;
+
+    &:hover {
+      box-shadow: 0 12px 28px rgba(240, 147, 251, 0.28);
+      border: 1px solid rgba(240, 147, 251, 0.45);
+    }
   }
+
   &:nth-child(4) {
     animation-delay: 0.4s;
+
+    &:hover {
+      box-shadow: 0 12px 28px rgba(249, 213, 110, 0.28);
+      border: 1px solid rgba(249, 213, 110, 0.55);
+    }
   }
 }
 
@@ -402,7 +434,6 @@ $text-light: #7f8c8d;
       .feature-icon {
         font-size: 48px;
         margin-bottom: 20px;
-        animation: float 3s ease-in-out infinite;
         color: var(--primary-color);
       }
 

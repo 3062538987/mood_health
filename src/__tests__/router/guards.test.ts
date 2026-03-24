@@ -98,6 +98,20 @@ describe('router guards', () => {
       ).toBe('/')
     })
 
+    it('管理员访问管理员页面时允许通过', () => {
+      const to = createRoute({
+        path: '/admin',
+        meta: { adminOnly: true },
+      })
+
+      expect(
+        getRouteRedirect(
+          to,
+          createUserStore({ isLoggedIn: true, isAdmin: true, user: { id: 1 } }) as never
+        )
+      ).toBeNull()
+    })
+
     it('已登录用户访问普通公开页面时允许通过', () => {
       const to = createRoute({
         path: '/guide',

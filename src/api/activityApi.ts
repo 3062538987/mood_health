@@ -101,6 +101,16 @@ export const joinActivity = async (id: number): Promise<void> => {
 }
 
 /**
+ * 取消报名活动
+ */
+export const cancelJoinActivity = async (id: number): Promise<void> => {
+  await request({
+    url: `/api/activities/cancel/${id}`,
+    method: 'post',
+  })
+}
+
+/**
  * 获取我已报名的活动
  */
 export const getMyJoinedActivities = async (): Promise<Activity[]> => {

@@ -3,6 +3,7 @@ import sql from 'mssql'
 import pool from '../config/database'
 import type { AuthRequest } from '../middleware/auth'
 import { logOperation } from '../utils/operationLogger'
+import { isValidUserRole, updateUserRole } from '../models/userModel'
 
 const getClientIp = (req: AuthRequest): string => {
   const forwarded = req.headers['x-forwarded-for']
@@ -37,18 +38,44 @@ export const roleManageHandler = async (req: AuthRequest, res: Response) => {
   try {
     const { targetUserId, targetRole } = req.body
 
+    if (!Number.isInteger(targetUserId) || targetUserId <= 0) {
+      return res.status(400).json({ code: 400, message: 'targetUserId 必须是正整数' })
+    }
+
+    if (!isValidUserRole(targetRole)) {
+      return res
+        .status(400)
+        .json({ code: 400, message: 'targetRole 非法，仅支持 user/admin/super_admin' })
+    }
+
+    const updateResult = await updateUserRole(targetUserId, targetRole)
+    if ((updateResult.rowsAffected?.[0] || 0) === 0) {
+      await logOperation(
+        req.user!.userId,
+        req.user!.role,
+        'role.manage',
+        'ROLE_MANAGE',
+        String(targetUserId),
+        `targetRole=${targetRole}; reason=target_user_not_found`,
+        'failed',
+        getClientIp(req)
+      )
+
+      return res.status(404).json({ code: 404, message: '目标用户不存在' })
+    }
+
     await logOperation(
       req.user!.userId,
       req.user!.role,
       'role.manage',
       'ROLE_MANAGE',
       targetUserId ? String(targetUserId) : null,
-      `targetRole=${targetRole || 'unknown'}`,
+      `targetRole=${targetRole}`,
       'success',
       getClientIp(req)
     )
 
-    res.status(200).json({ code: 0, message: '角色管理操作已记录' })
+    res.status(200).json({ code: 0, message: '用户角色更新成功' })
   } catch (error) {
     res.status(500).json({ code: 500, message: '角色管理操作失败' })
   }

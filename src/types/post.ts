@@ -31,10 +31,18 @@ export interface Post {
   liked?: boolean
   /** 点赞数（可选，用于树洞组件） */
   like_count?: number
+  /** 审核状态（可选：0待审核 1通过 2拒绝） */
+  status?: number
+  /** 审核备注（可选） */
+  audit_remark?: string | null
   /** 评论数（可选） */
   commentCount?: number
   /** 创建时间 */
   createdAt: string
+  /** 兼容后端 snake_case 字段（可选） */
+  created_at?: string
+  /** 兼容后端 snake_case 字段（可选） */
+  is_anonymous?: boolean
   /** 评论列表（可选） */
   comments?: Comment[]
 }

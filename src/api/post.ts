@@ -11,11 +11,15 @@ const normalizePost = (post: Record<string, any>): Post => ({
   title: post.title || '未命名帖子',
   content: post.content || '',
   isAnonymous: Boolean(post.isAnonymous ?? post.is_anonymous),
+  is_anonymous: Boolean(post.isAnonymous ?? post.is_anonymous),
   likes: Number(post.likes ?? post.like_count ?? 0),
   liked: Boolean(post.liked),
   like_count: Number(post.like_count ?? post.likes ?? 0),
+  status: typeof post.status === 'number' ? post.status : undefined,
+  audit_remark: post.audit_remark ?? post.auditRemark ?? null,
   commentCount: Number(post.commentCount ?? post.comment_count ?? 0),
   createdAt: post.createdAt || post.created_at || new Date().toISOString(),
+  created_at: post.created_at || post.createdAt || new Date().toISOString(),
   comments: Array.isArray(post.comments)
     ? post.comments.map((item) => normalizeComment(item))
     : undefined,
@@ -100,12 +104,19 @@ export const likeComment = (commentId: number) => {
   })
 }
 
-export const getPendingPosts = (page = 1, pageSize = 10) => {
+export const getPendingPosts = (page = 1, pageSize = 10, status = 0) => {
   return request<Record<string, any>[]>({
     url: '/api/posts/admin/pending',
     method: 'get',
-    params: { page, pageSize },
+    params: { page, pageSize, status },
   }).then((response) => response.map((item) => normalizePost(item)))
+}
+
+export const getPostAuditStats = () => {
+  return request<{ pending: number; approved: number; rejected: number }>({
+    url: '/api/posts/admin/stats',
+    method: 'get',
+  })
 }
 
 export const auditPost = (postId: number, data: { status: number; audit_remark?: string }) => {

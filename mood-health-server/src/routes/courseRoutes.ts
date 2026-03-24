@@ -6,7 +6,7 @@ import {
   updateCourse,
   deleteCourse,
 } from '../controllers/courseController'
-import { authenticate, requirePermission, requireRole } from '../middleware/auth'
+import { authenticate, requirePermission } from '../middleware/auth'
 import { auditOperation } from '../utils/operationLogger'
 
 const router = express.Router()
@@ -19,7 +19,6 @@ router.get('/:id', getCourseById)
 router.post(
   '/',
   authenticate,
-  requireRole(['super_admin', 'admin']),
   requirePermission('course.manage'),
   auditOperation({ permissionCode: 'course.manage', operationType: 'COURSE_CREATE' }),
   createCourse
@@ -27,7 +26,6 @@ router.post(
 router.put(
   '/:id',
   authenticate,
-  requireRole(['super_admin', 'admin']),
   requirePermission('course.manage'),
   auditOperation({
     permissionCode: 'course.manage',
@@ -39,7 +37,6 @@ router.put(
 router.delete(
   '/:id',
   authenticate,
-  requireRole(['super_admin', 'admin']),
   requirePermission('course.manage'),
   auditOperation({
     permissionCode: 'course.manage',

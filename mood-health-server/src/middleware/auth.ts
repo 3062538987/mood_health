@@ -56,6 +56,7 @@ export const rolePermissions: Record<UserRole, RolePermissionConfig> = {
       'system.config',
       'incident.fix',
       'audit.record.view_all',
+      'post.audit.pending.read',
       'post.audit',
       'activity.manage',
       'course.manage',
@@ -202,7 +203,7 @@ export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction
     return sendAuthError(req, res, 401, '未登录')
   }
 
-  if (req.user.role !== 'admin') {
+  if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
     logger.warn('管理员权限校验失败', {
       path: req.originalUrl,
       username: req.user.username,

@@ -6,7 +6,7 @@ import {
   updateMusic,
   deleteMusic,
 } from '../controllers/musicController'
-import { authenticate, requirePermission, requireRole } from '../middleware/auth'
+import { authenticate, requirePermission } from '../middleware/auth'
 import { auditOperation } from '../utils/operationLogger'
 
 const router = Router()
@@ -19,7 +19,6 @@ router.get('/:id', getMusicById)
 router.post(
   '/',
   authenticate,
-  requireRole(['super_admin', 'admin']),
   requirePermission('music.manage'),
   auditOperation({ permissionCode: 'music.manage', operationType: 'MUSIC_CREATE' }),
   createMusic
@@ -27,7 +26,6 @@ router.post(
 router.put(
   '/:id',
   authenticate,
-  requireRole(['super_admin', 'admin']),
   requirePermission('music.manage'),
   auditOperation({
     permissionCode: 'music.manage',
@@ -39,7 +37,6 @@ router.put(
 router.delete(
   '/:id',
   authenticate,
-  requireRole(['super_admin', 'admin']),
   requirePermission('music.manage'),
   auditOperation({
     permissionCode: 'music.manage',

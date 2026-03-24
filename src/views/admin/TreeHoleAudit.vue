@@ -28,12 +28,12 @@
       </div>
 
       <div class="filter-bar">
-        <select v-model="statusFilter" @change="loadPosts">
+        <select v-model.number="statusFilter" @change="onStatusFilterChange">
           <option value="0">待审核</option>
           <option value="1">已通过</option>
           <option value="2">已拒绝</option>
         </select>
-        <button class="refresh-btn" @click="loadPosts"><i class="fas fa-redo"></i> 刷新</button>
+        <button class="refresh-btn" @click="loadData"><i class="fas fa-redo"></i> 刷新</button>
       </div>
 
       <div v-if="loading" class="loading"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>
@@ -58,9 +58,11 @@
             <div class="post-info">
               <span class="post-title">{{ post.title }}</span>
               <span class="post-author">
-                {{ post.is_anonymous ? '匿名用户' : post.username || '未知用户' }}
+                {{
+                  (post.isAnonymous ?? post.is_anonymous) ? '匿名用户' : post.username || '未知用户'
+                }}
               </span>
-              <span class="post-time">{{ formatTime(post.created_at) }}</span>
+              <span class="post-time">{{ formatTime(post.createdAt || post.created_at) }}</span>
             </div>
             <div class="post-status" :class="`status-${post.status}`">
               {{ getStatusText(post.status) }}
@@ -69,8 +71,8 @@
 
           <div class="post-content">{{ post.content }}</div>
 
-          <div v-if="post.audit_remark" class="audit-remark">
-            <strong>审核备注：</strong>{{ post.audit_remark }}
+          <div v-if="post.audit_remark || post.auditRemark" class="audit-remark">
+            <strong>审核备注：</strong>{{ post.audit_remark || post.auditRemark }}
           </div>
 
           <div v-if="post.status === 0" class="post-actions">
@@ -107,9 +109,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getPendingPosts, auditPost } from '@/api/post'
+import { getPendingPosts, getPostAuditStats, auditPost } from '@/api/post'
 
 const posts = ref<any[]>([])
 const loading = ref(false)
@@ -124,12 +126,24 @@ const pendingCount = ref(0)
 const approvedCount = ref(0)
 const rejectedCount = ref(0)
 
+type AuditStatus = 1 | 2
+
+const loadStats = async () => {
+  const stats = await getPostAuditStats()
+  pendingCount.value = Number(stats.pending || 0)
+  approvedCount.value = Number(stats.approved || 0)
+  rejectedCount.value = Number(stats.rejected || 0)
+}
+
 const loadPosts = async () => {
   loading.value = true
   try {
-    const data = await getPendingPosts(currentPage.value, pageSize.value)
+    const data = await getPendingPosts(
+      currentPage.value,
+      pageSize.value,
+      Number(statusFilter.value)
+    )
     posts.value = data
-    updateStats()
   } catch (error) {
     ElMessage.error('获取待审核帖子失败')
     console.error(error)
@@ -138,10 +152,13 @@ const loadPosts = async () => {
   }
 }
 
-const updateStats = () => {
-  pendingCount.value = posts.value.filter((p) => p.status === 0).length
-  approvedCount.value = posts.value.filter((p) => p.status === 1).length
-  rejectedCount.value = posts.value.filter((p) => p.status === 2).length
+const loadData = async () => {
+  await Promise.all([loadPosts(), loadStats()])
+}
+
+const onStatusFilterChange = async () => {
+  currentPage.value = 1
+  await loadPosts()
 }
 
 const changePage = async (page: number) => {
@@ -150,8 +167,12 @@ const changePage = async (page: number) => {
   await loadPosts()
 }
 
-const formatTime = (date: string) => {
+const formatTime = (date?: string) => {
+  if (!date) return '未知时间'
+
   const d = new Date(date)
+  if (Number.isNaN(d.getTime())) return '未知时间'
+
   const now = new Date()
   const diff = now.getTime() - d.getTime()
   const minutes = Math.floor(diff / 60000)
@@ -190,17 +211,64 @@ const closeRejectDialog = () => {
   rejectRemark.value = ''
 }
 
+const applyAuditResultLocally = (postId: number, targetStatus: AuditStatus) => {
+  const targetIndex = posts.value.findIndex((post) => Number(post.id) === Number(postId))
+  if (targetIndex < 0) {
+    return false
+  }
+
+  const targetPost = posts.value[targetIndex]
+  const previousStatus = Number(targetPost?.status ?? 0)
+
+  // 审核后在当前列表移除该帖子，避免用户误以为操作未生效
+  posts.value.splice(targetIndex, 1)
+
+  if (previousStatus === 0) {
+    pendingCount.value = Math.max(0, pendingCount.value - 1)
+  }
+
+  if (targetStatus === 1) {
+    approvedCount.value += 1
+  } else {
+    rejectedCount.value += 1
+  }
+
+  return true
+}
+
+const refillPageAfterAudit = async () => {
+  // 当前页已经空了且不是第一页，回退一页避免空白
+  if (posts.value.length === 0 && currentPage.value > 1) {
+    currentPage.value -= 1
+    await loadPosts()
+    return
+  }
+
+  // 当前页条目不足时尝试补拉，填充下一条数据
+  if (posts.value.length < pageSize.value) {
+    await loadPosts()
+  }
+}
+
 const confirmReject = async () => {
   if (!currentPost.value) return
 
   try {
+    const postId = Number(currentPost.value.id)
     await auditPost(currentPost.value.id, {
       status: 2,
       audit_remark: rejectRemark.value || undefined,
     })
+
+    const applied = applyAuditResultLocally(postId, 2)
     ElMessage.success('已拒绝该帖子')
     closeRejectDialog()
-    await loadPosts()
+
+    if (applied) {
+      await refillPageAfterAudit()
+    } else {
+      await loadData()
+    }
   } catch (error) {
     ElMessage.error('操作失败')
     console.error(error)
@@ -210,15 +278,22 @@ const confirmReject = async () => {
 const approvePost = async (postId: number) => {
   try {
     await auditPost(postId, { status: 1 })
+
+    const applied = applyAuditResultLocally(postId, 1)
     ElMessage.success('已通过该帖子')
-    await loadPosts()
+
+    if (applied) {
+      await refillPageAfterAudit()
+    } else {
+      await loadData()
+    }
   } catch (error) {
     ElMessage.error('操作失败')
     console.error(error)
   }
 }
 
-onMounted(loadPosts)
+onMounted(loadData)
 </script>
 
 <style scoped lang="scss">

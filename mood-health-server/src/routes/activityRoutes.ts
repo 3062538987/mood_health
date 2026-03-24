@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { body } from 'express-validator'
-import { authenticate, requireAdmin, requirePermission } from '../middleware/auth'
+import { authenticate, requirePermission } from '../middleware/auth'
 import { validateRequest } from '../middleware/validateRequest'
 import { auditOperation } from '../utils/operationLogger'
 import {
@@ -8,6 +8,7 @@ import {
   getActivityDetail,
   getActivityDetailWithParticipants,
   joinActivityHandler,
+  cancelJoinActivityHandler,
   getMyJoinedActivities,
   createActivityHandler,
   updateActivityHandler,
@@ -21,12 +22,12 @@ router.get('/detail/:id', getActivityDetail)
 router.get('/detail-with-participants/:id', getActivityDetailWithParticipants)
 
 router.post('/join/:id', authenticate, joinActivityHandler)
+router.post('/cancel/:id', authenticate, cancelJoinActivityHandler)
 router.get('/my-joined', authenticate, getMyJoinedActivities)
 
 router.post(
   '/create',
   authenticate,
-  requireAdmin,
   requirePermission('activity.manage'),
   auditOperation({
     permissionCode: 'activity.manage',
@@ -47,7 +48,6 @@ router.post(
 router.put(
   '/update/:id',
   authenticate,
-  requireAdmin,
   requirePermission('activity.manage'),
   auditOperation({
     permissionCode: 'activity.manage',
@@ -69,7 +69,6 @@ router.put(
 router.delete(
   '/delete/:id',
   authenticate,
-  requireAdmin,
   requirePermission('activity.manage'),
   auditOperation({
     permissionCode: 'activity.manage',

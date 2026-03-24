@@ -27,6 +27,9 @@
         <router-link to="/improve/knowledge" active-class="active">
           <i class="fas fa-book-open"></i> 情绪科普
         </router-link>
+        <router-link v-if="isAdmin" to="/admin" active-class="active">
+          <i class="fas fa-shield-alt"></i> 管理后台
+        </router-link>
       </nav>
       <div class="user-profile">
         <router-link to="/user/profile" class="profile-btn">
@@ -40,6 +43,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useUserStore } from '@/stores/userStore'
 
 interface SubNavItem {
   path: string
@@ -48,6 +52,8 @@ interface SubNavItem {
 }
 
 const route = useRoute()
+const userStore = useUserStore()
+const isAdmin = computed(() => userStore.isAdmin)
 const subNavItems = computed<SubNavItem[]>(() => {
   // 查找当前路由匹配的父路由中第一个包含 subNav 的路由
   const matched = route.matched.find((record) => record.meta?.subNav)

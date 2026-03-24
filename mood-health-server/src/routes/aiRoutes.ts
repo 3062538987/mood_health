@@ -5,8 +5,19 @@
 
 import express, { Request, Response } from 'express'
 import axios from 'axios'
+import rateLimit from 'express-rate-limit'
+import { authenticate } from '../middleware/auth'
 
 const router = express.Router()
+
+const aiProxyLimiter = rateLimit({
+  windowMs: Number(process.env.AI_PROXY_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
+  max: Number(process.env.AI_PROXY_RATE_LIMIT_MAX || 30),
+  message: 'AI 请求过于频繁，请稍后再试',
+})
+
+router.use(aiProxyLimiter)
+router.use(authenticate)
 
 const getAiServiceBaseUrl = () => {
   const rawBaseUrl =

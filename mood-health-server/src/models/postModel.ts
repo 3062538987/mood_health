@@ -1,36 +1,36 @@
-import pool from "../config/database";
-import sql from "mssql";
-import logger from "../utils/logger";
+import pool from '../config/database'
+import sql from 'mssql'
+import logger from '../utils/logger'
 
 export interface Post {
-  id: number;
-  title: string;
-  content: string;
-  user_id: number | null;
-  is_anonymous: boolean;
-  like_count: number;
-  status: number;
-  audit_remark: string | null;
-  created_at: Date;
+  id: number
+  title: string
+  content: string
+  user_id: number | null
+  is_anonymous: boolean
+  like_count: number
+  status: number
+  audit_remark: string | null
+  created_at: Date
 }
 
 export interface CreatePostParams {
-  title: string;
-  content: string;
-  user_id: number | null;
-  isAnonymous: boolean;
+  title: string
+  content: string
+  user_id: number | null
+  isAnonymous: boolean
 }
 
 export interface AuditPostParams {
-  status: number;
-  audit_remark?: string;
+  status: number
+  audit_remark?: string
 }
 
-let postSchemaChecked = false;
+let postSchemaChecked = false
 
 const ensurePostSchema = async () => {
   if (postSchemaChecked) {
-    return;
+    return
   }
 
   await pool.request().query(`
@@ -105,54 +105,50 @@ const ensurePostSchema = async () => {
       ALTER TABLE comments ADD is_anonymous BIT NOT NULL CONSTRAINT DF_comments_is_anonymous DEFAULT 0;
     IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('comments') AND name = 'like_count')
       ALTER TABLE comments ADD like_count INT NOT NULL CONSTRAINT DF_comments_like_count DEFAULT 0;
-  `);
+  `)
 
-  postSchemaChecked = true;
-};
+  postSchemaChecked = true
+}
 
-const logPostDbError = (
-  message: string,
-  error: unknown,
-  extra?: Record<string, unknown>,
-) => {
+const logPostDbError = (message: string, error: unknown, extra?: Record<string, unknown>) => {
   logger.error(message, {
     ...extra,
     error,
-  });
-};
+  })
+}
 
 // 创建帖子
 export const createPost = async (params: CreatePostParams) => {
-  await ensurePostSchema();
+  await ensurePostSchema()
   const result = await pool
     .request()
-    .input("title", sql.NVarChar, params.title)
-    .input("content", sql.NVarChar, params.content)
-    .input("user_id", sql.Int, params.user_id)
-    .input("is_anonymous", sql.Bit, params.isAnonymous ? 1 : 0)
-    .input("status", sql.Int, 0).query(`
+    .input('title', sql.NVarChar, params.title)
+    .input('content', sql.NVarChar, params.content)
+    .input('user_id', sql.Int, params.user_id)
+    .input('is_anonymous', sql.Bit, params.isAnonymous ? 1 : 0)
+    .input('status', sql.Int, 0).query(`
       INSERT INTO posts (title, content, user_id, is_anonymous, status)
       OUTPUT INSERTED.*
       VALUES (@title, @content, @user_id, @is_anonymous, @status)
-    `);
-  return result.recordset[0];
-};
+    `)
+  return result.recordset[0]
+}
 
 // 获取帖子列表（分页）
 export const getPosts = async (page: number = 1, pageSize: number = 10) => {
-  await ensurePostSchema();
-  const safePage = page > 0 ? Math.floor(page) : 1;
-  const safePageSize = pageSize > 0 ? Math.min(Math.floor(pageSize), 50) : 10;
-  const offset = (safePage - 1) * safePageSize;
+  await ensurePostSchema()
+  const safePage = page > 0 ? Math.floor(page) : 1
+  const safePageSize = pageSize > 0 ? Math.min(Math.floor(pageSize), 50) : 10
+  const offset = (safePage - 1) * safePageSize
 
   try {
     const totalResult = await pool.request().query(`
       SELECT COUNT(*) AS total FROM posts WHERE status = 1
-    `);
+    `)
     const result = await pool
       .request()
-      .input("offset", sql.Int, offset)
-      .input("pageSize", sql.Int, safePageSize).query(`
+      .input('offset', sql.Int, offset)
+      .input('pageSize', sql.Int, safePageSize).query(`
         SELECT 
           p.id,
           p.title,
@@ -171,22 +167,22 @@ export const getPosts = async (page: number = 1, pageSize: number = 10) => {
         ORDER BY p.created_at DESC
         OFFSET @offset ROWS
         FETCH NEXT @pageSize ROWS ONLY
-      `);
+      `)
 
     return {
       list: result.recordset,
       total: totalResult.recordset[0]?.total || 0,
-    };
+    }
   } catch (error) {
-    logPostDbError("获取帖子列表查询失败", error, { page, pageSize });
-    throw error;
+    logPostDbError('获取帖子列表查询失败', error, { page, pageSize })
+    throw error
   }
-};
+}
 
 // 根据ID获取帖子
 export const getPostById = async (id: number) => {
-  await ensurePostSchema();
-  const result = await pool.request().input("id", sql.Int, id).query(`
+  await ensurePostSchema()
+  const result = await pool.request().input('id', sql.Int, id).query(`
       SELECT 
         p.id,
         p.title,
@@ -201,20 +197,26 @@ export const getPostById = async (id: number) => {
       FROM posts p
       LEFT JOIN users u ON p.user_id = u.id
       WHERE p.id = @id
-    `);
-  return result.recordset.length ? result.recordset[0] : null;
-};
+    `)
+  return result.recordset.length ? result.recordset[0] : null
+}
 
 export const getPendingPosts = async (
   page: number = 1,
   pageSize: number = 10,
+  status: number = 0
 ) => {
-  await ensurePostSchema();
-  const offset = (page - 1) * pageSize;
+  await ensurePostSchema()
+  const safePage = page > 0 ? Math.floor(page) : 1
+  const safePageSize = pageSize > 0 ? Math.min(Math.floor(pageSize), 50) : 10
+  const safeStatus = [0, 1, 2].includes(status) ? status : 0
+  const offset = (safePage - 1) * safePageSize
+
   const result = await pool
     .request()
-    .input("offset", sql.Int, offset)
-    .input("pageSize", sql.Int, pageSize).query(`
+    .input('offset', sql.Int, offset)
+    .input('pageSize', sql.Int, safePageSize)
+    .input('status', sql.Int, safeStatus).query(`
       SELECT 
         p.id,
         p.title,
@@ -228,90 +230,102 @@ export const getPendingPosts = async (
         u.username
       FROM posts p
       LEFT JOIN users u ON p.user_id = u.id
-      WHERE p.status = 0
+      WHERE p.status = @status
       ORDER BY p.created_at DESC
       OFFSET @offset ROWS
       FETCH NEXT @pageSize ROWS ONLY
-    `);
-  return result.recordset;
-};
+    `)
+  return result.recordset
+}
+
+export const getPostAuditStats = async () => {
+  await ensurePostSchema()
+  const result = await pool.request().query(`
+      SELECT
+        SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) AS pending,
+        SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS approved,
+        SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) AS rejected
+      FROM posts
+    `)
+
+  const row = result.recordset[0] || {}
+  return {
+    pending: Number(row.pending || 0),
+    approved: Number(row.approved || 0),
+    rejected: Number(row.rejected || 0),
+  }
+}
 
 export const auditPost = async (id: number, params: AuditPostParams) => {
-  await ensurePostSchema();
+  await ensurePostSchema()
   const result = await pool
     .request()
-    .input("id", sql.Int, id)
-    .input("status", sql.Int, params.status)
-    .input("audit_remark", sql.NVarChar, params.audit_remark || null).query(`
+    .input('id', sql.Int, id)
+    .input('status', sql.Int, params.status)
+    .input('audit_remark', sql.NVarChar, params.audit_remark || null).query(`
       UPDATE posts
       SET status = @status,
           audit_remark = @audit_remark
       OUTPUT INSERTED.*
       WHERE id = @id
-    `);
-  return result.recordset.length ? result.recordset[0] : null;
-};
+    `)
+  return result.recordset.length ? result.recordset[0] : null
+}
 
 // 点赞帖子（防止重复点赞）
 export const likePost = async (id: number, userId: number) => {
-  await ensurePostSchema();
+  await ensurePostSchema()
   // 检查是否已经点赞
   const checkResult = await pool
     .request()
-    .input("post_id", sql.Int, id)
-    .input("user_id", sql.Int, userId).query(`
+    .input('post_id', sql.Int, id)
+    .input('user_id', sql.Int, userId).query(`
       SELECT * FROM post_likes 
       WHERE post_id = @post_id AND user_id = @user_id
-    `);
+    `)
 
   if (checkResult.recordset.length > 0) {
     // 已点赞，取消点赞
-    await pool
-      .request()
-      .input("post_id", sql.Int, id)
-      .input("user_id", sql.Int, userId).query(`
+    await pool.request().input('post_id', sql.Int, id).input('user_id', sql.Int, userId).query(`
         DELETE FROM post_likes 
         WHERE post_id = @post_id AND user_id = @user_id
-      `);
+      `)
 
     // 减少点赞数
-    const result = await pool.request().input("id", sql.Int, id).query(`
+    const result = await pool.request().input('id', sql.Int, id).query(`
         UPDATE posts
         SET like_count = CASE WHEN like_count > 0 THEN like_count - 1 ELSE 0 END
         OUTPUT INSERTED.*
         WHERE id = @id
-      `);
-    return { ...result.recordset[0], liked: false };
+      `)
+    return { ...result.recordset[0], liked: false }
   } else {
     // 未点赞，添加点赞
-    await pool
-      .request()
-      .input("post_id", sql.Int, id)
-      .input("user_id", sql.Int, userId).query(`
+    await pool.request().input('post_id', sql.Int, id).input('user_id', sql.Int, userId).query(`
         INSERT INTO post_likes (post_id, user_id)
         VALUES (@post_id, @user_id)
-      `);
+      `)
 
     // 增加点赞数
-    const result = await pool.request().input("id", sql.Int, id).query(`
+    const result = await pool.request().input('id', sql.Int, id).query(`
         UPDATE posts
         SET like_count = like_count + 1
         OUTPUT INSERTED.*
         WHERE id = @id
-      `);
-    return { ...result.recordset[0], liked: true };
+      `)
+    return { ...result.recordset[0], liked: true }
   }
-};
+}
 
 // 检查用户是否已点赞
 export const checkUserLiked = async (postId: number, userId: number) => {
-  await ensurePostSchema();
+  await ensurePostSchema()
   const result = await pool
     .request()
-    .input("post_id", sql.Int, postId)
-    .input("user_id", sql.Int, userId).query(`
+    .input('post_id', sql.Int, postId)
+    .input('user_id', sql.Int, userId).query(`
       SELECT * FROM post_likes 
       WHERE post_id = @post_id AND user_id = @user_id
-    `);
-  return result.recordset.length > 0;
-};
+    `)
+  return result.recordset.length > 0
+}
