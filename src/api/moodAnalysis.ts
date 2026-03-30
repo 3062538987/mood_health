@@ -1,6 +1,4 @@
 import { debounce } from '@/utils/debounce'
-import request from '@/utils/request'
-import { buildAiApiUrl, isAiFeatureEnabled } from '@/utils/apiBase'
 
 export interface MoodAnalysisRequest {
   content: string
@@ -14,8 +12,6 @@ export interface MoodAnalysisResponse {
   risk_level?: string
   mood: string
 }
-
-const VALID_MOODS = ['开心', '焦虑', '抑郁', '平静', '愤怒', '疲惫', '紧张', '兴奋']
 
 const DEFAULT_FALLBACK_RESPONSE: MoodAnalysisResponse = {
   mood: '未知',
@@ -78,73 +74,9 @@ export const analyzeMood = async (data: MoodAnalysisRequest): Promise<MoodAnalys
     throw new Error('情绪强度必须在1-10之间')
   }
 
-  if (!isAiFeatureEnabled()) {
-    return getLocalFallbackMood(data.content)
-  }
-
   try {
-    const response = await request<MoodAnalysisResponse>({
-      url: buildAiApiUrl('/analyze-mood'),
-      method: 'post',
-      data: {
-        content: data.content.trim(),
-        mood_level: data.mood_level,
-      },
-      timeout: 30000,
-    })
-
-    if (!response.mood || response.mood === '未知') {
-      console.warn('AI返回的情绪标签无效，使用本地fallback方案')
-      return getLocalFallbackMood(data.content)
-    }
-
-    if (!VALID_MOODS.includes(response.mood)) {
-      console.warn(`AI返回的情绪标签${response.mood}不在有效列表中，使用本地fallback方案`)
-      return getLocalFallbackMood(data.content)
-    }
-
-    return response
-  } catch (error: any) {
-    console.error('情绪分析失败:', error)
-
-    if (error.response) {
-      const status = error.response.status
-
-      if (status === 400) {
-        throw new Error(error.response.data?.detail || '请求参数错误')
-      }
-
-      if (status === 429) {
-        throw new Error('请求过于频繁，请稍后再试')
-      }
-
-      if (status === 503) {
-        console.warn('AI服务暂时不可用，使用本地fallback方案')
-        return getLocalFallbackMood(data.content)
-      }
-
-      if (status === 504) {
-        console.warn('AI服务响应超时，使用本地fallback方案')
-        return getLocalFallbackMood(data.content)
-      }
-
-      if (status >= 500) {
-        console.warn('服务器错误，使用本地fallback方案')
-        return getLocalFallbackMood(data.content)
-      }
-    }
-
-    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-      console.warn('请求超时，使用本地fallback方案')
-      return getLocalFallbackMood(data.content)
-    }
-
-    if (error.message?.includes('Network Error')) {
-      console.warn('网络连接失败，使用本地fallback方案')
-      return getLocalFallbackMood(data.content)
-    }
-
-    console.warn('未知错误，使用默认fallback方案')
+    return getLocalFallbackMood(data.content.trim())
+  } catch {
     return DEFAULT_FALLBACK_RESPONSE
   }
 }

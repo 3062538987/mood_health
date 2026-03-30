@@ -25,6 +25,18 @@ npm --prefix mood-health-server run start
 Invoke-RestMethod -Method Get -Uri 'http://127.0.0.1:3000/health'
 ```
 
+## 3.1 一键冒烟（推荐）
+
+```powershell
+npm run release:smoke
+```
+
+如需跳过 AI 路由检查：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/release-smoke.ps1 -SkipAiRouteCheck
+```
+
 ## 4. 核心接口最小回归
 
 ```powershell

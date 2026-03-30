@@ -108,9 +108,12 @@ npm run dev:all
 - `npm run doctor`：环境、文件、端口健康检查
 - `npm run doctor:strict`：严格模式（warning 也视为失败）
 - `npm run start-all`：通过 `start-project.ps1` 启动 PM2 服务
+- `npm run start-all:no-ai`：通过 `start-project.ps1 -NoAi` 启动（推荐 2核2G）
 - `npm run start-all:linux`：通过 `start-project.sh` 启动 PM2 服务（Linux/macOS）
+- `npm run start-all:linux:no-ai`：通过 `start-project.sh --no-ai` 启动（推荐 2核2G）
 - `npm run start-all:check`：先 `doctor` 再 `start-all`
 - `npm run start-all:clean`：先清理进程再重启
+- 低配主机建议：2核2G 场景下将 `AI_ENABLED=false`，不在本机运行大模型推理。
 
 ### 构建与测试
 

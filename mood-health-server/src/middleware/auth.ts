@@ -27,8 +27,6 @@ export type PermissionCode =
   | 'mood.advice.history.read'
   | 'questionnaire.read'
   | 'questionnaire.submit'
-  | 'ai.mood.analyze'
-  | 'ai.counseling.use'
   | 'post.create'
   | 'post.comment.create'
   | 'post.like'
@@ -65,7 +63,6 @@ export const rolePermissions: Record<UserRole, RolePermissionConfig> = {
       'feedback.handle',
       'mood.record.read',
       'questionnaire.submit',
-      'ai.mood.analyze',
       'auth.profile.read',
     ],
     forbidden: ['auth.register.role_assign'],
@@ -81,7 +78,6 @@ export const rolePermissions: Record<UserRole, RolePermissionConfig> = {
       'feedback.handle',
       'mood.record.read',
       'questionnaire.submit',
-      'ai.mood.analyze',
       'auth.profile.read',
     ],
     forbidden: ['role.manage', 'system.config', 'incident.fix', 'auth.register.role_assign'],
@@ -100,7 +96,6 @@ export const rolePermissions: Record<UserRole, RolePermissionConfig> = {
       'activity.join',
       'questionnaire.read',
       'questionnaire.submit',
-      'ai.counseling.use',
       'relax.record.manage',
       'achievement.read',
     ],

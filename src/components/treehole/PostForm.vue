@@ -153,7 +153,7 @@ const submitPost = async () => {
   isFallback.value = false
 
   try {
-    // AI 下线后使用本地温柔文案，避免依赖外部服务
+    // 使用本地温柔文案，避免依赖外部服务
     gentleReply.value = getLocalGentleReply()
     isFallback.value = true
 

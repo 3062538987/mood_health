@@ -9,14 +9,6 @@ import {
   validateCounselingRequest,
   formatMessagesToContext,
 } from '@/api/counseling'
-import request from '@/utils/request'
-
-// Mock request 模块
-vi.mock('@/utils/request', () => ({
-  default: vi.fn(),
-}))
-
-const mockRequest = request as any
 
 describe('心理咨询API测试', () => {
   beforeEach(() => {
@@ -29,33 +21,13 @@ describe('心理咨询API测试', () => {
 
   describe('sendCounselingMessage', () => {
     it('应该成功发送心理咨询消息并返回响应', async () => {
-      // 模拟成功响应
-      const mockResponse = {
-        response:
-          '我能理解你的感受，这种情绪是很正常的。给自己一些时间和空间，允许自己感受这些情绪。',
-        mood: '平静',
-        riskLevel: 'low',
-      }
-
-      mockRequest.mockResolvedValue(mockResponse)
-
       const result = await sendCounselingMessage({
         message: '我最近感到很焦虑，不知道该怎么办',
       })
 
-      expect(mockRequest).toHaveBeenCalledWith({
-        url: '/ai/counseling',
-        method: 'post',
-        data: {
-          message: '我最近感到很焦虑，不知道该怎么办',
-          userId: undefined,
-          context: undefined,
-          mood: undefined,
-        },
-        timeout: 30000,
-      })
-
-      expect(result).toEqual(mockResponse)
+      expect(result.riskLevel).toBe('low')
+      expect(result.mood).toBe('焦虑')
+      expect(result.response.length).toBeGreaterThan(0)
     })
 
     it('应该在消息为空时抛出错误', async () => {
@@ -70,50 +42,27 @@ describe('心理咨询API测试', () => {
       )
     })
 
-    it('应该在网络异常时返回兜底响应', async () => {
-      // 模拟网络错误
-      mockRequest.mockRejectedValue(new Error('Network Error'))
-
+    it('应对低落情绪给出本地回复', async () => {
       const result = await sendCounselingMessage({
-        message: '我感到很孤独',
+        message: '最近有点难过和低落',
       })
 
-      expect(result).toEqual({
-        response: '很抱歉，我暂时无法为你提供帮助，请稍后再试',
-        mood: '平静',
-        riskLevel: 'low',
-      })
+      expect(result.mood).toBe('低落')
+      expect(result.riskLevel).toBe('low')
     })
 
-    it('应该在请求超时时返回兜底响应', async () => {
-      // 模拟超时错误
-      const timeoutError = new Error('timeout of 30000ms exceeded')
-      ;(timeoutError as any).code = 'ECONNABORTED'
-      mockRequest.mockRejectedValue(timeoutError)
-
+    it('应对一般内容给出平静回复', async () => {
       const result = await sendCounselingMessage({
-        message: '我感到很压力',
+        message: '我想把今天的安排理清楚',
       })
 
-      expect(result).toEqual({
-        response: '很抱歉，我暂时无法为你提供帮助，请稍后再试',
-        mood: '平静',
-        riskLevel: 'low',
-      })
+      expect(result.mood).toBe('平静')
+      expect(result.riskLevel).toBe('low')
     })
   })
 
   describe('sendCounselingMessageWithContext', () => {
     it('应该成功发送带上下文的心理咨询消息', async () => {
-      // 模拟成功响应
-      const mockResponse = {
-        response: '我理解你最近的压力，尝试深呼吸，一步一步来解决问题。',
-        mood: '焦虑',
-        riskLevel: 'low',
-      }
-
-      mockRequest.mockResolvedValue(mockResponse)
-
       const context: Array<{ role: 'user' | 'assistant'; content: string }> = [
         { role: 'user', content: '我最近工作压力很大' },
         {
@@ -127,19 +76,8 @@ describe('心理咨询API测试', () => {
         context,
       })
 
-      expect(mockRequest).toHaveBeenCalledWith({
-        url: '/ai/counseling',
-        method: 'post',
-        data: {
-          message: '项目 deadlines 快到了，我担心完成不了',
-          userId: undefined,
-          context,
-          mood: undefined,
-        },
-        timeout: 30000,
-      })
-
-      expect(result).toEqual(mockResponse)
+      expect(result.riskLevel).toBe('low')
+      expect(result.response.length).toBeGreaterThan(0)
     })
 
     it('应该在上下文为空时抛出错误', async () => {

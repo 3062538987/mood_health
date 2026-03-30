@@ -25,6 +25,11 @@
 - 根目录 `.env`（前端 Vite 变量）
 - `mood-health-server/.env`（后端与 AI 服务变量）
 
+可参考模板：
+
+- `.env.production.example`（前端生产）
+- `mood-health-server/.env.production.no-ai.example`（后端 2核2G 无 AI 推理）
+
 建议至少校验以下变量：
 
 - `VITE_API_BASE_URL`
@@ -35,6 +40,8 @@
 - `DB_SERVER`、`DB_USER`、`DB_PASSWORD`、`DB_NAME`（仅 SQL Server 模式需要）
 - `JWT_SECRET`、`ENCRYPTION_KEY`
 - `REDIS_URL`
+- `AI_ENABLED`（2核2G 建议 `false`）
+- `AI_SERVICE_BASE_URL`（仅 `AI_ENABLED=true` 时需要）
 - `OLLAMA_URL`、`OLLAMA_MODEL`
 
 ## 3. 安装与构建
@@ -86,6 +93,7 @@ Windows 下可直接使用：
 
 ```powershell
 npm run start-all:check
+npm run start-all:no-ai
 ```
 
 Linux/macOS 下可使用：
@@ -93,9 +101,27 @@ Linux/macOS 下可使用：
 ```bash
 chmod +x ./start-project.sh
 npm run start-all:linux
+npm run start-all:linux:no-ai
 ```
 
-这会先执行 `doctor`，再启动 `mood-health-server` 与 `mood-ai-server`。
+这会先执行 `doctor`，再启动 `mood-health-server`，并根据 `AI_ENABLED` 决定是否启动 `mood-ai-server`。
+
+默认情况下，`start-project.ps1` / `start-project.sh` 会根据 `AI_ENABLED` 决定是否启动 `mood-ai-server`：
+
+- `AI_ENABLED=false`：仅启动 `mood-health-server`
+- `AI_ENABLED=true`：启动 `mood-health-server` + `mood-ai-server`
+
+命令行也可显式覆盖：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File ./start-project.ps1 -NoAi
+powershell -ExecutionPolicy Bypass -File ./start-project.ps1 -WithAi
+```
+
+```bash
+bash ./start-project.sh --no-ai
+bash ./start-project.sh --with-ai
+```
 
 常用命令：
 
@@ -141,7 +167,7 @@ npm run doctor:strict
 
 ## 7. Nginx 反向代理（示例）
 
-可参考仓库根目录 `nginx.conf` 与 `mood-health-server/nginx.conf.example`。
+可参考仓库根目录 `nginx.conf`、`nginx.linux.conf` 与 `mood-health-server/nginx.conf.example`。
 
 典型策略：
 

@@ -2,33 +2,6 @@ const trimTrailingSlash = (value?: string) => (value || '').replace(/\/+$/, '')
 
 const ensureLeadingSlash = (value: string) => (value.startsWith('/') ? value : `/${value}`)
 
-const parseBooleanEnv = (value: unknown, defaultValue = false) => {
-  if (value === undefined || value === null || value === '') {
-    return defaultValue
-  }
-
-  const normalized = String(value).toLowerCase().trim()
-  return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on'
-}
-
-const normalizeAiPath = (path: string) => {
-  const normalizedPath = ensureLeadingSlash(path)
-
-  if (normalizedPath === '/api/ai' || normalizedPath === '/api') {
-    return '/'
-  }
-
-  if (normalizedPath.startsWith('/api/ai/')) {
-    return normalizedPath.slice('/api/ai'.length)
-  }
-
-  if (normalizedPath.startsWith('/api/')) {
-    return normalizedPath.slice('/api'.length)
-  }
-
-  return normalizedPath
-}
-
 const joinBaseAndPath = (
   baseValue: string | undefined,
   path: string,
@@ -57,12 +30,5 @@ const joinBaseAndPath = (
 
 export const getApiBaseUrl = () => trimTrailingSlash(import.meta.env.VITE_API_BASE_URL)
 
-export const getAiBaseUrl = () => trimTrailingSlash(import.meta.env.VITE_AI_API_URL || '/ai')
-
-export const isAiFeatureEnabled = () => parseBooleanEnv(import.meta.env.VITE_ENABLE_AI, false)
-
 export const buildApiUrl = (path: string) =>
   joinBaseAndPath(import.meta.env.VITE_API_BASE_URL, path, ['/api'])
-
-export const buildAiApiUrl = (path: string) =>
-  joinBaseAndPath(getAiBaseUrl(), normalizeAiPath(path), ['/api/ai', '/api', '/ai'])

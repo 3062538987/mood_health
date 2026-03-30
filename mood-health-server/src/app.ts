@@ -14,7 +14,6 @@ import postRoutes from './routes/postRoutes'
 import questionnaireRoutes from './routes/questionnaireRoutes'
 import musicRoutes from './routes/musicRoutes'
 import courseRoutes from './routes/courseRoutes'
-import aiRoutes from './routes/aiRoutes'
 import relaxRoutes from './routes/relaxRoutes'
 import achievementRoutes from './routes/achievementRoutes'
 import auditRoutes from './routes/auditRoutes'
@@ -110,9 +109,13 @@ app.use(
 
 // 速率限制 - 开发环境放宽限制
 const isDevelopment = process.env.NODE_ENV !== 'production'
+const loginRateLimitWindowMs = Number(process.env.AUTH_LOGIN_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000)
+const loginRateLimitMax = Number(
+  process.env.AUTH_LOGIN_RATE_LIMIT_MAX || (isDevelopment ? 100 : 20)
+)
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15分钟
-  max: isDevelopment ? 100 : 5, // 开发环境100次，生产环境5次
+  windowMs: loginRateLimitWindowMs,
+  max: loginRateLimitMax,
   message: '请求过于频繁，请稍后再试',
 })
 
@@ -125,8 +128,6 @@ app.use('/api/posts', postRoutes)
 app.use('/api/questionnaires', questionnaireRoutes)
 app.use('/api/music', musicRoutes)
 app.use('/api/courses', courseRoutes)
-app.use('/api/ai', aiRoutes)
-app.use('/ai', aiRoutes)
 app.use('/api/relax', relaxRoutes)
 app.use('/api/achievements', achievementRoutes)
 app.use('/api/audit', auditRoutes)

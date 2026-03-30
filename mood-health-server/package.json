@@ -16,7 +16,7 @@
     "test:role-permissions": "ts-node src/scripts/test_role_permissions.ts",
     "doctor": "node -e \"require('fs').existsSync('dist/app.js') ? (console.log('dist/app.js found'), process.exit(0)) : (console.log('dist/app.js missing, run npm run build'), process.exit(1))\"",
     "test": "npm run test:stable",
-    "test:stable": "jest tests/utils/ai/counselingService.test.ts",
+    "test:stable": "jest tests/unit --runInBand",
     "test:integration": "jest tests/unit --runInBand",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch"

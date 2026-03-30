@@ -14,6 +14,39 @@ const strict = process.argv.includes('--strict')
 let warnings = 0
 let errors = 0
 
+function parseBoolean(value, defaultValue = false) {
+  if (value === undefined || value === null || value === '') {
+    return defaultValue
+  }
+  const normalized = String(value).trim().toLowerCase()
+  return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on'
+}
+
+function readEnvFromFile(relPath) {
+  const absPath = path.join(root, relPath)
+  if (!fs.existsSync(absPath)) {
+    return {}
+  }
+
+  const content = fs.readFileSync(absPath, 'utf8')
+  const env = {}
+
+  for (const line of content.split(/\r?\n/)) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) {
+      continue
+    }
+    const eqIndex = trimmed.indexOf('=')
+    const key = trimmed.slice(0, eqIndex).trim()
+    const value = trimmed.slice(eqIndex + 1).trim()
+    if (key) {
+      env[key] = value
+    }
+  }
+
+  return env
+}
+
 function ok(msg) {
   console.log(`[OK] ${msg}`)
 }
@@ -54,6 +87,10 @@ function checkDir(relPath, required = false) {
     warn(`Missing optional directory: ${relPath}`)
   }
   return false
+}
+
+function fileExists(relPath) {
+  return fs.existsSync(path.join(root, relPath))
 }
 
 function checkCommand(binary, args, required = true) {
@@ -115,14 +152,31 @@ async function run() {
   checkDir('node_modules', false)
   checkDir('mood-health-server/node_modules', false)
   checkFile('mood-health-server/dist/app.js', false)
-  checkFile('start-project.ps1', true)
+  if (process.platform === 'win32') {
+    checkFile('start-project.ps1', true)
+    checkFile('start-project.sh', false)
+  } else {
+    checkFile('start-project.sh', true)
+    checkFile('start-project.ps1', false)
+  }
+
+  if (!fileExists('start-project.ps1') && !fileExists('start-project.sh')) {
+    fail('Missing startup scripts: start-project.ps1/start-project.sh')
+  }
+
+  const backendEnv = readEnvFromFile('mood-health-server/.env')
+  const redisRequired = parseBoolean(process.env.REDIS_REQUIRED ?? backendEnv.REDIS_REQUIRED, false)
 
   const ports = [
     { name: 'Frontend dev', port: 3001 },
     { name: 'Node API', port: 3000 },
-    { name: 'AI API', port: 8000 },
-    { name: 'Redis', port: 6379 },
   ]
+
+  if (redisRequired) {
+    ports.push({ name: 'Redis', port: 6379 })
+  } else {
+    ok('Redis port check skipped (REDIS_REQUIRED=false)')
+  }
 
   for (const item of ports) {
     const status = await checkPort('127.0.0.1', item.port)

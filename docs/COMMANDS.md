@@ -35,32 +35,34 @@ npm run pm2:status
 
 ## 1. 项目根命令
 
-| 场景                      | 命令                      | 说明                                                   |
-| ------------------------- | ------------------------- | ------------------------------------------------------ |
-| 安装依赖                  | `npm run setup`           | 安装根目录和 `mood-health-server` 的 Node 依赖         |
-| Python 环境（Windows）    | `npm run setup:python`    | 调用 `create_venv.ps1` 创建 `.venv` 并安装 Python 依赖 |
-| 环境自检                  | `npm run doctor`          | 检查命令可用性、关键文件、端口连通性                   |
-| 严格自检                  | `npm run doctor:strict`   | Warning 也视为失败                                     |
-| 开发（前端）              | `npm run dev`             | 启动 Vite 开发服务                                     |
-| 开发（前后端并行）        | `npm run dev:all`         | 同时启动前端 Vite 和后端 nodemon                       |
-| 开发重置并启动（Windows） | `npm run dev:reset`       | 清理 3001/3000/8000 占用并启动 `dev:all`               |
-| 仅清理开发端口（Windows） | `npm run dev:reset:clean` | 仅清理 3001/3000/8000 占用，不启动服务                 |
-| 构建（前端）              | `npm run build`           | 前端构建                                               |
-| 构建（前后端）            | `npm run build:all`       | 前端 + 后端构建                                        |
-| 测试（前端 watch）        | `npm run test`            | Vitest watch 模式                                      |
-| 测试（前端单次）          | `npm run test:run`        | Vitest 单次执行                                        |
-| 测试（前端覆盖率）        | `npm run test:coverage`   | Vitest 覆盖率                                          |
-| 测试（前后端）            | `npm run test:all`        | 前端单次 + 后端 Jest                                   |
-| 演示数据（基础）          | `npm run demo:init`       | 初始化基础演示数据                                     |
-| 演示数据（全量）          | `npm run demo:init:all`   | 初始化并验证演示账号                                   |
-| 数据初始化别名            | `npm run db:init`         | 等价于 `demo:init:all`                                 |
-| 启动服务（Windows）       | `npm run start-all`       | 执行 `start-project.ps1`                               |
-| 启动服务（Linux/macOS）   | `npm run start-all:linux` | 执行 `start-project.sh`                                |
-| 启动前检查（Windows）     | `npm run start-all:check` | 先 `doctor` 再 `start-all`                             |
-| 清理后重启（Windows）     | `npm run start-all:clean` | 先删 PM2 进程再重启                                    |
-| PM2 状态                  | `npm run pm2:status`      | 查看 PM2 进程状态                                      |
-| PM2 日志                  | `npm run pm2:logs`        | 查看 PM2 日志                                          |
-| PM2 停止                  | `npm run pm2:stop`        | 删除 `mood-health-server` 和 `mood-ai-server`          |
+| 场景                       | 命令                            | 说明                                                   |
+| -------------------------- | ------------------------------- | ------------------------------------------------------ |
+| 安装依赖                   | `npm run setup`                 | 安装根目录和 `mood-health-server` 的 Node 依赖         |
+| Python 环境（Windows）     | `npm run setup:python`          | 调用 `create_venv.ps1` 创建 `.venv` 并安装 Python 依赖 |
+| 环境自检                   | `npm run doctor`                | 检查命令可用性、关键文件、端口连通性                   |
+| 严格自检                   | `npm run doctor:strict`         | Warning 也视为失败                                     |
+| 开发（前端）               | `npm run dev`                   | 启动 Vite 开发服务                                     |
+| 开发（前后端并行）         | `npm run dev:all`               | 同时启动前端 Vite 和后端 nodemon                       |
+| 开发重置并启动（Windows）  | `npm run dev:reset`             | 清理 3001/3000/8000 占用并启动 `dev:all`               |
+| 仅清理开发端口（Windows）  | `npm run dev:reset:clean`       | 仅清理 3001/3000/8000 占用，不启动服务                 |
+| 构建（前端）               | `npm run build`                 | 前端构建                                               |
+| 构建（前后端）             | `npm run build:all`             | 前端 + 后端构建                                        |
+| 测试（前端 watch）         | `npm run test`                  | Vitest watch 模式                                      |
+| 测试（前端单次）           | `npm run test:run`              | Vitest 单次执行                                        |
+| 测试（前端覆盖率）         | `npm run test:coverage`         | Vitest 覆盖率                                          |
+| 测试（前后端）             | `npm run test:all`              | 前端单次 + 后端 Jest                                   |
+| 演示数据（基础）           | `npm run demo:init`             | 初始化基础演示数据                                     |
+| 演示数据（全量）           | `npm run demo:init:all`         | 初始化并验证演示账号                                   |
+| 数据初始化别名             | `npm run db:init`               | 等价于 `demo:init:all`                                 |
+| 启动服务（Windows）        | `npm run start-all`             | 执行 `start-project.ps1`                               |
+| 启动服务（Windows，无 AI） | `npm run start-all:no-ai`       | 执行 `start-project.ps1 -NoAi`（2核2G 推荐）           |
+| 启动服务（Linux/macOS）    | `npm run start-all:linux`       | 执行 `start-project.sh`                                |
+| 启动服务（Linux，无 AI）   | `npm run start-all:linux:no-ai` | 执行 `start-project.sh --no-ai`（2核2G 推荐）          |
+| 启动前检查（Windows）      | `npm run start-all:check`       | 先 `doctor` 再 `start-all`                             |
+| 清理后重启（Windows）      | `npm run start-all:clean`       | 先删 PM2 进程再重启                                    |
+| PM2 状态                   | `npm run pm2:status`            | 查看 PM2 进程状态                                      |
+| PM2 日志                   | `npm run pm2:logs`              | 查看 PM2 日志                                          |
+| PM2 停止                   | `npm run pm2:stop`              | 删除 `mood-health-server` 和 `mood-ai-server`          |
 
 ## 2. 后端命令（mood-health-server）
 
@@ -99,6 +101,20 @@ npm run start-all:linux
 npm run dev:all
 ```
 
+### 2核2G（无 AI 推理）
+
+```bash
+# Linux/macOS
+export AI_ENABLED=false
+npm run start-all:linux:no-ai
+```
+
+```powershell
+# Windows PowerShell
+$env:AI_ENABLED='false'
+npm run start-all:no-ai
+```
+
 ## 4. 常见组合流程
 
 ### 本地首次启动
@@ -125,7 +141,16 @@ npm run build:all
 ```bash
 npm run sqlite:preflight
 npm run sqlite:db:status
+npm run release:smoke
 ```
+
+可选：仅验证核心链路并跳过 AI 路由检查。
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/release-smoke.ps1 -SkipAiRouteCheck
+```
+
+说明：`doctor` 中 Redis 端口检查由 `REDIS_REQUIRED` 控制；2核2G 无 AI 场景建议保持 `REDIS_REQUIRED=false`。
 
 ```powershell
 # 1) 设定 SQLite 环境变量（建议绝对路径）
