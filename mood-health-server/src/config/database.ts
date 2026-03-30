@@ -1,12 +1,13 @@
 import sql from 'mssql'
 import dotenv from 'dotenv'
+import path from 'path'
 import logger from '../utils/logger'
 import { DatabaseError } from '../utils/errors'
 import { connectSqlite, sqliteAll } from './sqlite'
 
-dotenv.config()
+dotenv.config({ path: path.resolve(__dirname, '../../.env') })
 
-const dbClient = (process.env.DB_CLIENT || 'sqlserver').toLowerCase()
+const dbClient = (process.env.DB_CLIENT || 'sqlite').toLowerCase()
 export const isSqliteClient = dbClient === 'sqlite'
 
 // SQL Server 连接配置

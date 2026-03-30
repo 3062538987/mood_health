@@ -1,10 +1,15 @@
-import pool from "../config/database";
+import pool, { isSqliteClient } from '../config/database'
 
 const createTreeHoleTables = async () => {
+  if (isSqliteClient) {
+    console.error('❌ createTreeHoleTables.ts 仅支持 SQL Server，请改用 SQLite 初始化脚本')
+    process.exit(1)
+  }
+
   try {
     // 连接数据库
-    await pool.connect();
-    console.log("✅ 数据库连接成功");
+    await pool.connect()
+    console.log('✅ 数据库连接成功')
 
     // 创建 posts 表
     await pool.request().query(`
@@ -19,8 +24,8 @@ const createTreeHoleTables = async () => {
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
         )
       END
-    `);
-    console.log("✅ posts 表创建成功");
+    `)
+    console.log('✅ posts 表创建成功')
 
     // 创建 comments 表
     await pool.request().query(`
@@ -36,16 +41,16 @@ const createTreeHoleTables = async () => {
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
         )
       END
-    `);
-    console.log("✅ comments 表创建成功");
+    `)
+    console.log('✅ comments 表创建成功')
 
-    console.log("🎉 树洞模块表结构创建完成");
+    console.log('🎉 树洞模块表结构创建完成')
   } catch (error) {
-    console.error("❌ 创建表失败:", error);
+    console.error('❌ 创建表失败:', error)
   } finally {
     // 关闭连接
-    await pool.close();
+    await pool.close()
   }
-};
+}
 
-createTreeHoleTables();
+createTreeHoleTables()

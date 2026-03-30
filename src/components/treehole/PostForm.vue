@@ -71,11 +71,7 @@
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { CreatePostData } from '@/types/post'
-import {
-  submitTreeHoleAndGetReply,
-  validateTreeHoleContent,
-  checkSensitiveContent,
-} from '@/api/treehole'
+import { validateTreeHoleContent, checkSensitiveContent } from '@/api/treehole'
 
 const newPost = ref<CreatePostData>({
   title: '',
@@ -87,6 +83,22 @@ const isLoading = ref(false)
 const gentleReply = ref('')
 const isFallback = ref(false)
 const sensitiveWarning = ref('')
+
+const localReplyPool = [
+  '谢谢你愿意说出来。先深呼吸一下，你已经很勇敢了。',
+  '你正在经历的感受很真实，也很值得被认真对待。',
+  '慢一点也没有关系，先照顾好自己，再去处理事情。',
+  '今天已经很不容易了，允许自己先休息一会儿。',
+  '你并不孤单，很多人也在和类似的压力做斗争。',
+  '把问题拆小，一步一步来，你会比想象中更稳。',
+  '情绪有起伏很正常，给自己一点耐心和温柔。',
+  '无论今天怎样，明天都可以是一个新的开始。',
+]
+
+const getLocalGentleReply = () => {
+  const index = Math.floor(Math.random() * localReplyPool.length)
+  return localReplyPool[index]
+}
 
 const emit = defineEmits<{
   (e: 'submit', post: CreatePostData): void
@@ -138,16 +150,12 @@ const submitPost = async () => {
 
   isLoading.value = true
   gentleReply.value = ''
+  isFallback.value = false
 
   try {
-    // 获取温柔回复
-    const replyResponse = await submitTreeHoleAndGetReply(
-      newPost.value.content,
-      undefined // 用户ID可以从用户状态中获取
-    )
-
-    gentleReply.value = replyResponse.reply
-    isFallback.value = replyResponse.is_fallback
+    // AI 下线后使用本地温柔文案，避免依赖外部服务
+    gentleReply.value = getLocalGentleReply()
+    isFallback.value = true
 
     // 触发提交事件
     emit('submit', newPost.value)

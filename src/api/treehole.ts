@@ -1,12 +1,10 @@
 /**
- * 树洞温柔回复 API 模块
+ * 树洞温柔回复模块
  *
- * 提供树洞帖子的温柔回复功能
+ * 当前版本使用本地温柔文案，不依赖远端 AI 服务。
  */
 
-import request from '@/utils/request'
 import { ElMessage } from 'element-plus'
-import { buildAiApiUrl } from '@/utils/apiBase'
 
 /**
  * 温柔回复请求参数
@@ -48,45 +46,7 @@ export const generateGentleReply = async (
     throw new Error('内容长度不能超过1000字')
   }
 
-  try {
-    const response = await request<GentleReplyResponse>({
-      url: buildAiApiUrl('/treehole/gentle-reply'),
-      method: 'post',
-      data: {
-        content: data.content.trim(),
-        user_id: data.user_id,
-      },
-      timeout: 35000, // 35秒超时，给AI生成留出足够时间
-    })
-
-    return response
-  } catch (error: any) {
-    console.error('生成温柔回复失败:', error)
-
-    // 统一错误处理
-    if (error.response) {
-      const status = error.response.status
-      const message = error.response.data?.detail || error.response.data?.message
-
-      if (status === 400) {
-        throw new Error(message || '请求参数错误')
-      } else if (status === 429) {
-        throw new Error('请求太频繁，请稍后再试')
-      } else if (status >= 500) {
-        // 服务器错误，返回兜底文案
-        return getFallbackReply()
-      }
-    } else if (error.code === 'ECONNABORTED') {
-      // 请求超时，返回兜底文案
-      return getFallbackReply()
-    } else if (error.message && error.message.includes('Network Error')) {
-      // 网络错误，返回兜底文案
-      return getFallbackReply()
-    }
-
-    // 其他错误，返回兜底文案
-    return getFallbackReply()
-  }
+  return getFallbackReply()
 }
 
 /**
@@ -100,6 +60,8 @@ export const generateGentleReplyWithRetry = async (
   data: GentleReplyRequest,
   maxRetries: number = 2
 ): Promise<GentleReplyResponse> => {
+  void maxRetries
+
   // 内容为空拦截
   if (!data.content || !data.content.trim()) {
     throw new Error('内容不能为空')
@@ -110,34 +72,6 @@ export const generateGentleReplyWithRetry = async (
     throw new Error('内容长度不能超过1000字')
   }
 
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const response = await request<GentleReplyResponse>({
-        url: buildAiApiUrl('/treehole/gentle-reply'),
-        method: 'post',
-        data: {
-          content: data.content.trim(),
-          user_id: data.user_id,
-        },
-        timeout: 35000,
-      })
-
-      return response
-    } catch (error: any) {
-      console.error(`生成温柔回复失败 (尝试 ${attempt + 1}/${maxRetries + 1}):`, error)
-
-      // 如果是最后一次尝试，返回兜底文案
-      if (attempt === maxRetries) {
-        return getFallbackReply()
-      }
-
-      // 等待后重试（指数退避）
-      const delay = Math.pow(2, attempt) * 1000
-      await new Promise((resolve) => setTimeout(resolve, delay))
-    }
-  }
-
-  // 所有重试都失败，返回兜底文案
   return getFallbackReply()
 }
 

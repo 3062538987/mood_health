@@ -2,7 +2,7 @@
   <section class="ai-suggest-card">
     <div class="card-head">
       <div>
-        <p class="eyebrow">AI 情绪建议</p>
+        <p class="eyebrow">智能情绪建议</p>
         <h3>让建议更像是陪你一起梳理</h3>
       </div>
       <button
@@ -17,7 +17,7 @@
             ? '生成中...'
             : serviceUnavailable
               ? `服务恢复中 (${disabledSeconds}s)`
-              : '获取 AI 建议'
+              : '获取建议'
         }}
       </button>
     </div>
@@ -35,7 +35,7 @@
       v-if="loading"
       variant="panel"
       :item-count="3"
-      title="AI 正在整理你的心情线索"
+      title="正在整理你的心情线索"
       description="它会结合文字、情绪类型和触发因素，生成更贴近当下的建议。"
     />
 
@@ -71,8 +71,8 @@
     <SoftEmptyState
       v-else
       compact
-      title="先写一点心情，AI 再跟上"
-      description="你可以先描述发生了什么，或者点几枚情绪类型，AI 会更容易读懂你。"
+      title="先写一点心情，建议模块再跟上"
+      description="你可以先描述发生了什么，或者点几枚情绪类型，系统会更容易读懂你。"
       :action-text="
         serviceUnavailable
           ? `服务恢复中 (${disabledSeconds}s)`
@@ -85,7 +85,7 @@
 
     <div class="history-panel">
       <div class="history-head">
-        <h4>最近的 AI 建议</h4>
+        <h4>最近的建议</h4>
         <span>{{ history.length }} 条</span>
       </div>
 
@@ -105,7 +105,7 @@
         </button>
       </div>
 
-      <p v-else class="history-empty">还没有保存过 AI 建议，生成后会自动出现在这里。</p>
+      <p v-else class="history-empty">还没有保存过建议，生成后会自动出现在这里。</p>
     </div>
   </section>
 </template>

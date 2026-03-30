@@ -134,12 +134,26 @@ app.use('/api', managementRoutes)
 
 // 健康检查接口
 app.get('/health', async (req, res) => {
+  const checkRedisWithTimeout = async (timeoutMs: number) => {
+    try {
+      const result = await Promise.race<boolean>([
+        redisClient.ping(),
+        new Promise<boolean>((resolve) => {
+          setTimeout(() => resolve(false), timeoutMs)
+        }),
+      ])
+      return result
+    } catch {
+      return false
+    }
+  }
+
   try {
-    // 测试 SQL Server 连接
+    // 测试数据库连接
     const dbResult = await query('SELECT 1 + 1 AS result')
 
     // 测试 Redis 连接
-    const redisStatus = await redisClient.ping()
+    const redisStatus = await checkRedisWithTimeout(2000)
 
     res.json({
       status: 'ok',
@@ -153,7 +167,7 @@ app.get('/health', async (req, res) => {
     // 单独检查 Redis 状态
     let redisStatus
     try {
-      redisStatus = await redisClient.ping()
+      redisStatus = await checkRedisWithTimeout(2000)
     } catch (redisError) {
       redisStatus = false
     }

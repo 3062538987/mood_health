@@ -120,8 +120,41 @@ npm run test:all
 npm run build:all
 ```
 
+### SQLite 上线前回归（建议）
+
+```bash
+npm run sqlite:preflight
+npm run sqlite:db:status
+```
+
+```powershell
+# 1) 设定 SQLite 环境变量（建议绝对路径）
+$env:DB_CLIENT='sqlite'
+$env:SQLITE_DB_PATH='D:/deploy/mood-health/data/mood-health.db'
+
+# 2) 后端构建
+npm --prefix mood-health-server run build
+
+# 3) 初始化 SQLite schema
+npm --prefix mood-health-server run db:init:sqlite
+
+# 4) 初始化演示数据（可按需替换为生产初始化脚本）
+npm --prefix mood-health-server run seed:demo:all
+
+# 5) SQLite 冒烟测试
+npm --prefix mood-health-server run test:sqlite-smoke
+
+# 6) 启动前健康自检
+npm run doctor
+```
+
 ## 5. 相关文档
+
+遗留脚本提示：`mood-health-server/src/scripts/addAuditFields.ts`、`mood-health-server/src/scripts/addEncryptionFields.ts`、`mood-health-server/src/scripts/createCourseTable.ts`、`mood-health-server/src/scripts/createMusicTable.ts`、`mood-health-server/src/scripts/createLikeTables.ts`、`mood-health-server/src/scripts/createTreeHoleTables.ts` 为历史 SQL Server 专用脚本，SQLite 部署请使用 `db:init:sqlite` 与 `seed:demo:all`。
 
 - 部署：`DEPLOYMENT.md`
 - 测试：`docs/TESTING.md`
 - API：`docs/API.md`
+- SQLite 发布当天操作单：`docs/SQLITE_RELEASE_DAY_CHECKLIST.md`
+- SQLite 留档模板：`docs/SQLITE_RELEASE_REPORT_TEMPLATE.md`
+- SQLite 留档样例：`docs/SQLITE_RELEASE_REPORT_2026-03-30.md`

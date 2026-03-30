@@ -11,16 +11,25 @@ import {
   getEmotionTypes,
   getTags,
 } from '../../../src/models/moodModel'
-import pool from '../../../src/config/database'
+import { isSqliteClient, query } from '../../../src/config/database'
+
+const selectFirstEmotionTypeSql = isSqliteClient
+  ? 'SELECT id FROM emotion_types LIMIT 1'
+  : 'SELECT TOP 1 id FROM emotion_types'
+
+const asRows = (result: any) =>
+  Array.isArray(result) ? result : ((result?.recordset as any[]) ?? [])
 
 describe('moodModel', () => {
   const testUserId = 999999
   const testDate = new Date().toISOString().split('T')[0]
 
   beforeAll(async () => {
-    const result = await pool.request().query(`SELECT TOP 1 id FROM emotion_types`)
-    if (result.recordset.length === 0) {
-      await pool.request().query(`
+    const result = await query(selectFirstEmotionTypeSql)
+    const rows = asRows(result)
+
+    if (rows.length === 0) {
+      await query(`
         INSERT INTO emotion_types (name, icon, category, sort_order)
         VALUES 
           ('快乐', '😊', 'positive', 1),

@@ -308,7 +308,7 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
     }
 
     return [
-      `AI 情绪分析：${aiResult.value.analysis}`,
+      `情绪分析：${aiResult.value.analysis}`,
       '',
       '建议：',
       ...aiResult.value.suggestions.map((item, index) => `${index + 1}. ${item}`),
@@ -516,7 +516,7 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
     }
 
     autoRecommendations.value = [
-      '试着把情绪、触发事件和身体感受分开写，AI 会更容易读懂你。',
+      '试着把情绪、触发事件和身体感受分开写，系统会更容易读懂你。',
       '如果不知道从哪里开始，可以先补 1 到 2 个触发因素。',
     ]
   }
@@ -531,8 +531,8 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
       aiHistory.value = response.list || []
       resetAiFailureState()
     } catch (error) {
-      console.error('获取 AI 建议历史失败', error)
-      markAiFailure('暂时无法加载 AI 建议历史，稍后会自动恢复。', true)
+      console.error('获取建议历史失败', error)
+      markAiFailure('暂时无法加载建议历史，稍后会自动恢复。', true)
     } finally {
       historyLoading.value = false
     }
@@ -591,7 +591,7 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
 
     if (aiFailureCount.value >= AI_FAILURE_THRESHOLD) {
       aiDisabledUntil.value = Date.now() + AI_DISABLE_COOLDOWN_MS
-      aiServiceMessage.value = 'AI 服务连续异常，已临时暂停，请稍后重试。'
+      aiServiceMessage.value = '建议服务连续异常，已临时暂停，请稍后重试。'
     }
 
     if (!silent) {
@@ -629,13 +629,13 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
     }
 
     if ((requestError.response?.status || 0) >= 500) {
-      const message = 'AI 服务暂时繁忙，请稍后重试'
+      const message = '建议服务暂时繁忙，请稍后重试'
       markAiFailure(message)
       return message
     }
 
     if (requestError.code === 'ECONNABORTED') {
-      const message = 'AI 请求超时，请稍后重试'
+      const message = '请求超时，请稍后重试'
       markAiFailure(message)
       return message
     }
@@ -644,23 +644,23 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
       requestError.response?.data?.detail ||
       requestError.response?.data?.message ||
       requestError.message ||
-      '获取 AI 建议失败'
+      '获取建议失败'
     markAiFailure(message)
     return message
   }
 
   const requestAiAdvice = async (): Promise<AiAdviceRequestResult> => {
     if (!moodContent.value.trim()) {
-      const message = '先写一点今天的感受，AI 才能更贴近你'
+      const message = '先写一点今天的感受，建议模块才能更贴近你'
       ElMessage.warning(message)
       return { ok: false, code: 'EMPTY_INPUT', message }
     }
     if (aiLoading.value) {
-      return { ok: false, code: 'LOADING', message: 'AI 正在生成中' }
+      return { ok: false, code: 'LOADING', message: '建议正在生成中' }
     }
 
     if (isAiTemporarilyDisabled.value) {
-      const message = 'AI 服务恢复中，请稍后再试'
+      const message = '建议服务恢复中，请稍后再试'
       ElMessage.warning(message)
       return { ok: false, code: 'COOLDOWN', message }
     }
@@ -684,7 +684,7 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
       await fetchAdviceHistory()
       return { ok: true }
     } catch (error) {
-      console.error('获取 AI 建议失败', error)
+      console.error('获取建议失败', error)
       const message = handleAiError(error)
       return { ok: false, code: 'REQUEST_FAILED', message }
     } finally {

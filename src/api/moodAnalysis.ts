@@ -1,6 +1,6 @@
 import { debounce } from '@/utils/debounce'
 import request from '@/utils/request'
-import { buildAiApiUrl } from '@/utils/apiBase'
+import { buildAiApiUrl, isAiFeatureEnabled } from '@/utils/apiBase'
 
 export interface MoodAnalysisRequest {
   content: string
@@ -76,6 +76,10 @@ export const analyzeMood = async (data: MoodAnalysisRequest): Promise<MoodAnalys
 
   if (!data.mood_level || data.mood_level < 1 || data.mood_level > 10) {
     throw new Error('情绪强度必须在1-10之间')
+  }
+
+  if (!isAiFeatureEnabled()) {
+    return getLocalFallbackMood(data.content)
   }
 
   try {

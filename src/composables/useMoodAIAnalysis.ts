@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { debounce } from '@/utils/debounce'
 import request from '@/utils/request'
-import { buildAiApiUrl } from '@/utils/apiBase'
+import { buildAiApiUrl, isAiFeatureEnabled } from '@/utils/apiBase'
 import type { MoodAIAnalysisResult, MoodTrendPrediction } from '@/types/ai'
 
 /**
@@ -26,6 +26,12 @@ export function useMoodAIAnalysis() {
     try {
       // 数据脱敏处理
       const sanitizedText = sanitizeText(text)
+
+      if (!isAiFeatureEnabled()) {
+        const fallback = getLocalMoodAnalysis(sanitizedText)
+        analysisResult.value = fallback
+        return fallback
+      }
 
       // 调用后端AI接口
       const response = await request<MoodAIAnalysisResult>({
@@ -62,6 +68,12 @@ export function useMoodAIAnalysis() {
     error.value = null
 
     try {
+      if (!isAiFeatureEnabled()) {
+        const fallback = getLocalMoodTrend(historicalData, days)
+        trendPrediction.value = fallback
+        return fallback
+      }
+
       // 调用后端AI接口
       const response = await request<MoodTrendPrediction>({
         url: buildAiApiUrl('/predict-mood-trend'),

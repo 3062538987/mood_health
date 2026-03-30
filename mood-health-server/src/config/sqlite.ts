@@ -4,9 +4,10 @@ import { DatabaseSync } from 'node:sqlite'
 
 let sqliteDb: DatabaseSync | null = null
 
-const sqliteDbPath = process.env.SQLITE_DB_PATH
-  ? path.resolve(process.cwd(), process.env.SQLITE_DB_PATH)
-  : path.resolve(process.cwd(), 'data', 'mood-health.db')
+const resolveSqliteDbPath = () =>
+  process.env.SQLITE_DB_PATH
+    ? path.resolve(process.cwd(), process.env.SQLITE_DB_PATH)
+    : path.resolve(process.cwd(), 'data', 'mood-health.db')
 
 const ensureDirectory = (filePath: string) => {
   const dir = path.dirname(filePath)
@@ -282,6 +283,7 @@ export const connectSqlite = () => {
     return sqliteDb
   }
 
+  const sqliteDbPath = resolveSqliteDbPath()
   ensureDirectory(sqliteDbPath)
 
   sqliteDb = new DatabaseSync(sqliteDbPath)

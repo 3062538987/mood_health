@@ -2,6 +2,15 @@ const trimTrailingSlash = (value?: string) => (value || '').replace(/\/+$/, '')
 
 const ensureLeadingSlash = (value: string) => (value.startsWith('/') ? value : `/${value}`)
 
+const parseBooleanEnv = (value: unknown, defaultValue = false) => {
+  if (value === undefined || value === null || value === '') {
+    return defaultValue
+  }
+
+  const normalized = String(value).toLowerCase().trim()
+  return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on'
+}
+
 const normalizeAiPath = (path: string) => {
   const normalizedPath = ensureLeadingSlash(path)
 
@@ -49,6 +58,8 @@ const joinBaseAndPath = (
 export const getApiBaseUrl = () => trimTrailingSlash(import.meta.env.VITE_API_BASE_URL)
 
 export const getAiBaseUrl = () => trimTrailingSlash(import.meta.env.VITE_AI_API_URL || '/ai')
+
+export const isAiFeatureEnabled = () => parseBooleanEnv(import.meta.env.VITE_ENABLE_AI, false)
 
 export const buildApiUrl = (path: string) =>
   joinBaseAndPath(import.meta.env.VITE_API_BASE_URL, path, ['/api'])

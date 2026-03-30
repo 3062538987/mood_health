@@ -13,7 +13,8 @@
 - Node.js 18+
 - Python 3.8+
 - Redis（建议）
-- SQL Server（按项目配置）
+- SQLite（推荐，低配主机优先）
+- SQL Server（可选，兼容模式）
 - PM2（可选，推荐用于常驻）
 - Nginx（可选，用于反向代理）
 
@@ -29,7 +30,9 @@
 - `VITE_API_BASE_URL`
 - `NODE_ENV`
 - `FRONTEND_URL`
-- `DB_SERVER`、`DB_USER`、`DB_PASSWORD`、`DB_NAME`
+- `DB_CLIENT`（推荐 `sqlite`）
+- `SQLITE_DB_PATH`（建议绝对路径）
+- `DB_SERVER`、`DB_USER`、`DB_PASSWORD`、`DB_NAME`（仅 SQL Server 模式需要）
 - `JWT_SECRET`、`ENCRYPTION_KEY`
 - `REDIS_URL`
 - `OLLAMA_URL`、`OLLAMA_MODEL`

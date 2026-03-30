@@ -4,7 +4,7 @@
  */
 
 import request from '@/utils/request'
-import { buildAiApiUrl } from '@/utils/apiBase'
+import { buildAiApiUrl, isAiFeatureEnabled } from '@/utils/apiBase'
 
 /**
  * 心理咨询请求接口
@@ -53,6 +53,14 @@ export const sendCounselingMessage = async (
 
   if (data.message.length > 1000) {
     throw new Error('消息内容不能超过1000字')
+  }
+
+  if (!isAiFeatureEnabled()) {
+    return {
+      ...DEFAULT_FALLBACK_RESPONSE,
+      response:
+        '倾诉已经是很勇敢的一步。当前系统处于离线陪伴模式，你可以先做一次深呼吸，给自己一点缓冲时间。',
+    }
   }
 
   try {

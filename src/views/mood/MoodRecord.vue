@@ -6,7 +6,7 @@
           <p class="eyebrow">Mood Record</p>
           <h1>把今天的情绪，温柔但清楚地记下来</h1>
           <p class="hero-copy">
-            先记录情绪，再决定要不要解决它。这里会帮你把感受、触发因素和 AI
+            先记录情绪，再决定要不要解决它。这里会帮你把感受、触发因素和智能
             建议整理成一条更顺滑的路径。
           </p>
         </div>
@@ -109,14 +109,14 @@
                 :class="{ loading: aiLoading }"
                 @click="handleGenerateAdvice"
               >
-                {{ aiLoading ? 'AI 正在整理建议...' : '让 AI 先陪我梳理一下' }}
+                {{ aiLoading ? '正在整理建议...' : '先帮我梳理一下' }}
               </button>
               <p>按钮前置在描述区下方，写完就能立刻得到回应。</p>
             </div>
 
             <transition name="soft-fade" mode="out-in">
               <div v-if="autoRecommendations.length > 0" class="auto-recommend-list">
-                <span class="tip-label">AI 已根据你的输入做了预匹配</span>
+                <span class="tip-label">系统已根据你的输入做了预匹配</span>
                 <button
                   v-for="item in autoRecommendations"
                   :key="item"
@@ -310,7 +310,7 @@ const handleGenerateAdvice = async () => {
     const canAsk = Boolean(canAskAi?.value)
 
     if (isDisabled) {
-      ElMessage.warning(`AI 服务恢复中，请 ${cooldownSeconds} 秒后再试`)
+      ElMessage.warning(`建议服务恢复中，请 ${cooldownSeconds} 秒后再试`)
       return
     }
 
@@ -320,23 +320,23 @@ const handleGenerateAdvice = async () => {
         (document.querySelector('.writing-panel textarea') as HTMLTextAreaElement | null)
       textareaEl?.focus()
       textareaEl?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      ElMessage.info('请先输入情绪描述，再获取 AI 建议')
+      ElMessage.info('请先输入情绪描述，再获取建议')
       return
     }
 
     if (!canAsk) {
       focusTextarea()
-      ElMessage.info('先补几句描述，AI 才能给出更贴近的建议')
+      ElMessage.info('先补几句描述，系统才能给出更贴近的建议')
       return
     }
 
     const result = await store.requestAiAdvice()
     if (!result.ok && result.code === 'REQUEST_FAILED') {
-      console.warn('AI 请求失败', result.message)
+      console.warn('建议请求失败', result.message)
     }
   } catch (error) {
     console.error('handleGenerateAdvice 执行异常', error)
-    ElMessage.error('获取 AI 建议失败，请稍后重试')
+    ElMessage.error('获取建议失败，请稍后重试')
   }
 }
 
@@ -351,9 +351,9 @@ const handleCopyAdvice = async () => {
 
   try {
     await navigator.clipboard.writeText(store.copyableAdviceText)
-    ElMessage.success('AI 建议已复制')
+    ElMessage.success('建议已复制')
   } catch (error) {
-    console.error('复制 AI 建议失败', error)
+    console.error('复制建议失败', error)
     ElMessage.error('复制失败，请稍后重试')
   }
 }

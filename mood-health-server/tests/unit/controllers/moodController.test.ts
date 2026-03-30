@@ -9,7 +9,14 @@ import {
   getMoodTypes,
 } from '../../../src/controllers/moodController'
 import { createMood, findMoodById } from '../../../src/models/moodModel'
-import pool from '../../../src/config/database'
+import { isSqliteClient, query } from '../../../src/config/database'
+
+const selectFirstEmotionTypeSql = isSqliteClient
+  ? 'SELECT id FROM emotion_types LIMIT 1'
+  : 'SELECT TOP 1 id FROM emotion_types'
+
+const asRows = (result: any) =>
+  Array.isArray(result) ? result : ((result?.recordset as any[]) ?? [])
 
 const createMockResponse = () => {
   const res: any = {
@@ -32,9 +39,11 @@ describe('moodController', () => {
   const testDate = new Date().toISOString().split('T')[0]
 
   beforeAll(async () => {
-    const result = await pool.request().query(`SELECT TOP 1 id FROM emotion_types`)
-    if (result.recordset.length === 0) {
-      await pool.request().query(`
+    const result = await query(selectFirstEmotionTypeSql)
+    const rows = asRows(result)
+
+    if (rows.length === 0) {
+      await query(`
         INSERT INTO emotion_types (name, icon, category, sort_order)
         VALUES 
           ('快乐', '😊', 'positive', 1),
@@ -136,8 +145,8 @@ describe('moodController', () => {
     })
 
     it('should create mood with emotions array', async () => {
-      const emotionTypes = await pool.request().query(`SELECT TOP 1 id FROM emotion_types`)
-      const emotionTypeId = emotionTypes.recordset[0]?.id || 1
+      const emotionTypes = asRows(await query(selectFirstEmotionTypeSql))
+      const emotionTypeId = emotionTypes[0]?.id || 1
 
       const req = createMockRequest({
         emotions: [{ emotionTypeId, intensity: 7 }],

@@ -1,8 +1,14 @@
-import { query } from '../config/database';
+import { query } from '../config/database'
+import { isSqliteClient } from '../config/database'
 
 const createLikeTables = async () => {
+  if (isSqliteClient) {
+    console.error('❌ createLikeTables.ts 仅支持 SQL Server，请改用 SQLite 初始化脚本')
+    process.exit(1)
+  }
+
   try {
-    console.log('开始创建点赞相关表...');
+    console.log('开始创建点赞相关表...')
 
     // 创建帖子点赞记录表
     await query(`
@@ -16,8 +22,8 @@ const createLikeTables = async () => {
           UNIQUE(post_id, user_id)
         );
       END
-    `);
-    console.log('帖子点赞记录表创建成功！');
+    `)
+    console.log('帖子点赞记录表创建成功！')
 
     // 创建评论点赞记录表
     await query(`
@@ -31,8 +37,8 @@ const createLikeTables = async () => {
           UNIQUE(comment_id, user_id)
         );
       END
-    `);
-    console.log('评论点赞记录表创建成功！');
+    `)
+    console.log('评论点赞记录表创建成功！')
 
     // 修改posts表，添加title和isAnonymous字段（如果不存在）
     await query(`
@@ -40,14 +46,14 @@ const createLikeTables = async () => {
       BEGIN
         ALTER TABLE posts ADD title NVARCHAR(255);
       END
-    `);
+    `)
 
     await query(`
       IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('posts') AND name = 'is_anonymous')
       BEGIN
         ALTER TABLE posts ADD is_anonymous BIT DEFAULT 0;
       END
-    `);
+    `)
 
     // 修改comments表，添加isAnonymous字段（如果不存在）
     await query(`
@@ -55,14 +61,14 @@ const createLikeTables = async () => {
       BEGIN
         ALTER TABLE comments ADD is_anonymous BIT DEFAULT 0;
       END
-    `);
+    `)
 
-    console.log('帖子和评论表字段扩展完成！');
-    console.log('点赞功能初始化完成。');
+    console.log('帖子和评论表字段扩展完成！')
+    console.log('点赞功能初始化完成。')
   } catch (error) {
-    console.error('创建点赞表失败:', error);
-    process.exit(1);
+    console.error('创建点赞表失败:', error)
+    process.exit(1)
   }
-};
+}
 
-createLikeTables();
+createLikeTables()
