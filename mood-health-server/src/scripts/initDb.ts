@@ -1,9 +1,16 @@
-import sql from "mssql";
-import { pool, connectDB } from "../config/database";
+import sql from 'mssql'
+import { pool, connectDB, isSqliteClient } from '../config/database'
+import { connectSqlite } from '../config/sqlite'
 
 export const initDatabase = async () => {
   try {
-    await connectDB();
+    await connectDB()
+
+    if (isSqliteClient) {
+      connectSqlite()
+      console.log('✅ SQLite 数据库初始化完成')
+      return
+    }
 
     // 创建 users 表
     await pool.request().query(`
@@ -33,7 +40,7 @@ export const initDatabase = async () => {
         END
         PRINT 'users 表已存在';
       END
-    `);
+    `)
 
     // 创建 moods 表（如果不存在）
     await pool.request().query(`
@@ -55,7 +62,7 @@ export const initDatabase = async () => {
       BEGIN
         PRINT 'moods 表已存在';
       END
-    `);
+    `)
 
     // 创建 activities 表（如果不存在）
     await pool.request().query(`
@@ -80,7 +87,7 @@ export const initDatabase = async () => {
       BEGIN
         PRINT 'activities 表已存在';
       END
-    `);
+    `)
 
     // 创建 activity_participants 表（如果不存在）
     await pool.request().query(`
@@ -101,7 +108,7 @@ export const initDatabase = async () => {
       BEGIN
         PRINT 'activity_participants 表已存在';
       END
-    `);
+    `)
 
     // 创建 questionnaires 表（如果不存在）
     await pool.request().query(`
@@ -111,6 +118,7 @@ export const initDatabase = async () => {
           id INT IDENTITY(1,1) PRIMARY KEY,
           title NVARCHAR(100) NOT NULL,
           description NVARCHAR(500),
+          type NVARCHAR(50),
           created_at DATETIME DEFAULT GETDATE()
         );
         PRINT 'questionnaires 表创建成功';
@@ -119,7 +127,7 @@ export const initDatabase = async () => {
       BEGIN
         PRINT 'questionnaires 表已存在';
       END
-    `);
+    `)
 
     // 创建 questions 表（如果不存在）
     await pool.request().query(`
@@ -132,6 +140,7 @@ export const initDatabase = async () => {
           question_type NVARCHAR(20), -- 'single', 'multiple', 'text'
           options NVARCHAR(MAX),       -- JSON 格式存储选项，例如 ["选项1","选项2"]
           sort_order INT,
+          is_reverse BIT NOT NULL DEFAULT 0,
           FOREIGN KEY (questionnaire_id) REFERENCES questionnaires(id) ON DELETE CASCADE
         );
         PRINT 'questions 表创建成功';
@@ -140,7 +149,27 @@ export const initDatabase = async () => {
       BEGIN
         PRINT 'questions 表已存在';
       END
-    `);
+    `)
+
+    await pool.request().query(`
+      IF NOT EXISTS (SELECT * FROM sys.columns 
+                     WHERE object_id = OBJECT_ID('questionnaires') 
+                     AND name = 'type')
+      BEGIN
+        ALTER TABLE questionnaires ADD type NVARCHAR(50) NULL;
+        PRINT 'questionnaires 表已添加 type 字段';
+      END
+    `)
+
+    await pool.request().query(`
+      IF NOT EXISTS (SELECT * FROM sys.columns 
+                     WHERE object_id = OBJECT_ID('questions') 
+                     AND name = 'is_reverse')
+      BEGIN
+        ALTER TABLE questions ADD is_reverse BIT NOT NULL DEFAULT 0;
+        PRINT 'questions 表已添加 is_reverse 字段';
+      END
+    `)
 
     // 创建 user_answers 表（如果不存在）
     await pool.request().query(`
@@ -163,22 +192,26 @@ export const initDatabase = async () => {
       BEGIN
         PRINT 'user_answers 表已存在';
       END
-    `);
+    `)
 
-    console.log("✅ 数据库初始化完成");
+    console.log('✅ 数据库初始化完成')
   } catch (error) {
-    console.error("❌ 数据库初始化失败:", error);
-    throw error;
+    console.error('❌ 数据库初始化失败:', error)
+    throw error
+  } finally {
+    if (!isSqliteClient && pool.connected) {
+      await pool.close()
+    }
   }
-};
+}
 
 // 直接运行
 initDatabase()
   .then(() => {
-    console.log("🎉 初始化脚本执行完毕");
-    process.exit(0);
+    console.log('🎉 初始化脚本执行完毕')
+    process.exit(0)
   })
   .catch((err) => {
-    console.error(err);
-    process.exit(1);
-  });
+    console.error(err)
+    process.exit(1)
+  })

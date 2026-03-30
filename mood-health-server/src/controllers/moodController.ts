@@ -1,12 +1,11 @@
 import { Response } from 'express'
 import { AuthRequest } from '../middleware/auth'
-import pool from '../config/database'
-import sql from 'mssql'
 import {
   createMood,
   createMoodWithRelations,
   getMoodsByUser,
   getMoodsWithRelations,
+  getMoodTotalCount,
   getWeeklyReport,
   getMoodTrend as getMoodTrendModel,
   findMoodById,
@@ -126,11 +125,7 @@ export const getMoodList = async (req: AuthRequest, res: Response) => {
       }
     })
 
-    const countResult = await pool
-      .request()
-      .input('userId', sql.Int, userId)
-      .query('SELECT COUNT(*) as total FROM moods WHERE user_id = @userId')
-    const total = countResult.recordset[0].total
+    const total = await getMoodTotalCount(userId)
 
     res.json({ code: 0, data: { list: formattedMoods, total } })
   } catch (error) {

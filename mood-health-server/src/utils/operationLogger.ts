@@ -2,6 +2,8 @@ import sql from 'mssql'
 import winston from 'winston'
 import { NextFunction, Response } from 'express'
 import pool from '../config/database'
+import { isSqliteClient } from '../config/database'
+import { sqliteRun } from '../config/sqlite'
 import logger, { sanitizeForLogs, summarizeRequestBody } from './logger'
 import type { AuthRequest } from '../middleware/auth'
 
@@ -37,6 +39,26 @@ export const logOperation = async (
 
   // 2) 写入数据库审计表
   try {
+    if (isSqliteClient) {
+      sqliteRun(
+        `
+          INSERT INTO operation_logs (
+            operator_id,
+            operator_role,
+            permission_code,
+            operation_type,
+            target_id,
+            content,
+            ip_address,
+            operation_result
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [userId, userRole, permissionCode, operationType, targetId, content, ip, result]
+      )
+      return
+    }
+
     if (!pool.connected) {
       await pool.connect()
     }

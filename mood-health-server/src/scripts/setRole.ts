@@ -1,5 +1,7 @@
 import pool from '../config/database'
 import sql from 'mssql'
+import { isSqliteClient } from '../config/database'
+import { connectSqlite, sqliteGet, sqliteRun, sqliteTransaction } from '../config/sqlite'
 
 type AllowedRole = 'user' | 'admin' | 'super_admin'
 
@@ -71,7 +73,59 @@ const ensureOperatorPermission = async (operator: string, tx: sql.Transaction) =
   console.log(`✅ 执行账号校验通过: ${operator} (${user.role})`)
 }
 
+const ensureOperatorPermissionSqlite = (operator: string) => {
+  const user = sqliteGet('SELECT id, username, role FROM users WHERE username = ? LIMIT 1', [
+    operator,
+  ]) as { id: number; username: string; role: string } | undefined
+
+  if (!user) {
+    throw new Error(`执行账号 ${operator} 不存在`)
+  }
+
+  if (user.role !== 'super_admin') {
+    throw new Error(`执行账号 ${operator} 权限不足，仅 super_admin 可执行`)
+  }
+
+  console.log(`✅ 执行账号校验通过: ${operator} (${user.role})`)
+}
+
+const setRoleSqlite = (args: ScriptArgs) => {
+  connectSqlite()
+  console.log('✅ SQLite 数据库连接成功')
+
+  sqliteTransaction(() => {
+    ensureOperatorPermissionSqlite(args.operator)
+
+    const user = sqliteGet('SELECT id, username, role FROM users WHERE username = ? LIMIT 1', [
+      args.username,
+    ]) as { id: number; username: string; role: string } | undefined
+
+    if (!user) {
+      throw new Error(`用户 ${args.username} 不存在`)
+    }
+
+    console.log(`找到目标用户: ${user.username}, 当前角色: ${user.role || 'user'}`)
+
+    sqliteRun(
+      `
+        UPDATE users
+        SET role = ?,
+            updated_at = datetime('now', 'localtime')
+        WHERE id = ?
+      `,
+      [args.role, user.id]
+    )
+  })
+
+  console.log(`✅ 用户 ${args.username} 已设为 ${args.role}`)
+}
+
 const setRole = async (args: ScriptArgs) => {
+  if (isSqliteClient) {
+    setRoleSqlite(args)
+    return
+  }
+
   let tx: sql.Transaction | null = null
 
   try {

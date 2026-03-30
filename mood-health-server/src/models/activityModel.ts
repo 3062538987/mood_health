@@ -1,4 +1,5 @@
-import pool from '../config/database'
+import pool, { isSqliteClient } from '../config/database'
+import { sqliteAll, sqliteGet, sqliteRun, sqliteTransaction } from '../config/sqlite'
 import sql from 'mssql'
 
 export interface Activity {
@@ -15,9 +16,6 @@ export interface Activity {
   updated_at: Date
 }
 
-/**
- * 筛选参数接口
- */
 export interface ActivityFilter {
   title?: string
   location?: string
@@ -26,41 +24,32 @@ export interface ActivityFilter {
   status?: string[]
 }
 
-/**
- * 构建筛选条件
- */
-const buildFilterConditions = (
+const buildSqlServerFilterConditions = (
   request: sql.Request,
   filter: ActivityFilter
-): { whereClause: string; paramIndex: number } => {
+): { whereClause: string } => {
   const conditions: string[] = []
-  let paramIndex = 0
 
   if (filter.title) {
-    paramIndex++
-    request.input(`title`, sql.NVarChar, `%${filter.title}%`)
-    conditions.push(`title LIKE @title`)
+    request.input('title', sql.NVarChar, `%${filter.title}%`)
+    conditions.push('title LIKE @title')
   }
 
   if (filter.location) {
-    paramIndex++
-    request.input(`location`, sql.NVarChar, filter.location)
-    conditions.push(`location = @location`)
+    request.input('location', sql.NVarChar, filter.location)
+    conditions.push('location = @location')
   }
 
   if (filter.startDate) {
-    paramIndex++
-    request.input(`startDate`, sql.DateTime, filter.startDate)
-    conditions.push(`start_time >= @startDate`)
+    request.input('startDate', sql.DateTime, filter.startDate)
+    conditions.push('start_time >= @startDate')
   }
 
   if (filter.endDate) {
-    paramIndex++
-    request.input(`endDate`, sql.DateTime, filter.endDate)
-    conditions.push(`start_time <= @endDate`)
+    request.input('endDate', sql.DateTime, filter.endDate)
+    conditions.push('start_time <= @endDate')
   }
 
-  // 状态筛选
   if (filter.status && filter.status.length > 0) {
     const now = new Date().toISOString()
     const statusConditions: string[] = []
@@ -75,7 +64,7 @@ const buildFilterConditions = (
       statusConditions.push(`(end_time < '${now}')`)
     }
     if (filter.status.includes('full')) {
-      statusConditions.push(`(current_participants >= max_participants)`)
+      statusConditions.push('(current_participants >= max_participants)')
     }
 
     if (statusConditions.length > 0) {
@@ -84,21 +73,70 @@ const buildFilterConditions = (
   }
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
-  return { whereClause, paramIndex }
+  return { whereClause }
 }
 
-/**
- * 获取活动列表（支持筛选）
- */
-export const getActivities = async (
+const buildSqliteFilterConditions = (
+  filter: ActivityFilter
+): { whereClause: string; params: unknown[] } => {
+  const conditions: string[] = []
+  const params: unknown[] = []
+
+  if (filter.title) {
+    conditions.push('title LIKE ?')
+    params.push(`%${filter.title}%`)
+  }
+
+  if (filter.location) {
+    conditions.push('location = ?')
+    params.push(filter.location)
+  }
+
+  if (filter.startDate) {
+    conditions.push('datetime(start_time) >= datetime(?)')
+    params.push(filter.startDate)
+  }
+
+  if (filter.endDate) {
+    conditions.push('datetime(start_time) <= datetime(?)')
+    params.push(filter.endDate)
+  }
+
+  if (filter.status && filter.status.length > 0) {
+    const statusConditions: string[] = []
+
+    if (filter.status.includes('ongoing')) {
+      statusConditions.push(
+        "(datetime(start_time) <= datetime('now', 'localtime') AND datetime(end_time) >= datetime('now', 'localtime'))"
+      )
+    }
+    if (filter.status.includes('upcoming')) {
+      statusConditions.push("(datetime(start_time) > datetime('now', 'localtime'))")
+    }
+    if (filter.status.includes('ended')) {
+      statusConditions.push("(datetime(end_time) < datetime('now', 'localtime'))")
+    }
+    if (filter.status.includes('full')) {
+      statusConditions.push('(current_participants >= max_participants)')
+    }
+
+    if (statusConditions.length > 0) {
+      conditions.push(`(${statusConditions.join(' OR ')})`)
+    }
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+  return { whereClause, params }
+}
+
+const getActivitiesSqlServer = async (
   page: number = 1,
   limit: number = 10,
   filter: ActivityFilter = {}
 ) => {
   const offset = (page - 1) * limit
   const request = pool.request()
-
-  const { whereClause } = buildFilterConditions(request, filter)
+  const { whereClause } = buildSqlServerFilterConditions(request, filter)
 
   const result = await request.input('offset', sql.Int, offset).input('limit', sql.Int, limit)
     .query(`
@@ -113,13 +151,40 @@ export const getActivities = async (
   return result.recordset
 }
 
-/**
- * 获取活动总数（支持筛选）
- */
-export const getActivitiesCount = async (filter: ActivityFilter = {}): Promise<number> => {
-  const request = pool.request()
+const getActivitiesSqlite = async (
+  page: number = 1,
+  limit: number = 10,
+  filter: ActivityFilter = {}
+) => {
+  const offset = (page - 1) * limit
+  const { whereClause, params } = buildSqliteFilterConditions(filter)
 
-  const { whereClause } = buildFilterConditions(request, filter)
+  return sqliteAll(
+    `
+      SELECT *
+      FROM activities
+      ${whereClause}
+      ORDER BY datetime(start_time) ASC
+      LIMIT ? OFFSET ?
+    `,
+    [...params, limit, offset]
+  ) as unknown as Activity[]
+}
+
+export const getActivities = async (
+  page: number = 1,
+  limit: number = 10,
+  filter: ActivityFilter = {}
+) => {
+  if (isSqliteClient) {
+    return getActivitiesSqlite(page, limit, filter)
+  }
+  return getActivitiesSqlServer(page, limit, filter)
+}
+
+const getActivitiesCountSqlServer = async (filter: ActivityFilter = {}): Promise<number> => {
+  const request = pool.request()
+  const { whereClause } = buildSqlServerFilterConditions(request, filter)
 
   const result = await request.query(`
     SELECT COUNT(*) as total
@@ -130,7 +195,28 @@ export const getActivitiesCount = async (filter: ActivityFilter = {}): Promise<n
   return result.recordset[0].total
 }
 
-export const getActivityById = async (id: number): Promise<Activity | null> => {
+const getActivitiesCountSqlite = async (filter: ActivityFilter = {}): Promise<number> => {
+  const { whereClause, params } = buildSqliteFilterConditions(filter)
+  const row = sqliteGet(
+    `
+      SELECT COUNT(*) as total
+      FROM activities
+      ${whereClause}
+    `,
+    params
+  ) as { total: number } | undefined
+
+  return row?.total || 0
+}
+
+export const getActivitiesCount = async (filter: ActivityFilter = {}): Promise<number> => {
+  if (isSqliteClient) {
+    return getActivitiesCountSqlite(filter)
+  }
+  return getActivitiesCountSqlServer(filter)
+}
+
+const getActivityByIdSqlServer = async (id: number): Promise<Activity | null> => {
   const result = await pool
     .request()
     .input('id', sql.Int, id)
@@ -138,7 +224,19 @@ export const getActivityById = async (id: number): Promise<Activity | null> => {
   return result.recordset.length ? result.recordset[0] : null
 }
 
-export const hasUserJoined = async (activityId: number, userId: number): Promise<boolean> => {
+const getActivityByIdSqlite = async (id: number): Promise<Activity | null> => {
+  const row = sqliteGet('SELECT * FROM activities WHERE id = ?', [id]) as Activity | undefined
+  return row || null
+}
+
+export const getActivityById = async (id: number): Promise<Activity | null> => {
+  if (isSqliteClient) {
+    return getActivityByIdSqlite(id)
+  }
+  return getActivityByIdSqlServer(id)
+}
+
+const hasUserJoinedSqlServer = async (activityId: number, userId: number): Promise<boolean> => {
   const result = await pool
     .request()
     .input('activityId', sql.Int, activityId)
@@ -149,14 +247,23 @@ export const hasUserJoined = async (activityId: number, userId: number): Promise
   return result.recordset.length > 0
 }
 
-// 事务超时时间（毫秒）
+const hasUserJoinedSqlite = async (activityId: number, userId: number): Promise<boolean> => {
+  const row = sqliteGet(
+    'SELECT id FROM activity_participants WHERE activity_id = ? AND user_id = ?',
+    [activityId, userId]
+  )
+  return !!row
+}
+
+export const hasUserJoined = async (activityId: number, userId: number): Promise<boolean> => {
+  if (isSqliteClient) {
+    return hasUserJoinedSqlite(activityId, userId)
+  }
+  return hasUserJoinedSqlServer(activityId, userId)
+}
+
 const TRANSACTION_TIMEOUT = 5000
 
-/**
- * 带超时控制的事务执行函数
- * @param transaction 事务对象
- * @param operations 事务操作函数
- */
 const executeTransactionWithTimeout = async <T>(
   transaction: sql.Transaction,
   operations: () => Promise<T>
@@ -184,11 +291,10 @@ const executeTransactionWithTimeout = async <T>(
   }
 }
 
-export const joinActivity = async (activityId: number, userId: number) => {
+const joinActivitySqlServer = async (activityId: number, userId: number) => {
   const transaction = new sql.Transaction(pool)
 
   const operations = async () => {
-    // 1. 先插入报名记录（使用唯一索引防止重复报名）
     try {
       await transaction
         .request()
@@ -198,23 +304,20 @@ export const joinActivity = async (activityId: number, userId: number) => {
           VALUES (@activityId, @userId)
         `)
     } catch (error: any) {
-      // 处理重复报名（唯一索引冲突）
       if (error.number === 2627 || error.number === 2601) {
         throw new Error('ALREADY_JOINED')
       }
       throw error
     }
 
-    // 2. 使用乐观锁更新人数（条件更新）
     const updateResult = await transaction.request().input('activityId', sql.Int, activityId)
       .query(`
         UPDATE activities
         SET current_participants = current_participants + 1
-        WHERE id = @activityId 
+        WHERE id = @activityId
           AND current_participants < max_participants
       `)
 
-    // 3. 检查更新是否成功
     if (updateResult.rowsAffected[0] === 0) {
       throw new Error('ACTIVITY_FULL')
     }
@@ -225,11 +328,51 @@ export const joinActivity = async (activityId: number, userId: number) => {
   return executeTransactionWithTimeout(transaction, operations)
 }
 
-export const cancelJoinActivity = async (activityId: number, userId: number) => {
+const joinActivitySqlite = async (activityId: number, userId: number) => {
+  try {
+    return sqliteTransaction(() => {
+      try {
+        sqliteRun('INSERT INTO activity_participants (activity_id, user_id) VALUES (?, ?)', [
+          activityId,
+          userId,
+        ])
+      } catch (error: any) {
+        if (String(error?.message || '').includes('UNIQUE constraint failed')) {
+          throw new Error('ALREADY_JOINED')
+        }
+        throw error
+      }
+
+      const updateResult = sqliteRun(
+        'UPDATE activities SET current_participants = current_participants + 1 WHERE id = ? AND current_participants < max_participants',
+        [activityId]
+      )
+
+      if (updateResult.changes === 0) {
+        throw new Error('ACTIVITY_FULL')
+      }
+
+      return true
+    })
+  } catch (error: any) {
+    if (error?.message === 'ALREADY_JOINED' || error?.message === 'ACTIVITY_FULL') {
+      throw error
+    }
+    throw new Error('JOIN_ACTIVITY_FAILED')
+  }
+}
+
+export const joinActivity = async (activityId: number, userId: number) => {
+  if (isSqliteClient) {
+    return joinActivitySqlite(activityId, userId)
+  }
+  return joinActivitySqlServer(activityId, userId)
+}
+
+const cancelJoinActivitySqlServer = async (activityId: number, userId: number) => {
   const transaction = new sql.Transaction(pool)
 
   const operations = async () => {
-    // 1. 先删除报名记录，确保只能取消自己已有的报名
     const deleteResult = await transaction
       .request()
       .input('activityId', sql.Int, activityId)
@@ -242,7 +385,6 @@ export const cancelJoinActivity = async (activityId: number, userId: number) => 
       throw new Error('NOT_JOINED')
     }
 
-    // 2. 回滚活动当前人数，避免出现负数
     await transaction.request().input('activityId', sql.Int, activityId).query(`
         UPDATE activities
         SET current_participants = CASE
@@ -258,7 +400,34 @@ export const cancelJoinActivity = async (activityId: number, userId: number) => 
   return executeTransactionWithTimeout(transaction, operations)
 }
 
-export const getUserJoinedActivities = async (userId: number) => {
+const cancelJoinActivitySqlite = async (activityId: number, userId: number) => {
+  return sqliteTransaction(() => {
+    const deleteResult = sqliteRun(
+      'DELETE FROM activity_participants WHERE activity_id = ? AND user_id = ?',
+      [activityId, userId]
+    )
+
+    if (deleteResult.changes === 0) {
+      throw new Error('NOT_JOINED')
+    }
+
+    sqliteRun(
+      'UPDATE activities SET current_participants = CASE WHEN current_participants > 0 THEN current_participants - 1 ELSE 0 END WHERE id = ?',
+      [activityId]
+    )
+
+    return true
+  })
+}
+
+export const cancelJoinActivity = async (activityId: number, userId: number) => {
+  if (isSqliteClient) {
+    return cancelJoinActivitySqlite(activityId, userId)
+  }
+  return cancelJoinActivitySqlServer(activityId, userId)
+}
+
+const getUserJoinedActivitiesSqlServer = async (userId: number) => {
   const result = await pool.request().input('userId', sql.Int, userId).query(`
       SELECT a.*
       FROM activities a
@@ -269,7 +438,27 @@ export const getUserJoinedActivities = async (userId: number) => {
   return result.recordset
 }
 
-export const createActivity = async (
+const getUserJoinedActivitiesSqlite = async (userId: number) => {
+  return sqliteAll(
+    `
+      SELECT a.*
+      FROM activities a
+      JOIN activity_participants ap ON a.id = ap.activity_id
+      WHERE ap.user_id = ?
+      ORDER BY datetime(a.start_time) ASC
+    `,
+    [userId]
+  )
+}
+
+export const getUserJoinedActivities = async (userId: number) => {
+  if (isSqliteClient) {
+    return getUserJoinedActivitiesSqlite(userId)
+  }
+  return getUserJoinedActivitiesSqlServer(userId)
+}
+
+const createActivitySqlServer = async (
   title: string,
   description: string,
   startTime: string,
@@ -294,7 +483,58 @@ export const createActivity = async (
   return result.recordset[0].id
 }
 
-export const updateActivity = async (
+const createActivitySqlite = async (
+  title: string,
+  description: string,
+  startTime: string,
+  endTime: string,
+  maxParticipants: number,
+  location: string,
+  imageUrl?: string
+) => {
+  const result = sqliteRun(
+    `
+      INSERT INTO activities (title, description, start_time, end_time, max_participants, location, image_url)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `,
+    [title, description, startTime, endTime, maxParticipants, location, imageUrl || null]
+  )
+
+  return Number(result.lastInsertRowid)
+}
+
+export const createActivity = async (
+  title: string,
+  description: string,
+  startTime: string,
+  endTime: string,
+  maxParticipants: number,
+  location: string,
+  imageUrl?: string
+) => {
+  if (isSqliteClient) {
+    return createActivitySqlite(
+      title,
+      description,
+      startTime,
+      endTime,
+      maxParticipants,
+      location,
+      imageUrl
+    )
+  }
+  return createActivitySqlServer(
+    title,
+    description,
+    startTime,
+    endTime,
+    maxParticipants,
+    location,
+    imageUrl
+  )
+}
+
+const updateActivitySqlServer = async (
   id: number,
   title: string,
   description: string,
@@ -328,18 +568,77 @@ export const updateActivity = async (
   return result
 }
 
-export const deleteActivity = async (id: number) => {
+const updateActivitySqlite = async (
+  id: number,
+  title: string,
+  description: string,
+  startTime: string,
+  endTime: string,
+  maxParticipants: number,
+  location: string,
+  imageUrl?: string
+) => {
+  return sqliteRun(
+    `
+      UPDATE activities
+      SET title = ?,
+          description = ?,
+          start_time = ?,
+          end_time = ?,
+          max_participants = ?,
+          location = ?,
+          image_url = ?,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `,
+    [title, description, startTime, endTime, maxParticipants, location, imageUrl || null, id]
+  )
+}
+
+export const updateActivity = async (
+  id: number,
+  title: string,
+  description: string,
+  startTime: string,
+  endTime: string,
+  maxParticipants: number,
+  location: string,
+  imageUrl?: string
+) => {
+  if (isSqliteClient) {
+    return updateActivitySqlite(
+      id,
+      title,
+      description,
+      startTime,
+      endTime,
+      maxParticipants,
+      location,
+      imageUrl
+    )
+  }
+  return updateActivitySqlServer(
+    id,
+    title,
+    description,
+    startTime,
+    endTime,
+    maxParticipants,
+    location,
+    imageUrl
+  )
+}
+
+const deleteActivitySqlServer = async (id: number) => {
   const transaction = new sql.Transaction(pool)
   try {
     await transaction.begin()
 
-    // 先删除关联的参与者记录
     await transaction
       .request()
       .input('id', sql.Int, id)
       .query('DELETE FROM activity_participants WHERE activity_id = @id')
 
-    // 再删除活动记录
     const result = await transaction
       .request()
       .input('id', sql.Int, id)
@@ -353,12 +652,23 @@ export const deleteActivity = async (id: number) => {
   }
 }
 
-/**
- * 获取活动参与者列表
- */
-export const getActivityParticipants = async (activityId: number) => {
+const deleteActivitySqlite = async (id: number) => {
+  return sqliteTransaction(() => {
+    sqliteRun('DELETE FROM activity_participants WHERE activity_id = ?', [id])
+    return sqliteRun('DELETE FROM activities WHERE id = ?', [id])
+  })
+}
+
+export const deleteActivity = async (id: number) => {
+  if (isSqliteClient) {
+    return deleteActivitySqlite(id)
+  }
+  return deleteActivitySqlServer(id)
+}
+
+const getActivityParticipantsSqlServer = async (activityId: number) => {
   const result = await pool.request().input('activityId', sql.Int, activityId).query(`
-    SELECT 
+    SELECT
       u.id,
       u.username,
       u.nickname,
@@ -370,4 +680,29 @@ export const getActivityParticipants = async (activityId: number) => {
     ORDER BY ap.joined_at ASC
   `)
   return result.recordset
+}
+
+const getActivityParticipantsSqlite = async (activityId: number) => {
+  return sqliteAll(
+    `
+      SELECT
+        u.id,
+        u.username,
+        u.nickname,
+        u.avatar,
+        ap.joined_at
+      FROM activity_participants ap
+      JOIN users u ON ap.user_id = u.id
+      WHERE ap.activity_id = ?
+      ORDER BY datetime(ap.joined_at) ASC
+    `,
+    [activityId]
+  )
+}
+
+export const getActivityParticipants = async (activityId: number) => {
+  if (isSqliteClient) {
+    return getActivityParticipantsSqlite(activityId)
+  }
+  return getActivityParticipantsSqlServer(activityId)
 }

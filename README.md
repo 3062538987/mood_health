@@ -103,6 +103,8 @@ npm run dev:all
 
 - `npm run setup`：安装根与后端 Node 依赖
 - `npm run setup:python`：创建 `.venv` 并安装 Python 依赖（Windows）
+- `powershell -ExecutionPolicy Bypass -File ./run-in-venv.ps1 <command> [args...]`：自动选择项目虚拟环境并执行命令（默认优先 `.venv`）
+- `powershell -ExecutionPolicy Bypass -File ./run-in-venv.ps1 -Activate`：打开一个已激活虚拟环境的交互式 PowerShell
 - `npm run doctor`：环境、文件、端口健康检查
 - `npm run doctor:strict`：严格模式（warning 也视为失败）
 - `npm run start-all`：通过 `start-project.ps1` 启动 PM2 服务

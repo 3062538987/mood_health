@@ -1,6 +1,8 @@
 import pool from '../config/database'
 import { hashPassword, comparePassword as comparePasswordUtil } from '../utils/password'
 import sql from 'mssql'
+import { isSqliteClient } from '../config/database'
+import { sqliteGet, sqliteRun } from '../config/sqlite'
 
 /**
  * 用户角色类型
@@ -59,6 +61,52 @@ export interface User {
   updated_at: Date
 }
 
+type UserPublic = Omit<User, 'password'>
+
+type UpdateUserRoleResult = {
+  rowsAffected: number[]
+}
+
+const normalizeRole = (role: unknown): UserRole => {
+  return isValidUserRole(role) ? role : 'user'
+}
+
+const toDate = (value: unknown): Date => {
+  if (value instanceof Date) {
+    return value
+  }
+
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value)
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed
+    }
+  }
+
+  return new Date()
+}
+
+const mapSqliteUser = (row: any): User => ({
+  id: Number(row.id),
+  username: String(row.username),
+  password: String(row.password),
+  email: String(row.email),
+  avatar: row.avatar || undefined,
+  role: normalizeRole(row.role),
+  created_at: toDate(row.created_at),
+  updated_at: toDate(row.updated_at),
+})
+
+const mapSqliteUserPublic = (row: any): UserPublic => ({
+  id: Number(row.id),
+  username: String(row.username),
+  email: String(row.email),
+  avatar: row.avatar || undefined,
+  role: normalizeRole(row.role),
+  created_at: toDate(row.created_at),
+  updated_at: toDate(row.updated_at),
+})
+
 /**
  * 创建用户（密码加密）
  * @param {string} username - 用户名
@@ -69,6 +117,18 @@ export interface User {
 export const createUser = async (username: string, password: string, email: string) => {
   // 对密码进行加密
   const hashedPassword = await hashPassword(password)
+
+  if (isSqliteClient) {
+    const result = sqliteRun(
+      `
+      INSERT INTO users (username, password, email)
+      VALUES (?, ?, ?)
+      `,
+      [username, hashedPassword, email]
+    )
+    return Number(result.lastInsertRowid)
+  }
+
   // 插入用户数据并返回新用户ID
   const result = await pool
     .request()
@@ -88,6 +148,11 @@ export const createUser = async (username: string, password: string, email: stri
  * @returns {Promise<User | null>} - 用户对象或null
  */
 export const findUserByUsername = async (username: string): Promise<User | null> => {
+  if (isSqliteClient) {
+    const row = sqliteGet('SELECT * FROM users WHERE username = ? LIMIT 1', [username])
+    return row ? mapSqliteUser(row) : null
+  }
+
   const result = await pool
     .request()
     .input('username', sql.NVarChar, username)
@@ -101,6 +166,11 @@ export const findUserByUsername = async (username: string): Promise<User | null>
  * @returns {Promise<User | null>} - 用户对象或null
  */
 export const findUserByEmail = async (email: string): Promise<User | null> => {
+  if (isSqliteClient) {
+    const row = sqliteGet('SELECT * FROM users WHERE email = ? LIMIT 1', [email])
+    return row ? mapSqliteUser(row) : null
+  }
+
   const result = await pool
     .request()
     .input('email', sql.NVarChar, email)
@@ -113,7 +183,20 @@ export const findUserByEmail = async (email: string): Promise<User | null> => {
  * @param {number} id - 用户ID
  * @returns {Promise<Omit<User, "password"> | null>} - 不含密码的用户对象或null
  */
-export const findUserById = async (id: number): Promise<Omit<User, 'password'> | null> => {
+export const findUserById = async (id: number): Promise<UserPublic | null> => {
+  if (isSqliteClient) {
+    const row = sqliteGet(
+      `
+      SELECT id, username, email, avatar, role, created_at, updated_at
+      FROM users
+      WHERE id = ?
+      LIMIT 1
+      `,
+      [id]
+    )
+    return row ? mapSqliteUserPublic(row) : null
+  }
+
   const result = await pool.request().input('id', sql.Int, id).query(`
       SELECT id, username, email, avatar, role, created_at, updated_at
       FROM users
@@ -128,7 +211,21 @@ export const findUserById = async (id: number): Promise<Omit<User, 'password'> |
  * @param {UserRole} role - 新角色
  * @returns {Promise<sql.IProcedureResult<any>>} - 数据库操作结果
  */
-export const updateUserRole = async (id: number, role: UserRole) => {
+export const updateUserRole = async (id: number, role: UserRole): Promise<UpdateUserRoleResult> => {
+  if (isSqliteClient) {
+    const result = sqliteRun(
+      `
+      UPDATE users
+      SET role = ?,
+          updated_at = datetime('now', 'localtime')
+      WHERE id = ?
+      `,
+      [role, id]
+    )
+
+    return { rowsAffected: [Number(result.changes || 0)] }
+  }
+
   const result = await pool.request().input('id', sql.Int, id).input('role', sql.NVarChar, role)
     .query(`
       UPDATE users

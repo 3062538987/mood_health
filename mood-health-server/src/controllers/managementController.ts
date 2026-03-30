@@ -1,6 +1,8 @@
 import { Response } from 'express'
 import sql from 'mssql'
 import pool from '../config/database'
+import { isSqliteClient } from '../config/database'
+import { sqliteRun } from '../config/sqlite'
 import type { AuthRequest } from '../middleware/auth'
 import { logOperation } from '../utils/operationLogger'
 import { isValidUserRole, updateUserRole } from '../models/userModel'
@@ -106,16 +108,26 @@ export const incidentFixHandler = async (req: AuthRequest, res: Response) => {
   try {
     const { issueDescription, fixContent, result = 'success' } = req.body
 
-    await pool
-      .request()
-      .input('fixerId', sql.Int, req.user!.userId)
-      .input('fixerRole', sql.NVarChar(20), req.user!.role)
-      .input('issueDescription', sql.NVarChar(sql.MAX), issueDescription)
-      .input('fixContent', sql.NVarChar(sql.MAX), fixContent)
-      .input('result', sql.NVarChar(20), result).query(`
-        INSERT INTO incident_fix_list (fixer_id, fixer_role, issue_description, fix_content, result)
-        VALUES (@fixerId, @fixerRole, @issueDescription, @fixContent, @result)
-      `)
+    if (isSqliteClient) {
+      sqliteRun(
+        `
+          INSERT INTO incident_fix_list (fixer_id, fixer_role, issue_description, fix_content, result)
+          VALUES (?, ?, ?, ?, ?)
+        `,
+        [req.user!.userId, req.user!.role, issueDescription, fixContent, result]
+      )
+    } else {
+      await pool
+        .request()
+        .input('fixerId', sql.Int, req.user!.userId)
+        .input('fixerRole', sql.NVarChar(20), req.user!.role)
+        .input('issueDescription', sql.NVarChar(sql.MAX), issueDescription)
+        .input('fixContent', sql.NVarChar(sql.MAX), fixContent)
+        .input('result', sql.NVarChar(20), result).query(`
+          INSERT INTO incident_fix_list (fixer_id, fixer_role, issue_description, fix_content, result)
+          VALUES (@fixerId, @fixerRole, @issueDescription, @fixContent, @result)
+        `)
+    }
 
     await logOperation(
       req.user!.userId,
@@ -148,16 +160,26 @@ export const feedbackHandleHandler = async (req: AuthRequest, res: Response) => 
   try {
     const { feedbackId, handleContent, closeStatus = 'closed' } = req.body
 
-    await pool
-      .request()
-      .input('handlerId', sql.Int, req.user!.userId)
-      .input('handlerRole', sql.NVarChar(20), req.user!.role)
-      .input('feedbackId', sql.NVarChar(100), String(feedbackId || ''))
-      .input('handleContent', sql.NVarChar(sql.MAX), handleContent)
-      .input('closeStatus', sql.NVarChar(20), closeStatus).query(`
-        INSERT INTO feedback_close_list (handler_id, handler_role, feedback_id, handle_content, close_status)
-        VALUES (@handlerId, @handlerRole, @feedbackId, @handleContent, @closeStatus)
-      `)
+    if (isSqliteClient) {
+      sqliteRun(
+        `
+          INSERT INTO feedback_close_list (handler_id, handler_role, feedback_id, handle_content, close_status)
+          VALUES (?, ?, ?, ?, ?)
+        `,
+        [req.user!.userId, req.user!.role, String(feedbackId || ''), handleContent, closeStatus]
+      )
+    } else {
+      await pool
+        .request()
+        .input('handlerId', sql.Int, req.user!.userId)
+        .input('handlerRole', sql.NVarChar(20), req.user!.role)
+        .input('feedbackId', sql.NVarChar(100), String(feedbackId || ''))
+        .input('handleContent', sql.NVarChar(sql.MAX), handleContent)
+        .input('closeStatus', sql.NVarChar(20), closeStatus).query(`
+          INSERT INTO feedback_close_list (handler_id, handler_role, feedback_id, handle_content, close_status)
+          VALUES (@handlerId, @handlerRole, @feedbackId, @handleContent, @closeStatus)
+        `)
+    }
 
     await logOperation(
       req.user!.userId,

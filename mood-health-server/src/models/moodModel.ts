@@ -1,5 +1,7 @@
 import pool from '../config/database'
 import sql from 'mssql'
+import { isSqliteClient } from '../config/database'
+import { sqliteAll, sqliteGet, sqliteRun, sqliteTransaction } from '../config/sqlite'
 import {
   getMoodTrendCacheKey,
   getMoodAnalysisCacheKey,
@@ -50,7 +52,107 @@ export interface MoodWithRelations extends Mood {
   tagList: Tag[]
 }
 
+const toDate = (value: unknown): Date => {
+  if (value instanceof Date) {
+    return value
+  }
+  const parsed = new Date(String(value))
+  return Number.isNaN(parsed.getTime()) ? new Date() : parsed
+}
+
+const decodeMoodRow = (row: Record<string, unknown>): Mood => ({
+  id: Number(row.id),
+  user_id: Number(row.user_id),
+  mood_type: String(row.mood_type || ''),
+  intensity: Number(row.intensity || 0),
+  note: decryptField((row.note_encrypted as string | null | undefined) ?? null) ?? undefined,
+  tags: row.tags ? String(row.tags) : undefined,
+  trigger: row.trigger ? String(row.trigger) : undefined,
+  record_date: String(row.record_date || ''),
+  created_at: toDate(row.created_at),
+  updated_at: toDate(row.updated_at),
+})
+
+const buildSqlitePlaceholders = (count: number) =>
+  Array.from({ length: count }, () => '?').join(',')
+
+const loadMoodRelationsSqlite = (moodIds: number[]) => {
+  if (moodIds.length === 0) {
+    return {
+      emotionsMap: new Map<number, MoodEmotion[]>(),
+      tagsMap: new Map<number, Tag[]>(),
+    }
+  }
+
+  const placeholders = buildSqlitePlaceholders(moodIds.length)
+  const emotionRows = sqliteAll(
+    `
+    SELECT me.mood_id, me.emotion_type_id, me.intensity, et.name as emotion_name, et.icon as emotion_icon
+    FROM mood_emotions me
+    JOIN emotion_types et ON me.emotion_type_id = et.id
+    WHERE me.mood_id IN (${placeholders})
+    `,
+    moodIds
+  ) as Array<Record<string, unknown>>
+
+  const tagRows = sqliteAll(
+    `
+    SELECT mt.mood_id, t.id, t.name, t.user_id, t.is_system
+    FROM mood_tags mt
+    JOIN tags t ON mt.tag_id = t.id
+    WHERE mt.mood_id IN (${placeholders})
+    `,
+    moodIds
+  ) as Array<Record<string, unknown>>
+
+  const emotionsMap = new Map<number, MoodEmotion[]>()
+  for (const row of emotionRows) {
+    const moodId = Number(row.mood_id)
+    const items = emotionsMap.get(moodId) || []
+    items.push({
+      mood_id: moodId,
+      emotion_type_id: Number(row.emotion_type_id),
+      intensity: Number(row.intensity),
+      emotion_name: String(row.emotion_name || ''),
+      emotion_icon: String(row.emotion_icon || ''),
+    })
+    emotionsMap.set(moodId, items)
+  }
+
+  const tagsMap = new Map<number, Tag[]>()
+  for (const row of tagRows) {
+    const moodId = Number(row.mood_id)
+    const items = tagsMap.get(moodId) || []
+    items.push({
+      id: Number(row.id),
+      name: String(row.name),
+      user_id: row.user_id === null || row.user_id === undefined ? null : Number(row.user_id),
+      is_system: Number(row.is_system || 0) === 1,
+    })
+    tagsMap.set(moodId, items)
+  }
+
+  return { emotionsMap, tagsMap }
+}
+
 export const getEmotionTypes = async (): Promise<EmotionType[]> => {
+  if (isSqliteClient) {
+    const rows = sqliteAll(
+      `
+      SELECT id, name, icon, category, sort_order
+      FROM emotion_types
+      ORDER BY sort_order
+      `
+    ) as Array<Record<string, unknown>>
+    return rows.map((row) => ({
+      id: Number(row.id),
+      name: String(row.name),
+      icon: String(row.icon || ''),
+      category: String(row.category || ''),
+      sort_order: Number(row.sort_order || 0),
+    }))
+  }
+
   const result = await pool.request().query(`
     SELECT id, name, icon, category, sort_order
     FROM emotion_types
@@ -60,6 +162,25 @@ export const getEmotionTypes = async (): Promise<EmotionType[]> => {
 }
 
 export const getTags = async (userId?: number): Promise<Tag[]> => {
+  if (isSqliteClient) {
+    const rows = sqliteAll(
+      `
+      SELECT id, name, user_id, is_system
+      FROM tags
+      WHERE is_system = 1 OR user_id = ?
+      ORDER BY is_system DESC, name
+      `,
+      [userId || null]
+    ) as Array<Record<string, unknown>>
+
+    return rows.map((row) => ({
+      id: Number(row.id),
+      name: String(row.name),
+      user_id: row.user_id === null || row.user_id === undefined ? null : Number(row.user_id),
+      is_system: Number(row.is_system || 0) === 1,
+    }))
+  }
+
   const result = await pool.request().input('userId', sql.Int, userId || null).query(`
       SELECT id, name, user_id, is_system
       FROM tags
@@ -78,6 +199,20 @@ export const createMood = async (
   trigger: string,
   recordDate: string
 ): Promise<number> => {
+  if (isSqliteClient) {
+    const encryptedNote = encryptField(note)
+    return sqliteTransaction(() => {
+      const insertResult = sqliteRun(
+        `
+        INSERT INTO moods (user_id, mood_type, intensity, note_encrypted, tags, trigger, record_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        `,
+        [userId, moodType, intensity, encryptedNote, tags, trigger, recordDate]
+      )
+      return Number(insertResult.lastInsertRowid)
+    })
+  }
+
   const transaction = pool.transaction()
   await transaction.begin()
 
@@ -115,6 +250,51 @@ export const createMoodWithRelations = async (
   trigger: string,
   recordDate: string
 ): Promise<number> => {
+  if (isSqliteClient) {
+    return sqliteTransaction(() => {
+      const moodTypeNames = sqliteAll(
+        `SELECT name FROM emotion_types WHERE id IN (${buildSqlitePlaceholders(emotions.length)})`,
+        emotions.map((e) => e.emotionTypeId)
+      ) as Array<{ name: string }>
+      const moodTypeStr = moodTypeNames.map((item) => item.name).join(',')
+      const avgIntensity = Math.round(
+        emotions.reduce((sum, e) => sum + e.intensity, 0) / Math.max(1, emotions.length)
+      )
+      const encryptedNote = encryptField(note)
+
+      const insertResult = sqliteRun(
+        `
+        INSERT INTO moods (user_id, mood_type, intensity, note_encrypted, trigger, record_date)
+        VALUES (?, ?, ?, ?, ?, ?)
+        `,
+        [userId, moodTypeStr, avgIntensity, encryptedNote, trigger, recordDate]
+      )
+      const moodId = Number(insertResult.lastInsertRowid)
+
+      for (const emotion of emotions) {
+        sqliteRun(
+          `
+          INSERT INTO mood_emotions (mood_id, emotion_type_id, intensity)
+          VALUES (?, ?, ?)
+          `,
+          [moodId, emotion.emotionTypeId, emotion.intensity]
+        )
+      }
+
+      for (const tagId of tagIds) {
+        sqliteRun(
+          `
+          INSERT INTO mood_tags (mood_id, tag_id)
+          VALUES (?, ?)
+          `,
+          [moodId, tagId]
+        )
+      }
+
+      return moodId
+    })
+  }
+
   const transaction = pool.transaction()
   await transaction.begin()
 
@@ -173,6 +353,15 @@ export const createMoodWithRelations = async (
 const getEmotionTypeNames = async (emotionTypeIds: number[]): Promise<string[]> => {
   if (emotionTypeIds.length === 0) return []
 
+  if (isSqliteClient) {
+    const placeholders = buildSqlitePlaceholders(emotionTypeIds.length)
+    const rows = sqliteAll(
+      `SELECT name FROM emotion_types WHERE id IN (${placeholders})`,
+      emotionTypeIds
+    ) as Array<{ name: string }>
+    return rows.map((r) => r.name)
+  }
+
   const request = pool.request()
   const placeholders = emotionTypeIds.map((_, index) => `@id${index}`).join(',')
   emotionTypeIds.forEach((id, index) => {
@@ -190,6 +379,22 @@ export const getMoodsByUser = async (
   page: number = 1,
   limit: number = 20
 ): Promise<Mood[]> => {
+  if (isSqliteClient) {
+    const offset = (page - 1) * limit
+    const rows = sqliteAll(
+      `
+      SELECT id, user_id, mood_type, intensity, note_encrypted, tags, trigger, record_date, created_at, updated_at
+      FROM moods
+      WHERE user_id = ?
+      ORDER BY record_date DESC, created_at DESC
+      LIMIT ? OFFSET ?
+      `,
+      [userId, limit, offset]
+    ) as Array<Record<string, unknown>>
+
+    return rows.map(decodeMoodRow)
+  }
+
   const offset = (page - 1) * limit
   const result = await pool
     .request()
@@ -210,11 +415,50 @@ export const getMoodsByUser = async (
   })) as Mood[]
 }
 
+export const getMoodTotalCount = async (userId: number): Promise<number> => {
+  if (isSqliteClient) {
+    const row = sqliteGet('SELECT COUNT(*) as total FROM moods WHERE user_id = ?', [userId]) as
+      | { total: number }
+      | undefined
+    return Number(row?.total || 0)
+  }
+
+  const result = await pool
+    .request()
+    .input('userId', sql.Int, userId)
+    .query('SELECT COUNT(*) as total FROM moods WHERE user_id = @userId')
+  return Number(result.recordset[0]?.total || 0)
+}
+
 export const getMoodsWithRelations = async (
   userId: number,
   page: number = 1,
   limit: number = 20
 ): Promise<MoodWithRelations[]> => {
+  if (isSqliteClient) {
+    const offset = (page - 1) * limit
+    const rows = sqliteAll(
+      `
+      SELECT id, user_id, mood_type, intensity, note_encrypted, tags, trigger, record_date, created_at, updated_at
+      FROM moods
+      WHERE user_id = ?
+      ORDER BY record_date DESC, created_at DESC
+      LIMIT ? OFFSET ?
+      `,
+      [userId, limit, offset]
+    ) as Array<Record<string, unknown>>
+
+    const moods = rows.map(decodeMoodRow)
+    const moodIds = moods.map((mood) => mood.id)
+    const { emotionsMap, tagsMap } = loadMoodRelationsSqlite(moodIds)
+
+    return moods.map((mood) => ({
+      ...mood,
+      emotions: emotionsMap.get(mood.id) || [],
+      tagList: tagsMap.get(mood.id) || [],
+    }))
+  }
+
   const offset = (page - 1) * limit
 
   const moodsResult = await pool
@@ -355,25 +599,42 @@ export const getMoodAnalysis = async (
       startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   }
 
-  const moodsResult = await pool
-    .request()
-    .input('userId', sql.Int, userId)
-    .input('startDate', sql.Date, startDate)
-    .input('endDate', sql.Date, endDate).query(`
-      SELECT 
-        m.id,
-        m.mood_type,
-        m.intensity,
-        m.[trigger],
-        CONVERT(DATE, m.record_date) as record_date
-      FROM moods m
-      WHERE m.user_id = @userId
-        AND m.record_date >= @startDate
-        AND m.record_date <= @endDate
-      ORDER BY m.record_date DESC
-    `)
-
-  const moods = moodsResult.recordset
+  const moods = isSqliteClient
+    ? (sqliteAll(
+        `
+        SELECT
+          m.id,
+          m.mood_type,
+          m.intensity,
+          m.trigger,
+          date(m.record_date) as record_date
+        FROM moods m
+        WHERE m.user_id = ?
+          AND date(m.record_date) >= date(?)
+          AND date(m.record_date) <= date(?)
+        ORDER BY m.record_date DESC
+        `,
+        [userId, startDate, endDate]
+      ) as Array<Record<string, any>>)
+    : (
+        await pool
+          .request()
+          .input('userId', sql.Int, userId)
+          .input('startDate', sql.Date, startDate)
+          .input('endDate', sql.Date, endDate).query(`
+          SELECT 
+            m.id,
+            m.mood_type,
+            m.intensity,
+            m.[trigger],
+            CONVERT(DATE, m.record_date) as record_date
+          FROM moods m
+          WHERE m.user_id = @userId
+            AND m.record_date >= @startDate
+            AND m.record_date <= @endDate
+          ORDER BY m.record_date DESC
+        `)
+      ).recordset
 
   if (moods.length === 0) {
     return {
@@ -452,7 +713,7 @@ export const getMoodAnalysis = async (
 
   const dateRecords: Record<string, { intensity: number; negativeCount: number }> = {}
   for (const mood of moods) {
-    const dateStr = mood.record_date.toISOString().split('T')[0]
+    const dateStr = toDate(mood.record_date).toISOString().split('T')[0]
     if (!dateRecords[dateStr]) {
       dateRecords[dateStr] = { intensity: 0, negativeCount: 0 }
     }
@@ -648,6 +909,27 @@ export const getWeeklyReport = async (userId: number) => {
     return cached
   }
 
+  if (isSqliteClient) {
+    const rows = sqliteAll(
+      `
+      SELECT
+        date(record_date) as date,
+        mood_type,
+        COUNT(*) as count,
+        AVG(CAST(intensity AS REAL)) as avg_intensity
+      FROM moods
+      WHERE user_id = ?
+        AND date(record_date) >= date('now', '-7 day')
+      GROUP BY date(record_date), mood_type
+      ORDER BY date DESC
+      `,
+      [userId]
+    )
+
+    await setMoodCache(cacheKey, rows)
+    return rows
+  }
+
   const result = await pool.request().input('userId', sql.Int, userId).query(`
       SELECT
           CONVERT(DATE, record_date) as date,
@@ -666,6 +948,20 @@ export const getWeeklyReport = async (userId: number) => {
 }
 
 export const findMoodById = async (id: number, userId?: number): Promise<Mood | null> => {
+  if (isSqliteClient) {
+    const whereClause = userId === undefined ? 'WHERE id = ?' : 'WHERE id = ? AND user_id = ?'
+    const params = userId === undefined ? [id] : [id, userId]
+    const row = sqliteGet(
+      `
+      SELECT id, user_id, mood_type, intensity, note_encrypted, tags, trigger, record_date, created_at, updated_at
+      FROM moods ${whereClause}
+      `,
+      params
+    ) as Record<string, unknown> | undefined
+
+    return row ? decodeMoodRow(row) : null
+  }
+
   const request = pool.request().input('id', sql.Int, id)
   if (userId !== undefined) {
     request.input('userId', sql.Int, userId)
@@ -687,6 +983,20 @@ export const findMoodWithRelationsById = async (
   id: number,
   userId?: number
 ): Promise<MoodWithRelations | null> => {
+  if (isSqliteClient) {
+    const mood = await findMoodById(id, userId)
+    if (!mood) {
+      return null
+    }
+
+    const { emotionsMap, tagsMap } = loadMoodRelationsSqlite([id])
+    return {
+      ...mood,
+      emotions: emotionsMap.get(id) || [],
+      tagList: tagsMap.get(id) || [],
+    }
+  }
+
   const moodRequest = pool.request().input('id', sql.Int, id)
   if (userId !== undefined) {
     moodRequest.input('userId', sql.Int, userId)
@@ -745,6 +1055,30 @@ export const updateMood = async (
   trigger: string,
   userId?: number
 ) => {
+  if (isSqliteClient) {
+    const encryptedNote = encryptField(note)
+    const whereClause = userId === undefined ? 'WHERE id = ?' : 'WHERE id = ? AND user_id = ?'
+    const params =
+      userId === undefined
+        ? [moodType, intensity, encryptedNote, tags, trigger, id]
+        : [moodType, intensity, encryptedNote, tags, trigger, id, userId]
+
+    const result = sqliteRun(
+      `
+      UPDATE moods
+      SET mood_type = ?,
+          intensity = ?,
+          note_encrypted = ?,
+          tags = ?,
+          trigger = ?,
+          updated_at = datetime('now', 'localtime')
+      ${whereClause}
+      `,
+      params
+    )
+    return Number(result.changes || 0) > 0
+  }
+
   const encryptedNote = encryptField(note)
 
   const whereClause =
@@ -784,6 +1118,58 @@ export const updateMoodWithRelations = async (
   trigger: string,
   userId?: number
 ): Promise<boolean> => {
+  if (isSqliteClient) {
+    return sqliteTransaction(() => {
+      const moodTypeRows = sqliteAll(
+        `SELECT name FROM emotion_types WHERE id IN (${buildSqlitePlaceholders(emotions.length)})`,
+        emotions.map((e) => e.emotionTypeId)
+      ) as Array<{ name: string }>
+      const moodTypeStr = moodTypeRows.map((item) => item.name).join(',')
+      const avgIntensity = Math.round(
+        emotions.reduce((sum, e) => sum + e.intensity, 0) / Math.max(1, emotions.length)
+      )
+      const encryptedNote = encryptField(note)
+
+      const whereClause = userId === undefined ? 'WHERE id = ?' : 'WHERE id = ? AND user_id = ?'
+      const updateParams =
+        userId === undefined
+          ? [moodTypeStr, avgIntensity, encryptedNote, trigger, id]
+          : [moodTypeStr, avgIntensity, encryptedNote, trigger, id, userId]
+
+      const updateResult = sqliteRun(
+        `
+        UPDATE moods
+        SET mood_type = ?,
+            intensity = ?,
+            note_encrypted = ?,
+            trigger = ?,
+            updated_at = datetime('now', 'localtime')
+        ${whereClause}
+        `,
+        updateParams
+      )
+
+      if (Number(updateResult.changes || 0) === 0) {
+        return false
+      }
+
+      sqliteRun('DELETE FROM mood_emotions WHERE mood_id = ?', [id])
+      for (const emotion of emotions) {
+        sqliteRun(
+          'INSERT INTO mood_emotions (mood_id, emotion_type_id, intensity) VALUES (?, ?, ?)',
+          [id, emotion.emotionTypeId, emotion.intensity]
+        )
+      }
+
+      sqliteRun('DELETE FROM mood_tags WHERE mood_id = ?', [id])
+      for (const tagId of tagIds) {
+        sqliteRun('INSERT INTO mood_tags (mood_id, tag_id) VALUES (?, ?)', [id, tagId])
+      }
+
+      return true
+    })
+  }
+
   const transaction = pool.transaction()
   await transaction.begin()
 
@@ -859,6 +1245,13 @@ export const updateMoodWithRelations = async (
 }
 
 export const deleteMood = async (id: number, userId?: number) => {
+  if (isSqliteClient) {
+    const whereClause = userId === undefined ? 'WHERE id = ?' : 'WHERE id = ? AND user_id = ?'
+    const params = userId === undefined ? [id] : [id, userId]
+    const result = sqliteRun(`DELETE FROM moods ${whereClause}`, params)
+    return Number(result.changes || 0) > 0
+  }
+
   const request = pool.request().input('id', sql.Int, id)
   const whereClause =
     userId === undefined ? 'WHERE id = @id' : 'WHERE id = @id AND user_id = @userId'
@@ -899,24 +1292,40 @@ export const getMoodTrend = async (userId: number, range: string) => {
       startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   }
 
-  const queryResult = await pool
-    .request()
-    .input('userId', sql.Int, userId)
-    .input('startDate', sql.Date, startDate)
-    .input('endDate', sql.Date, endDate).query(`
-      SELECT 
-        CONVERT(DATE, record_date) as date,
-        mood_type,
-        AVG(CAST(intensity AS FLOAT)) as avg_intensity
-      FROM moods
-      WHERE user_id = @userId
-        AND record_date >= @startDate
-        AND record_date <= @endDate
-      GROUP BY CONVERT(DATE, record_date), mood_type
-      ORDER BY date ASC
-    `)
-
-  const records = queryResult.recordset
+  const records = isSqliteClient
+    ? (sqliteAll(
+        `
+        SELECT
+          date(record_date) as date,
+          mood_type,
+          AVG(CAST(intensity AS REAL)) as avg_intensity
+        FROM moods
+        WHERE user_id = ?
+          AND date(record_date) >= date(?)
+          AND date(record_date) <= date(?)
+        GROUP BY date(record_date), mood_type
+        ORDER BY date ASC
+        `,
+        [userId, startDate, endDate]
+      ) as Array<{ date: string; mood_type: string; avg_intensity: number }>)
+    : (
+        await pool
+          .request()
+          .input('userId', sql.Int, userId)
+          .input('startDate', sql.Date, startDate)
+          .input('endDate', sql.Date, endDate).query(`
+          SELECT 
+            CONVERT(DATE, record_date) as date,
+            mood_type,
+            AVG(CAST(intensity AS FLOAT)) as avg_intensity
+          FROM moods
+          WHERE user_id = @userId
+            AND record_date >= @startDate
+            AND record_date <= @endDate
+          GROUP BY CONVERT(DATE, record_date), mood_type
+          ORDER BY date ASC
+        `)
+      ).recordset
 
   const dates = Array.from(new Set(records.map((r: { date: string }) => r.date))).sort()
   const moodTypes = Array.from(new Set(records.map((r: { mood_type: string }) => r.mood_type)))
@@ -963,6 +1372,23 @@ export const getMoodTrend = async (userId: number, range: string) => {
 }
 
 export const createOrGetTag = async (name: string, userId: number): Promise<number> => {
+  if (isSqliteClient) {
+    const existingTag = sqliteGet(
+      'SELECT id FROM tags WHERE name = ? AND (is_system = 1 OR user_id = ?) LIMIT 1',
+      [name, userId]
+    ) as { id: number } | undefined
+
+    if (existingTag) {
+      return Number(existingTag.id)
+    }
+
+    const result = sqliteRun('INSERT INTO tags (name, user_id, is_system) VALUES (?, ?, 0)', [
+      name,
+      userId,
+    ])
+    return Number(result.lastInsertRowid)
+  }
+
   const existingTag = await pool
     .request()
     .input('name', sql.NVarChar, name)
@@ -992,6 +1418,31 @@ export const getMoodsByEmotionType = async (
   page: number = 1,
   limit: number = 20
 ): Promise<MoodWithRelations[]> => {
+  if (isSqliteClient) {
+    const offset = (page - 1) * limit
+    const rows = sqliteAll(
+      `
+      SELECT DISTINCT m.id, m.user_id, m.mood_type, m.intensity, m.note_encrypted, m.tags, m.trigger, m.record_date, m.created_at, m.updated_at
+      FROM moods m
+      JOIN mood_emotions me ON m.id = me.mood_id
+      WHERE m.user_id = ? AND me.emotion_type_id = ?
+      ORDER BY m.record_date DESC, m.created_at DESC
+      LIMIT ? OFFSET ?
+      `,
+      [userId, emotionTypeId, limit, offset]
+    ) as Array<Record<string, unknown>>
+
+    const moods = rows.map(decodeMoodRow)
+    const moodIds = moods.map((mood) => mood.id)
+    const { emotionsMap, tagsMap } = loadMoodRelationsSqlite(moodIds)
+
+    return moods.map((mood) => ({
+      ...mood,
+      emotions: emotionsMap.get(mood.id) || [],
+      tagList: tagsMap.get(mood.id) || [],
+    }))
+  }
+
   const offset = (page - 1) * limit
 
   const moodsResult = await pool

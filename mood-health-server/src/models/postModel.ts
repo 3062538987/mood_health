@@ -1,5 +1,7 @@
 import pool from '../config/database'
 import sql from 'mssql'
+import { isSqliteClient } from '../config/database'
+import { sqliteAll, sqliteGet, sqliteRun, sqliteTransaction } from '../config/sqlite'
 import logger from '../utils/logger'
 
 export interface Post {
@@ -30,6 +32,64 @@ let postSchemaChecked = false
 
 const ensurePostSchema = async () => {
   if (postSchemaChecked) {
+    return
+  }
+
+  if (isSqliteClient) {
+    sqliteRun(`
+      CREATE TABLE IF NOT EXISTS posts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        user_id INTEGER,
+        is_anonymous INTEGER NOT NULL DEFAULT 0,
+        like_count INTEGER NOT NULL DEFAULT 0,
+        status INTEGER NOT NULL DEFAULT 1,
+        audit_remark TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+      )
+    `)
+
+    sqliteRun(`
+      CREATE TABLE IF NOT EXISTS comments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        post_id INTEGER NOT NULL,
+        user_id INTEGER,
+        content TEXT NOT NULL,
+        is_anonymous INTEGER NOT NULL DEFAULT 0,
+        like_count INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+      )
+    `)
+
+    sqliteRun(`
+      CREATE TABLE IF NOT EXISTS post_likes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        post_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (post_id, user_id),
+        FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `)
+
+    sqliteRun(`
+      CREATE TABLE IF NOT EXISTS comment_likes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        comment_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (comment_id, user_id),
+        FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `)
+
+    postSchemaChecked = true
     return
   }
 
@@ -117,9 +177,25 @@ const logPostDbError = (message: string, error: unknown, extra?: Record<string, 
   })
 }
 
-// 创建帖子
 export const createPost = async (params: CreatePostParams) => {
   await ensurePostSchema()
+
+  if (isSqliteClient) {
+    const insertResult = sqliteRun(
+      'INSERT INTO posts (title, content, user_id, is_anonymous, status) VALUES (?, ?, ?, ?, ?)',
+      [params.title, params.content, params.user_id, params.isAnonymous ? 1 : 0, 0]
+    )
+
+    return sqliteGet(
+      `
+        SELECT id, title, content, user_id, is_anonymous, like_count, status, audit_remark, created_at
+        FROM posts
+        WHERE id = ?
+      `,
+      [Number(insertResult.lastInsertRowid)]
+    )
+  }
+
   const result = await pool
     .request()
     .input('title', sql.NVarChar, params.title)
@@ -134,7 +210,6 @@ export const createPost = async (params: CreatePostParams) => {
   return result.recordset[0]
 }
 
-// 获取帖子列表（分页）
 export const getPosts = async (page: number = 1, pageSize: number = 10) => {
   await ensurePostSchema()
   const safePage = page > 0 ? Math.floor(page) : 1
@@ -142,6 +217,40 @@ export const getPosts = async (page: number = 1, pageSize: number = 10) => {
   const offset = (safePage - 1) * safePageSize
 
   try {
+    if (isSqliteClient) {
+      const totalRow = sqliteGet('SELECT COUNT(*) AS total FROM posts WHERE status = 1') as
+        | { total: number }
+        | undefined
+
+      const rows = sqliteAll(
+        `
+          SELECT
+            p.id,
+            p.title,
+            p.content,
+            p.user_id,
+            p.is_anonymous,
+            p.like_count,
+            p.status,
+            p.audit_remark,
+            p.created_at,
+            u.username,
+            (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count
+          FROM posts p
+          LEFT JOIN users u ON p.user_id = u.id
+          WHERE p.status = 1
+          ORDER BY datetime(p.created_at) DESC
+          LIMIT ? OFFSET ?
+        `,
+        [safePageSize, offset]
+      )
+
+      return {
+        list: rows,
+        total: Number(totalRow?.total || 0),
+      }
+    }
+
     const totalResult = await pool.request().query(`
       SELECT COUNT(*) AS total FROM posts WHERE status = 1
     `)
@@ -179,9 +288,32 @@ export const getPosts = async (page: number = 1, pageSize: number = 10) => {
   }
 }
 
-// 根据ID获取帖子
 export const getPostById = async (id: number) => {
   await ensurePostSchema()
+
+  if (isSqliteClient) {
+    const row = sqliteGet(
+      `
+        SELECT
+          p.id,
+          p.title,
+          p.content,
+          p.user_id,
+          p.is_anonymous,
+          p.like_count,
+          p.status,
+          p.audit_remark,
+          p.created_at,
+          u.username
+        FROM posts p
+        LEFT JOIN users u ON p.user_id = u.id
+        WHERE p.id = ?
+      `,
+      [id]
+    )
+    return row || null
+  }
+
   const result = await pool.request().input('id', sql.Int, id).query(`
       SELECT 
         p.id,
@@ -212,6 +344,30 @@ export const getPendingPosts = async (
   const safeStatus = [0, 1, 2].includes(status) ? status : 0
   const offset = (safePage - 1) * safePageSize
 
+  if (isSqliteClient) {
+    return sqliteAll(
+      `
+        SELECT
+          p.id,
+          p.title,
+          p.content,
+          p.user_id,
+          p.is_anonymous,
+          p.like_count,
+          p.status,
+          p.audit_remark,
+          p.created_at,
+          u.username
+        FROM posts p
+        LEFT JOIN users u ON p.user_id = u.id
+        WHERE p.status = ?
+        ORDER BY datetime(p.created_at) DESC
+        LIMIT ? OFFSET ?
+      `,
+      [safeStatus, safePageSize, offset]
+    )
+  }
+
   const result = await pool
     .request()
     .input('offset', sql.Int, offset)
@@ -240,6 +396,23 @@ export const getPendingPosts = async (
 
 export const getPostAuditStats = async () => {
   await ensurePostSchema()
+
+  if (isSqliteClient) {
+    const row = sqliteGet(`
+      SELECT
+        SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) AS pending,
+        SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS approved,
+        SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) AS rejected
+      FROM posts
+    `) as Record<string, unknown> | undefined
+
+    return {
+      pending: Number(row?.pending || 0),
+      approved: Number(row?.approved || 0),
+      rejected: Number(row?.rejected || 0),
+    }
+  }
+
   const result = await pool.request().query(`
       SELECT
         SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) AS pending,
@@ -258,6 +431,25 @@ export const getPostAuditStats = async () => {
 
 export const auditPost = async (id: number, params: AuditPostParams) => {
   await ensurePostSchema()
+
+  if (isSqliteClient) {
+    const updateResult = sqliteRun(
+      `
+        UPDATE posts
+        SET status = ?,
+            audit_remark = ?
+        WHERE id = ?
+      `,
+      [params.status, params.audit_remark || null, id]
+    )
+
+    if (Number(updateResult.changes || 0) === 0) {
+      return null
+    }
+
+    return sqliteGet('SELECT * FROM posts WHERE id = ?', [id])
+  }
+
   const result = await pool
     .request()
     .input('id', sql.Int, id)
@@ -272,10 +464,38 @@ export const auditPost = async (id: number, params: AuditPostParams) => {
   return result.recordset.length ? result.recordset[0] : null
 }
 
-// 点赞帖子（防止重复点赞）
 export const likePost = async (id: number, userId: number) => {
   await ensurePostSchema()
-  // 检查是否已经点赞
+
+  if (isSqliteClient) {
+    return sqliteTransaction(() => {
+      const liked = sqliteGet('SELECT id FROM post_likes WHERE post_id = ? AND user_id = ?', [
+        id,
+        userId,
+      ])
+
+      if (liked) {
+        sqliteRun('DELETE FROM post_likes WHERE post_id = ? AND user_id = ?', [id, userId])
+        sqliteRun(
+          `
+            UPDATE posts
+            SET like_count = CASE WHEN like_count > 0 THEN like_count - 1 ELSE 0 END
+            WHERE id = ?
+          `,
+          [id]
+        )
+
+        const post = sqliteGet('SELECT * FROM posts WHERE id = ?', [id])
+        return post ? { ...(post as Record<string, unknown>), liked: false } : null
+      }
+
+      sqliteRun('INSERT INTO post_likes (post_id, user_id) VALUES (?, ?)', [id, userId])
+      sqliteRun('UPDATE posts SET like_count = like_count + 1 WHERE id = ?', [id])
+      const post = sqliteGet('SELECT * FROM posts WHERE id = ?', [id])
+      return post ? { ...(post as Record<string, unknown>), liked: true } : null
+    })
+  }
+
   const checkResult = await pool
     .request()
     .input('post_id', sql.Int, id)
@@ -285,13 +505,11 @@ export const likePost = async (id: number, userId: number) => {
     `)
 
   if (checkResult.recordset.length > 0) {
-    // 已点赞，取消点赞
     await pool.request().input('post_id', sql.Int, id).input('user_id', sql.Int, userId).query(`
         DELETE FROM post_likes 
         WHERE post_id = @post_id AND user_id = @user_id
       `)
 
-    // 减少点赞数
     const result = await pool.request().input('id', sql.Int, id).query(`
         UPDATE posts
         SET like_count = CASE WHEN like_count > 0 THEN like_count - 1 ELSE 0 END
@@ -299,27 +517,33 @@ export const likePost = async (id: number, userId: number) => {
         WHERE id = @id
       `)
     return { ...result.recordset[0], liked: false }
-  } else {
-    // 未点赞，添加点赞
-    await pool.request().input('post_id', sql.Int, id).input('user_id', sql.Int, userId).query(`
-        INSERT INTO post_likes (post_id, user_id)
-        VALUES (@post_id, @user_id)
-      `)
-
-    // 增加点赞数
-    const result = await pool.request().input('id', sql.Int, id).query(`
-        UPDATE posts
-        SET like_count = like_count + 1
-        OUTPUT INSERTED.*
-        WHERE id = @id
-      `)
-    return { ...result.recordset[0], liked: true }
   }
+
+  await pool.request().input('post_id', sql.Int, id).input('user_id', sql.Int, userId).query(`
+      INSERT INTO post_likes (post_id, user_id)
+      VALUES (@post_id, @user_id)
+    `)
+
+  const result = await pool.request().input('id', sql.Int, id).query(`
+      UPDATE posts
+      SET like_count = like_count + 1
+      OUTPUT INSERTED.*
+      WHERE id = @id
+    `)
+  return { ...result.recordset[0], liked: true }
 }
 
-// 检查用户是否已点赞
 export const checkUserLiked = async (postId: number, userId: number) => {
   await ensurePostSchema()
+
+  if (isSqliteClient) {
+    const row = sqliteGet('SELECT id FROM post_likes WHERE post_id = ? AND user_id = ?', [
+      postId,
+      userId,
+    ])
+    return !!row
+  }
+
   const result = await pool
     .request()
     .input('post_id', sql.Int, postId)

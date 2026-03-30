@@ -2,6 +2,8 @@ import crypto from 'crypto'
 import sql from 'mssql'
 import dotenv from 'dotenv'
 import { connectDB, pool } from '../config/database'
+import { isSqliteClient } from '../config/database'
+import { connectSqlite, sqliteAll, sqliteGet, sqliteRun } from '../config/sqlite'
 import { hashPassword } from '../utils/password'
 
 dotenv.config()
@@ -241,7 +243,15 @@ const encryptNote = (text: string) => {
   })
 }
 
+const buildSqlitePlaceholders = (count: number) =>
+  Array.from({ length: count }, () => '?').join(', ')
+
 const ensureSchema = async () => {
+  if (isSqliteClient) {
+    connectSqlite()
+    return
+  }
+
   await pool.request().query(`
     IF OBJECT_ID('users', 'U') IS NULL
     BEGIN
@@ -468,6 +478,40 @@ const ensureSchema = async () => {
 }
 
 const upsertDemoUser = async (user: DemoUserConfig, password: string) => {
+  if (isSqliteClient) {
+    const hashedPassword = await hashPassword(password)
+    const existing = sqliteGet('SELECT id, username, role FROM users WHERE username = ? LIMIT 1', [
+      user.username,
+    ]) as { id: number; username: string; role: string } | undefined
+
+    if (existing) {
+      sqliteRun(
+        `
+          UPDATE users
+          SET password = ?,
+              email = ?,
+              role = ?,
+              updated_at = datetime('now', 'localtime')
+          WHERE username = ?
+        `,
+        [hashedPassword, user.email, user.role, user.username]
+      )
+
+      return sqliteGet('SELECT id, username, role FROM users WHERE username = ? LIMIT 1', [
+        user.username,
+      ]) as { id: number; username: string; role: string }
+    }
+
+    const insertResult = sqliteRun(
+      'INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, ?)',
+      [user.username, hashedPassword, user.email, user.role]
+    )
+
+    return sqliteGet('SELECT id, username, role FROM users WHERE id = ? LIMIT 1', [
+      Number(insertResult.lastInsertRowid),
+    ]) as { id: number; username: string; role: string }
+  }
+
   const hashedPassword = await hashPassword(password)
   const result = await pool
     .request()
@@ -498,6 +542,40 @@ const upsertDemoUser = async (user: DemoUserConfig, password: string) => {
 }
 
 const cleanupDemoData = async (demoUserIds: number[]) => {
+  if (isSqliteClient) {
+    if (demoUserIds.length === 0) {
+      return
+    }
+
+    const placeholders = buildSqlitePlaceholders(demoUserIds.length)
+
+    sqliteRun(`DELETE FROM moods WHERE user_id IN (${placeholders})`, demoUserIds)
+    sqliteRun(`DELETE FROM activity_participants WHERE user_id IN (${placeholders})`, demoUserIds)
+    sqliteRun(
+      'DELETE FROM activity_participants WHERE activity_id IN (SELECT id FROM activities WHERE title LIKE ?)',
+      [`${DEMO_PREFIX}%`]
+    )
+    sqliteRun('DELETE FROM activities WHERE title LIKE ?', [`${DEMO_PREFIX}%`])
+    sqliteRun(`DELETE FROM comments WHERE user_id IN (${placeholders})`, demoUserIds)
+    sqliteRun(`DELETE FROM posts WHERE user_id IN (${placeholders}) OR title LIKE ?`, [
+      ...demoUserIds,
+      `${DEMO_PREFIX}%`,
+    ])
+
+    sqliteRun(
+      `
+        UPDATE activities
+        SET current_participants = (
+          SELECT COUNT(*)
+          FROM activity_participants ap
+          WHERE ap.activity_id = activities.id
+        )
+      `
+    )
+
+    return
+  }
+
   const idPlaceholders = demoUserIds.map((_, index) => `@userId${index}`).join(', ')
   const request = pool.request().input('demoPrefix', sql.NVarChar, `${DEMO_PREFIX}%`)
   demoUserIds.forEach((userId, index) => {
@@ -529,6 +607,27 @@ const cleanupDemoData = async (demoUserIds: number[]) => {
 }
 
 const seedMoodsForUser = async (userId: number, seeds: DemoMoodSeed[]) => {
+  if (isSqliteClient) {
+    for (const seed of seeds) {
+      sqliteRun(
+        `
+          INSERT INTO moods (user_id, mood_type, intensity, note_encrypted, tags, trigger, record_date)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          userId,
+          seed.moodType,
+          seed.intensity,
+          encryptNote(seed.note),
+          seed.tags,
+          seed.trigger,
+          createDateOnly(seed.daysAgo),
+        ]
+      )
+    }
+    return
+  }
+
   for (const seed of seeds) {
     await pool
       .request()
@@ -591,6 +690,33 @@ const seedPosts = async (studentOneId: number, studentTwoId: number) => {
 
   const insertedPostIds: number[] = []
 
+  if (isSqliteClient) {
+    for (const post of posts) {
+      const result = sqliteRun(
+        `
+          INSERT INTO posts (title, content, user_id, is_anonymous, status, audit_remark)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `,
+        [
+          post.title,
+          post.content,
+          post.userId,
+          post.isAnonymous ? 1 : 0,
+          post.status,
+          post.auditRemark,
+        ]
+      )
+
+      insertedPostIds.push(Number(result.lastInsertRowid))
+    }
+
+    sqliteRun(
+      'INSERT INTO comments (post_id, user_id, content, is_anonymous) VALUES (?, ?, ?, 0)',
+      [insertedPostIds[0], studentTwoId, '这条分享很有共鸣，我也在努力调整自己的节奏。']
+    )
+    return
+  }
+
   for (const post of posts) {
     const result = await pool
       .request()
@@ -651,6 +777,51 @@ const seedActivities = async (studentOneId: number, studentTwoId: number) => {
 
   const activityIds: number[] = []
 
+  if (isSqliteClient) {
+    for (const activity of activities) {
+      const result = sqliteRun(
+        `
+          INSERT INTO activities (title, description, start_time, end_time, max_participants, current_participants, location, image_url)
+          VALUES (?, ?, ?, ?, ?, 0, ?, ?)
+        `,
+        [
+          activity.title,
+          activity.description,
+          activity.startTime.toISOString(),
+          activity.endTime.toISOString(),
+          activity.maxParticipants,
+          activity.location,
+          activity.imageUrl,
+        ]
+      )
+
+      activityIds.push(Number(result.lastInsertRowid))
+    }
+
+    sqliteRun('INSERT INTO activity_participants (activity_id, user_id) VALUES (?, ?)', [
+      activityIds[0],
+      studentOneId,
+    ])
+    sqliteRun('INSERT INTO activity_participants (activity_id, user_id) VALUES (?, ?)', [
+      activityIds[1],
+      studentTwoId,
+    ])
+
+    sqliteRun(
+      `
+        UPDATE activities
+        SET current_participants = (
+          SELECT COUNT(*)
+          FROM activity_participants ap
+          WHERE ap.activity_id = activities.id
+        )
+        WHERE title LIKE ?
+      `,
+      [`${DEMO_PREFIX}%`]
+    )
+    return
+  }
+
   for (const activity of activities) {
     const result = await pool
       .request()
@@ -702,6 +873,98 @@ const ensureQuestionnaireForDemo = async (): Promise<{
   questionnaire: QuestionnaireRecord
   questions: QuestionRecord[]
 }> => {
+  if (isSqliteClient) {
+    const existingQuestionnaire = sqliteGet(
+      `
+        SELECT q.id, q.title, q.type
+        FROM questionnaires q
+        LEFT JOIN (
+          SELECT questionnaire_id, COUNT(*) AS question_count
+          FROM questions
+          GROUP BY questionnaire_id
+        ) counts ON counts.questionnaire_id = q.id
+        ORDER BY CASE WHEN COALESCE(counts.question_count, 0) > 0 THEN 0 ELSE 1 END, q.id ASC
+        LIMIT 1
+      `
+    ) as unknown as QuestionnaireRecord | undefined
+
+    let questionnaire = existingQuestionnaire
+
+    if (!questionnaire) {
+      const insertResult = sqliteRun(
+        `
+          INSERT INTO questionnaires (title, description, type)
+          VALUES (?, ?, ?)
+        `,
+        [`${DEMO_PREFIX} 演示心理状态问卷`, '用于演示问卷结果与历史记录的简化问卷。', 'DEMO']
+      )
+
+      questionnaire = sqliteGet('SELECT id, title, type FROM questionnaires WHERE id = ? LIMIT 1', [
+        Number(insertResult.lastInsertRowid),
+      ]) as unknown as QuestionnaireRecord
+
+      if (!questionnaire) {
+        throw new Error('创建演示问卷失败')
+      }
+    }
+
+    let questions = sqliteAll(
+      `
+        SELECT id, is_reverse
+        FROM questions
+        WHERE questionnaire_id = ?
+        ORDER BY sort_order ASC, id ASC
+      `,
+      [questionnaire.id]
+    ) as unknown as QuestionRecord[]
+
+    if (questions.length === 0) {
+      const demoQuestions = [
+        { text: '最近一周我能较快从压力中缓过来', isReverse: true },
+        { text: '最近一周我经常感到紧张', isReverse: false },
+        { text: '最近一周我的睡眠质量稳定', isReverse: true },
+        { text: '最近一周我会主动向他人寻求支持', isReverse: true },
+        { text: '最近一周我感到学习或生活负担偏重', isReverse: false },
+      ]
+
+      for (let index = 0; index < demoQuestions.length; index++) {
+        const question = demoQuestions[index]
+        sqliteRun(
+          `
+            INSERT INTO questions (questionnaire_id, question_text, question_type, options, sort_order, is_reverse)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `,
+          [
+            questionnaire.id,
+            question.text,
+            'single',
+            JSON.stringify(['完全不符合', '比较不符合', '比较符合', '完全符合']),
+            index + 1,
+            question.isReverse ? 1 : 0,
+          ]
+        )
+      }
+
+      questions = sqliteAll(
+        `
+          SELECT id, is_reverse
+          FROM questions
+          WHERE questionnaire_id = ?
+          ORDER BY sort_order ASC, id ASC
+        `,
+        [questionnaire.id]
+      ) as unknown as QuestionRecord[]
+    }
+
+    return {
+      questionnaire,
+      questions: questions.map((question) => ({
+        ...question,
+        is_reverse: Boolean(question.is_reverse),
+      })),
+    }
+  }
+
   const existingQuestionnaireResult = await pool.request().query(`
     SELECT TOP 1 q.id, q.title, q.type
     FROM questionnaires q
@@ -818,6 +1081,17 @@ const seedAssessment = async (
   }
 
   for (let index = 0; index < questions.length; index++) {
+    if (isSqliteClient) {
+      sqliteRun(
+        `
+          INSERT INTO user_answers (user_id, questionnaire_id, question_id, answer)
+          VALUES (?, ?, ?, ?)
+        `,
+        [userId, questionnaire.id, questions[index].id, String(answers[index])]
+      )
+      continue
+    }
+
     await pool
       .request()
       .input('userId', sql.Int, userId)
@@ -827,6 +1101,22 @@ const seedAssessment = async (
         INSERT INTO user_answers (user_id, questionnaire_id, question_id, answer)
         VALUES (@userId, @questionnaireId, @questionId, @answer)
       `)
+  }
+
+  if (isSqliteClient) {
+    sqliteRun(
+      `
+        INSERT INTO user_assessments (user_id, questionnaire_id, score, result_text)
+        VALUES (?, ?, ?, ?)
+      `,
+      [
+        userId,
+        questionnaire.id,
+        score,
+        buildQuestionnaireResultText(questionnaire.type, score, questions.length),
+      ]
+    )
+    return
   }
 
   await pool
@@ -844,7 +1134,10 @@ const seedAssessment = async (
     `)
 }
 
-const printSummary = (accounts: Array<{ username: string; role: string }>) => {
+const printSummary = (
+  accounts: Array<{ username: string; role: string }>,
+  questionnaireSeeded: boolean
+) => {
   console.log('\n演示账号初始化完成：')
   accounts.forEach((account) => {
     console.log(`- ${account.username} (${account.role}) / ${DEFAULT_PASSWORD}`)
@@ -857,7 +1150,11 @@ const printSummary = (accounts: Array<{ username: string; role: string }>) => {
   console.log('- student_test2 最近 4 天情绪记录')
   console.log('- 5 条树洞帖子，其中 1 条待审核')
   console.log('- 3 个未来活动，2 个学生账号各报名 1 个')
-  console.log('- 1 条问卷结果记录与答案明细')
+  if (questionnaireSeeded) {
+    console.log('- 1 条问卷结果记录与答案明细')
+  } else {
+    console.log('- SQLite 模式下已跳过问卷结果与答案写入')
+  }
 }
 
 const main = async () => {
@@ -895,20 +1192,22 @@ const main = async () => {
     await seedActivities(studentOne.id, studentTwo.id)
     console.log('✅ 活动与报名记录写入完成')
 
+    let questionnaireSeeded = false
     const questionnaireSetup = await ensureQuestionnaireForDemo()
     await seedAssessment(
       studentOne.id,
       questionnaireSetup.questionnaire,
       questionnaireSetup.questions
     )
+    questionnaireSeeded = true
     console.log('✅ 问卷结果写入完成')
 
-    printSummary(accounts)
+    printSummary(accounts, questionnaireSeeded)
   } catch (error) {
     console.error('❌ 初始化演示数据失败:', error)
     process.exitCode = 1
   } finally {
-    if (pool.connected) {
+    if (!isSqliteClient && pool.connected) {
       await pool.close()
     }
   }

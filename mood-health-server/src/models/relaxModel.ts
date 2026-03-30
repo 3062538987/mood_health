@@ -1,57 +1,56 @@
-import sql from "mssql";
-import pool from "../config/database";
-import logger from "../utils/logger";
+import sql from 'mssql'
+import pool, { isSqliteClient } from '../config/database'
+import { sqliteAll, sqliteGet, sqliteRun } from '../config/sqlite'
+import logger from '../utils/logger'
 
 export interface RelaxRecordInput {
-  activityType: string;
-  startTime: string;
-  endTime: string;
-  metrics?: Record<string, unknown>;
-  moodTag?: string;
+  activityType: string
+  startTime: string
+  endTime: string
+  metrics?: Record<string, unknown>
+  moodTag?: string
 }
 
 export interface RelaxRecordEntity {
-  id: string;
-  userId: string;
-  activityType: string;
-  startTime: string;
-  endTime: string;
-  metrics: Record<string, unknown>;
-  moodTag?: string;
+  id: string
+  userId: string
+  activityType: string
+  startTime: string
+  endTime: string
+  metrics: Record<string, unknown>
+  moodTag?: string
 }
 
 export interface RelaxStatisticsEntity {
-  todayDuration: number;
-  thisWeekCount: number;
-  mostUsedActivity: string;
+  todayDuration: number
+  thisWeekCount: number
+  mostUsedActivity: string
   activityBreakdown: Array<{
-    type: string;
-    count: number;
-    duration: number;
-  }>;
+    type: string
+    count: number
+    duration: number
+  }>
 }
 
-let relaxSchemaChecked = false;
+let relaxSchemaChecked = false
 
 const parseMetrics = (raw: unknown): Record<string, unknown> => {
   if (!raw) {
-    return {};
+    return {}
   }
-  if (typeof raw === "object") {
-    return raw as Record<string, unknown>;
+  if (typeof raw === 'object') {
+    return raw as Record<string, unknown>
   }
-  if (typeof raw === "string") {
+  if (typeof raw === 'string') {
     try {
-      const parsed = JSON.parse(raw);
-      return parsed && typeof parsed === "object"
-        ? (parsed as Record<string, unknown>)
-        : {};
+      const parsed = JSON.parse(raw)
+      return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {}
     } catch {
-      return {};
+      return {}
     }
   }
-  return {};
-};
+  return {}
+}
 
 const mapRecord = (row: Record<string, unknown>): RelaxRecordEntity => ({
   id: String(row.id),
@@ -61,11 +60,34 @@ const mapRecord = (row: Record<string, unknown>): RelaxRecordEntity => ({
   endTime: new Date(String(row.endTime)).toISOString(),
   metrics: parseMetrics(row.metrics),
   moodTag: row.moodTag ? String(row.moodTag) : undefined,
-});
+})
 
 const ensureRelaxSchema = async () => {
   if (relaxSchemaChecked) {
-    return;
+    return
+  }
+
+  if (isSqliteClient) {
+    sqliteRun(`
+      CREATE TABLE IF NOT EXISTS relax_records (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        activity_type TEXT NOT NULL,
+        start_time TEXT NOT NULL,
+        end_time TEXT NOT NULL,
+        metrics TEXT,
+        mood_tag TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      )
+    `)
+    sqliteRun('CREATE INDEX IF NOT EXISTS idx_relax_records_user_id ON relax_records(user_id)')
+    sqliteRun(
+      'CREATE INDEX IF NOT EXISTS idx_relax_records_start_time ON relax_records(start_time DESC)'
+    )
+
+    relaxSchemaChecked = true
+    return
   }
 
   await pool.request().query(`
@@ -85,25 +107,59 @@ const ensureRelaxSchema = async () => {
       CREATE INDEX idx_relax_records_user_id ON relax_records(user_id);
       CREATE INDEX idx_relax_records_start_time ON relax_records(start_time DESC);
     END
-  `);
+  `)
 
-  relaxSchemaChecked = true;
-};
+  relaxSchemaChecked = true
+}
 
 export const saveRelaxRecord = async (
   userId: number,
-  record: RelaxRecordInput,
+  record: RelaxRecordInput
 ): Promise<RelaxRecordEntity> => {
-  await ensureRelaxSchema();
+  await ensureRelaxSchema()
+
+  if (isSqliteClient) {
+    const insertResult = sqliteRun(
+      `
+        INSERT INTO relax_records (user_id, activity_type, start_time, end_time, metrics, mood_tag)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `,
+      [
+        userId,
+        record.activityType,
+        new Date(record.startTime).toISOString(),
+        new Date(record.endTime).toISOString(),
+        JSON.stringify(record.metrics || {}),
+        record.moodTag || null,
+      ]
+    )
+
+    const row = sqliteGet(
+      `
+        SELECT id,
+               user_id AS userId,
+               activity_type AS activityType,
+               start_time AS startTime,
+               end_time AS endTime,
+               metrics,
+               mood_tag AS moodTag
+        FROM relax_records
+        WHERE id = ?
+      `,
+      [Number(insertResult.lastInsertRowid)]
+    ) as Record<string, unknown>
+
+    return mapRecord(row)
+  }
 
   const result = await pool
     .request()
-    .input("userId", sql.Int, userId)
-    .input("activityType", sql.NVarChar, record.activityType)
-    .input("startTime", sql.DateTime, new Date(record.startTime))
-    .input("endTime", sql.DateTime, new Date(record.endTime))
-    .input("metrics", sql.NVarChar, JSON.stringify(record.metrics || {}))
-    .input("moodTag", sql.NVarChar, record.moodTag || null).query(`
+    .input('userId', sql.Int, userId)
+    .input('activityType', sql.NVarChar, record.activityType)
+    .input('startTime', sql.DateTime, new Date(record.startTime))
+    .input('endTime', sql.DateTime, new Date(record.endTime))
+    .input('metrics', sql.NVarChar, JSON.stringify(record.metrics || {}))
+    .input('moodTag', sql.NVarChar, record.moodTag || null).query(`
       INSERT INTO relax_records (user_id, activity_type, start_time, end_time, metrics, mood_tag)
       OUTPUT INSERTED.id,
              INSERTED.user_id AS userId,
@@ -113,62 +169,112 @@ export const saveRelaxRecord = async (
              INSERTED.metrics AS metrics,
              INSERTED.mood_tag AS moodTag
       VALUES (@userId, @activityType, @startTime, @endTime, @metrics, @moodTag)
-    `);
+    `)
 
-  return mapRecord(result.recordset[0]);
-};
+  return mapRecord(result.recordset[0])
+}
 
 export const getRelaxRecords = async (
   userId: number,
   params: {
-    startDate?: string;
-    endDate?: string;
-    activityType?: string;
-    page?: number;
-    pageSize?: number;
-  },
+    startDate?: string
+    endDate?: string
+    activityType?: string
+    page?: number
+    pageSize?: number
+  }
 ): Promise<{ records: RelaxRecordEntity[]; total: number }> => {
-  await ensureRelaxSchema();
+  await ensureRelaxSchema()
 
-  const safePage = params.page && params.page > 0 ? Math.floor(params.page) : 1;
+  const safePage = params.page && params.page > 0 ? Math.floor(params.page) : 1
   const safePageSize =
-    params.pageSize && params.pageSize > 0
-      ? Math.min(Math.floor(params.pageSize), 100)
-      : 20;
-  const offset = (safePage - 1) * safePageSize;
+    params.pageSize && params.pageSize > 0 ? Math.min(Math.floor(params.pageSize), 100) : 20
+  const offset = (safePage - 1) * safePageSize
 
-  const filters: string[] = ["user_id = @userId"];
-  const countRequest = pool.request().input("userId", sql.Int, userId);
-  const listRequest = pool.request().input("userId", sql.Int, userId);
+  if (isSqliteClient) {
+    const filters: string[] = ['user_id = ?']
+    const sqliteParams: unknown[] = [userId]
+
+    if (params.startDate) {
+      filters.push('datetime(start_time) >= datetime(?)')
+      sqliteParams.push(new Date(params.startDate).toISOString())
+    }
+
+    if (params.endDate) {
+      filters.push('datetime(start_time) <= datetime(?)')
+      sqliteParams.push(new Date(params.endDate).toISOString())
+    }
+
+    if (params.activityType) {
+      filters.push('activity_type = ?')
+      sqliteParams.push(params.activityType)
+    }
+
+    const whereClause = filters.join(' AND ')
+    const countRow = sqliteGet(
+      `
+        SELECT COUNT(*) AS total
+        FROM relax_records
+        WHERE ${whereClause}
+      `,
+      sqliteParams
+    ) as { total: number } | undefined
+
+    const rows = sqliteAll(
+      `
+        SELECT id,
+               user_id AS userId,
+               activity_type AS activityType,
+               start_time AS startTime,
+               end_time AS endTime,
+               metrics,
+               mood_tag AS moodTag
+        FROM relax_records
+        WHERE ${whereClause}
+        ORDER BY datetime(start_time) DESC
+        LIMIT ? OFFSET ?
+      `,
+      [...sqliteParams, safePageSize, offset]
+    ) as Array<Record<string, unknown>>
+
+    return {
+      records: rows.map((row) => mapRecord(row)),
+      total: Number(countRow?.total || 0),
+    }
+  }
+
+  const filters: string[] = ['user_id = @userId']
+  const countRequest = pool.request().input('userId', sql.Int, userId)
+  const listRequest = pool.request().input('userId', sql.Int, userId)
 
   if (params.startDate) {
-    filters.push("start_time >= @startDate");
-    countRequest.input("startDate", sql.DateTime, new Date(params.startDate));
-    listRequest.input("startDate", sql.DateTime, new Date(params.startDate));
+    filters.push('start_time >= @startDate')
+    countRequest.input('startDate', sql.DateTime, new Date(params.startDate))
+    listRequest.input('startDate', sql.DateTime, new Date(params.startDate))
   }
 
   if (params.endDate) {
-    filters.push("start_time <= @endDate");
-    countRequest.input("endDate", sql.DateTime, new Date(params.endDate));
-    listRequest.input("endDate", sql.DateTime, new Date(params.endDate));
+    filters.push('start_time <= @endDate')
+    countRequest.input('endDate', sql.DateTime, new Date(params.endDate))
+    listRequest.input('endDate', sql.DateTime, new Date(params.endDate))
   }
 
   if (params.activityType) {
-    filters.push("activity_type = @activityType");
-    countRequest.input("activityType", sql.NVarChar, params.activityType);
-    listRequest.input("activityType", sql.NVarChar, params.activityType);
+    filters.push('activity_type = @activityType')
+    countRequest.input('activityType', sql.NVarChar, params.activityType)
+    listRequest.input('activityType', sql.NVarChar, params.activityType)
   }
 
-  const whereClause = filters.join(" AND ");
+  const whereClause = filters.join(' AND ')
   const countResult = await countRequest.query(`
     SELECT COUNT(*) AS total
     FROM relax_records
     WHERE ${whereClause}
-  `);
+  `)
 
   const listResult = await listRequest
-    .input("offset", sql.Int, offset)
-    .input("pageSize", sql.Int, safePageSize).query(`
+    .input('offset', sql.Int, offset)
+    .input('pageSize', sql.Int, safePageSize).query(`
       SELECT id,
              user_id AS userId,
              activity_type AS activityType,
@@ -180,26 +286,41 @@ export const getRelaxRecords = async (
       WHERE ${whereClause}
       ORDER BY start_time DESC
       OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY
-    `);
+    `)
 
   return {
-    records: listResult.recordset.map((row: Record<string, unknown>) =>
-      mapRecord(row),
-    ),
+    records: listResult.recordset.map((row: Record<string, unknown>) => mapRecord(row)),
     total: countResult.recordset[0]?.total || 0,
-  };
-};
+  }
+}
 
 export const getRelaxRecordById = async (
   userId: number,
-  id: number,
+  id: number
 ): Promise<RelaxRecordEntity | null> => {
-  await ensureRelaxSchema();
+  await ensureRelaxSchema()
 
-  const result = await pool
-    .request()
-    .input("id", sql.Int, id)
-    .input("userId", sql.Int, userId).query(`
+  if (isSqliteClient) {
+    const row = sqliteGet(
+      `
+        SELECT id,
+               user_id AS userId,
+               activity_type AS activityType,
+               start_time AS startTime,
+               end_time AS endTime,
+               metrics,
+               mood_tag AS moodTag
+        FROM relax_records
+        WHERE id = ? AND user_id = ?
+      `,
+      [id, userId]
+    ) as Record<string, unknown> | undefined
+
+    return row ? mapRecord(row) : null
+  }
+
+  const result = await pool.request().input('id', sql.Int, id).input('userId', sql.Int, userId)
+    .query(`
       SELECT id,
              user_id AS userId,
              activity_type AS activityType,
@@ -209,82 +330,76 @@ export const getRelaxRecordById = async (
              mood_tag AS moodTag
       FROM relax_records
       WHERE id = @id AND user_id = @userId
-    `);
+    `)
 
-  return result.recordset[0] ? mapRecord(result.recordset[0]) : null;
-};
+  return result.recordset[0] ? mapRecord(result.recordset[0]) : null
+}
 
 export const getRelaxStatistics = async (
   userId: number,
-  params: { startDate?: string; endDate?: string },
+  params: { startDate?: string; endDate?: string }
 ): Promise<RelaxStatisticsEntity> => {
-  await ensureRelaxSchema();
+  await ensureRelaxSchema()
 
   const recordsResult = await getRelaxRecords(userId, {
     ...params,
     page: 1,
     pageSize: 500,
-  });
-  const records = recordsResult.records;
-  const today = new Date().toISOString().slice(0, 10);
-  const weekAgo = new Date();
-  weekAgo.setDate(weekAgo.getDate() - 7);
+  })
+  const records = recordsResult.records
+  const today = new Date().toISOString().slice(0, 10)
+  const weekAgo = new Date()
+  weekAgo.setDate(weekAgo.getDate() - 7)
 
-  const activityMap = new Map<string, { count: number; duration: number }>();
-  let todayDuration = 0;
-  let thisWeekCount = 0;
+  const activityMap = new Map<string, { count: number; duration: number }>()
+  let todayDuration = 0
+  let thisWeekCount = 0
 
   for (const record of records) {
-    const start = new Date(record.startTime).getTime();
-    const end = new Date(record.endTime).getTime();
-    const duration = Math.max(0, end - start);
+    const start = new Date(record.startTime).getTime()
+    const end = new Date(record.endTime).getTime()
+    const duration = Math.max(0, end - start)
     const item = activityMap.get(record.activityType) || {
       count: 0,
       duration: 0,
-    };
-    item.count += 1;
-    item.duration += duration;
-    activityMap.set(record.activityType, item);
+    }
+    item.count += 1
+    item.duration += duration
+    activityMap.set(record.activityType, item)
 
     if (record.startTime.slice(0, 10) === today) {
-      todayDuration += duration;
+      todayDuration += duration
     }
     if (new Date(record.startTime) >= weekAgo) {
-      thisWeekCount += 1;
+      thisWeekCount += 1
     }
   }
 
-  let mostUsedActivity = "";
-  let maxCount = 0;
-  const activityBreakdown = Array.from(activityMap.entries()).map(
-    ([type, value]) => {
-      if (value.count > maxCount) {
-        maxCount = value.count;
-        mostUsedActivity = type;
-      }
-      return {
-        type,
-        count: value.count,
-        duration: value.duration,
-      };
-    },
-  );
+  let mostUsedActivity = ''
+  let maxCount = 0
+  const activityBreakdown = Array.from(activityMap.entries()).map(([type, value]) => {
+    if (value.count > maxCount) {
+      maxCount = value.count
+      mostUsedActivity = type
+    }
+    return {
+      type,
+      count: value.count,
+      duration: value.duration,
+    }
+  })
 
   return {
     todayDuration,
     thisWeekCount,
     mostUsedActivity,
     activityBreakdown,
-  };
-};
+  }
+}
 
-export const logRelaxError = (
-  message: string,
-  error: unknown,
-  extra?: Record<string, unknown>,
-) => {
+export const logRelaxError = (message: string, error: unknown, extra?: Record<string, unknown>) => {
   logger.error(message, {
     ...extra,
     error,
-  });
-};
+  })
+}
