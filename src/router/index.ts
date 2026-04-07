@@ -33,7 +33,6 @@ const routes: RouteRecordRaw[] = [
       subNav: [
         { path: '/mood/record', name: '情绪记录', icon: 'fas fa-pencil-alt' },
         { path: '/mood/archive', name: '情绪档案', icon: 'fas fa-archive' },
-        { path: '/mood/analysis', name: '情绪分析', icon: 'fas fa-chart-pie' },
       ],
     },
     children: [
@@ -44,10 +43,6 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'archive',
         component: () => import('@/views/mood/MoodArchive.vue'),
-      },
-      {
-        path: 'analysis',
-        component: () => import('@/views/mood/MoodAnalysis.vue'),
       },
     ],
   },

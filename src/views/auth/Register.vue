@@ -34,6 +34,17 @@
             required
           />
         </div>
+        <div class="form-group">
+          <label for="email">QQ邮箱</label>
+          <input
+            id="email"
+            v-model="form.email"
+            type="text"
+            placeholder="请输入QQ邮箱（如：123456789@qq.com）"
+            required
+            autocomplete="email"
+          />
+        </div>
         <div v-if="error" class="error-message">
           {{ error }}
         </div>
@@ -67,7 +78,10 @@ const form = reactive({
   username: '',
   password: '',
   confirmPassword: '',
+  email: '',
 })
+
+const qqEmailPattern = /^[a-zA-Z0-9._%+-]+@qq\.com$/
 
 const handleRegister = async () => {
   error.value = ''
@@ -88,7 +102,19 @@ const handleRegister = async () => {
     return
   }
 
-  const success = await userStore.register(form.username, form.password)
+  const email = form.email.trim()
+
+  if (!email) {
+    error.value = 'QQ邮箱不能为空'
+    return
+  }
+
+  if (!qqEmailPattern.test(email)) {
+    error.value = '请输入正确的QQ邮箱（例如：123456789@qq.com）'
+    return
+  }
+
+  const success = await userStore.register(form.username, form.password, email)
 
   if (success) {
     ElMessage.success('注册成功！请登录')

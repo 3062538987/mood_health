@@ -32,14 +32,14 @@ export const useUserStore = defineStore('user', () => {
     localStorage.removeItem('token')
   }
 
-  const register = async (username: string, password: string): Promise<boolean> => {
+  const register = async (username: string, password: string, email: string): Promise<boolean> => {
     loading.value = true
     error.value = ''
     try {
       await request({
         url: '/api/auth/register',
         method: 'post',
-        data: { username, password },
+        data: { username, password, email },
       })
       return true
     } catch (err: unknown) {

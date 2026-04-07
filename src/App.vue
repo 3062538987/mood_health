@@ -8,15 +8,18 @@
           <router-link to="/mood" active-class="active">
             <i class="fas fa-smile"></i> 情绪
           </router-link>
-          <router-link to="/relax" active-class="active">
+          <!-- // 第二版隐藏，待开发完成取消注释 -->
+          <!-- <router-link to="/relax" active-class="active">
             <i class="fas fa-leaf"></i> 放松
-          </router-link>
-          <router-link to="/improve" active-class="active">
+          </router-link> -->
+          <!-- // 第二版隐藏，待开发完成取消注释 -->
+          <!-- <router-link to="/improve" active-class="active">
             <i class="fas fa-chart-line"></i> 提升
-          </router-link>
-          <router-link to="/counseling" active-class="active">
+          </router-link> -->
+          <!-- // 第二版隐藏，待开发完成取消注释 -->
+          <!-- <router-link to="/counseling" active-class="active">
             <i class="fas fa-heart"></i> 咨询
-          </router-link>
+          </router-link> -->
           <router-link to="/user" active-class="active">
             <i class="fas fa-user"></i> 我的
           </router-link>

@@ -106,7 +106,11 @@
                 </div>
 
                 <div class="record-actions">
-                  <button class="action-btn edit-btn" type="button" @click.stop="editRecord(record)">
+                  <button
+                    class="action-btn edit-btn"
+                    type="button"
+                    @click.stop="editRecord(record)"
+                  >
                     编辑
                   </button>
                   <button
@@ -643,7 +647,6 @@ const confirmDeleteRecord = (record: MoodRecord) => {
 onMounted(() => {
   fetchMoodRecords()
 })
-
 </script>
 
 <style scoped lang="scss">
@@ -1221,4 +1224,6 @@ onMounted(() => {
         .record-date {
           font-size: 22px;
         }
+      }
+    }
 </style>
