@@ -20,6 +20,9 @@
           <router-link to="/user" active-class="active">
             <i class="fas fa-user"></i> 我的
           </router-link>
+          <router-link v-if="userStore.isAdmin" to="/admin" active-class="active">
+            <i class="fas fa-user-shield"></i> 管理后台
+          </router-link>
         </div>
         <div class="nav-user">
           <template v-if="userStore.isLoggedIn">

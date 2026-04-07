@@ -179,8 +179,97 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/admin',
-    component: () => import('@/views/admin/TreeHoleAudit.vue'),
-    meta: { adminOnly: true },
+    component: () => import('@/views/admin/AdminLayout.vue'),
+    redirect: '/admin/dashboard',
+    meta: {
+      adminOnly: true,
+      roles: ['admin', 'super_admin'],
+      permission: 'user.manage',
+      subNav: [
+        { path: '/admin/dashboard', name: '管理首页', icon: 'fas fa-gauge-high' },
+        { path: '/admin/users', name: '用户管理', icon: 'fas fa-users-cog' },
+        { path: '/admin/user-moods', name: '用户情绪数据', icon: 'fas fa-chart-line' },
+        { path: '/admin/moods', name: '情绪记录', icon: 'fas fa-face-smile' },
+        { path: '/admin/posts', name: '帖子审核', icon: 'fas fa-clipboard-check' },
+        { path: '/admin/courses', name: '课程管理', icon: 'fas fa-book-medical' },
+        { path: '/admin/music', name: '音乐管理', icon: 'fas fa-music' },
+        { path: '/admin/audit-logs', name: '审计日志', icon: 'fas fa-file-shield' },
+      ],
+    },
+    children: [
+      {
+        path: 'dashboard',
+        component: () => import('@/views/admin/AdminDashboard.vue'),
+        meta: {
+          adminOnly: true,
+          roles: ['admin', 'super_admin'],
+          permission: 'user.manage',
+        },
+      },
+      {
+        path: 'users',
+        component: () => import('@/views/admin/Users.vue'),
+        meta: {
+          adminOnly: true,
+          roles: ['super_admin'],
+          permission: 'user.manage',
+        },
+      },
+      {
+        path: 'posts',
+        component: () => import('@/views/admin/Posts.vue'),
+        meta: {
+          adminOnly: true,
+          roles: ['admin', 'super_admin'],
+          permission: 'post.audit',
+        },
+      },
+      {
+        path: 'user-moods',
+        component: () => import('@/views/admin/UserMoods.vue'),
+        meta: {
+          adminOnly: true,
+          roles: ['admin', 'super_admin'],
+          permission: 'mood.record.read',
+        },
+      },
+      {
+        path: 'moods',
+        component: () => import('@/views/admin/Moods.vue'),
+        meta: {
+          adminOnly: true,
+          roles: ['admin', 'super_admin'],
+          permission: 'mood.record.read',
+        },
+      },
+      {
+        path: 'courses',
+        component: () => import('@/views/admin/Courses.vue'),
+        meta: {
+          adminOnly: true,
+          roles: ['admin', 'super_admin'],
+          permission: 'course.manage',
+        },
+      },
+      {
+        path: 'music',
+        component: () => import('@/views/admin/Music.vue'),
+        meta: {
+          adminOnly: true,
+          roles: ['admin', 'super_admin'],
+          permission: 'music.manage',
+        },
+      },
+      {
+        path: 'audit-logs',
+        component: () => import('@/views/admin/AuditLogs.vue'),
+        meta: {
+          adminOnly: true,
+          roles: ['super_admin'],
+          permission: 'audit.record.view_all',
+        },
+      },
+    ],
   },
   {
     path: '/counseling',

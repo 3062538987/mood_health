@@ -1,5 +1,5 @@
 /* 导入主题变量 */
-@use "./theme.scss" as *;
+@use './theme.scss' as *;
 
 /* 全局样式重置 */
 * {
@@ -9,10 +9,10 @@
 }
 
 /* 导入Google Fonts衬线字体 */
-@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
 
 body {
-  font-family: "Microsoft YaHei", sans-serif;
+  font-family: 'Microsoft YaHei', sans-serif;
   font-size: $font-size-md;
   color: var(--text-color);
   background-color: var(--bg-color);
@@ -96,18 +96,13 @@ body {
   overflow: hidden;
 
   &::before {
-    content: "";
+    content: '';
     position: absolute;
     top: -50%;
     left: -50%;
     width: 200%;
     height: 200%;
-    background: linear-gradient(
-      45deg,
-      transparent,
-      rgba(255, 255, 255, 0.2),
-      transparent
-    );
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
     transform: rotate(45deg);
     animation: shimmer 3s infinite;
     opacity: 0;
@@ -231,7 +226,7 @@ h6 {
   margin-bottom: 16px;
   font-weight: 600;
   line-height: 1.3;
-  font-family: "Noto Serif SC", serif;
+  font-family: 'Noto Serif SC', serif;
 }
 
 h1 {
@@ -254,11 +249,41 @@ h3 {
   font-weight: 500;
 }
 
+/* Element Plus 消息提示：全局柔和主题 */
+.el-message {
+  border-radius: 18px;
+  border: 1px solid #f0d3ad;
+  background: #fff6ec;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+.el-message .el-message__content {
+  color: #8a6a47;
+}
+
+.el-message .el-message__icon,
+.el-message .el-message__closeBtn {
+  color: #c49a6c;
+}
+
+.el-message--info,
+.el-message--warning,
+.el-message--error {
+  border-color: #f0d3ad;
+  background: #fff6ec;
+}
+
+.el-message--info .el-message__content,
+.el-message--warning .el-message__content,
+.el-message--error .el-message__content {
+  color: #8a6a47;
+}
+
 /* 动态数字样式 */
 .dynamic-number {
   font-size: 2.5rem;
   font-weight: 700;
-  font-family: "Noto Serif SC", serif;
+  font-family: 'Noto Serif SC', serif;
   transition: all 0.5s ease;
   &.happy {
     color: var(--mood-happy);

@@ -55,35 +55,35 @@ const emit = defineEmits<{
 
 .eyebrow {
   margin: 0 0 0.35rem;
-  color: #7c7fb7;
+  color: #9c8f7d;
   font-size: 0.84rem;
   font-weight: 600;
 }
 
 h3 {
   margin: 0;
-  color: #202447;
+  color: #5c5c5c;
   font-size: 1.08rem;
 }
 
 .counter {
-  color: #70759a;
+  color: #7a746b;
   font-size: 0.9rem;
 }
 
 .tag-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.8rem;
+  gap: 0.95rem;
 }
 
 .tag-chip {
-  min-height: 42px;
-  padding: 0.72rem 1rem;
+  min-height: 44px;
+  padding: 0.78rem 1.12rem;
   border-radius: 999px;
-  border: 1px solid rgba(99, 102, 241, 0.16);
-  background: rgba(99, 102, 241, 0.07);
-  color: #4f5479;
+  border: 1px solid #e8e2d8;
+  background: #fbf4ea;
+  color: #5c5c5c;
   font-weight: 600;
   cursor: pointer;
   transition:
@@ -95,13 +95,13 @@ h3 {
 
 .tag-chip:hover {
   transform: translateY(-1px);
-  background: rgba(99, 102, 241, 0.12);
+  background: #f6ead9;
 }
 
 .tag-chip.selected {
-  background: linear-gradient(135deg, #6366f1, #7c83ff);
+  background: linear-gradient(135deg, #8b9dc3, #c49a6c);
   color: #fff;
-  box-shadow: 0 12px 22px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
   transform: scale(1.03);
 }
 

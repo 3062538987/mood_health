@@ -6,10 +6,19 @@
       <router-link to="/relax/center">解压中心</router-link>
       <router-link to="/improve/group">团体辅导</router-link>
       <router-link to="/user/profile">个人中心</router-link>
+      <router-link v-if="isAdmin" to="/admin">管理后台</router-link>
     </nav>
     <router-view />
   </div>
 </template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useUserStore } from '@/stores/userStore'
+
+const userStore = useUserStore()
+const isAdmin = computed(() => userStore.isAdmin)
+</script>
 
 <style scoped lang="scss">
 .layout-nav {

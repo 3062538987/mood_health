@@ -5,6 +5,8 @@ declare module 'vue-router' {
     public?: boolean
     guestOnly?: boolean
     adminOnly?: boolean
+    roles?: string[]
+    permission?: string
     subNav?: {
       path: string
       name: string

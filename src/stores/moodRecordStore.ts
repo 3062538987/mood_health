@@ -67,12 +67,36 @@ const moodOptions: MoodTypeOption[] = [
     softColor: 'rgba(139, 92, 246, 0.14)',
   },
   {
+    id: 'neutral',
+    label: '一般',
+    emoji: '🙂',
+    description: '没有特别明显起伏，状态比较日常。',
+    color: '#64748b',
+    softColor: 'rgba(100, 116, 139, 0.12)',
+  },
+  {
+    id: 'sad',
+    label: '难过',
+    emoji: '😔',
+    description: '有点失落，想慢慢缓一缓。',
+    color: '#3b82f6',
+    softColor: 'rgba(59, 130, 246, 0.12)',
+  },
+  {
     id: 'angry',
     label: '愤怒',
     emoji: '😠',
     description: '边界被碰撞，想表达不舒服。',
     color: '#ef4444',
     softColor: 'rgba(239, 68, 68, 0.12)',
+  },
+  {
+    id: 'irritable',
+    label: '烦躁',
+    emoji: '😣',
+    description: '心里有点堵，容易被小事触发。',
+    color: '#f97316',
+    softColor: 'rgba(249, 115, 22, 0.12)',
   },
   {
     id: 'anxious',
@@ -207,6 +231,14 @@ const normalizeRatios = (count: number) => {
   const base = Math.floor(100 / count)
   const remainder = 100 - base * count
   return Array.from({ length: count }, (_, index) => (index < remainder ? base + 1 : base))
+}
+
+const clampIntensity = (value: number) => {
+  if (!Number.isFinite(value)) {
+    return 6
+  }
+
+  return Math.min(10, Math.max(1, Math.round(value)))
 }
 
 const formatSavedAt = (savedAt?: number) => {
@@ -371,9 +403,10 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
 
   const applyDraft = (draft: MoodDraft) => {
     selectedMoodTypes.value = [...draft.selectedMoodTypes]
-    moodRatios.value = normalizeRatios(draft.selectedMoodTypes.length)
+    moodRatios.value =
+      selectedMoodTypes.value.length > 0 ? [clampIntensity(draft.intensity || 6)] : []
     moodContent.value = draft.moodContent || ''
-    intensity.value = draft.intensity || 6
+    intensity.value = clampIntensity(draft.intensity || 6)
     selectedTags.value = [...draft.selectedTags]
     selectedTriggers.value = [...draft.selectedTriggers]
     lastDraftSavedAt.value = draft.savedAt
@@ -425,6 +458,12 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
       selectedMoodTypes.value.push(id)
     }
     moodRatios.value = normalizeRatios(selectedMoodTypes.value.length)
+  }
+
+  const setMoodWheelSelection = (id: string, selectedIntensity?: number) => {
+    selectedMoodTypes.value = id ? [id] : []
+    intensity.value = clampIntensity(selectedIntensity ?? intensity.value)
+    moodRatios.value = selectedMoodTypes.value.length > 0 ? [intensity.value] : []
   }
 
   const toggleTag = (tag: string) => {
@@ -717,36 +756,26 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
     return selectedTriggers.value.length - originalCount
   }
 
-  const validateForm = () => {
-    if (selectedMoodTypes.value.length === 0) {
-      ElMessage.error('请至少选择一种情绪类型')
-      return false
-    }
-    if (!moodContent.value.trim()) {
-      ElMessage.error('请填写情绪描述')
-      return false
-    }
-    if (moodContent.value.trim().length > 300) {
-      ElMessage.error('情绪描述建议控制在 300 字以内')
-      return false
-    }
-    return true
-  }
-
   const submitRecord = async () => {
-    if (!validateForm()) {
-      return false
-    }
-
     isSubmitting.value = true
     try {
+      const safeMoodTypes =
+        selectedMoodTypes.value.length > 0 ? [...selectedMoodTypes.value] : ['neutral']
+      const normalizedIntensity = Number.isFinite(intensity.value)
+        ? Math.min(10, Math.max(1, Math.round(intensity.value)))
+        : 5
+      const safeIntensity = normalizedIntensity || 5
+      // Backend currently reads moodRatio[0] as intensity and validates 1-10.
+      // Keep combined mood types, but always submit a 1-10 ratio payload to avoid 400.
+      const safeMoodRatio = [safeIntensity]
+
       await submitMoodRecord({
-        moodType: [...selectedMoodTypes.value],
-        moodRatio: [...moodRatios.value],
-        event: moodContent.value.trim(),
+        moodType: safeMoodTypes,
+        moodRatio: safeMoodRatio,
+        event: moodContent.value.trim() || '',
         tags: Array.from(new Set([...selectedTags.value, ...selectedTriggers.value])),
         trigger: selectedTriggers.value.join(','),
-        intensity: intensity.value,
+        intensity: safeIntensity,
       })
 
       ElMessage.success('这次心情已经好好存下来了')
@@ -786,6 +815,9 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
       hasDraft.value = true
     } else {
       hasDraft.value = false
+      if (selectedMoodTypes.value.length === 0) {
+        setMoodWheelSelection('happy', intensity.value)
+      }
     }
 
     refreshAutoRecommendations()
@@ -829,6 +861,7 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
     discardDraft,
     resetForm,
     toggleMoodType,
+    setMoodWheelSelection,
     toggleTag,
     addTrigger,
     removeTrigger,

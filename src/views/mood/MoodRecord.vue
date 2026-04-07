@@ -29,6 +29,42 @@
 
       <div class="content-grid">
         <main class="editor-column">
+          <section class="panel mood-type-panel">
+            <div class="panel-head compact">
+              <div>
+                <p class="eyebrow">情绪类型</p>
+                <h2>可组合选择最多 3 种情绪类型</h2>
+              </div>
+              <span class="count-chip"
+                >已选 {{ selectedMoodTypeIds.length }}/3：{{ selectedMoodLabelText }}</span
+              >
+            </div>
+
+            <div class="mood-type-list">
+              <button
+                v-for="item in visibleMoodOptions"
+                :key="item.id"
+                type="button"
+                class="mood-type-item"
+                :class="{ active: selectedMoodTypeIds.includes(item.id) }"
+                @click="handleMoodTypeSelect(item.id)"
+              >
+                <span
+                  class="mood-emoji"
+                  :style="{ backgroundColor: item.softColor, borderColor: item.color }"
+                >
+                  {{ item.emoji }}
+                </span>
+                <span class="mood-meta">
+                  <span class="mood-label">{{ item.label }}</span>
+                  <span class="mood-tag" :style="{ backgroundColor: item.softColor }">
+                    {{ getMoodTag(item.id) }}
+                  </span>
+                </span>
+              </button>
+            </div>
+          </section>
+
           <section class="panel intensity-panel">
             <div class="panel-head">
               <div>
@@ -96,47 +132,10 @@
             </div>
 
             <textarea
-              ref="moodTextareaRef"
               v-model="moodContent"
               rows="6"
               placeholder="可以从一件小事开始：今天什么时候开始觉得不舒服，或哪一刻突然轻松了？"
             ></textarea>
-
-            <div class="ai-entry-row">
-              <button
-                type="button"
-                class="inline-ai-btn"
-                :class="{ loading: aiLoading }"
-                @click="handleGenerateAdvice"
-              >
-                {{ aiLoading ? '正在整理建议...' : '先帮我梳理一下' }}
-              </button>
-              <p>按钮前置在描述区下方，写完就能立刻得到回应。</p>
-            </div>
-
-            <transition name="soft-fade" mode="out-in">
-              <div v-if="autoRecommendations.length > 0" class="auto-recommend-list">
-                <span class="tip-label">系统已根据你的输入做了预匹配</span>
-                <button
-                  v-for="item in autoRecommendations"
-                  :key="item"
-                  type="button"
-                  class="auto-pill"
-                  @click="appendRecommendation(item)"
-                >
-                  {{ item }}
-                </button>
-              </div>
-            </transition>
-          </section>
-
-          <section class="panel">
-            <MoodTypeGroup
-              :options="moodOptions"
-              :selected-ids="selectedMoodTypes"
-              :max-select="3"
-              @toggle="store.toggleMoodType"
-            />
           </section>
 
           <section class="panel trigger-panel">
@@ -186,14 +185,6 @@
             </div>
           </section>
 
-          <section class="panel">
-            <MoodTagGroup
-              :tags="tagOptions"
-              :selected-tags="selectedTags"
-              @toggle="store.toggleTag"
-            />
-          </section>
-
           <section class="panel action-panel">
             <div class="draft-banner" :class="{ visible: hasDraft }">
               <span>草稿已自动保存</span>
@@ -201,9 +192,6 @@
             </div>
 
             <div class="action-row">
-              <button type="button" class="ghost-action" @click="store.resetForm">
-                清空当前记录
-              </button>
               <button
                 type="button"
                 class="submit-action"
@@ -216,57 +204,24 @@
             </div>
           </section>
         </main>
-
-        <aside class="ai-column">
-          <AiSuggestCard
-            :loading="aiLoading"
-            :history-loading="historyLoading"
-            :can-generate="canAskAi"
-            :service-unavailable="isAiTemporarilyDisabled"
-            :disabled-seconds="aiCooldownSeconds"
-            :service-message="aiServiceMessage"
-            :result="aiResult"
-            :auto-recommendations="autoRecommendations"
-            :history="aiHistory"
-            :mood-meta="currentAiMoodMeta"
-            @generate="handleGenerateAdvice"
-            @copy="handleCopyAdvice"
-            @apply-all="handleApplyAllTriggers"
-            @apply-one="handleApplySingleTrigger"
-            @use-history="store.hydrateAdviceFromHistory"
-          />
-        </aside>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import { ElMessage } from 'element-plus'
-import AiSuggestCard from '@/components/mood/AiSuggestCard.vue'
-import MoodTagGroup from '@/components/mood/MoodTagGroup.vue'
-import MoodTypeGroup from '@/components/mood/MoodTypeGroup.vue'
 import { useMoodRecordStore } from '@/stores/moodRecordStore'
 
 const store = useMoodRecordStore()
-const moodTextareaRef = ref<HTMLTextAreaElement | null>(null)
 
 const {
-  moodOptions,
-  tagOptions,
   selectedMoodTypes,
   moodContent,
   intensity,
   triggerInput,
   selectedTriggers,
-  selectedTags,
-  aiResult,
-  aiLoading,
-  aiHistory,
-  historyLoading,
-  autoRecommendations,
   hasDraft,
   isSubmitting,
   isSubmittingSuccess,
@@ -274,13 +229,13 @@ const {
   filteredTriggerSuggestions,
   characterCount,
   formProgress,
-  canAskAi,
-  isAiTemporarilyDisabled,
-  aiCooldownSeconds,
-  aiServiceMessage,
-  currentAiMoodMeta,
   draftSavedAtText,
 } = storeToRefs(store)
+
+const moodOptions = computed(() => {
+  const options = store.moodOptions
+  return Array.isArray(options) ? options : []
+})
 
 const intensityTone = computed(() => {
   if (intensity.value <= 3) {
@@ -292,88 +247,89 @@ const intensityTone = computed(() => {
   return { emoji: '✨', label: '高能量', className: 'high' }
 })
 
+const selectedMoodTypeIds = computed(() => selectedMoodTypes.value)
+
+const selectedMoodLabelText = computed(() => {
+  if (selectedMoodMeta.value.length === 0) {
+    return '未选择'
+  }
+  return selectedMoodMeta.value.map((item) => item.label).join('、')
+})
+
 const canSubmit = computed(() => !isSubmitting.value)
 
-const focusTextarea = () => {
-  moodTextareaRef.value?.focus()
-  moodTextareaRef.value?.scrollIntoView({
-    behavior: 'smooth',
-    block: 'center',
-  })
+const fallbackMoodOptions = [
+  {
+    id: 'happy',
+    label: '快乐',
+    emoji: '😊',
+    color: '#6366f1',
+    softColor: 'rgba(99, 102, 241, 0.14)',
+  },
+  {
+    id: 'delight',
+    label: '愉悦',
+    emoji: '🌤️',
+    color: '#8b5cf6',
+    softColor: 'rgba(139, 92, 246, 0.14)',
+  },
+  {
+    id: 'neutral',
+    label: '一般',
+    emoji: '🙂',
+    color: '#64748b',
+    softColor: 'rgba(100, 116, 139, 0.12)',
+  },
+  {
+    id: 'sad',
+    label: '难过',
+    emoji: '😔',
+    color: '#3b82f6',
+    softColor: 'rgba(59, 130, 246, 0.12)',
+  },
+  {
+    id: 'angry',
+    label: '愤怒',
+    emoji: '😠',
+    color: '#ef4444',
+    softColor: 'rgba(239, 68, 68, 0.12)',
+  },
+  {
+    id: 'anxious',
+    label: '焦虑',
+    emoji: '😰',
+    color: '#f59e0b',
+    softColor: 'rgba(245, 158, 11, 0.12)',
+  },
+]
+
+const visibleMoodOptions = computed(() => {
+  if (Array.isArray(moodOptions.value) && moodOptions.value.length > 0) {
+    return moodOptions.value
+  }
+  return fallbackMoodOptions
+})
+
+const handleMoodTypeSelect = (moodId: string) => {
+  store.toggleMoodType(moodId)
 }
 
-const handleGenerateAdvice = async () => {
-  try {
-    const isDisabled = Boolean(isAiTemporarilyDisabled?.value)
-    const cooldownSeconds = aiCooldownSeconds?.value ?? 0
-    const content = (moodContent?.value ?? '').trim()
-    const canAsk = Boolean(canAskAi?.value)
-
-    if (isDisabled) {
-      ElMessage.warning(`建议服务恢复中，请 ${cooldownSeconds} 秒后再试`)
-      return
-    }
-
-    if (!content) {
-      const textareaEl =
-        moodTextareaRef.value ||
-        (document.querySelector('.writing-panel textarea') as HTMLTextAreaElement | null)
-      textareaEl?.focus()
-      textareaEl?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      ElMessage.info('请先输入情绪描述，再获取建议')
-      return
-    }
-
-    if (!canAsk) {
-      focusTextarea()
-      ElMessage.info('先补几句描述，系统才能给出更贴近的建议')
-      return
-    }
-
-    const result = await store.requestAiAdvice()
-    if (!result.ok && result.code === 'REQUEST_FAILED') {
-      console.warn('建议请求失败', result.message)
-    }
-  } catch (error) {
-    console.error('handleGenerateAdvice 执行异常', error)
-    ElMessage.error('获取建议失败，请稍后重试')
-  }
-}
-
-const appendRecommendation = (text: string) => {
-  moodContent.value = [moodContent.value.trim(), text].filter(Boolean).join('\n')
-}
-
-const handleCopyAdvice = async () => {
-  if (!store.copyableAdviceText) {
-    return
+const getMoodTag = (moodId: string) => {
+  const tagMap: Record<string, string> = {
+    happy: '积极',
+    delight: '舒展',
+    excited: '高能',
+    grateful: '温暖',
+    calm: '平衡',
+    neutral: '平稳',
+    tired: '低能',
+    sad: '消耗',
+    anxious: '紧绷',
+    irritable: '敏感',
+    angry: '防御',
   }
 
-  try {
-    await navigator.clipboard.writeText(store.copyableAdviceText)
-    ElMessage.success('建议已复制')
-  } catch (error) {
-    console.error('复制建议失败', error)
-    ElMessage.error('复制失败，请稍后重试')
-  }
-}
-
-const handleApplyAllTriggers = () => {
-  const appendedCount = store.applyAiSuggestionsToTriggers()
-  if (appendedCount > 0) {
-    ElMessage.success(`已补入 ${appendedCount} 个触发因素`)
-    return
-  }
-  ElMessage.info('当前建议里没有可回填的触发因素')
-}
-
-const handleApplySingleTrigger = (index: number) => {
-  const appendedCount = store.applyAiSuggestionsToTriggers(index)
-  if (appendedCount > 0) {
-    ElMessage.success('这条建议已回填到触发因素')
-    return
-  }
-  ElMessage.info('这条建议暂时没有可提取的触发因素')
+  return tagMap[moodId] || '状态'
 }
 
 const handleSubmit = async () => {
@@ -389,39 +345,35 @@ onMounted(() => {
 <style scoped lang="scss">
 .mood-record-page {
   min-height: 100%;
-  padding: 24px;
-  background:
-    radial-gradient(circle at top left, rgba(129, 140, 248, 0.2), transparent 28%),
-    radial-gradient(circle at right 20%, rgba(196, 181, 253, 0.22), transparent 24%),
-    linear-gradient(180deg, #f6f7ff 0%, #f4f5fb 100%);
+  padding: 36px;
+  background: #fdf8f2;
 }
 
 .page-shell {
   width: min(1200px, 100%);
   margin: 0 auto;
   display: grid;
-  gap: 1.2rem;
+  gap: 1.6rem;
 }
 
 .hero-panel,
 .panel {
   border-radius: 22px;
-  border: 1px solid rgba(99, 102, 241, 0.1);
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 24px 60px rgba(99, 102, 241, 0.08);
+  border: 1px solid #eee5d8;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
 }
 
 .hero-panel {
-  padding: 1.6rem;
+  padding: 2rem;
   display: grid;
-  gap: 1rem;
+  gap: 1.4rem;
   grid-template-columns: 1.5fr 1fr;
 }
 
 .eyebrow {
   margin: 0 0 0.45rem;
-  color: #7c7fb7;
+  color: #9c8f7d;
   font-size: 0.84rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -431,7 +383,7 @@ onMounted(() => {
 h1,
 h2 {
   margin: 0;
-  color: #1f2347;
+  color: #5c5c5c;
 }
 
 h1 {
@@ -440,13 +392,15 @@ h1 {
 }
 
 h2 {
-  font-size: 1.18rem;
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
 }
 
 .hero-copy {
   margin: 0.8rem 0 0;
   max-width: 46rem;
-  color: #586080;
+  color: #5c5c5c;
   line-height: 1.8;
 }
 
@@ -461,40 +415,110 @@ h2 {
   align-content: center;
   gap: 0.28rem;
   padding: 1rem;
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(99, 102, 241, 0.09), rgba(255, 255, 255, 0.88));
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(196, 154, 108, 0.1), rgba(255, 255, 255, 0.92));
 }
 
 .hero-metrics strong {
   font-size: 1.5rem;
-  color: #6366f1;
+  color: #8b9dc3;
 }
 
 .hero-metrics span {
-  color: #6d7295;
+  color: #7a746b;
   font-size: 0.9rem;
 }
 
 .content-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.95fr);
-  gap: 1.2rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
   align-items: start;
 }
 
-.editor-column,
-.ai-column {
+.editor-column {
+  display: grid;
+  gap: 1.4rem;
+}
+
+.panel {
+  padding: 1.65rem;
+}
+
+.mood-type-panel {
   display: grid;
   gap: 1rem;
 }
 
-.ai-column {
-  position: sticky;
-  top: 20px;
+.mood-type-list {
+  display: flex;
+  gap: 0.58rem;
+  overflow-x: auto;
+  padding: 0.2rem 0.1rem 0.4rem;
+  scrollbar-width: thin;
 }
 
-.panel {
-  padding: 1.25rem;
+.mood-type-item {
+  min-width: 128px;
+  border: 1px solid #e8e2d8;
+  border-radius: 16px;
+  background: #fffdf9;
+  color: #5c5c5c;
+  padding: 0.5rem 0.58rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.mood-type-item:hover {
+  transform: translateY(-1px);
+  border-color: #d4c5b3;
+}
+
+.mood-type-item.active {
+  border-color: #c49a6c;
+  background: linear-gradient(180deg, rgba(252, 244, 234, 0.95), rgba(255, 255, 255, 0.98));
+  box-shadow: 0 8px 18px rgba(196, 154, 108, 0.2);
+}
+
+.mood-emoji {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 1.04rem;
+  background: #f8f3ea;
+  border: 1px solid #ece2d3;
+}
+
+.mood-meta {
+  min-width: 0;
+  display: grid;
+  justify-items: start;
+  gap: 0.2rem;
+}
+
+.mood-label {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.mood-tag {
+  padding: 0.09rem 0.42rem;
+  border-radius: 999px;
+  background: rgba(139, 157, 195, 0.14);
+  color: #6d7280;
+  font-size: 12px;
+  line-height: 1.25;
 }
 
 .panel-head {
@@ -517,11 +541,11 @@ h2 {
 .intensity-badge {
   min-width: 116px;
   padding: 0.8rem 0.9rem;
-  border-radius: 16px;
+  border-radius: 20px;
   display: grid;
   justify-items: center;
-  background: rgba(99, 102, 241, 0.08);
-  color: #4d5378;
+  background: rgba(139, 157, 195, 0.12);
+  color: #5c5c5c;
 }
 
 .intensity-badge.low {
@@ -529,11 +553,11 @@ h2 {
 }
 
 .intensity-badge.mid {
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(139, 157, 195, 0.12);
 }
 
 .intensity-badge.high {
-  background: rgba(129, 140, 248, 0.14);
+  background: rgba(196, 154, 108, 0.16);
 }
 
 .intensity-badge strong {
@@ -542,10 +566,10 @@ h2 {
 
 .intensity-badge small,
 .scale-labels,
-.count-chip,
 .ai-entry-row p,
 .draft-banner small {
-  color: #71789a;
+  color: #888;
+  font-size: 13px;
 }
 
 .intensity-scale {
@@ -557,9 +581,10 @@ h2 {
 .scale-dot {
   min-height: 44px;
   border: none;
-  border-radius: 12px;
-  background: rgba(99, 102, 241, 0.08);
-  color: #66708f;
+  border-radius: 16px;
+  background: rgba(196, 154, 108, 0.12);
+  color: #6f6a62;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   transition:
@@ -570,36 +595,36 @@ h2 {
 }
 
 .scale-dot.active {
-  background: rgba(99, 102, 241, 0.18);
-  color: #4850d8;
+  background: rgba(139, 157, 195, 0.24);
+  color: #5c5c5c;
 }
 
 .scale-dot.current {
-  background: linear-gradient(135deg, #6366f1, #818cf8);
+  background: linear-gradient(135deg, #8b9dc3, #c49a6c);
   color: #fff;
   transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.22);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
 }
 
 .intensity-slider {
   width: 100%;
-  accent-color: #6366f1;
+  accent-color: #c49a6c;
 }
 
 .scale-labels {
   display: flex;
   justify-content: space-between;
-  font-size: 0.92rem;
+  font-size: 13px;
 }
 
 textarea,
 .trigger-input {
   width: 100%;
-  border-radius: 14px;
-  border: 1px solid rgba(99, 102, 241, 0.14);
-  background: rgba(248, 249, 255, 0.95);
-  color: #2d345c;
-  padding: 1rem;
+  border-radius: 20px;
+  border: 1px solid #e8e2d8;
+  background: #fff;
+  color: #5c5c5c;
+  padding: 1.15rem 1.2rem;
   outline: none;
   transition:
     border-color 0.2s ease,
@@ -610,29 +635,36 @@ textarea,
 textarea {
   resize: vertical;
   min-height: 156px;
+  font-size: 15px;
   line-height: 1.75;
+}
+
+textarea::placeholder {
+  font-size: 15px;
+  color: #888;
 }
 
 textarea:focus,
 .trigger-input:focus {
-  border-color: rgba(99, 102, 241, 0.38);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.08);
+  border-color: #c49a6c;
+  box-shadow: 0 0 0 4px rgba(196, 154, 108, 0.12);
   background: #fff;
 }
 
 .count-chip {
   padding: 0.42rem 0.7rem;
   border-radius: 999px;
-  background: rgba(99, 102, 241, 0.08);
-  font-size: 0.86rem;
+  background: rgba(196, 154, 108, 0.14);
+  color: #888;
+  font-size: 12px;
 }
 
 .inline-draft-tip {
   margin-bottom: 0.9rem;
-  padding: 0.85rem 0.95rem;
-  border-radius: 14px;
-  border: 1px solid rgba(99, 102, 241, 0.18);
-  background: rgba(99, 102, 241, 0.06);
+  padding: 1rem 1.1rem;
+  border-radius: 20px;
+  border: 1px solid #e5e7eb;
+  background: #f6f7f9;
   display: flex;
   justify-content: space-between;
   gap: 0.8rem;
@@ -645,12 +677,13 @@ textarea:focus,
 }
 
 .tip-text strong {
-  color: #4048b7;
-  font-size: 0.92rem;
+  color: #555;
+  font-size: 12px;
 }
 
 .tip-text small {
-  color: #626b90;
+  color: #888;
+  font-size: 12px;
 }
 
 .tip-actions {
@@ -660,16 +693,19 @@ textarea:focus,
 
 .tip-btn {
   border: none;
-  border-radius: 10px;
+  border-radius: 40px;
   padding: 0.52rem 0.78rem;
   cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
   color: #fff;
-  background: linear-gradient(135deg, #6366f1, #818cf8);
+  background: linear-gradient(135deg, #8b9dc3, #c49a6c);
 }
 
 .tip-btn.ghost {
-  color: #4b537b;
-  background: rgba(99, 102, 241, 0.12);
+  font-weight: 400;
+  color: #6f6a62;
+  background: rgba(196, 154, 108, 0.16);
 }
 
 .ai-entry-row {
@@ -689,6 +725,8 @@ textarea:focus,
 .selected-trigger {
   border: none;
   cursor: pointer;
+  font-size: 15px;
+  font-weight: 400;
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease,
@@ -699,11 +737,16 @@ textarea:focus,
 
 .inline-ai-btn,
 .submit-action {
-  padding: 0.9rem 1.15rem;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #6366f1, #818cf8);
+  padding: 0.95rem 1.3rem;
+  border-radius: 40px;
+  background: linear-gradient(135deg, #8b9dc3, #c49a6c);
+  font-weight: 700;
   color: #fff;
-  box-shadow: 0 16px 26px rgba(99, 102, 241, 0.18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+.add-trigger-btn {
+  font-weight: 700;
 }
 
 .inline-ai-btn.loading,
@@ -720,9 +763,9 @@ textarea:focus,
 }
 
 .tip-label {
-  color: #6366f1;
-  font-weight: 700;
-  font-size: 0.88rem;
+  color: #888;
+  font-weight: 400;
+  font-size: 13px;
 }
 
 .auto-pill,
@@ -732,8 +775,8 @@ textarea:focus,
 .add-trigger-btn {
   padding: 0.74rem 0.95rem;
   border-radius: 999px;
-  background: rgba(99, 102, 241, 0.08);
-  color: #53597f;
+  background: rgba(196, 154, 108, 0.14);
+  color: #5c5c5c;
 }
 
 .auto-pill:hover,
@@ -761,9 +804,9 @@ textarea:focus,
 }
 
 .selected-trigger {
-  background: rgba(99, 102, 241, 0.14);
-  color: #454db8;
-  font-weight: 700;
+  background: rgba(139, 157, 195, 0.2);
+  color: #5c5c5c;
+  font-weight: 400;
 }
 
 .selected-trigger span {
@@ -773,8 +816,15 @@ textarea:focus,
 .draft-banner {
   display: none;
   padding: 0.95rem 1rem;
-  border-radius: 16px;
-  background: rgba(99, 102, 241, 0.08);
+  border-radius: 20px;
+  border: 1px solid #e5e7eb;
+  background: #f6f7f9;
+  font-size: 12px;
+}
+
+.eyebrow {
+  color: #888;
+  font-size: 13px;
 }
 
 .draft-banner.visible {
@@ -783,11 +833,20 @@ textarea:focus,
 }
 
 .ghost-action {
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(196, 154, 108, 0.16);
 }
 
 .submit-action.success {
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  background: linear-gradient(135deg, #8b9dc3, #c49a6c);
+}
+
+:deep(.el-message--error) {
+  background: #fff6ec;
+  border-color: #f0d3ad;
+}
+
+:deep(.el-message--error .el-message__content) {
+  color: #8a6a47;
 }
 
 .soft-fade-enter-active,
@@ -803,20 +862,130 @@ textarea:focus,
   transform: translateY(8px);
 }
 
+/* Visual hierarchy overrides */
+.editor-column {
+  gap: 0 !important;
+}
+
+.editor-column > .panel {
+  margin-bottom: 28px !important;
+}
+
+.editor-column > .panel:last-of-type {
+  margin-bottom: 0 !important;
+}
+
+.mood-type-panel .eyebrow,
+.intensity-panel .eyebrow,
+.writing-panel .eyebrow,
+.trigger-panel .eyebrow {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: #2c3e50 !important;
+  margin-bottom: 12px !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  line-height: 1.2 !important;
+}
+
+.mood-type-panel h2,
+.intensity-panel h2,
+.writing-panel h2,
+.trigger-panel h2 {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  color: #95a5a6 !important;
+  line-height: 1.4 !important;
+  margin-bottom: 0 !important;
+}
+
+.panel-head {
+  border-bottom: 1px solid #eceff1 !important;
+  padding-bottom: 12px !important;
+  margin-bottom: 12px !important;
+}
+
+.eyebrow,
+.hero-copy,
+.scale-labels,
+.count-chip,
+.tip-text small,
+.draft-banner small,
+.tip-label {
+  font-size: 13px !important;
+  color: #95a5a6 !important;
+  line-height: 1.4 !important;
+}
+
+.mood-type-item {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  padding: 10px 16px !important;
+}
+
+.mood-label {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+}
+
+.intensity-badge strong {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: #8b9dc3 !important;
+}
+
+textarea {
+  font-size: 16px !important;
+  padding: 14px !important;
+}
+
+textarea::placeholder {
+  font-size: 14px !important;
+  color: #bbb !important;
+}
+
+.inline-draft-tip,
+.draft-banner {
+  background: #f8f9fa !important;
+  border-radius: 16px !important;
+  padding: 12px !important;
+  border: none !important;
+}
+
+.tip-text strong,
+.tip-text small,
+.draft-banner,
+.draft-banner small {
+  font-size: 12px !important;
+}
+
+.submit-action {
+  background: linear-gradient(135deg, #8b9dc3, #c49a6c) !important;
+  color: #fff !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  border-radius: 40px !important;
+}
+
+.tip-actions .tip-btn,
+.tip-actions .tip-btn.ghost {
+  background: transparent !important;
+  border: 1px solid #d0d7de !important;
+  color: #4b5563 !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+}
+
 @media (max-width: 1024px) {
   .content-grid,
   .hero-panel {
     grid-template-columns: 1fr;
   }
-
-  .ai-column {
-    position: static;
-  }
 }
 
 @media (max-width: 768px) {
   .mood-record-page {
-    padding: 16px;
+    padding: 18px;
   }
 
   .hero-metrics {
