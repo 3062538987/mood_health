@@ -32,7 +32,8 @@ const routes: RouteRecordRaw[] = [
     meta: {
       subNav: [
         { path: '/mood/record', name: '情绪记录', icon: 'fas fa-pencil-alt' },
-        { path: '/mood/archive', name: '情绪档案', icon: 'fas fa-archive' },
+        // 第二版隐藏，待开发完成取消注释
+        // { path: '/mood/archive', name: '情绪档案', icon: 'fas fa-archive' },
       ],
     },
     children: [

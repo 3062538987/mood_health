@@ -17,7 +17,7 @@
             <span>记录完成度</span>
           </article>
           <article>
-            <strong>{{ selectedMoodMeta.length }}</strong>
+            <strong>{{ selectedMoodTypeIds.length }}</strong>
             <span>已选情绪</span>
           </article>
           <article>
@@ -40,28 +40,31 @@
               >
             </div>
 
-            <div class="mood-type-list">
-              <button
-                v-for="item in visibleMoodOptions"
-                :key="item.id"
-                type="button"
-                class="mood-type-item"
-                :class="{ active: selectedMoodTypeIds.includes(item.id) }"
-                @click="handleMoodTypeSelect(item.id)"
-              >
-                <span
-                  class="mood-emoji"
-                  :style="{ backgroundColor: item.softColor, borderColor: item.color }"
-                >
-                  {{ item.emoji }}
-                </span>
-                <span class="mood-meta">
-                  <span class="mood-label">{{ item.label }}</span>
-                  <span class="mood-tag" :style="{ backgroundColor: item.softColor }">
-                    {{ getMoodTag(item.id) }}
-                  </span>
-                </span>
-              </button>
+            <div class="mood-grid-scroll">
+              <div v-for="row in visibleMoodRows" :key="row.key" class="mood-row-block">
+                <p class="mood-row-title">{{ row.title }}</p>
+                <div class="mood-grid">
+                  <button
+                    v-for="item in row.options"
+                    :key="item.id"
+                    type="button"
+                    class="mood-type-item"
+                    :class="{
+                      active: selectedMoodTypeIds.includes(item.id),
+                      disabled: isMoodDisabled(item.id),
+                    }"
+                    :disabled="isMoodDisabled(item.id)"
+                    :aria-label="`选择情绪 ${getMoodLabel(item.id)}`"
+                    :style="getMoodCardStyle(item.softColor)"
+                    @click="handleMoodTypeSelect(item.id)"
+                  >
+                    <span class="mood-emoji">
+                      {{ item.emoji }}
+                    </span>
+                    <span class="mood-label">{{ getMoodLabel(item.id) }}</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </section>
 
@@ -212,6 +215,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
+import { EMOTION_MAP } from '@/constants/emotions'
 import { useMoodRecordStore } from '@/stores/moodRecordStore'
 
 const store = useMoodRecordStore()
@@ -225,17 +229,68 @@ const {
   hasDraft,
   isSubmitting,
   isSubmittingSuccess,
-  selectedMoodMeta,
   filteredTriggerSuggestions,
   characterCount,
   formProgress,
   draftSavedAtText,
 } = storeToRefs(store)
 
-const moodOptions = computed(() => {
-  const options = store.moodOptions
-  return Array.isArray(options) ? options : []
-})
+interface MoodRingOption {
+  id: string
+  emoji: string
+  softColor: string
+}
+
+interface MoodRingRow {
+  key: string
+  title: string
+  options: MoodRingOption[]
+}
+
+const visibleMoodRows: MoodRingRow[] = [
+  {
+    key: 'strong',
+    title: '强烈情绪',
+    options: [
+      { id: 'ecstasy', emoji: '😆', softColor: '#f4c862' },
+      { id: 'admiration', emoji: '👏', softColor: '#2fd59e' },
+      { id: 'fear', emoji: '😨', softColor: '#1aa98c' },
+      { id: 'amazement', emoji: '😲', softColor: '#2f82d8' },
+      { id: 'grief', emoji: '😢', softColor: '#5a58bb' },
+      { id: 'disgust', emoji: '🤢', softColor: '#c35ec9' },
+      { id: 'angry', emoji: '😠', softColor: '#ef6a95' },
+      { id: 'vigilance', emoji: '👀', softColor: '#f39a61' },
+    ],
+  },
+  {
+    key: 'compound',
+    title: '复合情绪',
+    options: [
+      { id: 'delight', emoji: '😊', softColor: '#f3d57f' },
+      { id: 'trust', emoji: '🤝', softColor: '#5ae2bb' },
+      { id: 'terror', emoji: '😖', softColor: '#31ba8a' },
+      { id: 'surprise', emoji: '🎉', softColor: '#4ea9ef' },
+      { id: 'sad', emoji: '😔', softColor: '#8a73ce' },
+      { id: 'loathing', emoji: '🙅', softColor: '#d285cf' },
+      { id: 'rage', emoji: '😤', softColor: '#f08aac' },
+      { id: 'anticipation', emoji: '🤩', softColor: '#f7b88f' },
+    ],
+  },
+  {
+    key: 'basic',
+    title: '基础情绪',
+    options: [
+      { id: 'calm', emoji: '😌', softColor: '#efe1b2' },
+      { id: 'acceptance', emoji: '🤗', softColor: '#8ee7cd' },
+      { id: 'apprehension', emoji: '😟', softColor: '#9dd7bd' },
+      { id: 'distraction', emoji: '🎮', softColor: '#94c8ef' },
+      { id: 'pensiveness', emoji: '🤔', softColor: '#b8abdf' },
+      { id: 'boredom', emoji: '😑', softColor: '#deb0d9' },
+      { id: 'annoyance', emoji: '😣', softColor: '#f7b7cb' },
+      { id: 'interest', emoji: '🔍', softColor: '#f3c8b3' },
+    ],
+  },
+]
 
 const intensityTone = computed(() => {
   if (intensity.value <= 3) {
@@ -250,86 +305,52 @@ const intensityTone = computed(() => {
 const selectedMoodTypeIds = computed(() => selectedMoodTypes.value)
 
 const selectedMoodLabelText = computed(() => {
-  if (selectedMoodMeta.value.length === 0) {
+  if (selectedMoodTypeIds.value.length === 0) {
     return '未选择'
   }
-  return selectedMoodMeta.value.map((item) => item.label).join('、')
+  return selectedMoodTypeIds.value.map((id) => getMoodLabel(id)).join('、')
 })
 
 const canSubmit = computed(() => !isSubmitting.value)
 
-const fallbackMoodOptions = [
-  {
-    id: 'happy',
-    label: '快乐',
-    emoji: '😊',
-    color: '#6366f1',
-    softColor: 'rgba(99, 102, 241, 0.14)',
-  },
-  {
-    id: 'delight',
-    label: '愉悦',
-    emoji: '🌤️',
-    color: '#8b5cf6',
-    softColor: 'rgba(139, 92, 246, 0.14)',
-  },
-  {
-    id: 'neutral',
-    label: '一般',
-    emoji: '🙂',
-    color: '#64748b',
-    softColor: 'rgba(100, 116, 139, 0.12)',
-  },
-  {
-    id: 'sad',
-    label: '难过',
-    emoji: '😔',
-    color: '#3b82f6',
-    softColor: 'rgba(59, 130, 246, 0.12)',
-  },
-  {
-    id: 'angry',
-    label: '愤怒',
-    emoji: '😠',
-    color: '#ef4444',
-    softColor: 'rgba(239, 68, 68, 0.12)',
-  },
-  {
-    id: 'anxious',
-    label: '焦虑',
-    emoji: '😰',
-    color: '#f59e0b',
-    softColor: 'rgba(245, 158, 11, 0.12)',
-  },
-]
+const getMoodLabel = (moodId: string) => {
+  return EMOTION_MAP[moodId] || moodId
+}
 
-const visibleMoodOptions = computed(() => {
-  if (Array.isArray(moodOptions.value) && moodOptions.value.length > 0) {
-    return moodOptions.value
+const toRgb = (hexColor: string) => {
+  const hex = hexColor.replace('#', '')
+  const normalized = hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex
+  const value = Number.parseInt(normalized, 16)
+  const r = (value >> 16) & 255
+  const g = (value >> 8) & 255
+  const b = value & 255
+  return { r, g, b }
+}
+
+const getMoodCardStyle = (hexColor: string) => {
+  const { r, g, b } = toRgb(hexColor)
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+  const ink = luminance < 0.56 ? '#ffffff' : '#24313f'
+
+  return {
+    backgroundColor: `rgba(${r}, ${g}, ${b}, 0.22)`,
+    borderColor: `rgba(${r}, ${g}, ${b}, 0.42)`,
+    color: ink,
+    '--mood-glow': `rgba(${r}, ${g}, ${b}, 0.3)`,
+    '--mood-emoji-bg': `rgba(${r}, ${g}, ${b}, ${luminance < 0.56 ? 0.2 : 0.3})`,
+    '--mood-emoji-border': `rgba(${r}, ${g}, ${b}, ${luminance < 0.56 ? 0.42 : 0.32})`,
   }
-  return fallbackMoodOptions
-})
+}
 
 const handleMoodTypeSelect = (moodId: string) => {
+  if (selectedMoodTypeIds.value.length >= 3 && !selectedMoodTypeIds.value.includes(moodId)) {
+    return
+  }
   store.toggleMoodType(moodId)
 }
 
-const getMoodTag = (moodId: string) => {
-  const tagMap: Record<string, string> = {
-    happy: '积极',
-    delight: '舒展',
-    excited: '高能',
-    grateful: '温暖',
-    calm: '平衡',
-    neutral: '平稳',
-    tired: '低能',
-    sad: '消耗',
-    anxious: '紧绷',
-    irritable: '敏感',
-    angry: '防御',
-  }
-
-  return tagMap[moodId] || '状态'
+const isMoodDisabled = (moodId: string) => {
+  return selectedMoodTypeIds.value.length >= 3 && !selectedMoodTypeIds.value.includes(moodId)
 }
 
 const handleSubmit = async () => {
@@ -450,25 +471,44 @@ h2 {
   gap: 1rem;
 }
 
-.mood-type-list {
-  display: flex;
-  gap: 0.58rem;
+.mood-grid-scroll {
   overflow-x: auto;
-  padding: 0.2rem 0.1rem 0.4rem;
-  scrollbar-width: thin;
+  padding-bottom: 0.25rem;
+}
+
+.mood-row-block {
+  margin-bottom: 0.7rem;
+}
+
+.mood-row-block:last-child {
+  margin-bottom: 0;
+}
+
+.mood-row-title {
+  margin: 0 0 0.42rem;
+  font-size: 13px;
+  font-weight: 700;
+  color: #6f6a62;
+}
+
+.mood-grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(86px, 1fr));
+  gap: 0.58rem;
+  min-width: 760px;
 }
 
 .mood-type-item {
-  min-width: 128px;
+  min-height: 92px;
   border: 1px solid #e8e2d8;
   border-radius: 16px;
-  background: #fffdf9;
+  background: #f8f4ee;
   color: #5c5c5c;
-  padding: 0.5rem 0.58rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 0 0 auto;
+  padding: 0.55rem 0.4rem;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 0.35rem;
   cursor: pointer;
   transition:
     transform 0.2s ease,
@@ -479,46 +519,39 @@ h2 {
 
 .mood-type-item:hover {
   transform: translateY(-1px);
-  border-color: #d4c5b3;
+  box-shadow: 0 8px 18px var(--mood-glow, rgba(196, 154, 108, 0.2));
 }
 
 .mood-type-item.active {
-  border-color: #c49a6c;
-  background: linear-gradient(180deg, rgba(252, 244, 234, 0.95), rgba(255, 255, 255, 0.98));
-  box-shadow: 0 8px 18px rgba(196, 154, 108, 0.2);
+  border-color: #8b9dc3;
+  box-shadow:
+    0 10px 20px var(--mood-glow, rgba(139, 157, 195, 0.22)),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+}
+
+.mood-type-item.disabled {
+  opacity: 0.44;
+  filter: grayscale(0.38);
+  cursor: not-allowed;
+  transform: none;
 }
 
 .mood-emoji {
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
-  font-size: 1.04rem;
-  background: #f8f3ea;
-  border: 1px solid #ece2d3;
-}
-
-.mood-meta {
-  min-width: 0;
-  display: grid;
-  justify-items: start;
-  gap: 0.2rem;
+  font-size: 28px;
+  line-height: 1;
+  box-shadow: none;
+  background: transparent;
 }
 
 .mood-label {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 500;
   line-height: 1.2;
-}
-
-.mood-tag {
-  padding: 0.09rem 0.42rem;
-  border-radius: 999px;
-  background: rgba(139, 157, 195, 0.14);
-  color: #6d7280;
-  font-size: 12px;
-  line-height: 1.25;
 }
 
 .panel-head {
@@ -986,6 +1019,7 @@ textarea::placeholder {
 @media (max-width: 768px) {
   .mood-record-page {
     padding: 18px;
+    padding-bottom: 120px;
   }
 
   .hero-metrics {
@@ -1002,6 +1036,36 @@ textarea::placeholder {
 
   .intensity-scale {
     grid-template-columns: repeat(5, 1fr);
+  }
+
+  .mood-type-list {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mood-grid {
+    min-width: 740px;
+  }
+
+  .action-panel {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    z-index: 30;
+    padding: 14px;
+    border-radius: 20px 20px 18px 18px;
+    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.08);
+  }
+
+  .action-row {
+    width: 100%;
+  }
+
+  .submit-action {
+    width: 100%;
+    min-height: 48px;
   }
 }
 </style>

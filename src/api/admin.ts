@@ -73,6 +73,7 @@ export interface AdminMoodListParams {
   username?: string
   startDate?: string
   endDate?: string
+  emotions?: string[]
   moodType?: string
 }
 
@@ -188,10 +189,41 @@ export const getAdminAuditLogs = async (): Promise<AdminAuditLog[]> => {
 export const getAdminMoods = async (
   params: AdminMoodListParams
 ): Promise<AdminMoodListResponse> => {
+  const searchParams = new URLSearchParams()
+
+  if (params.page !== undefined) {
+    searchParams.append('page', String(params.page))
+  }
+  if (params.pageSize !== undefined) {
+    searchParams.append('pageSize', String(params.pageSize))
+  }
+  if (params.userId !== undefined) {
+    searchParams.append('userId', String(params.userId))
+  }
+  if (params.username) {
+    searchParams.append('username', params.username)
+  }
+  if (params.startDate) {
+    searchParams.append('startDate', params.startDate)
+  }
+  if (params.endDate) {
+    searchParams.append('endDate', params.endDate)
+  }
+  if (params.moodType) {
+    searchParams.append('moodType', params.moodType)
+  }
+  if (Array.isArray(params.emotions)) {
+    params.emotions.forEach((item) => {
+      if (item) {
+        searchParams.append('emotions[]', item)
+      }
+    })
+  }
+
+  const query = searchParams.toString()
   const response = await request<AdminMoodListResponse>({
-    url: '/api/admin/moods',
+    url: query ? `/api/admin/moods?${query}` : '/api/admin/moods',
     method: 'get',
-    params,
   })
 
   return {

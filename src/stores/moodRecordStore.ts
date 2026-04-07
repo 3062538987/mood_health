@@ -768,15 +768,18 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
       // Backend currently reads moodRatio[0] as intensity and validates 1-10.
       // Keep combined mood types, but always submit a 1-10 ratio payload to avoid 400.
       const safeMoodRatio = [safeIntensity]
-
-      await submitMoodRecord({
+      const payload = {
         moodType: safeMoodTypes,
         moodRatio: safeMoodRatio,
         event: moodContent.value.trim() || '',
         tags: Array.from(new Set([...selectedTags.value, ...selectedTriggers.value])),
         trigger: selectedTriggers.value.join(','),
         intensity: safeIntensity,
-      })
+      }
+
+      console.log('提交情绪记录 payload:', payload)
+
+      await submitMoodRecord(payload)
 
       ElMessage.success('这次心情已经好好存下来了')
       isSubmittingSuccess.value = true
@@ -815,9 +818,6 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
       hasDraft.value = true
     } else {
       hasDraft.value = false
-      if (selectedMoodTypes.value.length === 0) {
-        setMoodWheelSelection('happy', intensity.value)
-      }
     }
 
     refreshAutoRecommendations()

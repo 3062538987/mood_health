@@ -137,14 +137,14 @@
               <div class="intensity-block">
                 <div class="intensity-head">
                   <span>强度</span>
-                  <strong>{{ record.intensity || 0 }}/10</strong>
+                  <strong>{{ getDisplayIntensity(record) }}/10</strong>
                 </div>
-                <div class="intensity-dots" :aria-label="`情绪强度 ${record.intensity || 0} / 10`">
+                <div class="intensity-dots" :aria-label="`情绪强度 ${getDisplayIntensity(record)} / 10`">
                   <span
                     v-for="level in 10"
                     :key="level"
                     class="intensity-dot"
-                    :class="{ active: level <= (record.intensity || 0) }"
+                    :class="{ active: level <= getDisplayIntensity(record) }"
                   ></span>
                 </div>
               </div>
@@ -204,17 +204,17 @@
           <p class="detail-note">{{ selectedRecord.event }}</p>
         </div>
 
-        <div v-if="selectedRecord.intensity" class="detail-section">
+        <div v-if="selectedRecord && getDisplayIntensity(selectedRecord) > 0" class="detail-section">
           <h4>情绪强度</h4>
           <div class="intensity-bar">
             <div
               class="intensity-fill"
               :style="{
-                width: `${selectedRecord.intensity * 10}%`,
-                background: getIntensityColor(selectedRecord.intensity),
+                width: `${getDisplayIntensity(selectedRecord) * 10}%`,
+                background: getIntensityColor(getDisplayIntensity(selectedRecord)),
               }"
             ></div>
-            <span class="intensity-value">{{ selectedRecord.intensity }}/10</span>
+            <span class="intensity-value">{{ getDisplayIntensity(selectedRecord) }}/10</span>
           </div>
         </div>
       </div>
@@ -235,62 +235,99 @@ import SoftEmptyState from '@/components/shared/SoftEmptyState.vue'
 import SoftLoadingState from '@/components/shared/SoftLoadingState.vue'
 
 import { getMoodRecordList } from '@/api/mood'
+import { EMOTION_MAP, EMOTION_OPTIONS } from '@/constants/emotions'
 import { MoodRecord } from '@/types/mood'
-import { formatDate as formatDateUtil } from '@/utils/dateUtil'
 
 const router = useRouter()
 
-// 情绪类型数据
-const moodTypes = [
-  {
-    type: 'happy',
-    name: '快乐',
+const emotionVisualMap: Record<
+  string,
+  { color: string; softColor: string; textColor: string; borderColor: string }
+> = {
+  happy: {
     color: '#ffd166',
     softColor: 'rgba(255, 209, 102, 0.18)',
     textColor: '#8c6500',
     borderColor: 'rgba(255, 209, 102, 0.45)',
   },
-  {
-    type: 'anxious',
-    name: '焦虑',
+  delight: {
+    color: '#d7aefb',
+    softColor: 'rgba(215, 174, 251, 0.18)',
+    textColor: '#7a41a8',
+    borderColor: 'rgba(215, 174, 251, 0.45)',
+  },
+  neutral: {
+    color: '#9ca3af',
+    softColor: 'rgba(156, 163, 175, 0.18)',
+    textColor: '#4b5563',
+    borderColor: 'rgba(156, 163, 175, 0.45)',
+  },
+  anxious: {
     color: '#f3a683',
     softColor: 'rgba(243, 166, 131, 0.18)',
     textColor: '#a4572d',
     borderColor: 'rgba(243, 166, 131, 0.45)',
   },
-  {
-    type: 'sad',
-    name: '悲伤',
+  sad: {
     color: '#4d96ff',
     softColor: 'rgba(77, 150, 255, 0.16)',
     textColor: '#1f5fbf',
     borderColor: 'rgba(77, 150, 255, 0.45)',
   },
-  {
-    type: 'calm',
-    name: '平静',
+  excited: {
+    color: '#fb7185',
+    softColor: 'rgba(251, 113, 133, 0.16)',
+    textColor: '#be123c',
+    borderColor: 'rgba(251, 113, 133, 0.45)',
+  },
+  calm: {
     color: '#6ab0a5',
     softColor: 'rgba(106, 176, 165, 0.18)',
     textColor: '#32665f',
     borderColor: 'rgba(106, 176, 165, 0.45)',
   },
-  {
-    type: 'angry',
-    name: '愤怒',
+  angry: {
     color: '#ef476f',
     softColor: 'rgba(239, 71, 111, 0.16)',
     textColor: '#b42f4c',
     borderColor: 'rgba(239, 71, 111, 0.45)',
   },
-  {
-    type: 'irritable',
-    name: '烦躁',
+  irritable: {
     color: '#8d99ae',
     softColor: 'rgba(141, 153, 174, 0.18)',
     textColor: '#5f6a78',
     borderColor: 'rgba(141, 153, 174, 0.45)',
   },
-]
+  tired: {
+    color: '#94a3b8',
+    softColor: 'rgba(148, 163, 184, 0.18)',
+    textColor: '#475569',
+    borderColor: 'rgba(148, 163, 184, 0.45)',
+  },
+  grateful: {
+    color: '#f59e0b',
+    softColor: 'rgba(245, 158, 11, 0.18)',
+    textColor: '#92400e',
+    borderColor: 'rgba(245, 158, 11, 0.45)',
+  },
+}
+
+const defaultMoodVisual = {
+  color: '#8d99ae',
+  softColor: 'rgba(141, 153, 174, 0.16)',
+  textColor: '#5f6a78',
+  borderColor: 'rgba(141, 153, 174, 0.35)',
+}
+
+// 情绪类型筛选项来源统一到共享常量
+const moodTypes = EMOTION_OPTIONS.map((option) => {
+  const visual = emotionVisualMap[option.value] || defaultMoodVisual
+  return {
+    type: option.value,
+    name: option.label,
+    ...visual,
+  }
+})
 
 // 时间筛选选项
 const timeFilters = [
@@ -527,34 +564,62 @@ const truncateText = (text: string, maxLength: number) => {
   return text.length > maxLength ? text.substring(0, maxLength) + '...' : text
 }
 
-// 格式化日期
-const formatDate = (dateString: string) => {
-  return formatDateUtil(dateString)
+const toLocalDateTime = (dateString?: string) => {
+  if (!dateString) return ''
+
+  const date = new Date(dateString)
+  if (Number.isNaN(date.getTime())) return ''
+
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  })
 }
 
 const formatDateDetail = (dateString?: string) => {
-  if (!dateString) return ''
-  return formatDateUtil(dateString)
+  return toLocalDateTime(dateString)
 }
 
 const formatArchiveDate = (dateString: string) => {
-  const date = new Date(dateString)
-  if (Number.isNaN(date.getTime())) return ''
-  return `${date.getMonth() + 1}月${date.getDate()}日`
+  const localDateTime = toLocalDateTime(dateString)
+  if (!localDateTime) return ''
+  return localDateTime.split(' ')[0] || ''
 }
 
 const formatArchiveDateMeta = (dateString: string) => {
-  const date = new Date(dateString)
-  if (Number.isNaN(date.getTime())) return ''
+  const localDateTime = toLocalDateTime(dateString)
+  if (!localDateTime) return ''
+  return localDateTime.split(' ')[1] || ''
+}
 
-  const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-  const time = date.toLocaleTimeString('zh-CN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  })
+const normalizeIntensity = (value: unknown) => {
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric) || numeric <= 0) return 0
+  return Math.max(1, Math.min(10, Math.round(numeric)))
+}
 
-  return `${weekdays[date.getDay()]} · ${time}`
+const getDisplayIntensity = (record?: MoodRecord | null) => {
+  if (!record) return 0
+
+  const directIntensity = normalizeIntensity(record.intensity)
+  if (directIntensity > 0) {
+    return directIntensity
+  }
+
+  if (Array.isArray(record.moodRatio) && record.moodRatio.length > 0) {
+    const firstRatio = Number(record.moodRatio[0])
+    if (Number.isFinite(firstRatio) && firstRatio > 0) {
+      const derived = firstRatio <= 10 ? firstRatio : firstRatio / 10
+      return normalizeIntensity(derived)
+    }
+  }
+
+  return 0
 }
 
 // 获取情绪颜色
@@ -589,8 +654,7 @@ const getMoodDotStyle = (moodType: string) => {
 
 // 获取情绪名称
 const getMoodName = (moodType: string) => {
-  const mood = moodTypes.find((m) => m.type === moodType)
-  return mood ? mood.name : moodType
+  return EMOTION_MAP[moodType] || moodType
 }
 
 // 获取强度颜色
@@ -652,578 +716,595 @@ onMounted(() => {
 <style scoped lang="scss">
 @use '@/assets/styles/theme.scss' as *;
 
-    .mood-archive {
-      padding: 24px 20px 28px;
-      background:
-        radial-gradient(circle at top left, rgba(255, 209, 102, 0.15), transparent 28%),
-        radial-gradient(circle at top right, rgba(106, 176, 165, 0.14), transparent 30%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(248, 245, 242, 0.92));
+.mood-archive {
+  padding: 24px 20px 28px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 209, 102, 0.15), transparent 28%),
+    radial-gradient(circle at top right, rgba(106, 176, 165, 0.14), transparent 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(248, 245, 242, 0.92));
 
-      .container {
-        max-width: 1200px;
-        margin: 0 auto;
-      }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
 
-      .archive-header {
-        display: flex;
-        align-items: flex-end;
-        justify-content: space-between;
-        gap: 24px;
-        margin-bottom: 22px;
-        padding: 4px 2px 8px;
-      }
+  .archive-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 22px;
+    padding: 4px 2px 8px;
+  }
 
-      .eyebrow {
-        margin: 0 0 10px;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-        font-size: 12px;
+  .eyebrow {
+    margin: 0 0 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary-color);
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-color);
+  }
+
+  .archive-copy {
+    margin: 10px 0 0;
+    color: var(--text-light-color);
+    line-height: 1.7;
+  }
+
+  .summary-strip {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .summary-card {
+    min-width: 160px;
+    padding: 16px 18px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow: 0 12px 28px rgba(106, 176, 165, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .summary-card span {
+    font-size: 12px;
+    color: var(--text-light-color);
+    font-weight: 600;
+  }
+
+  .summary-card strong {
+    font-size: 24px;
+    line-height: 1.1;
+    color: var(--text-color);
+  }
+
+  .summary-card small {
+    color: var(--text-light-color);
+    font-size: 12px;
+  }
+
+  .summary-card.accent {
+    background: linear-gradient(135deg, rgba(255, 209, 102, 0.22), rgba(106, 176, 165, 0.16));
+  }
+
+  .filter-section {
+    background: rgba(255, 255, 255, 0.76);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    border-radius: 24px;
+    box-shadow: 0 16px 40px rgba(31, 38, 135, 0.08);
+    padding: 20px;
+    margin-bottom: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    align-items: flex-start;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 280px;
+    flex: 1 1 360px;
+  }
+
+  label {
+    font-weight: 700;
+    color: var(--text-color);
+    font-size: $font-size-sm;
+  }
+
+  .time-filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .time-filters button,
+  .mood-filters button {
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(8px);
+    cursor: pointer;
+    transition:
+      transform 0.25s ease,
+      border-color 0.25s ease,
+      background 0.25s ease,
+      color 0.25s ease;
+    font-size: $font-size-sm;
+    font-weight: 600;
+
+    &:hover {
+      transform: translateY(-1px);
+      border-color: var(--primary-color);
+    }
+
+    &.active {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: var(--white);
+      border-color: transparent;
+      box-shadow: 0 10px 20px rgba(106, 176, 165, 0.2);
+    }
+  }
+
+  .time-filters button {
+    padding: 9px 16px;
+  }
+
+  .custom-time {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+
+    input {
+      padding: 9px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.88);
+      font-size: $font-size-sm;
+    }
+
+    .date-separator {
+      color: var(--text-light-color);
+    }
+  }
+
+  .mood-filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: thin;
+  }
+
+  .mood-filter {
+    padding: 9px 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+
+  .mood-filter.all {
+    min-width: 72px;
+    justify-content: center;
+  }
+
+  .mood-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  }
+
+  .reset-btn {
+    align-self: center;
+    margin-left: auto;
+    padding: 10px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.85);
+    cursor: pointer;
+    transition:
+      transform 0.25s ease,
+      color 0.25s ease,
+      border-color 0.25s ease;
+
+    &:hover {
+      color: var(--primary-color);
+      border-color: var(--primary-color);
+      transform: translateY(-1px);
+    }
+  }
+
+  .empty-state-shell {
+    min-height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .records-shell {
+    min-height: 420px;
+  }
+
+  .records-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px;
+  }
+
+  .record-card {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    border-radius: 22px;
+    box-shadow: 0 14px 30px rgba(31, 38, 135, 0.08);
+    padding: 18px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition:
+      transform 0.28s ease,
+      box-shadow 0.28s ease,
+      border-color 0.28s ease;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, rgba(255, 209, 102, 0.95), rgba(106, 176, 165, 0.85));
+      opacity: 0.9;
+    }
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(31, 38, 135, 0.12);
+      border-color: rgba(106, 176, 165, 0.28);
+    }
+  }
+
+  .record-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 2px;
+  }
+
+  .record-date {
+    font-size: 24px;
+    line-height: 1.1;
+    font-weight: 800;
+    color: var(--text-color);
+  }
+
+  .record-meta {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-light-color);
+  }
+
+  .record-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .action-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+      transform 0.25s ease,
+      opacity 0.25s ease,
+      box-shadow 0.25s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      opacity: 0.96;
+    }
+  }
+
+  .edit-btn {
+    background: rgba(106, 176, 165, 0.14);
+    color: var(--primary-color);
+  }
+
+  .delete-btn {
+    background: rgba(239, 71, 111, 0.12);
+    color: var(--mood-angry);
+  }
+
+  .mood-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .mood-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .intensity-block {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 18px;
+    background: rgba(248, 245, 242, 0.86);
+  }
+
+  .intensity-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--text-light-color);
+
+    strong {
+      color: var(--text-color);
+      font-size: 14px;
+    }
+  }
+
+  .intensity-dots {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .intensity-dot {
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(125, 125, 125, 0.18);
+    transition:
+      transform 0.25s ease,
+      background 0.25s ease,
+      box-shadow 0.25s ease;
+
+    &.active {
+      background: linear-gradient(90deg, #ffd166, #f3a683);
+      box-shadow: 0 4px 10px rgba(243, 166, 131, 0.18);
+    }
+  }
+
+  .record-note {
+    margin: 0;
+    color: var(--text-light-color);
+    font-style: italic;
+    line-height: 1.7;
+  }
+
+  .trigger-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .trigger-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 11px;
+    border-radius: 999px;
+    background: rgba(106, 176, 165, 0.12);
+    color: var(--primary-color);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .load-more {
+    text-align: center;
+    margin-top: 32px;
+  }
+}
+
+.detail-dialog {
+  .detail-content {
+    .detail-section {
+      margin-bottom: 24px;
+
+      h4 {
+        font-size: $font-size-md;
         font-weight: 700;
-        color: var(--primary-color);
-      }
-
-      h2 {
-        margin: 0;
-        font-size: 28px;
-        font-weight: 800;
         color: var(--text-color);
+        margin-bottom: 12px;
+        font-family: 'Noto Serif SC', serif;
       }
 
-      .archive-copy {
-        margin: 10px 0 0;
-        color: var(--text-light-color);
-        line-height: 1.7;
-      }
-
-      .summary-strip {
+      .detail-emotions {
         display: flex;
+        flex-direction: column;
         gap: 12px;
-        flex-wrap: wrap;
-        justify-content: flex-end;
       }
 
-      .summary-card {
-        min-width: 160px;
-        padding: 16px 18px;
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.82);
-        border: 1px solid rgba(255, 255, 255, 0.75);
-        box-shadow: 0 12px 28px rgba(106, 176, 165, 0.1);
+      .detail-emotion-item {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: $border-radius-md;
+      }
+
+      .emotion-dot-large {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .emotion-info {
         display: flex;
         flex-direction: column;
         gap: 4px;
       }
 
-      .summary-card span {
-        font-size: 12px;
-        color: var(--text-light-color);
+      .emotion-name {
         font-weight: 600;
-      }
-
-      .summary-card strong {
-        font-size: 24px;
-        line-height: 1.1;
         color: var(--text-color);
       }
 
-      .summary-card small {
-        color: var(--text-light-color);
-        font-size: 12px;
-      }
-
-      .summary-card.accent {
-        background: linear-gradient(135deg, rgba(255, 209, 102, 0.22), rgba(106, 176, 165, 0.16));
-      }
-
-      .filter-section {
-        background: rgba(255, 255, 255, 0.76);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.65);
-        border-radius: 24px;
-        box-shadow: 0 16px 40px rgba(31, 38, 135, 0.08);
-        padding: 20px;
-        margin-bottom: 28px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 18px;
-        align-items: flex-start;
-      }
-
-      .filter-group {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        min-width: 280px;
-        flex: 1 1 360px;
-      }
-
-      label {
-        font-weight: 700;
-        color: var(--text-color);
+      .emotion-ratio {
         font-size: $font-size-sm;
-      }
-
-      .time-filters {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-      }
-
-      .time-filters button,
-      .mood-filters button {
-        border: 1px solid var(--border-color);
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.82);
-        backdrop-filter: blur(8px);
-        cursor: pointer;
-        transition:
-          transform 0.25s ease,
-          border-color 0.25s ease,
-          background 0.25s ease,
-          color 0.25s ease;
-        font-size: $font-size-sm;
-        font-weight: 600;
-
-        &:hover {
-          transform: translateY(-1px);
-          border-color: var(--primary-color);
-        }
-
-        &.active {
-          background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-          color: var(--white);
-          border-color: transparent;
-          box-shadow: 0 10px 20px rgba(106, 176, 165, 0.2);
-        }
-      }
-
-      .time-filters button {
-        padding: 9px 16px;
-      }
-
-      .custom-time {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-
-        input {
-          padding: 9px 12px;
-          border: 1px solid var(--border-color);
-          border-radius: 12px;
-          background: rgba(255, 255, 255, 0.88);
-          font-size: $font-size-sm;
-        }
-
-        .date-separator {
-          color: var(--text-light-color);
-        }
-      }
-
-      .mood-filters {
-        display: flex;
-        gap: 10px;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        padding-bottom: 2px;
-        scrollbar-width: thin;
-      }
-
-      .mood-filter {
-        padding: 9px 14px;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        white-space: nowrap;
-        flex: 0 0 auto;
-      }
-
-      .mood-filter.all {
-        min-width: 72px;
-        justify-content: center;
-      }
-
-      .mood-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.6);
-        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
-      }
-
-      .reset-btn {
-        align-self: center;
-        margin-left: auto;
-        padding: 10px 16px;
-        border: 1px solid var(--border-color);
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.85);
-        cursor: pointer;
-        transition:
-          transform 0.25s ease,
-          color 0.25s ease,
-          border-color 0.25s ease;
-
-        &:hover {
-          color: var(--primary-color);
-          border-color: var(--primary-color);
-          transform: translateY(-1px);
-        }
-      }
-
-      .empty-state-shell {
-        min-height: 420px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .records-shell {
-        min-height: 420px;
-      }
-
-      .records-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 18px;
-      }
-
-      .record-card {
-        background: rgba(255, 255, 255, 0.82);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.75);
-        border-radius: 22px;
-        box-shadow: 0 14px 30px rgba(31, 38, 135, 0.08);
-        padding: 18px;
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        transition:
-          transform 0.28s ease,
-          box-shadow 0.28s ease,
-          border-color 0.28s ease;
-        position: relative;
-        overflow: hidden;
-
-        &::before {
-          content: '';
-          position: absolute;
-          inset: 0 auto auto 0;
-          width: 100%;
-          height: 4px;
-          background: linear-gradient(90deg, rgba(255, 209, 102, 0.95), rgba(106, 176, 165, 0.85));
-          opacity: 0.9;
-        }
-
-        &:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 20px 40px rgba(31, 38, 135, 0.12);
-          border-color: rgba(106, 176, 165, 0.28);
-        }
-      }
-
-      .record-top {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 14px;
-        margin-top: 2px;
-      }
-
-      .record-date {
-        font-size: 24px;
-        line-height: 1.1;
-        font-weight: 800;
-        color: var(--text-color);
-      }
-
-      .record-meta {
-        margin-top: 6px;
-        font-size: 12px;
         color: var(--text-light-color);
       }
 
-      .record-actions {
+      .detail-triggers {
         display: flex;
-        gap: 8px;
-        flex-shrink: 0;
-      }
-
-      .action-btn {
-        border: none;
-        border-radius: 999px;
-        padding: 8px 12px;
-        font-size: 12px;
-        font-weight: 700;
-        cursor: pointer;
-        transition:
-          transform 0.25s ease,
-          opacity 0.25s ease,
-          box-shadow 0.25s ease;
-
-        &:hover {
-          transform: translateY(-1px);
-          opacity: 0.96;
-        }
-      }
-
-      .edit-btn {
-        background: rgba(106, 176, 165, 0.14);
-        color: var(--primary-color);
-      }
-
-      .delete-btn {
-        background: rgba(239, 71, 111, 0.12);
-        color: var(--mood-angry);
-      }
-
-      .mood-tags {
-        display: flex;
-        gap: 8px;
         flex-wrap: wrap;
-      }
-
-      .mood-tag {
-        display: inline-flex;
-        align-items: center;
-        padding: 6px 12px;
-        border-radius: 999px;
-        border: 1px solid transparent;
-        font-size: 12px;
-        font-weight: 700;
-        line-height: 1;
-      }
-
-      .intensity-block {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        padding: 14px;
-        border-radius: 18px;
-        background: rgba(248, 245, 242, 0.86);
-      }
-
-      .intensity-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        font-size: 12px;
-        color: var(--text-light-color);
-
-        strong {
-          color: var(--text-color);
-          font-size: 14px;
-        }
-      }
-
-      .intensity-dots {
-        display: grid;
-        grid-template-columns: repeat(10, minmax(0, 1fr));
-        gap: 6px;
-      }
-
-      .intensity-dot {
-        height: 10px;
-        border-radius: 999px;
-        background: rgba(125, 125, 125, 0.18);
-        transition:
-          transform 0.25s ease,
-          background 0.25s ease,
-          box-shadow 0.25s ease;
-
-        &.active {
-          background: linear-gradient(90deg, #ffd166, #f3a683);
-          box-shadow: 0 4px 10px rgba(243, 166, 131, 0.18);
-        }
-      }
-
-      .record-note {
-        margin: 0;
-        color: var(--text-light-color);
-        font-style: italic;
-        line-height: 1.7;
-      }
-
-      .trigger-tags {
-        display: flex;
         gap: 8px;
-        flex-wrap: wrap;
       }
 
       .trigger-tag {
-        display: inline-flex;
-        align-items: center;
-        padding: 6px 11px;
-        border-radius: 999px;
-        background: rgba(106, 176, 165, 0.12);
+        padding: 6px 14px;
+        background: rgba(106, 176, 165, 0.15);
         color: var(--primary-color);
-        font-size: 12px;
+        border-radius: $border-radius-full;
+        font-size: $font-size-sm;
+        font-weight: 500;
+      }
+
+      .detail-note {
+        color: var(--text-color);
+        line-height: 1.6;
+        font-size: $font-size-md;
+      }
+
+      .intensity-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .intensity-fill {
+        height: 12px;
+        border-radius: 6px;
+        transition: width 0.5s ease;
+      }
+
+      .intensity-value {
         font-weight: 600;
-      }
-
-      .load-more {
-        text-align: center;
-        margin-top: 32px;
+        color: var(--text-color);
+        min-width: 40px;
       }
     }
+  }
+}
 
-    .detail-dialog {
-      .detail-content {
-        .detail-section {
-          margin-bottom: 24px;
+.archive-state-enter-active,
+.archive-state-leave-active {
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
 
-          h4 {
-            font-size: $font-size-md;
-            font-weight: 700;
-            color: var(--text-color);
-            margin-bottom: 12px;
-            font-family: 'Noto Serif SC', serif;
-          }
+.archive-state-enter-from,
+.archive-state-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
 
-          .detail-emotions {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-          }
+@media (max-width: 768px) {
+  .mood-archive {
+    padding: 18px 14px 22px;
 
-          .detail-emotion-item {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: $border-radius-md;
-          }
-
-          .emotion-dot-large {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            flex-shrink: 0;
-          }
-
-          .emotion-info {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-          }
-
-          .emotion-name {
-            font-weight: 600;
-            color: var(--text-color);
-          }
-
-          .emotion-ratio {
-            font-size: $font-size-sm;
-            color: var(--text-light-color);
-          }
-
-          .detail-triggers {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-          }
-
-          .trigger-tag {
-            padding: 6px 14px;
-            background: rgba(106, 176, 165, 0.15);
-            color: var(--primary-color);
-            border-radius: $border-radius-full;
-            font-size: $font-size-sm;
-            font-weight: 500;
-          }
-
-          .detail-note {
-            color: var(--text-color);
-            line-height: 1.6;
-            font-size: $font-size-md;
-          }
-
-          .intensity-bar {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-          }
-
-          .intensity-fill {
-            height: 12px;
-            border-radius: 6px;
-            transition: width 0.5s ease;
-          }
-
-          .intensity-value {
-            font-weight: 600;
-            color: var(--text-color);
-            min-width: 40px;
-          }
-        }
-      }
+    .archive-header {
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 18px;
     }
 
-    .archive-state-enter-active,
-    .archive-state-leave-active {
-      transition:
-        opacity 0.3s ease,
-        transform 0.3s ease;
+    h2 {
+      font-size: 24px;
     }
 
-    .archive-state-enter-from,
-    .archive-state-leave-to {
-      opacity: 0;
-      transform: translateY(10px);
+    .summary-strip {
+      width: 100%;
+      justify-content: stretch;
     }
 
-    @media (max-width: 768px) {
-      .mood-archive {
-        padding: 18px 14px 22px;
-
-        .archive-header {
-          flex-direction: column;
-          align-items: flex-start;
-          margin-bottom: 18px;
-        }
-
-        h2 {
-          font-size: 24px;
-        }
-
-        .summary-strip {
-          width: 100%;
-          justify-content: stretch;
-        }
-
-        .summary-card {
-          flex: 1 1 0;
-          min-width: 0;
-        }
-
-        .filter-section {
-          flex-direction: column;
-          align-items: stretch;
-          padding: 16px;
-        }
-
-        .filter-group {
-          min-width: 0;
-          flex-basis: auto;
-        }
-
-        .reset-btn {
-          margin-left: 0;
-          align-self: flex-start;
-        }
-
-        .records-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .record-date {
-          font-size: 22px;
-        }
-      }
+    .summary-card {
+      flex: 1 1 0;
+      min-width: 0;
     }
+
+    .filter-section {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 16px;
+    }
+
+    .filter-group {
+      min-width: 0;
+      flex-basis: auto;
+    }
+
+    .reset-btn {
+      margin-left: 0;
+      align-self: flex-start;
+    }
+
+    .records-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .record-card {
+      padding: 16px;
+    }
+
+    .record-top {
+      flex-direction: column;
+    }
+
+    .record-actions {
+      width: 100%;
+    }
+
+    .action-btn {
+      min-height: 44px;
+      flex: 1;
+    }
+
+    .record-date {
+      font-size: 22px;
+    }
+  }
+}
 </style>

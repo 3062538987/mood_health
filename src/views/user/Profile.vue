@@ -35,7 +35,7 @@
           <h4>近期高频情绪</h4>
           <div v-if="emotionEntries.length > 0" class="emotion-tags">
             <div v-for="(count, emotion) in recentEmotions" :key="emotion" class="emotion-tag">
-              <span class="emotion-name">{{ emotion }}</span>
+              <span class="emotion-name">{{ getMoodNameZh(emotion) }}</span>
               <span class="emotion-count">{{ count }}次</span>
             </div>
           </div>
@@ -95,6 +95,22 @@ const favoriteKnowledgeCount = ref(0)
 const favoriteToolsCount = ref(0)
 const emotionEntries = computed(() => Object.entries(recentEmotions.value))
 
+const moodLabelMap: Record<string, string> = {
+  happy: '开心',
+  delight: '愉悦',
+  neutral: '一般',
+  sad: '难过',
+  angry: '愤怒',
+  irritable: '烦躁',
+  anxious: '焦虑',
+  calm: '平静',
+  excited: '兴奋',
+  tired: '疲惫',
+  grateful: '感恩',
+}
+
+const getMoodNameZh = (mood: string) => moodLabelMap[mood] || mood
+
 const computeEmotionScore = (list: Array<{ moodRatio?: number[]; intensity?: number }>) => {
   if (list.length === 0) return 0
   const total = list.reduce((sum, item) => {
@@ -117,11 +133,7 @@ const computeRecentEmotions = (list: Array<{ moodType?: string[] }>) => {
     }
   }
 
-  return Object.fromEntries(
-    [...counter.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 4)
-  )
+  return Object.fromEntries([...counter.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4))
 }
 
 const loadProfileData = async () => {

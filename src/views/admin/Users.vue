@@ -276,4 +276,37 @@ onMounted(loadUsers)
   padding: 4px 8px;
   min-width: 140px;
 }
+
+@media (max-width: 768px) {
+  .admin-users-page {
+    padding: 16px;
+  }
+
+  .page-header,
+  .action-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  .users-table th:nth-child(1),
+  .users-table td:nth-child(1),
+  .users-table th:nth-child(5),
+  .users-table td:nth-child(5) {
+    display: none;
+  }
+
+  .users-table th,
+  .users-table td {
+    padding: 10px 8px;
+  }
+
+  .role-select {
+    min-width: 0;
+    width: 100%;
+  }
+}
 </style>

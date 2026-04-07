@@ -1,5 +1,9 @@
 <template>
-  <div id="app" :style="{ '--theme-color': themeColor }">
+  <div
+    id="app"
+    :class="{ 'has-mobile-tabs': !isAuthPage }"
+    :style="{ '--theme-color': themeColor }"
+  >
     <!-- 全局导航栏 -->
     <nav v-if="!isAuthPage" class="main-nav">
       <div class="nav-container">
@@ -46,13 +50,33 @@
       </div>
     </nav>
     <!-- 路由出口 -->
-    <router-view v-slot="{ Component }">
-      <transition name="fade" mode="out-in">
-        <component :is="Component" />
-      </transition>
-    </router-view>
+    <main class="app-content">
+      <router-view v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
+    </main>
     <!-- 全局页脚 -->
     <footer v-if="!isAuthPage">© 2025 情绪健康平台 版权所有</footer>
+    <nav v-if="!isAuthPage" class="mobile-tab-bar" aria-label="移动端主导航">
+      <router-link to="/" class="tab-item" active-class="active" end>
+        <i class="fas fa-home"></i>
+        <span>首页</span>
+      </router-link>
+      <router-link to="/mood" class="tab-item" active-class="active">
+        <i class="fas fa-smile"></i>
+        <span>情绪</span>
+      </router-link>
+      <router-link to="/user/profile" class="tab-item" active-class="active">
+        <i class="fas fa-user"></i>
+        <span>我的</span>
+      </router-link>
+      <router-link v-if="userStore.isAdmin" to="/admin" class="tab-item" active-class="active">
+        <i class="fas fa-user-shield"></i>
+        <span>后台</span>
+      </router-link>
+    </nav>
     <!-- 成就通知 -->
     <AchievementNotification />
   </div>
@@ -111,6 +135,10 @@ onMounted(() => {
   @media (prefers-color-scheme: dark) {
     background-color: rgba(30, 34, 40, 0.95);
   }
+}
+
+.app-content {
+  min-height: calc(100vh - 70px);
 }
 
 .nav-container {
@@ -244,6 +272,10 @@ footer {
   margin-top: 20px;
 }
 
+.mobile-tab-bar {
+  display: none;
+}
+
 // 路由切换动画
 .fade-enter-active,
 .fade-leave-active {
@@ -257,9 +289,58 @@ footer {
 
 // 响应式示例
 @media (max-width: 768px) {
+  .has-mobile-tabs .app-content {
+    padding-bottom: calc(90px + env(safe-area-inset-bottom));
+  }
+
   .nav-container {
     padding: 0 1rem;
   }
+
+  .main-nav {
+    display: none;
+  }
+
+  .mobile-tab-bar {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 6px;
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 120;
+    padding: 10px 12px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+
+    .tab-item {
+      min-height: 44px;
+      display: grid;
+      justify-items: center;
+      align-content: center;
+      gap: 4px;
+      color: var(--text-light-color);
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 600;
+
+      i {
+        font-size: 18px;
+        color: var(--theme-color, var(--primary-color));
+      }
+
+      &.active {
+        color: var(--theme-color, var(--primary-color));
+      }
+    }
+  }
+
   .nav-links {
     gap: 1.2rem;
     a {
@@ -277,6 +358,10 @@ footer {
       padding: 0.4rem 0.8rem;
       font-size: 0.9rem;
     }
+  }
+
+  footer {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
   }
 }
 </style>

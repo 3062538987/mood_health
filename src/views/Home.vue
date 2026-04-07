@@ -23,16 +23,16 @@
           <h3>情绪管理</h3>
           <p>记录与分析你的情绪</p>
         </router-link>
-        <router-link to="/relax" class="feature-card">
+        <!-- 第二版隐藏，待开发完成取消注释 <router-link to="/relax" class="feature-card">
           <i class="fas fa-headphones"></i>
           <h3>放松中心</h3>
           <p>多种放松方式，释放压力</p>
-        </router-link>
-        <router-link to="/improve" class="feature-card">
+        </router-link> -->
+        <!-- 第二版隐藏，待开发完成取消注释 <router-link to="/improve" class="feature-card">
           <i class="fas fa-users"></i>
           <h3>提升计划</h3>
           <p>专业团体活动，共同成长</p>
-        </router-link>
+        </router-link> -->
         <router-link to="/user" class="feature-card">
           <i class="fas fa-user"></i>
           <h3>个人中心</h3>
