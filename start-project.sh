@@ -2,11 +2,18 @@
 set -euo pipefail
 
 clean=false
+ai_enabled=""
 
 for arg in "$@"; do
   case "$arg" in
     --clean)
       clean=true
+      ;;
+    --no-ai)
+      ai_enabled="false"
+      ;;
+    --with-ai)
+      ai_enabled="true"
       ;;
     *)
       echo "Unknown argument: $arg"
@@ -14,6 +21,11 @@ for arg in "$@"; do
       ;;
   esac
 done
+
+if [[ -n "$ai_enabled" ]]; then
+  export AI_ENABLED="$ai_enabled"
+  echo "[start-project] AI_ENABLED=$AI_ENABLED"
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PM2_BIN="$SCRIPT_DIR/node_modules/pm2/bin/pm2"

@@ -1,5 +1,7 @@
 param(
-  [switch]$Clean
+  [switch]$Clean,
+  [switch]$NoAi,
+  [switch]$WithAi
 )
 
 $ErrorActionPreference = 'Stop'
@@ -28,6 +30,18 @@ if (-not (Test-Path $ecosystemFile)) {
 
 Push-Location $scriptRoot
 try {
+  if ($NoAi -and $WithAi) {
+    throw 'NoAi and WithAi cannot be used together.'
+  }
+
+  if ($NoAi) {
+    $env:AI_ENABLED = 'false'
+    Write-Host '[start-project] AI_ENABLED=false (NoAi mode)'
+  } elseif ($WithAi) {
+    $env:AI_ENABLED = 'true'
+    Write-Host '[start-project] AI_ENABLED=true (WithAi mode)'
+  }
+
   if ($Clean) {
     Remove-Pm2ProcessIfExists -Name 'mood-health-server'
   }

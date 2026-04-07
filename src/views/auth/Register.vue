@@ -14,10 +14,6 @@
           />
         </div>
         <div class="form-group">
-          <label for="email">邮箱</label>
-          <input id="email" v-model="form.email" type="email" placeholder="请输入邮箱" required />
-        </div>
-        <div class="form-group">
           <label for="password">密码</label>
           <input
             id="password"
@@ -61,6 +57,7 @@ import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
+import { isValidUsername } from '@/utils/validation'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -68,7 +65,6 @@ const error = ref('')
 
 const form = reactive({
   username: '',
-  email: '',
   password: '',
   confirmPassword: '',
 })
@@ -87,7 +83,12 @@ const handleRegister = async () => {
     return
   }
 
-  const success = await userStore.register(form.username, form.password, form.email)
+  if (!isValidUsername(form.username)) {
+    error.value = '用户名需为3-20位，可包含中文、字母、数字或下划线'
+    return
+  }
+
+  const success = await userStore.register(form.username, form.password)
 
   if (success) {
     ElMessage.success('注册成功！请登录')

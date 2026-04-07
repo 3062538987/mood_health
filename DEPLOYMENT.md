@@ -106,10 +106,10 @@ npm run start-all:linux:no-ai
 
 这会先执行 `doctor`，再启动 `mood-health-server`，并根据 `AI_ENABLED` 决定是否启动 `mood-ai-server`。
 
-默认情况下，`start-project.ps1` / `start-project.sh` 会根据 `AI_ENABLED` 决定是否启动 `mood-ai-server`：
+当前仓库内置启动脚本仅托管 `mood-health-server`（Node API）。
 
-- `AI_ENABLED=false`：仅启动 `mood-health-server`
-- `AI_ENABLED=true`：启动 `mood-health-server` + `mood-ai-server`
+- `-NoAi` / `--no-ai`：将 `AI_ENABLED=false` 注入进程环境（推荐 2核2G）
+- `-WithAi` / `--with-ai`：将 `AI_ENABLED=true` 注入进程环境（需额外部署 Python AI 服务）
 
 命令行也可显式覆盖：
 
@@ -122,6 +122,8 @@ powershell -ExecutionPolicy Bypass -File ./start-project.ps1 -WithAi
 bash ./start-project.sh --no-ai
 bash ./start-project.sh --with-ai
 ```
+
+如需启用 AI，请单独常驻 Python 服务（例如 systemd/PM2/supervisor），并确保 `AI_SERVICE_BASE_URL` 可达。
 
 常用命令：
 

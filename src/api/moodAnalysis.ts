@@ -1,5 +1,3 @@
-import { debounce } from '@/utils/debounce'
-
 export interface MoodAnalysisRequest {
   content: string
   mood_level: number
@@ -81,7 +79,46 @@ export const analyzeMood = async (data: MoodAnalysisRequest): Promise<MoodAnalys
   }
 }
 
-export const debouncedAnalyzeMood = debounce<typeof analyzeMood>(analyzeMood, 500)
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+let latestRequest: MoodAnalysisRequest | null = null
+let pendingResolvers: Array<{
+  resolve: (value: MoodAnalysisResponse) => void
+  reject: (reason?: unknown) => void
+}> = []
+
+export const debouncedAnalyzeMood = (data: MoodAnalysisRequest): Promise<MoodAnalysisResponse> => {
+  latestRequest = data
+
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+  }
+
+  return new Promise<MoodAnalysisResponse>((resolve, reject) => {
+    pendingResolvers.push({ resolve, reject })
+
+    debounceTimer = setTimeout(async () => {
+      const resolvers = pendingResolvers
+      const request = latestRequest
+
+      pendingResolvers = []
+      latestRequest = null
+      debounceTimer = null
+
+      if (!request) {
+        const error = new Error('无可用的情绪分析请求')
+        resolvers.forEach((item) => item.reject(error))
+        return
+      }
+
+      try {
+        const result = await analyzeMood(request)
+        resolvers.forEach((item) => item.resolve(result))
+      } catch (error) {
+        resolvers.forEach((item) => item.reject(error))
+      }
+    }, 500)
+  })
+}
 
 export const analyzeMoodWithRetry = async (
   data: MoodAnalysisRequest,
