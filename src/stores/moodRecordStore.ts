@@ -740,7 +740,7 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
 
     isSubmitting.value = true
     try {
-      await submitMoodRecord({
+await submitMoodRecord({
         moodType: [...selectedMoodTypes.value],
         moodRatio: [...moodRatios.value],
         event: moodContent.value.trim(),

@@ -96,7 +96,7 @@
                 ></div>
               </div>
 
-              <div class="trigger-preview">
+<div class="trigger-preview">
                 <span class="trigger-icon">🎯</span>
                 <span class="trigger-text">{{ getMainTrigger(record) }}</span>
               </div>
@@ -164,17 +164,17 @@
           <p class="detail-note">{{ selectedRecord.event }}</p>
         </div>
 
-        <div v-if="selectedRecord.intensity" class="detail-section">
+        <div v-if="selectedRecord && getDisplayIntensity(selectedRecord) > 0" class="detail-section">
           <h4>情绪强度</h4>
           <div class="intensity-bar">
             <div
               class="intensity-fill"
               :style="{
-                width: `${selectedRecord.intensity * 10}%`,
-                background: getIntensityColor(selectedRecord.intensity),
+                width: `${getDisplayIntensity(selectedRecord) * 10}%`,
+                background: getIntensityColor(getDisplayIntensity(selectedRecord)),
               }"
             ></div>
-            <span class="intensity-value">{{ selectedRecord.intensity }}/10</span>
+            <span class="intensity-value">{{ getDisplayIntensity(selectedRecord) }}/10</span>
           </div>
         </div>
       </div>
@@ -195,8 +195,8 @@ import SoftEmptyState from '@/components/shared/SoftEmptyState.vue'
 import SoftLoadingState from '@/components/shared/SoftLoadingState.vue'
 
 import { getMoodRecordList } from '@/api/mood'
+import { EMOTION_MAP, EMOTION_OPTIONS } from '@/constants/emotions'
 import { MoodRecord } from '@/types/mood'
-import { formatDate as formatDateUtil } from '@/utils/dateUtil'
 
 const router = useRouter()
 
@@ -436,15 +436,27 @@ const truncateText = (text: string, maxLength: number) => {
   return text.length > maxLength ? text.substring(0, maxLength) + '...' : text
 }
 
-// 格式化日期
-const formatDate = (dateString: string) => {
-  return formatDateUtil(dateString)
+const toLocalDateTime = (dateString?: string) => {
+  if (!dateString) return ''
+
+  const date = new Date(dateString)
+  if (Number.isNaN(date.getTime())) return ''
+
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  })
 }
 
 const formatDateDetail = (dateString?: string) => {
-  if (!dateString) return ''
-  return formatDateUtil(dateString)
+  return toLocalDateTime(dateString)
 }
+
 
 // 获取情绪颜色
 const getMoodColor = (moodType: string) => {
@@ -454,8 +466,7 @@ const getMoodColor = (moodType: string) => {
 
 // 获取情绪名称
 const getMoodName = (moodType: string) => {
-  const mood = moodTypes.find((m) => m.type === moodType)
-  return mood ? mood.name : moodType
+  return EMOTION_MAP[moodType] || moodType
 }
 
 // 获取强度颜色
@@ -518,14 +529,13 @@ onMounted(() => {
 @use '@/assets/styles/theme.scss' as *;
 
 .mood-archive {
-  padding: 20px;
+padding: 20px;
 
   .container {
     max-width: 1200px;
     margin: 0 auto;
   }
-
-  h2 {
+h2 {
     margin-bottom: 24px;
   }
 
@@ -922,7 +932,7 @@ onMounted(() => {
         font-weight: 600;
         color: var(--text-color);
         min-width: 40px;
-      }
+}
     }
   }
 }
@@ -963,8 +973,10 @@ onMounted(() => {
         grid-row: span 1;
       }
     }
+  }
+}
 
-    .filter-section {
+.filter-section {
       flex-direction: column;
       align-items: stretch;
     }

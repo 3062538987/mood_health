@@ -35,7 +35,7 @@
           <h4>近期高频情绪</h4>
           <div class="emotion-tags">
             <div v-for="(count, emotion) in recentEmotions" :key="emotion" class="emotion-tag">
-              <span class="emotion-name">{{ emotion }}</span>
+              <span class="emotion-name">{{ getMoodNameZh(emotion) }}</span>
               <span class="emotion-count">{{ count }}次</span>
             </div>
           </div>

@@ -17,7 +17,7 @@
             <span>记录完成度</span>
           </article>
           <article>
-            <strong>{{ selectedMoodMeta.length }}</strong>
+            <strong>{{ selectedMoodTypeIds.length }}</strong>
             <span>已选情绪</span>
           </article>
           <article>
@@ -29,6 +29,7 @@
 
       <div class="content-grid">
         <main class="editor-column">
+
           <section class="panel intensity-panel">
             <div class="panel-head">
               <div>
@@ -270,7 +271,6 @@ const {
   hasDraft,
   isSubmitting,
   isSubmittingSuccess,
-  selectedMoodMeta,
   filteredTriggerSuggestions,
   characterCount,
   formProgress,
@@ -281,6 +281,7 @@ const {
   currentAiMoodMeta,
   draftSavedAtText,
 } = storeToRefs(store)
+
 
 const intensityTone = computed(() => {
   if (intensity.value <= 3) {
@@ -816,7 +817,7 @@ textarea:focus,
 
 @media (max-width: 768px) {
   .mood-record-page {
-    padding: 16px;
+padding: 16px;
   }
 
   .hero-metrics {
@@ -833,6 +834,36 @@ textarea:focus,
 
   .intensity-scale {
     grid-template-columns: repeat(5, 1fr);
+  }
+
+  .mood-type-list {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mood-grid {
+    min-width: 740px;
+  }
+
+  .action-panel {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    z-index: 30;
+    padding: 14px;
+    border-radius: 20px 20px 18px 18px;
+    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.08);
+  }
+
+  .action-row {
+    width: 100%;
+  }
+
+  .submit-action {
+    width: 100%;
+    min-height: 48px;
   }
 }
 </style>

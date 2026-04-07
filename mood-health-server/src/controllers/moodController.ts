@@ -26,7 +26,19 @@ import logger from '../utils/logger'
 export const recordMood = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.userId
-    const { moodType, moodRatio, event, tags, trigger, recordDate, emotions, tagIds } = req.body
+    const {
+      moodType,
+      moodRatio,
+      intensity,
+      intensity_score,
+      level,
+      event,
+      tags,
+      trigger,
+      recordDate,
+      emotions,
+      tagIds,
+    } = req.body
 
     if (emotions && Array.isArray(emotions) && emotions.length > 0) {
       for (const emotion of emotions) {
@@ -53,21 +65,33 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
       return res.status(201).json({ code: 0, message: '记录成功' })
     }
 
-    if (!moodType || !moodRatio) {
+    const rawIntensity = Array.isArray(moodRatio)
+      ? moodRatio[0]
+      : (moodRatio ?? intensity ?? intensity_score ?? level)
+
+    if (!moodType || rawIntensity === undefined) {
       return res.status(400).json({ code: 400, message: '情绪类型和强度为必填' })
     }
 
     const moodTypeStr = Array.isArray(moodType) ? moodType.join(',') : moodType
-    const intensity = moodRatio[0] || 3
+    const resolvedIntensity = Number(rawIntensity)
 
-    if (intensity < 1 || intensity > 10) {
+    if (!Number.isFinite(resolvedIntensity) || resolvedIntensity < 1 || resolvedIntensity > 10) {
       return res.status(400).json({ code: 400, message: '强度必须在1-10之间' })
     }
 
     const date = recordDate || new Date().toISOString().split('T')[0]
     const tagsStr = Array.isArray(tags) ? tags.join(',') : tags || ''
 
-    await createMood(userId, moodTypeStr, intensity, event || '', tagsStr, trigger || '', date)
+    await createMood(
+      userId,
+      moodTypeStr,
+      resolvedIntensity,
+      event || '',
+      tagsStr,
+      trigger || '',
+      date
+    )
     await clearMoodCache(userId)
     res.status(201).json({ code: 0, message: '记录成功' })
   } catch (error) {
