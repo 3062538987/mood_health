@@ -9,16 +9,16 @@
 ## 2. 数据库配置确认
 
 - DB_CLIENT=sqlite
-- SQLITE_DB_PATH：D:/桌面/Code/大学生情绪健康/mood-health-web/mood-health-server/data/mood-health-questionnaire-test-abs.db
+- SQLITE_DB_PATH：D:/桌面/Code/大学生情绪健康/mood-health-web/mood_health_server/data/mood-health-questionnaire-test-abs.db
 - 数据库文件存在：是
 - integrity_check：ok
 
 ## 3. 发布前命令执行记录
 
-- `npm --prefix mood-health-server run build`：通过（多轮）
-- `npm --prefix mood-health-server run db:init:sqlite`：已在测试路径验证通过
-- `npm --prefix mood-health-server run seed:demo:all`：已具备执行入口
-- `npm --prefix mood-health-server run test:sqlite-smoke`：已具备执行入口
+- `npm --prefix mood_health_server run build`：通过（多轮）
+- `npm --prefix mood_health_server run db:init:sqlite`：已在测试路径验证通过
+- `npm --prefix mood_health_server run seed:demo:all`：已具备执行入口
+- `npm --prefix mood_health_server run test:sqlite-smoke`：已具备执行入口
 - `npm run doctor`：已集成到预检流程
 
 ## 4. 核心 API 回归

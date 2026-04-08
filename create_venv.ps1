@@ -28,7 +28,7 @@ $root = Split-Path -Parent $PSCommandPath
 $venvPath = Join-Path $root ".venv"
 $pythonExe = Join-Path $venvPath "Scripts\python.exe"
 $requirementsRoot = Join-Path $root "requirements.txt"
-$requirementsBackend = Join-Path $root "mood-health-server\requirements.txt"
+$requirementsBackend = Join-Path $root "mood_health_server\requirements.txt"
 
 Write-Info "Checking Python availability"
 $pythonCommand = Get-Command python -ErrorAction SilentlyContinue
@@ -57,7 +57,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 if (Test-Path $requirementsBackend) {
-    Write-Info "Installing backend requirements from mood-health-server/requirements.txt"
+    Write-Info "Installing backend requirements from mood_health_server/requirements.txt"
     & $pythonExe -m pip install -r $requirementsBackend
     if ($LASTEXITCODE -ne 0) {
         Fail "Failed to install backend requirements"

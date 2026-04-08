@@ -1,5 +1,5 @@
 {
-  "name": "mood-health-server",
+  "name": "mood_health_server",
   "version": "1.0.0",
   "description": "",
   "main": "dist/app.js",

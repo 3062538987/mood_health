@@ -9,14 +9,14 @@
 ## 1. 构建与预检
 
 ```powershell
-npm --prefix mood-health-server run build
+npm --prefix mood_health_server run build
 npm run sqlite:preflight
 ```
 
 ## 2. 启动服务
 
 ```powershell
-npm --prefix mood-health-server run start
+npm --prefix mood_health_server run start
 ```
 
 ## 3. 基础可用性检查
@@ -77,13 +77,13 @@ const fs = require('fs')
 const path = require('path')
 const { DatabaseSync } = require('node:sqlite')
 
-const envPath = path.join(process.cwd(), 'mood-health-server', '.env')
+const envPath = path.join(process.cwd(), 'mood_health_server', '.env')
 const envText = fs.readFileSync(envPath, 'utf8')
 const lines = envText.split(/\r?\n/)
 const pathLine = lines.find((line) => line.startsWith('SQLITE_DB_PATH='))
 
 if (!pathLine) {
-  throw new Error('未在 mood-health-server/.env 中找到 SQLITE_DB_PATH')
+  throw new Error('未在 mood_health_server/.env 中找到 SQLITE_DB_PATH')
 }
 
 const rawDbPath = pathLine.slice('SQLITE_DB_PATH='.length).trim()

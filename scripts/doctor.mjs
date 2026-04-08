@@ -146,12 +146,12 @@ async function run() {
   checkCommand('pm2', ['--version'], false)
 
   checkFile('package.json', true)
-  checkFile('mood-health-server/package.json', true)
+  checkFile('mood_health_server/package.json', true)
   checkFile('.env', false)
-  checkFile('mood-health-server/.env', false)
+  checkFile('mood_health_server/.env', false)
   checkDir('node_modules', false)
-  checkDir('mood-health-server/node_modules', false)
-  checkFile('mood-health-server/dist/app.js', false)
+  checkDir('mood_health_server/node_modules', false)
+  checkFile('mood_health_server/dist/app.js', false)
   if (process.platform === 'win32') {
     checkFile('start-project.ps1', true)
     checkFile('start-project.sh', false)
@@ -164,7 +164,7 @@ async function run() {
     fail('Missing startup scripts: start-project.ps1/start-project.sh')
   }
 
-  const backendEnv = readEnvFromFile('mood-health-server/.env')
+  const backendEnv = readEnvFromFile('mood_health_server/.env')
   const redisRequired = parseBoolean(process.env.REDIS_REQUIRED ?? backendEnv.REDIS_REQUIRED, false)
 
   const ports = [

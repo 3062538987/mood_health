@@ -16,10 +16,10 @@
 
 ## 3. 发布前命令执行记录
 
-- `npm --prefix mood-health-server run build`：通过 / 失败
-- `npm --prefix mood-health-server run db:init:sqlite`：通过 / 失败
-- `npm --prefix mood-health-server run seed:demo:all`：通过 / 跳过 / 失败
-- `npm --prefix mood-health-server run test:sqlite-smoke`：通过 / 跳过 / 失败
+- `npm --prefix mood_health_server run build`：通过 / 失败
+- `npm --prefix mood_health_server run db:init:sqlite`：通过 / 失败
+- `npm --prefix mood_health_server run seed:demo:all`：通过 / 跳过 / 失败
+- `npm --prefix mood_health_server run test:sqlite-smoke`：通过 / 跳过 / 失败
 - `npm run doctor`：通过 / 失败
 
 ## 4. 核心 API 回归

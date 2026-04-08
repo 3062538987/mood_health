@@ -14,7 +14,7 @@
 ```text
 mood-health-web/
 ├── src/                        # 前端源码
-├── mood-health-server/         # 后端与 AI 服务
+├── mood_health_server/         # 后端与 AI 服务
 │   ├── src/                    # Node API 代码
 │   ├── main.py                 # Python AI 服务入口
 │   ├── ecosystem.config.js     # PM2 进程编排
@@ -28,6 +28,81 @@ mood-health-web/
 ├── DEPLOYMENT.md               # 部署指南
 ├── start-project.ps1           # 一键启动（Windows）
 └── package.json                # 根命令入口
+```
+
+## 目录结构规范（已扁平化）
+
+- 统一使用 `mood_health_server/` 作为后端目录名称，不再使用 `mood-health-server/`。
+- 健康检查目录保持单层：`health/README.md`，不再出现 `health/health/`。
+- 测试与运行时数据统一放在 `mood_health_server/data/`，避免同名嵌套目录。
+
+### 最终标准目录树（完整版）
+
+```text
+mood-health-web/
+├── src/                                # 前端 Vue 源码
+│   ├── api/
+│   ├── assets/
+│   ├── components/
+│   ├── composables/
+│   ├── constants/
+│   ├── router/
+│   ├── stores/
+│   ├── types/
+│   ├── utils/
+│   ├── views/
+│   └── __tests__/
+├── mood_health_server/                 # 后端 Node + Python AI
+│   ├── src/                            # Node API 主代码
+│   │   ├── config/
+│   │   ├── controllers/
+│   │   ├── middleware/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── scripts/
+│   │   ├── types/
+│   │   └── utils/
+│   ├── api_response/                   # Python API 响应模型
+│   ├── assessment/                     # 评测相关 Python 模块
+│   ├── common/                         # Python 公共工具
+│   ├── db/                             # Python DB/缓存封装
+│   ├── treehole/                       # 树洞相关 Python 模块
+│   ├── user_auth/                      # Python 鉴权依赖
+│   ├── tests/                          # 后端测试
+│   ├── scripts/                        # SQL/Lua/脚本
+│   ├── data/                           # SQLite 与测试数据库
+│   ├── main.py                         # Python AI 入口
+│   ├── ecosystem.config.js             # PM2 编排
+│   ├── package.json
+│   └── requirements.txt
+├── scripts/                            # 根级运维与联调脚本
+│   ├── doctor.mjs
+│   ├── dev-all.mjs
+│   ├── demo-init.mjs
+│   ├── sqlite-preflight.ps1
+│   ├── sqlite-db-status.ps1
+│   └── release-smoke.ps1
+├── docs/                               # 文档中心
+│   ├── API.md
+│   ├── COMMANDS.md
+│   ├── TESTING.md
+│   ├── SQLITE_RELEASE_DAY_CHECKLIST.md
+│   ├── SQLITE_RELEASE_REPORT_TEMPLATE.md
+│   └── SQLITE_RELEASE_REPORT_2026-03-30.md
+├── health/
+│   └── README.md
+├── public/
+│   ├── index.html
+│   └── audio/
+├── assets/
+├── DEPLOYMENT.md
+├── README.txt
+├── package.json
+├── start-project.ps1
+├── start-project.sh
+├── nginx.conf
+├── nginx.linux.conf
+└── requirements.txt
 ```
 
 ## 服务端口
@@ -84,7 +159,7 @@ npm run setup
 # 2) 安装 Python 依赖（根据你的虚拟环境）
 python -m venv .venv
 source .venv/bin/activate
-pip install -r mood-health-server/requirements.txt
+pip install -r mood_health_server/requirements.txt
 
 # 3) 自检
 npm run doctor
@@ -141,14 +216,14 @@ $env:DEMO_USER_PASSWORD="123456"
 npm run demo:init:all
 ```
 
-## 后端命令（mood-health-server）
+## 后端命令（mood_health_server）
 
 ```bash
-npm --prefix mood-health-server run dev
-npm --prefix mood-health-server run build
-npm --prefix mood-health-server run test
-npm --prefix mood-health-server run seed:demo -- 123456
-npm --prefix mood-health-server run seed:demo:all
+npm --prefix mood_health_server run dev
+npm --prefix mood_health_server run build
+npm --prefix mood_health_server run test
+npm --prefix mood_health_server run seed:demo -- 123456
+npm --prefix mood_health_server run seed:demo:all
 ```
 
 ## 文档索引
@@ -165,7 +240,7 @@ npm --prefix mood-health-server run seed:demo:all
 
 1. `doctor` 报告 `dist/app.js missing`
 
-- 执行 `npm --prefix mood-health-server run build`
+- 执行 `npm --prefix mood_health_server run build`
 
 2. Windows 下 Python `.env` 编码问题
 

@@ -8,3 +8,7 @@ dist/
 .DS_Store
 Thumbs.db
 *.log
+
+# Prevent accidental nested duplicate directories
+health/health/
+mood_health_server/mood_health_server/

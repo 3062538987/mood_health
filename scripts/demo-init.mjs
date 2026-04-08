@@ -6,7 +6,7 @@ import { spawnSync } from 'node:child_process'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const root = path.resolve(__dirname, '..')
-const backendRoot = path.join(root, 'mood-health-server')
+const backendRoot = path.join(root, 'mood_health_server')
 
 const runAll = process.argv.includes('--all')
 const passwordArg = process.argv.find((arg) => arg.startsWith('--password='))

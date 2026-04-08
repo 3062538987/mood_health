@@ -3,7 +3,7 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $repoRoot
 
-$envPath = Join-Path $repoRoot 'mood-health-server/.env'
+$envPath = Join-Path $repoRoot 'mood_health_server/.env'
 if (-not (Test-Path $envPath)) {
   throw "Missing env file: $envPath"
 }

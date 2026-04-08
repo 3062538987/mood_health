@@ -10,7 +10,7 @@ module.exports = {
     'coverage',
     'node_modules',
     'logs',
-    'mood-health-server',
+    'mood_health_server',
     'public/audio',
   ],
   extends: [

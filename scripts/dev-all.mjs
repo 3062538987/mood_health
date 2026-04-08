@@ -31,7 +31,7 @@ function startProcess(name, args) {
 console.log('Starting frontend and backend dev servers...')
 
 const frontend = startProcess('frontend', ['run', 'dev'])
-const backend = startProcess('backend', ['--prefix', 'mood-health-server', 'run', 'dev'])
+const backend = startProcess('backend', ['--prefix', 'mood_health_server', 'run', 'dev'])
 
 let stopping = false
 function shutdown(signal) {

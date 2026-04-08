@@ -3,8 +3,8 @@
 本文档用于将项目部署到生产或准生产环境。当前仓库包含三个核心服务：
 
 - 前端静态站点（Vite 构建产物）
-- Node API 服务（mood-health-server/dist/app.js）
-- Python AI 服务（mood-health-server/main.py）
+- Node API 服务（mood_health_server/dist/app.js）
+- Python AI 服务（mood_health_server/main.py）
 
 命令以 `docs/COMMANDS.md` 为统一索引；本文件仅保留部署场景下最关键命令，避免多处重复维护。
 
@@ -23,12 +23,12 @@
 项目中未统一提供 `.env.example`，请按实际环境创建：
 
 - 根目录 `.env`（前端 Vite 变量）
-- `mood-health-server/.env`（后端与 AI 服务变量）
+- `mood_health_server/.env`（后端与 AI 服务变量）
 
 可参考模板：
 
 - `.env.production.example`（前端生产）
-- `mood-health-server/.env.production.no-ai.example`（后端 2核2G 无 AI 推理）
+- `mood_health_server/.env.production.no-ai.example`（后端 2核2G 无 AI 推理）
 
 建议至少校验以下变量：
 
@@ -59,7 +59,7 @@ npm run build:all
 # Linux/macOS
 python -m venv .venv
 source .venv/bin/activate
-pip install -r mood-health-server/requirements.txt
+pip install -r mood_health_server/requirements.txt
 
 # Windows（可选脚本）
 npm run setup:python
@@ -137,11 +137,11 @@ npm run pm2:stop
 
 ```bash
 # 终端 1：Node API
-npm --prefix mood-health-server run build
-npm --prefix mood-health-server run start
+npm --prefix mood_health_server run build
+npm --prefix mood_health_server run start
 
 # 终端 2：Python AI
-cd mood-health-server
+cd mood_health_server
 python main.py
 
 # 终端 3：前端（开发或静态服务）
@@ -169,7 +169,7 @@ npm run doctor:strict
 
 ## 7. Nginx 反向代理（示例）
 
-可参考仓库根目录 `nginx.conf`、`nginx.linux.conf` 与 `mood-health-server/nginx.conf.example`。
+可参考仓库根目录 `nginx.conf`、`nginx.linux.conf` 与 `mood_health_server/nginx.conf.example`。
 
 典型策略：
 
@@ -200,7 +200,7 @@ npm run start-all
 
 1. `doctor` 报 `dist/app.js missing`
 
-- 执行 `npm --prefix mood-health-server run build`
+- 执行 `npm --prefix mood_health_server run build`
 
 2. AI 服务读取 `.env` 报编码错误（Windows）
 

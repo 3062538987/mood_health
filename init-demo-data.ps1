@@ -21,7 +21,7 @@ function Convert-SecureStringToPlainText {
   }
 }
 
-$serverPath = Join-Path $PSScriptRoot "mood-health-server"
+$serverPath = Join-Path $PSScriptRoot "mood_health_server"
 
 $passwordText = Convert-SecureStringToPlainText -Value $Password
 

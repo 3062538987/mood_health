@@ -29,8 +29,8 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PM2_BIN="$SCRIPT_DIR/node_modules/pm2/bin/pm2"
-ECOSYSTEM_FILE="$SCRIPT_DIR/mood-health-server/ecosystem.config.js"
-DIST_APP="$SCRIPT_DIR/mood-health-server/dist/app.js"
+ECOSYSTEM_FILE="$SCRIPT_DIR/mood_health_server/ecosystem.config.js"
+DIST_APP="$SCRIPT_DIR/mood_health_server/dist/app.js"
 
 if [[ ! -f "$PM2_BIN" ]]; then
   echo "PM2 not found at $PM2_BIN. Run npm install in repository root first."
@@ -50,7 +50,7 @@ fi
 
 if [[ ! -f "$DIST_APP" ]]; then
   echo "[start-project] dist/app.js missing, building backend..."
-  npm --prefix mood-health-server run build
+  npm --prefix mood_health_server run build
 fi
 
 node "$PM2_BIN" delete mood-health-server >/dev/null 2>&1 || true

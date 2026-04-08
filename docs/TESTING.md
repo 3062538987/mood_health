@@ -7,7 +7,7 @@
 ## 1. 测试分层
 
 - 前端单元测试：Vitest（位于 `src/__tests__`）
-- 后端单元测试：Jest（位于 `mood-health-server/tests`）
+- 后端单元测试：Jest（位于 `mood_health_server/tests`）
 - 接口与联调冒烟：通过本地启动后手工/脚本验证
 - 压力测试：Locust 与 wrk
 
@@ -30,7 +30,7 @@ npm run test:all
 `test:all` 等价于：
 
 1. `npm run test:run`
-2. `npm --prefix mood-health-server run test`（稳定测试集）
+2. `npm --prefix mood_health_server run test`（稳定测试集）
 
 ## 3. 前端测试
 
@@ -50,22 +50,22 @@ npm run test:ui
 ## 4. 后端测试
 
 ```bash
-npm --prefix mood-health-server install
-npm --prefix mood-health-server run test
+npm --prefix mood_health_server install
+npm --prefix mood_health_server run test
 ```
 
 需要数据库依赖的集成测试：
 
 ```bash
-npm --prefix mood-health-server run test:integration
+npm --prefix mood_health_server run test:integration
 ```
 
 其他后端测试命令：
 
 ```bash
-npm --prefix mood-health-server run test:coverage
-npm --prefix mood-health-server run test:watch
-npm --prefix mood-health-server run test:role-permissions
+npm --prefix mood_health_server run test:coverage
+npm --prefix mood_health_server run test:watch
+npm --prefix mood_health_server run test:role-permissions
 ```
 
 ## 5. 联调冒烟建议流程
@@ -89,7 +89,7 @@ npm run dev:all
 ### Locust
 
 ```bash
-cd mood-health-server
+cd mood_health_server
 pip install locust
 locust -f locustfile.py --host=http://localhost:3000
 ```
@@ -104,7 +104,7 @@ locust -f locustfile.py --host=http://localhost:8000 --headless -u 10 -r 2 -t 60
 ### wrk
 
 ```bash
-cd mood-health-server
+cd mood_health_server
 chmod +x scripts/stress_test.sh
 ./scripts/stress_test.sh
 ```
@@ -139,11 +139,11 @@ Windows 无原生 `chmod`，可在 WSL/Git Bash 运行，或直接执行 wrk 单
 
 1. 后端测试启动失败
 
-- 先执行 `npm --prefix mood-health-server run build`，确认 TypeScript 可编译。
+- 先执行 `npm --prefix mood_health_server run build`，确认 TypeScript 可编译。
 
 2. `test:all` 在后端阶段失败
 
-- 单独执行 `npm --prefix mood-health-server run test` 查看详细错误。
+- 单独执行 `npm --prefix mood_health_server run test` 查看详细错误。
 
 3. 压测报 401
 

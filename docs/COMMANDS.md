@@ -37,7 +37,7 @@ npm run pm2:status
 
 | 场景                       | 命令                            | 说明                                                   |
 | -------------------------- | ------------------------------- | ------------------------------------------------------ |
-| 安装依赖                   | `npm run setup`                 | 安装根目录和 `mood-health-server` 的 Node 依赖         |
+| 安装依赖                   | `npm run setup`                 | 安装根目录和 `mood_health_server` 的 Node 依赖         |
 | Python 环境（Windows）     | `npm run setup:python`          | 调用 `create_venv.ps1` 创建 `.venv` 并安装 Python 依赖 |
 | 环境自检                   | `npm run doctor`                | 检查命令可用性、关键文件、端口连通性                   |
 | 严格自检                   | `npm run doctor:strict`         | Warning 也视为失败                                     |
@@ -66,21 +66,21 @@ npm run pm2:status
 | PM2 日志                   | `npm run pm2:logs`              | 查看 PM2 日志                                          |
 | PM2 停止                   | `npm run pm2:stop`              | 删除 `mood-health-server` 和 `mood-ai-server`          |
 
-## 2. 后端命令（mood-health-server）
+## 2. 后端命令（mood_health_server）
 
 | 场景         | 命令                                                        | 说明                           |
 | ------------ | ----------------------------------------------------------- | ------------------------------ |
-| 开发         | `npm --prefix mood-health-server run dev`                   | nodemon + ts-node              |
-| 构建         | `npm --prefix mood-health-server run build`                 | TypeScript 编译到 `dist/`      |
-| 生产启动     | `npm --prefix mood-health-server run start`                 | 启动 `dist/app.js`             |
-| 后端自检     | `npm --prefix mood-health-server run doctor`                | 检查 `dist/app.js` 是否存在    |
-| 测试（稳定） | `npm --prefix mood-health-server run test`                  | 默认稳定测试集（无数据库依赖） |
-| 集成测试     | `npm --prefix mood-health-server run test:integration`      | 需要数据库环境                 |
-| 测试覆盖率   | `npm --prefix mood-health-server run test:coverage`         | Jest 覆盖率                    |
-| 测试观察     | `npm --prefix mood-health-server run test:watch`            | Jest watch                     |
-| 角色权限测试 | `npm --prefix mood-health-server run test:role-permissions` | 权限脚本测试                   |
-| 种子数据     | `npm --prefix mood-health-server run seed:demo -- 123456`   | 初始化演示用户和数据           |
-| 全量种子     | `npm --prefix mood-health-server run seed:demo:all`         | 初始化并验证演示账号           |
+| 开发         | `npm --prefix mood_health_server run dev`                   | nodemon + ts-node              |
+| 构建         | `npm --prefix mood_health_server run build`                 | TypeScript 编译到 `dist/`      |
+| 生产启动     | `npm --prefix mood_health_server run start`                 | 启动 `dist/app.js`             |
+| 后端自检     | `npm --prefix mood_health_server run doctor`                | 检查 `dist/app.js` 是否存在    |
+| 测试（稳定） | `npm --prefix mood_health_server run test`                  | 默认稳定测试集（无数据库依赖） |
+| 集成测试     | `npm --prefix mood_health_server run test:integration`      | 需要数据库环境                 |
+| 测试覆盖率   | `npm --prefix mood_health_server run test:coverage`         | Jest 覆盖率                    |
+| 测试观察     | `npm --prefix mood_health_server run test:watch`            | Jest watch                     |
+| 角色权限测试 | `npm --prefix mood_health_server run test:role-permissions` | 权限脚本测试                   |
+| 种子数据     | `npm --prefix mood_health_server run seed:demo -- 123456`   | 初始化演示用户和数据           |
+| 全量种子     | `npm --prefix mood_health_server run seed:demo:all`         | 初始化并验证演示账号           |
 
 ## 3. 操作系统相关命令
 
@@ -160,16 +160,16 @@ $env:DB_CLIENT='sqlite'
 $env:SQLITE_DB_PATH='D:/deploy/mood-health/data/mood-health.db'
 
 # 2) 后端构建
-npm --prefix mood-health-server run build
+npm --prefix mood_health_server run build
 
 # 3) 初始化 SQLite schema
-npm --prefix mood-health-server run db:init:sqlite
+npm --prefix mood_health_server run db:init:sqlite
 
 # 4) 初始化演示数据（可按需替换为生产初始化脚本）
-npm --prefix mood-health-server run seed:demo:all
+npm --prefix mood_health_server run seed:demo:all
 
 # 5) SQLite 冒烟测试
-npm --prefix mood-health-server run test:sqlite-smoke
+npm --prefix mood_health_server run test:sqlite-smoke
 
 # 6) 启动前健康自检
 npm run doctor
@@ -177,7 +177,7 @@ npm run doctor
 
 ## 5. 相关文档
 
-遗留脚本提示：`mood-health-server/src/scripts/addAuditFields.ts`、`mood-health-server/src/scripts/addEncryptionFields.ts`、`mood-health-server/src/scripts/createCourseTable.ts`、`mood-health-server/src/scripts/createMusicTable.ts`、`mood-health-server/src/scripts/createLikeTables.ts`、`mood-health-server/src/scripts/createTreeHoleTables.ts` 为历史 SQL Server 专用脚本，SQLite 部署请使用 `db:init:sqlite` 与 `seed:demo:all`。
+遗留脚本提示：`mood_health_server/src/scripts/addAuditFields.ts`、`mood_health_server/src/scripts/addEncryptionFields.ts`、`mood_health_server/src/scripts/createCourseTable.ts`、`mood_health_server/src/scripts/createMusicTable.ts`、`mood_health_server/src/scripts/createLikeTables.ts`、`mood_health_server/src/scripts/createTreeHoleTables.ts` 为历史 SQL Server 专用脚本，SQLite 部署请使用 `db:init:sqlite` 与 `seed:demo:all`。
 
 - 部署：`DEPLOYMENT.md`
 - 测试：`docs/TESTING.md`
@@ -185,3 +185,20 @@ npm run doctor
 - SQLite 发布当天操作单：`docs/SQLITE_RELEASE_DAY_CHECKLIST.md`
 - SQLite 留档模板：`docs/SQLITE_RELEASE_REPORT_TEMPLATE.md`
 - SQLite 留档样例：`docs/SQLITE_RELEASE_REPORT_2026-03-30.md`
+
+## 6. 标准目录树索引
+
+目录规范以 `README.txt` 的“最终标准目录树（完整版）”为唯一维护源；本节保留执行视角的精简索引。
+
+```text
+mood-health-web/
+├── src/                        # 前端
+├── mood_health_server/         # 后端 Node + Python AI
+├── scripts/                    # 根级脚本
+├── docs/                       # 文档
+├── health/                     # 健康检查说明
+├── public/                     # 静态资源
+├── DEPLOYMENT.md               # 部署文档
+├── README.txt                  # 项目总览与完整目录树
+└── package.json                # 根命令入口
+```
