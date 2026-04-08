@@ -759,12 +759,6 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
   const submitRecord = async () => {
     isSubmitting.value = true
     try {
-<<<<<<< HEAD
-await submitMoodRecord({
-        moodType: [...selectedMoodTypes.value],
-        moodRatio: [...moodRatios.value],
-        event: moodContent.value.trim(),
-=======
       const safeMoodTypes =
         selectedMoodTypes.value.length > 0 ? [...selectedMoodTypes.value] : ['neutral']
       const normalizedIntensity = Number.isFinite(intensity.value)
@@ -778,7 +772,6 @@ await submitMoodRecord({
         moodType: safeMoodTypes,
         moodRatio: safeMoodRatio,
         event: moodContent.value.trim() || '',
->>>>>>> rescue-b991437
         tags: Array.from(new Set([...selectedTags.value, ...selectedTriggers.value])),
         trigger: selectedTriggers.value.join(','),
         intensity: safeIntensity,

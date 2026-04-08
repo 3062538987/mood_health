@@ -134,11 +134,6 @@
                 </span>
               </div>
 
-<<<<<<< HEAD
-<div class="trigger-preview">
-                <span class="trigger-icon">🎯</span>
-                <span class="trigger-text">{{ getMainTrigger(record) }}</span>
-=======
               <div class="intensity-block">
                 <div class="intensity-head">
                   <span>强度</span>
@@ -152,7 +147,6 @@
                     :class="{ active: level <= getDisplayIntensity(record) }"
                   ></span>
                 </div>
->>>>>>> rescue-b991437
               </div>
 
               <p v-if="record.event" class="record-note">{{ record.event }}</p>
@@ -589,8 +583,6 @@ const toLocalDateTime = (dateString?: string) => {
 
 const formatDateDetail = (dateString?: string) => {
   return toLocalDateTime(dateString)
-<<<<<<< HEAD
-=======
 }
 
 const formatArchiveDate = (dateString: string) => {
@@ -628,7 +620,6 @@ const getDisplayIntensity = (record?: MoodRecord | null) => {
   }
 
   return 0
->>>>>>> rescue-b991437
 }
 
 
@@ -727,24 +718,16 @@ onMounted(() => {
 @use '@/assets/styles/theme.scss' as *;
 
 .mood-archive {
-<<<<<<< HEAD
-padding: 20px;
-=======
   padding: 24px 20px 28px;
   background:
     radial-gradient(circle at top left, rgba(255, 209, 102, 0.15), transparent 28%),
     radial-gradient(circle at top right, rgba(106, 176, 165, 0.14), transparent 30%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(248, 245, 242, 0.92));
->>>>>>> rescue-b991437
 
   .container {
     max-width: 1200px;
     margin: 0 auto;
   }
-<<<<<<< HEAD
-h2 {
-    margin-bottom: 24px;
-=======
 
   .archive-header {
     display: flex;
@@ -815,7 +798,6 @@ h2 {
 
   .summary-card.accent {
     background: linear-gradient(135deg, rgba(255, 209, 102, 0.22), rgba(106, 176, 165, 0.16));
->>>>>>> rescue-b991437
   }
 
   .filter-section {
@@ -1283,10 +1265,8 @@ h2 {
       flex: 1 1 0;
       min-width: 0;
     }
-  }
-}
 
-.filter-section {
+    .filter-section {
       flex-direction: column;
       align-items: stretch;
       padding: 16px;

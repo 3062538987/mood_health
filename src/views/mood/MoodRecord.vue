@@ -29,8 +29,6 @@
 
       <div class="content-grid">
         <main class="editor-column">
-<<<<<<< HEAD
-=======
           <section class="panel mood-type-panel">
             <div class="panel-head compact">
               <div>
@@ -69,7 +67,6 @@
               </div>
             </div>
           </section>
->>>>>>> rescue-b991437
 
           <section class="panel intensity-panel">
             <div class="panel-head">
@@ -238,8 +235,6 @@ const {
   draftSavedAtText,
 } = storeToRefs(store)
 
-<<<<<<< HEAD
-=======
 interface MoodRingOption {
   id: string
   emoji: string
@@ -296,7 +291,6 @@ const visibleMoodRows: MoodRingRow[] = [
     ],
   },
 ]
->>>>>>> rescue-b991437
 
 const intensityTone = computed(() => {
   if (intensity.value <= 3) {
@@ -1024,12 +1018,8 @@ textarea::placeholder {
 
 @media (max-width: 768px) {
   .mood-record-page {
-<<<<<<< HEAD
-padding: 16px;
-=======
     padding: 18px;
     padding-bottom: 120px;
->>>>>>> rescue-b991437
   }
 
   .hero-metrics {
