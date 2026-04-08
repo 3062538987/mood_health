@@ -9,8 +9,8 @@
           <div class="avatar-placeholder">👤</div>
         </div>
         <div class="user-details">
-          <h2 class="username">大学生用户</h2>
-          <p class="user-id">用户ID: user_123456</p>
+          <h2 class="username">{{ displayUsername }}</h2>
+          <p class="user-id">用户ID: {{ displayUserId }}</p>
         </div>
       </div>
 
@@ -33,12 +33,13 @@
         <!-- 近期高频情绪 -->
         <div class="recent-emotions">
           <h4>近期高频情绪</h4>
-          <div class="emotion-tags">
+          <div v-if="emotionEntries.length > 0" class="emotion-tags">
             <div v-for="(count, emotion) in recentEmotions" :key="emotion" class="emotion-tag">
               <span class="emotion-name">{{ getMoodNameZh(emotion) }}</span>
               <span class="emotion-count">{{ count }}次</span>
             </div>
           </div>
+          <p v-else class="empty-text">暂无情绪记录</p>
         </div>
 
         <!-- 参与记录与收藏 -->
@@ -62,55 +63,10 @@
       <div class="function-section">
         <h3 class="section-title">功能入口</h3>
         <div class="function-grid">
-          <!-- 情绪调研入口 -->
-          <div class="function-card survey-card" @click="goToSurvey">
-            <div class="card-icon">📋</div>
-            <h4 class="card-title">情绪调研</h4>
-            <p class="card-description">参与情绪健康调研，解锁高级分析报告</p>
-            <div v-if="!surveyCompleted" class="card-badge">未参与</div>
-            <div v-else class="card-badge completed">已完成</div>
-          </div>
-
-          <!-- 其他功能入口 -->
-          <div class="function-card">
-            <div class="card-icon">📊</div>
-            <h4 class="card-title">情绪分析</h4>
-            <p class="card-description">查看我的情绪变化趋势</p>
-          </div>
-
-          <div class="function-card">
-            <div class="card-icon">🎁</div>
-            <h4 class="card-title">我的成就</h4>
-            <p class="card-description">查看已获得的情绪管理成就</p>
-          </div>
-
-          <div class="function-card">
+          <div class="function-card settings-card" @click="goToSetting">
             <div class="card-icon">⚙️</div>
             <h4 class="card-title">设置</h4>
             <p class="card-description">账号和隐私设置</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- 会员权益区域 -->
-      <div class="membership-section">
-        <div class="membership-card">
-          <h3 class="membership-title">会员权益</h3>
-          <div class="membership-benefits">
-            <div class="benefit-item">
-              <div class="benefit-icon">✨</div>
-              <div class="benefit-info">
-                <h4>基础权益</h4>
-                <p>情绪记录、简单分析</p>
-              </div>
-            </div>
-            <div class="benefit-item premium">
-              <div class="benefit-icon">💎</div>
-              <div class="benefit-info">
-                <h4>高级权益</h4>
-                <p>深度分析、个性化建议</p>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -119,38 +75,100 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/userStore'
+import { getMoodRecordList } from '@/api/mood'
+import { getMyJoinedActivities } from '@/api/activityApi'
 
 const router = useRouter()
+const userStore = useUserStore()
 
-// 状态管理
-const surveyCompleted = ref(false) // 问卷完成状态
+const displayUsername = computed(() => userStore.user?.username || '未登录用户')
+const displayUserId = computed(() => String(userStore.user?.id || '-'))
 
-// 个人情绪主页数据
-const emotionScore = ref(85) // 情绪健康评分
-const recentEmotions = ref({
-  // 近期高频情绪
-  平静: 4,
-  焦虑: 2,
-  开心: 3,
-  压力: 1,
-})
-const groupActivityCount = ref(2) // 团体辅导参与记录
-const favoriteKnowledgeCount = ref(5) // 收藏的知识点
-const favoriteToolsCount = ref(3) // 收藏的解压工具
+// 个人情绪主页数据（按当前登录用户实时计算）
+const emotionScore = ref(0)
+const recentEmotions = ref<Record<string, number>>({})
+const groupActivityCount = ref(0)
+const favoriteKnowledgeCount = ref(0)
+const favoriteToolsCount = ref(0)
+const emotionEntries = computed(() => Object.entries(recentEmotions.value))
 
-// 前往问卷页面
-const goToSurvey = () => {
-  router.push('/improve/survey')
+const moodLabelMap: Record<string, string> = {
+  happy: '开心',
+  delight: '愉悦',
+  neutral: '一般',
+  sad: '难过',
+  angry: '愤怒',
+  irritable: '烦躁',
+  anxious: '焦虑',
+  calm: '平静',
+  excited: '兴奋',
+  tired: '疲惫',
+  grateful: '感恩',
 }
 
-// 模拟从localStorage获取问卷完成状态
-onMounted(() => {
-  const completed = localStorage.getItem('surveyCompleted')
-  if (completed) {
-    surveyCompleted.value = JSON.parse(completed)
+const getMoodNameZh = (mood: string) => moodLabelMap[mood] || mood
+
+const computeEmotionScore = (list: Array<{ moodRatio?: number[]; intensity?: number }>) => {
+  if (list.length === 0) return 0
+  const total = list.reduce((sum, item) => {
+    if (Array.isArray(item.moodRatio) && item.moodRatio.length > 0) {
+      return sum + Number(item.moodRatio[0] || 0)
+    }
+    return sum + Number(item.intensity || 0) * 10
+  }, 0)
+  return Math.max(0, Math.min(100, Math.round(total / list.length)))
+}
+
+const computeRecentEmotions = (list: Array<{ moodType?: string[] }>) => {
+  const counter = new Map<string, number>()
+  for (const item of list) {
+    const moods = Array.isArray(item.moodType) ? item.moodType : []
+    for (const mood of moods) {
+      const key = String(mood || '').trim()
+      if (!key) continue
+      counter.set(key, (counter.get(key) || 0) + 1)
+    }
   }
+
+  return Object.fromEntries([...counter.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4))
+}
+
+const loadProfileData = async () => {
+  if (userStore.token && !userStore.user) {
+    await userStore.fetchUserInfo()
+  }
+
+  if (!userStore.user) {
+    emotionScore.value = 0
+    recentEmotions.value = {}
+    groupActivityCount.value = 0
+    return
+  }
+
+  const [moodListResult, joinedActivities] = await Promise.all([
+    getMoodRecordList({ page: 1, size: 200 }),
+    getMyJoinedActivities(),
+  ])
+
+  const moodList = Array.isArray(moodListResult?.list) ? moodListResult.list : []
+  emotionScore.value = computeEmotionScore(moodList)
+  recentEmotions.value = computeRecentEmotions(moodList)
+  groupActivityCount.value = Array.isArray(joinedActivities) ? joinedActivities.length : 0
+}
+
+const goToSetting = () => {
+  router.push('/user/setting')
+}
+
+onMounted(() => {
+  loadProfileData().catch(() => {
+    emotionScore.value = 0
+    recentEmotions.value = {}
+    groupActivityCount.value = 0
+  })
 })
 </script>
 
@@ -247,16 +265,6 @@ onMounted(() => {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
   }
 
-  // 情绪调研卡片特殊样式
-  &.survey-card {
-    border-color: #42b983;
-    background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
-
-    &:hover {
-      box-shadow: 0 8px 25px rgba(66, 185, 131, 0.15);
-    }
-  }
-
   .card-icon {
     font-size: 48px;
     margin-bottom: 16px;
@@ -273,22 +281,6 @@ onMounted(() => {
     color: #666;
     font-size: 14px;
     line-height: 1.5;
-  }
-
-  .card-badge {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: #ff9800;
-    color: white;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 500;
-  }
-
-  .card-badge.completed {
-    background: #4caf50;
   }
 }
 
@@ -356,6 +348,12 @@ onMounted(() => {
     color: #333;
     font-size: 16px;
   }
+
+  .empty-text {
+    margin: 0;
+    color: #999;
+    font-size: 14px;
+  }
 }
 
 // 情绪标签样式
@@ -420,60 +418,6 @@ onMounted(() => {
   }
 }
 
-// 会员权益区域样式
-.membership-section {
-  .membership-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 16px;
-    padding: 30px;
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
-
-    .membership-title {
-      margin: 0 0 24px 0;
-      font-size: 24px;
-    }
-
-    .membership-benefits {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-    }
-
-    .benefit-item {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 20px;
-      display: flex;
-      gap: 16px;
-      backdrop-filter: blur(10px);
-
-      &.premium {
-        background: rgba(255, 255, 255, 0.2);
-        border: 2px solid rgba(255, 255, 255, 0.3);
-      }
-
-      .benefit-icon {
-        font-size: 36px;
-        flex-shrink: 0;
-      }
-
-      .benefit-info {
-        .h4 {
-          margin: 0 0 8px 0;
-          font-size: 18px;
-        }
-
-        p {
-          margin: 0;
-          opacity: 0.9;
-          font-size: 14px;
-        }
-      }
-    }
-  }
-}
-
 // 响应式设计
 @media (max-width: 768px) {
   .user-info-card {
@@ -482,10 +426,6 @@ onMounted(() => {
   }
 
   .function-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .membership-benefits {
     grid-template-columns: 1fr;
   }
 

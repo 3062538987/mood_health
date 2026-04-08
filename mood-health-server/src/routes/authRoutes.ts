@@ -1,25 +1,24 @@
 /**
  * 认证路由模块
  * 提供用户注册、登录、获取用户信息等认证相关接口
- * 
+ *
  * @module authRoutes
  */
 
-import { Router } from 'express';
-import { body } from 'express-validator';
-import { register, login, getMe } from '../controllers/authController';
-import { authenticate } from '../middleware/auth';
-import { validateRequest } from '../middleware/validateRequest';
+import { Router } from 'express'
+import { body } from 'express-validator'
+import { register, login, getMe } from '../controllers/authController'
+import { authenticate } from '../middleware/auth'
+import { validateRequest } from '../middleware/validateRequest'
 
-const router = Router();
+const router = Router()
 
 /**
  * 用户注册接口
  * @route POST /api/auth/register
  * @description 创建新用户账号
  * @access 公开
- * @param {string} username - 用户名，至少3个字符
- * @param {string} email - 邮箱地址，必须为有效邮箱格式
+ * @param {string} username - 用户名，3-20位，可包含中文、字母、数字、下划线
  * @param {string} password - 密码，至少6个字符
  * @returns {Object} 201 - 注册成功
  * @returns {Object} 400 - 参数错误或用户已存在
@@ -28,20 +27,20 @@ const router = Router();
  * POST /api/auth/register
  * {
  *   "username": "testuser",
- *   "email": "test@example.com",
  *   "password": "password123"
  * }
  */
 router.post(
   '/register',
   [
-    body('username').isLength({ min: 3 }).withMessage('用户名至少3个字符'),
-    body('email').isEmail().withMessage('请输入有效邮箱'),
-    body('password').isLength({ min: 6 }).withMessage('密码至少6个字符')
+    body('username')
+      .matches(/^[\u4e00-\u9fa5a-zA-Z0-9_]{3,20}$/)
+      .withMessage('用户名需为3-20位，可包含中文、字母、数字或下划线'),
+    body('password').isLength({ min: 6 }).withMessage('密码至少6个字符'),
   ],
   validateRequest,
   register
-);
+)
 
 /**
  * 用户登录接口
@@ -65,11 +64,11 @@ router.post(
   '/login',
   [
     body('username').notEmpty().withMessage('用户名不能为空'),
-    body('password').notEmpty().withMessage('密码不能为空')
+    body('password').notEmpty().withMessage('密码不能为空'),
   ],
   validateRequest,
   login
-);
+)
 
 /**
  * 获取当前用户信息接口
@@ -85,6 +84,6 @@ router.post(
  * GET /api/auth/me
  * Headers: { "Authorization": "Bearer eyJhbGciOiJIUzI1NiIs..." }
  */
-router.get('/me', authenticate, getMe);
+router.get('/me', authenticate, getMe)
 
-export default router;
+export default router

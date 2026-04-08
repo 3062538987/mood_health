@@ -150,11 +150,11 @@ const formatTime = (value: string) => {
 .ai-suggest-card {
   display: grid;
   gap: 1rem;
-  padding: 1.2rem;
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(244, 245, 255, 0.96));
-  border: 1px solid rgba(99, 102, 241, 0.12);
-  box-shadow: 0 24px 60px rgba(99, 102, 241, 0.08);
+  padding: 1.5rem;
+  border-radius: 22px;
+  background: #fff;
+  border: 1px solid #e8e2d8;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
 }
 
 .card-head,
@@ -171,7 +171,7 @@ const formatTime = (value: string) => {
 
 .eyebrow {
   margin: 0 0 0.35rem;
-  color: #7c7fb7;
+  color: #9c8f7d;
   font-size: 0.84rem;
   font-weight: 700;
 }
@@ -179,7 +179,7 @@ const formatTime = (value: string) => {
 h3,
 h4 {
   margin: 0;
-  color: #1f2347;
+  color: #5c5c5c;
 }
 
 .primary-btn,
@@ -196,10 +196,10 @@ h4 {
 .primary-btn {
   min-width: 136px;
   padding: 0.82rem 1rem;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #6366f1, #818cf8);
+  border-radius: 40px;
+  background: linear-gradient(135deg, #8b9dc3, #c49a6c);
   color: #fff;
-  box-shadow: 0 14px 26px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
 }
 
 .primary-btn:hover,
@@ -214,24 +214,24 @@ h4 {
 
 .auto-guide {
   padding: 1rem;
-  border-radius: 14px;
-  background: rgba(99, 102, 241, 0.07);
+  border-radius: 20px;
+  background: #fbf4ea;
 }
 
 .service-notice {
   margin: 0;
   padding: 0.72rem 0.88rem;
-  border-radius: 12px;
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.18);
-  color: #b42318;
+  border-radius: 20px;
+  background: #fff6ec;
+  border: 1px solid #f0d3ad;
+  color: #8a6a47;
   font-size: 0.9rem;
 }
 
 .guide-label {
   display: inline-flex;
   margin-bottom: 0.7rem;
-  color: #6366f1;
+  color: #8a6a47;
   font-size: 0.82rem;
   font-weight: 700;
 }
@@ -239,7 +239,7 @@ h4 {
 .auto-guide ul {
   margin: 0;
   padding-left: 1.15rem;
-  color: #4d5378;
+  color: #5c5c5c;
   line-height: 1.7;
 }
 
@@ -254,8 +254,8 @@ h4 {
   gap: 0.5rem;
   padding: 0.58rem 0.85rem;
   border-radius: 999px;
-  color: var(--pill-color);
-  background: color-mix(in srgb, var(--pill-color) 12%, white);
+  color: #5c5c5c;
+  background: #f6ead9;
 }
 
 .head-actions {
@@ -268,22 +268,22 @@ h4 {
 .ghost-btn,
 .mini-btn {
   padding: 0.68rem 0.92rem;
-  border-radius: 12px;
-  background: rgba(99, 102, 241, 0.08);
-  color: #50557c;
+  border-radius: 40px;
+  background: #fbf4ea;
+  color: #5c5c5c;
 }
 
 .ghost-btn.primary {
   color: #fff;
-  background: linear-gradient(135deg, #6366f1, #818cf8);
+  background: linear-gradient(135deg, #8b9dc3, #c49a6c);
 }
 
 .analysis {
   margin: 0;
   padding: 1rem;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.7);
-  color: #30365d;
+  border-radius: 20px;
+  background: #fcf7f1;
+  color: #5c5c5c;
   line-height: 1.8;
 }
 
@@ -298,13 +298,13 @@ h4 {
   gap: 1rem;
   align-items: center;
   padding: 0.95rem 1rem;
-  border-radius: 14px;
-  background: rgba(99, 102, 241, 0.06);
+  border-radius: 20px;
+  background: #fcf7f1;
 }
 
 .suggestion-item p {
   margin: 0.35rem 0 0;
-  color: #41476d;
+  color: #5c5c5c;
   line-height: 1.7;
 }
 
@@ -315,15 +315,15 @@ h4 {
   width: 1.6rem;
   height: 1.6rem;
   border-radius: 999px;
-  background: rgba(99, 102, 241, 0.12);
-  color: #6366f1;
+  background: #f6ead9;
+  color: #8a6a47;
   font-size: 0.84rem;
   font-weight: 700;
 }
 
 .history-panel {
   padding-top: 0.4rem;
-  border-top: 1px solid rgba(99, 102, 241, 0.1);
+  border-top: 1px solid #eee5d8;
 }
 
 .history-head span,
@@ -331,7 +331,7 @@ h4 {
 .history-empty,
 .history-item small,
 .time {
-  color: #787e9f;
+  color: #7a746b;
 }
 
 .history-list {
@@ -345,9 +345,9 @@ h4 {
   gap: 0.3rem;
   text-align: left;
   padding: 0.9rem 1rem;
-  border-radius: 14px;
-  border: 1px solid rgba(99, 102, 241, 0.1);
-  background: rgba(255, 255, 255, 0.78);
+  border-radius: 20px;
+  border: 1px solid #e8e2d8;
+  background: #fff;
   cursor: pointer;
   transition:
     transform 0.2s ease,
@@ -357,8 +357,8 @@ h4 {
 
 .history-item:hover {
   transform: translateY(-1px);
-  border-color: rgba(99, 102, 241, 0.22);
-  box-shadow: 0 14px 28px rgba(99, 102, 241, 0.1);
+  border-color: #dbcbb5;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
 }
 
 @media (max-width: 768px) {

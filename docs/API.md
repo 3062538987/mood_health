@@ -24,14 +24,14 @@
 
 **描述**：注册新用户
 
+**说明**：注册时无需提交邮箱，系统将自动分配临时邮箱（`@temp.user`）
+
 **请求体**：
 
 ```json
 {
   "username": "string",
-  "email": "string",
-  "password": "string",
-  "nickname": "string"
+  "password": "string"
 }
 ```
 

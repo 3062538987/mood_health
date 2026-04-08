@@ -2,7 +2,7 @@ import pool from '../config/database'
 import { hashPassword, comparePassword as comparePasswordUtil } from '../utils/password'
 import sql from 'mssql'
 import { isSqliteClient } from '../config/database'
-import { sqliteGet, sqliteRun } from '../config/sqlite'
+import { sqliteGet, sqliteRun, sqliteTransaction } from '../config/sqlite'
 
 /**
  * 用户角色类型
@@ -64,6 +64,10 @@ export interface User {
 type UserPublic = Omit<User, 'password'>
 
 type UpdateUserRoleResult = {
+  rowsAffected: number[]
+}
+
+type DeleteUserResult = {
   rowsAffected: number[]
 }
 
@@ -234,6 +238,133 @@ export const updateUserRole = async (id: number, role: UserRole): Promise<Update
       WHERE id = @id
     `)
   return result
+}
+
+/**
+ * 删除用户及其关联数据
+ * @param {number} id - 用户ID
+ * @returns {Promise<DeleteUserResult>} - 数据库操作结果
+ */
+export const deleteUserById = async (id: number): Promise<DeleteUserResult> => {
+  if (isSqliteClient) {
+    const result = sqliteTransaction(() => {
+      sqliteRun('DELETE FROM comment_likes WHERE user_id = ?', [id])
+      sqliteRun(
+        `
+        DELETE FROM comment_likes
+        WHERE comment_id IN (
+          SELECT id FROM comments WHERE user_id = ? OR post_id IN (SELECT id FROM posts WHERE user_id = ?)
+        )
+        `,
+        [id, id]
+      )
+      sqliteRun(
+        `
+        DELETE FROM comments
+        WHERE user_id = ? OR post_id IN (SELECT id FROM posts WHERE user_id = ?)
+        `,
+        [id, id]
+      )
+      sqliteRun('DELETE FROM post_likes WHERE user_id = ?', [id])
+      sqliteRun('DELETE FROM post_likes WHERE post_id IN (SELECT id FROM posts WHERE user_id = ?)', [id])
+      sqliteRun('DELETE FROM activity_participants WHERE user_id = ?', [id])
+      sqliteRun('DELETE FROM user_answers WHERE user_id = ?', [id])
+      sqliteRun('DELETE FROM user_assessments WHERE user_id = ?', [id])
+      sqliteRun('DELETE FROM user_achievements WHERE user_id = ?', [id])
+      sqliteRun('DELETE FROM relax_records WHERE user_id = ?', [id])
+      sqliteRun('DELETE FROM moods WHERE user_id = ?', [id])
+      sqliteRun('DELETE FROM tags WHERE user_id = ? AND COALESCE(is_system, 0) = 0', [id])
+      sqliteRun('DELETE FROM posts WHERE user_id = ?', [id])
+      return sqliteRun('DELETE FROM users WHERE id = ?', [id])
+    })
+
+    return { rowsAffected: [Number(result.changes || 0)] }
+  }
+
+  const transaction = new sql.Transaction(pool)
+  await transaction.begin()
+
+  try {
+    const request = transaction.request().input('userId', sql.Int, id)
+
+    await request.query(`
+      DELETE FROM comment_likes
+      WHERE user_id = @userId
+    `)
+
+    await request.query(`
+      DELETE FROM comment_likes
+      WHERE comment_id IN (
+        SELECT id FROM comments WHERE user_id = @userId OR post_id IN (SELECT id FROM posts WHERE user_id = @userId)
+      )
+    `)
+
+    await request.query(`
+      DELETE FROM comments
+      WHERE user_id = @userId OR post_id IN (SELECT id FROM posts WHERE user_id = @userId)
+    `)
+
+    await request.query(`
+      DELETE FROM post_likes
+      WHERE user_id = @userId
+    `)
+
+    await request.query(`
+      DELETE FROM post_likes
+      WHERE post_id IN (SELECT id FROM posts WHERE user_id = @userId)
+    `)
+
+    await request.query(`
+      DELETE FROM activity_participants
+      WHERE user_id = @userId
+    `)
+
+    await request.query(`
+      DELETE FROM user_answers
+      WHERE user_id = @userId
+    `)
+
+    await request.query(`
+      DELETE FROM user_assessments
+      WHERE user_id = @userId
+    `)
+
+    await request.query(`
+      DELETE FROM user_achievements
+      WHERE user_id = @userId
+    `)
+
+    await request.query(`
+      DELETE FROM relax_records
+      WHERE user_id = @userId
+    `)
+
+    await request.query(`
+      DELETE FROM moods
+      WHERE user_id = @userId
+    `)
+
+    await request.query(`
+      DELETE FROM tags
+      WHERE user_id = @userId AND ISNULL(is_system, 0) = 0
+    `)
+
+    await request.query(`
+      DELETE FROM posts
+      WHERE user_id = @userId
+    `)
+
+    const result = await request.query(`
+      DELETE FROM users
+      WHERE id = @userId
+    `)
+
+    await transaction.commit()
+    return result
+  } catch (error) {
+    await transaction.rollback()
+    throw error
+  }
 }
 
 /**

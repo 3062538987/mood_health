@@ -1,17 +1,35 @@
 <template>
   <div class="mood-archive">
     <div class="container">
-      <h2>情绪档案</h2>
+      <header class="archive-header">
+        <div>
+          <p class="eyebrow">Mood Archive</p>
+          <h2>情绪档案</h2>
+          <p class="archive-copy">按时间回看自己的情绪变化，把每一次记录变得更清楚。</p>
+        </div>
 
-      <!-- 筛选区域 -->
-      <div class="filter-section">
-        <!-- 时间筛选 -->
+        <div class="summary-strip">
+          <article class="summary-card">
+            <span>本月记录</span>
+            <strong>{{ monthRecordCount }}</strong>
+            <small>条</small>
+          </article>
+          <article class="summary-card accent">
+            <span>主要情绪</span>
+            <strong>{{ mainMoodLabel }}</strong>
+            <small>{{ monthMoodHint }}</small>
+          </article>
+        </div>
+      </header>
+
+      <section class="filter-section">
         <div class="filter-group">
-          <label>时间范围：</label>
+          <label>时间范围</label>
           <div class="time-filters">
             <button
               v-for="filter in timeFilters"
               :key="filter.key"
+              type="button"
               :class="{ active: selectedTimeFilter === filter.key }"
               @click="setTimeFilter(filter.key)"
             >
@@ -19,7 +37,6 @@
             </button>
           </div>
 
-          <!-- 自定义时间范围 -->
           <div v-if="selectedTimeFilter === 'custom'" class="custom-time">
             <input v-model="customStartDate" type="date" @change="handleCustomDateChange" />
             <span class="date-separator">至</span>
@@ -27,27 +44,33 @@
           </div>
         </div>
 
-        <!-- 情绪类型筛选 -->
-        <div class="filter-group">
-          <label>情绪类型：</label>
+        <div class="filter-group mood-filter-group">
+          <label>情绪类型</label>
           <div class="mood-filters">
+            <button
+              type="button"
+              class="mood-filter all"
+              :class="{ active: selectedMoodFilters.length === 0 }"
+              @click="clearMoodFilters"
+            >
+              全部
+            </button>
             <button
               v-for="mood in moodTypes"
               :key="mood.type"
+              type="button"
+              class="mood-filter"
               :class="{ active: selectedMoodFilters.includes(mood.type) }"
               @click="toggleMoodFilter(mood.type)"
             >
-              <span class="mood-dot" :style="{ backgroundColor: mood.color }"></span>
+              <span class="mood-dot" :style="getMoodChipStyle(mood.type)"></span>
               {{ mood.name }}
-            </button>
-            <button :class="{ active: selectedMoodFilters.length === 0 }" @click="clearMoodFilters">
-              全部
             </button>
           </div>
         </div>
 
-        <button class="reset-btn" @click="resetFilters">重置筛选</button>
-      </div>
+        <button class="reset-btn" type="button" @click="resetFilters">重置筛选</button>
+      </section>
 
       <transition name="archive-state" mode="out-in">
         <SoftLoadingState
@@ -59,57 +82,87 @@
           description="正在为你铺开最近的情绪轨迹，马上就能看到更完整的记录。"
         />
 
-        <div v-else-if="showEmptyState" key="empty" class="timeline-bento-container">
+        <div v-else-if="showEmptyState" key="empty" class="empty-state-shell">
           <SoftEmptyState
-            title="还没有记录过情绪哦，去记录一下吧～"
-            description="每一次小小的记录，都会帮你更温柔地看见自己的情绪轨迹。先写下今天的心情，档案页就会慢慢丰富起来。"
+            :title="emptyStateTitle"
+            :description="emptyStateDescription"
             action-text="去记录情绪"
             @action="goToMoodRecord"
           />
         </div>
 
-        <div v-else key="content" class="timeline-bento-container">
-          <div class="timeline-bento">
-            <div
-              v-for="(record, index) in filteredRecords"
+        <div v-else key="content" class="records-shell">
+          <div class="records-grid">
+            <article
+              v-for="record in filteredRecords"
               :key="record.id"
-              class="bento-item"
-              :class="getItemSize(record, index)"
+              class="record-card"
               @click="showDetail(record)"
             >
-              <div class="date-badge">
-                <div class="date-day">{{ getDay(record.createTime) }}</div>
-                <div class="date-month">{{ getMonth(record.createTime) }}</div>
+              <div class="record-top">
+                <div class="record-date-block">
+                  <div class="record-date">{{ formatArchiveDate(record.createTime) }}</div>
+                  <div class="record-meta">{{ formatArchiveDateMeta(record.createTime) }}</div>
+                </div>
+
+                <div class="record-actions">
+                  <button
+                    class="action-btn edit-btn"
+                    type="button"
+                    @click.stop="editRecord(record)"
+                  >
+                    编辑
+                  </button>
+                  <button
+                    class="action-btn delete-btn"
+                    type="button"
+                    @click.stop="confirmDeleteRecord(record)"
+                  >
+                    删除
+                  </button>
+                </div>
               </div>
 
-              <div class="emotion-summary">
-                <div
-                  v-for="(type, idx) in record.moodType"
-                  :key="idx"
-                  class="emotion-dot"
-                  :style="{
-                    backgroundColor: getMoodColor(type),
-                    transform: `scale(${(record.moodRatio[idx] || 50) / 30})`,
-                    zIndex: idx,
-                  }"
-                  :title="`${getMoodName(type)}: ${record.moodRatio[idx] || 50}%`"
-                ></div>
+              <div class="mood-tags">
+                <span
+                  v-for="type in record.moodType"
+                  :key="type"
+                  class="mood-tag"
+                  :style="getMoodTagStyle(type)"
+                >
+                  {{ getMoodName(type) }}
+                </span>
               </div>
 
+<<<<<<< HEAD
 <div class="trigger-preview">
                 <span class="trigger-icon">🎯</span>
                 <span class="trigger-text">{{ getMainTrigger(record) }}</span>
+=======
+              <div class="intensity-block">
+                <div class="intensity-head">
+                  <span>强度</span>
+                  <strong>{{ getDisplayIntensity(record) }}/10</strong>
+                </div>
+                <div class="intensity-dots" :aria-label="`情绪强度 ${getDisplayIntensity(record)} / 10`">
+                  <span
+                    v-for="level in 10"
+                    :key="level"
+                    class="intensity-dot"
+                    :class="{ active: level <= getDisplayIntensity(record) }"
+                  ></span>
+                </div>
+>>>>>>> rescue-b991437
               </div>
 
-              <div class="mood-note">{{ truncateText(record.event, 20) }}</div>
+              <p v-if="record.event" class="record-note">{{ record.event }}</p>
 
-              <div class="item-actions">
-                <button class="action-btn edit-btn" @click.stop="editRecord(record)">✏️</button>
-                <button class="action-btn delete-btn" @click.stop="confirmDeleteRecord(record)">
-                  🗑️
-                </button>
+              <div v-if="getTags(record).length > 0" class="trigger-tags">
+                <span v-for="tag in getTags(record)" :key="tag" class="trigger-tag">
+                  {{ tag }}
+                </span>
               </div>
-            </div>
+            </article>
           </div>
 
           <div v-if="hasMore" class="load-more">
@@ -119,7 +172,6 @@
       </transition>
     </div>
 
-    <!-- 详情对话框 -->
     <el-dialog
       v-model="showDetailDialog"
       :title="`情绪详情 - ${formatDateDetail(selectedRecord?.createTime)}`"
@@ -135,13 +187,7 @@
               :key="idx"
               class="detail-emotion-item"
             >
-              <div
-                class="emotion-dot-large"
-                :style="{
-                  backgroundColor: getMoodColor(type),
-                  transform: `scale(${(selectedRecord.moodRatio[idx] || 50) / 25})`,
-                }"
-              ></div>
+              <div class="emotion-dot-large" :style="getMoodDotStyle(type)"></div>
               <div class="emotion-info">
                 <span class="emotion-name">{{ getMoodName(type) }}</span>
                 <span class="emotion-ratio">{{ selectedRecord.moodRatio[idx] || 50 }}%</span>
@@ -200,15 +246,94 @@ import { MoodRecord } from '@/types/mood'
 
 const router = useRouter()
 
-// 情绪类型数据
-const moodTypes = [
-  { type: 'angry', name: '愤怒', color: 'var(--mood-angry)' },
-  { type: 'sad', name: '悲伤', color: 'var(--mood-sad)' },
-  { type: 'calm', name: '平静', color: 'var(--mood-calm)' },
-  { type: 'happy', name: '愉悦', color: 'var(--mood-happy)' },
-  { type: 'anxious', name: '焦虑', color: 'var(--mood-anxious)' },
-  { type: 'irritable', name: '烦躁', color: 'var(--mood-neutral)' },
-]
+const emotionVisualMap: Record<
+  string,
+  { color: string; softColor: string; textColor: string; borderColor: string }
+> = {
+  happy: {
+    color: '#ffd166',
+    softColor: 'rgba(255, 209, 102, 0.18)',
+    textColor: '#8c6500',
+    borderColor: 'rgba(255, 209, 102, 0.45)',
+  },
+  delight: {
+    color: '#d7aefb',
+    softColor: 'rgba(215, 174, 251, 0.18)',
+    textColor: '#7a41a8',
+    borderColor: 'rgba(215, 174, 251, 0.45)',
+  },
+  neutral: {
+    color: '#9ca3af',
+    softColor: 'rgba(156, 163, 175, 0.18)',
+    textColor: '#4b5563',
+    borderColor: 'rgba(156, 163, 175, 0.45)',
+  },
+  anxious: {
+    color: '#f3a683',
+    softColor: 'rgba(243, 166, 131, 0.18)',
+    textColor: '#a4572d',
+    borderColor: 'rgba(243, 166, 131, 0.45)',
+  },
+  sad: {
+    color: '#4d96ff',
+    softColor: 'rgba(77, 150, 255, 0.16)',
+    textColor: '#1f5fbf',
+    borderColor: 'rgba(77, 150, 255, 0.45)',
+  },
+  excited: {
+    color: '#fb7185',
+    softColor: 'rgba(251, 113, 133, 0.16)',
+    textColor: '#be123c',
+    borderColor: 'rgba(251, 113, 133, 0.45)',
+  },
+  calm: {
+    color: '#6ab0a5',
+    softColor: 'rgba(106, 176, 165, 0.18)',
+    textColor: '#32665f',
+    borderColor: 'rgba(106, 176, 165, 0.45)',
+  },
+  angry: {
+    color: '#ef476f',
+    softColor: 'rgba(239, 71, 111, 0.16)',
+    textColor: '#b42f4c',
+    borderColor: 'rgba(239, 71, 111, 0.45)',
+  },
+  irritable: {
+    color: '#8d99ae',
+    softColor: 'rgba(141, 153, 174, 0.18)',
+    textColor: '#5f6a78',
+    borderColor: 'rgba(141, 153, 174, 0.45)',
+  },
+  tired: {
+    color: '#94a3b8',
+    softColor: 'rgba(148, 163, 184, 0.18)',
+    textColor: '#475569',
+    borderColor: 'rgba(148, 163, 184, 0.45)',
+  },
+  grateful: {
+    color: '#f59e0b',
+    softColor: 'rgba(245, 158, 11, 0.18)',
+    textColor: '#92400e',
+    borderColor: 'rgba(245, 158, 11, 0.45)',
+  },
+}
+
+const defaultMoodVisual = {
+  color: '#8d99ae',
+  softColor: 'rgba(141, 153, 174, 0.16)',
+  textColor: '#5f6a78',
+  borderColor: 'rgba(141, 153, 174, 0.35)',
+}
+
+// 情绪类型筛选项来源统一到共享常量
+const moodTypes = EMOTION_OPTIONS.map((option) => {
+  const visual = emotionVisualMap[option.value] || defaultMoodVisual
+  return {
+    type: option.value,
+    name: option.label,
+    ...visual,
+  }
+})
 
 // 时间筛选选项
 const timeFilters = [
@@ -243,6 +368,61 @@ const showEmptyState = computed(
 // 计算属性：是否有更多数据
 const hasMore = computed(() => {
   return moodRecords.value.length < totalRecords.value
+})
+
+const currentMonthRecords = computed(() => {
+  const now = new Date()
+  return moodRecords.value.filter((record) => {
+    const recordDate = new Date(record.createTime)
+    return (
+      recordDate.getFullYear() === now.getFullYear() && recordDate.getMonth() === now.getMonth()
+    )
+  })
+})
+
+const monthRecordCount = computed(() => currentMonthRecords.value.length)
+
+const mainMoodLabel = computed(() => {
+  if (currentMonthRecords.value.length === 0) {
+    return '暂无'
+  }
+
+  const moodCounts = new Map<string, number>()
+  currentMonthRecords.value.forEach((record) => {
+    record.moodType.forEach((type) => {
+      moodCounts.set(type, (moodCounts.get(type) || 0) + 1)
+    })
+  })
+
+  let dominantMood = ''
+  let highestCount = 0
+
+  moodCounts.forEach((count, type) => {
+    if (count > highestCount) {
+      highestCount = count
+      dominantMood = type
+    }
+  })
+
+  return dominantMood ? getMoodName(dominantMood) : '暂无'
+})
+
+const monthMoodHint = computed(() => {
+  if (currentMonthRecords.value.length === 0) {
+    return '先记录一条情绪'
+  }
+
+  return `${currentMonthRecords.value.length} 条记录`
+})
+
+const emptyStateTitle = computed(() => {
+  return moodRecords.value.length === 0 ? '还没有记录，去记录第一条情绪' : '没有符合当前筛选的记录'
+})
+
+const emptyStateDescription = computed(() => {
+  return moodRecords.value.length === 0
+    ? '先记录今天的心情、触发因素和强度，档案页就会逐渐变得更完整。'
+    : '尝试切换时间范围或情绪类型，找回你想查看的那一段情绪轨迹。'
 })
 
 // 计算属性：筛选后的记录
@@ -372,52 +552,6 @@ const resetFilters = () => {
   fetchMoodRecords()
 }
 
-// 获取本托项目大小
-const getItemSize = (record: MoodRecord, index: number) => {
-  // 基于情绪强度和多种情绪判断重要性
-  const hasMultipleEmotions = record.moodType.length > 1
-  const highIntensity = record.intensity && record.intensity >= 8
-  const isImportant = hasMultipleEmotions || highIntensity
-
-  // 前几个记录也显示得更大
-  const isRecent = index < 3
-
-  if (isImportant && isRecent) return 'large'
-  if (isImportant || isRecent) return 'medium'
-  return 'small'
-}
-
-// 获取日期
-const getDay = (dateString: string) => {
-  const date = new Date(dateString)
-  return date.getDate()
-}
-
-const getMonth = (dateString: string) => {
-  const date = new Date(dateString)
-  const months = [
-    '1月',
-    '2月',
-    '3月',
-    '4月',
-    '5月',
-    '6月',
-    '7月',
-    '8月',
-    '9月',
-    '10月',
-    '11月',
-    '12月',
-  ]
-  return months[date.getMonth()]
-}
-
-// 获取主要触发因素
-const getMainTrigger = (record: MoodRecord) => {
-  const tags = getTags(record)
-  return tags.length > 0 ? tags[0] : '无'
-}
-
 // 获取标签
 const getTags = (record: MoodRecord) => {
   const tags: string[] = []
@@ -455,6 +589,46 @@ const toLocalDateTime = (dateString?: string) => {
 
 const formatDateDetail = (dateString?: string) => {
   return toLocalDateTime(dateString)
+<<<<<<< HEAD
+=======
+}
+
+const formatArchiveDate = (dateString: string) => {
+  const localDateTime = toLocalDateTime(dateString)
+  if (!localDateTime) return ''
+  return localDateTime.split(' ')[0] || ''
+}
+
+const formatArchiveDateMeta = (dateString: string) => {
+  const localDateTime = toLocalDateTime(dateString)
+  if (!localDateTime) return ''
+  return localDateTime.split(' ')[1] || ''
+}
+
+const normalizeIntensity = (value: unknown) => {
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric) || numeric <= 0) return 0
+  return Math.max(1, Math.min(10, Math.round(numeric)))
+}
+
+const getDisplayIntensity = (record?: MoodRecord | null) => {
+  if (!record) return 0
+
+  const directIntensity = normalizeIntensity(record.intensity)
+  if (directIntensity > 0) {
+    return directIntensity
+  }
+
+  if (Array.isArray(record.moodRatio) && record.moodRatio.length > 0) {
+    const firstRatio = Number(record.moodRatio[0])
+    if (Number.isFinite(firstRatio) && firstRatio > 0) {
+      const derived = firstRatio <= 10 ? firstRatio : firstRatio / 10
+      return normalizeIntensity(derived)
+    }
+  }
+
+  return 0
+>>>>>>> rescue-b991437
 }
 
 
@@ -464,6 +638,30 @@ const getMoodColor = (moodType: string) => {
   return mood ? mood.color : '#999'
 }
 
+const getMoodChipStyle = (moodType: string) => {
+  const mood = moodTypes.find((m) => m.type === moodType)
+  if (!mood) {
+    return {
+      backgroundColor: 'rgba(141, 153, 174, 0.16)',
+      color: '#5f6a78',
+      borderColor: 'rgba(141, 153, 174, 0.35)',
+    }
+  }
+
+  return {
+    backgroundColor: mood.softColor,
+    color: mood.textColor,
+    borderColor: mood.borderColor,
+  }
+}
+
+const getMoodTagStyle = (moodType: string) => getMoodChipStyle(moodType)
+
+const getMoodDotStyle = (moodType: string) => {
+  const mood = moodTypes.find((m) => m.type === moodType)
+  return mood ? { backgroundColor: mood.color } : { backgroundColor: '#999' }
+}
+
 // 获取情绪名称
 const getMoodName = (moodType: string) => {
   return EMOTION_MAP[moodType] || moodType
@@ -471,9 +669,9 @@ const getMoodName = (moodType: string) => {
 
 // 获取强度颜色
 const getIntensityColor = (intensity: number) => {
-  if (intensity <= 3) return 'var(--mood-angry)'
-  if (intensity <= 6) return 'var(--mood-happy)'
-  return 'var(--mood-calm)'
+  if (intensity <= 3) return '#4d96ff'
+  if (intensity <= 6) return '#ffd166'
+  return '#ef476f'
 }
 
 // 显示详情
@@ -529,101 +727,175 @@ onMounted(() => {
 @use '@/assets/styles/theme.scss' as *;
 
 .mood-archive {
+<<<<<<< HEAD
 padding: 20px;
+=======
+  padding: 24px 20px 28px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 209, 102, 0.15), transparent 28%),
+    radial-gradient(circle at top right, rgba(106, 176, 165, 0.14), transparent 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(248, 245, 242, 0.92));
+>>>>>>> rescue-b991437
 
   .container {
     max-width: 1200px;
     margin: 0 auto;
   }
+<<<<<<< HEAD
 h2 {
     margin-bottom: 24px;
+=======
+
+  .archive-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 22px;
+    padding: 4px 2px 8px;
+  }
+
+  .eyebrow {
+    margin: 0 0 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary-color);
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-color);
+  }
+
+  .archive-copy {
+    margin: 10px 0 0;
+    color: var(--text-light-color);
+    line-height: 1.7;
+  }
+
+  .summary-strip {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .summary-card {
+    min-width: 160px;
+    padding: 16px 18px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow: 0 12px 28px rgba(106, 176, 165, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .summary-card span {
+    font-size: 12px;
+    color: var(--text-light-color);
+    font-weight: 600;
+  }
+
+  .summary-card strong {
+    font-size: 24px;
+    line-height: 1.1;
+    color: var(--text-color);
+  }
+
+  .summary-card small {
+    color: var(--text-light-color);
+    font-size: 12px;
+  }
+
+  .summary-card.accent {
+    background: linear-gradient(135deg, rgba(255, 209, 102, 0.22), rgba(106, 176, 165, 0.16));
+>>>>>>> rescue-b991437
   }
 
   .filter-section {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: $border-radius-lg;
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
+    background: rgba(255, 255, 255, 0.76);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    border-radius: 24px;
+    box-shadow: 0 16px 40px rgba(31, 38, 135, 0.08);
     padding: 20px;
     margin-bottom: 28px;
     display: flex;
     flex-wrap: wrap;
-    gap: 20px;
-    align-items: center;
-
-    &:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 40px rgba(31, 38, 135, 0.15);
-      border-color: rgba(255, 255, 255, 0.5);
-    }
+    gap: 18px;
+    align-items: flex-start;
   }
 
   .filter-group {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    min-width: 280px;
+    flex: 1 1 360px;
   }
 
   label {
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-color);
     font-size: $font-size-sm;
   }
 
   .time-filters {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     flex-wrap: wrap;
   }
 
   .time-filters button,
   .mood-filters button {
-    padding: 8px 16px;
     border: 1px solid var(--border-color);
-    border-radius: $border-radius-md;
-    background: rgba(255, 255, 255, 0.8);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.82);
     backdrop-filter: blur(8px);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition:
+      transform 0.25s ease,
+      border-color 0.25s ease,
+      background 0.25s ease,
+      color 0.25s ease;
     font-size: $font-size-sm;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-
-    &.active {
-      background: var(--primary-color);
-      color: var(--white);
-      border-color: var(--primary-color);
-      box-shadow: var(--shadow-sm);
-    }
+    font-weight: 600;
 
     &:hover {
+      transform: translateY(-1px);
       border-color: var(--primary-color);
-      transform: translateY(-2px);
     }
 
-    &.active:hover {
-      opacity: 0.9;
+    &.active {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: var(--white);
+      border-color: transparent;
+      box-shadow: 0 10px 20px rgba(106, 176, 165, 0.2);
     }
+  }
+
+  .time-filters button {
+    padding: 9px 16px;
   }
 
   .custom-time {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 8px;
+    gap: 10px;
+    flex-wrap: wrap;
 
     input {
-      padding: 8px 12px;
+      padding: 9px 12px;
       border: 1px solid var(--border-color);
-      border-radius: $border-radius-md;
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.88);
       font-size: $font-size-sm;
     }
 
@@ -634,216 +906,254 @@ h2 {
 
   .mood-filters {
     display: flex;
+    gap: 10px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: thin;
+  }
+
+  .mood-filter {
+    padding: 9px 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+
+  .mood-filter.all {
+    min-width: 72px;
+    justify-content: center;
+  }
+
+  .mood-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  }
+
+  .reset-btn {
+    align-self: center;
+    margin-left: auto;
+    padding: 10px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.85);
+    cursor: pointer;
+    transition:
+      transform 0.25s ease,
+      color 0.25s ease,
+      border-color 0.25s ease;
+
+    &:hover {
+      color: var(--primary-color);
+      border-color: var(--primary-color);
+      transform: translateY(-1px);
+    }
+  }
+
+  .empty-state-shell {
+    min-height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .records-shell {
+    min-height: 420px;
+  }
+
+  .records-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px;
+  }
+
+  .record-card {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    border-radius: 22px;
+    box-shadow: 0 14px 30px rgba(31, 38, 135, 0.08);
+    padding: 18px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition:
+      transform 0.28s ease,
+      box-shadow 0.28s ease,
+      border-color 0.28s ease;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, rgba(255, 209, 102, 0.95), rgba(106, 176, 165, 0.85));
+      opacity: 0.9;
+    }
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(31, 38, 135, 0.12);
+      border-color: rgba(106, 176, 165, 0.28);
+    }
+  }
+
+  .record-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 2px;
+  }
+
+  .record-date {
+    font-size: 24px;
+    line-height: 1.1;
+    font-weight: 800;
+    color: var(--text-color);
+  }
+
+  .record-meta {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-light-color);
+  }
+
+  .record-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .action-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+      transform 0.25s ease,
+      opacity 0.25s ease,
+      box-shadow 0.25s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      opacity: 0.96;
+    }
+  }
+
+  .edit-btn {
+    background: rgba(106, 176, 165, 0.14);
+    color: var(--primary-color);
+  }
+
+  .delete-btn {
+    background: rgba(239, 71, 111, 0.12);
+    color: var(--mood-angry);
+  }
+
+  .mood-tags {
+    display: flex;
     gap: 8px;
     flex-wrap: wrap;
   }
 
-  .mood-dot {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
+  .mood-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
   }
 
-  .reset-btn {
-    padding: 8px 16px;
-    border: 1px solid var(--border-color);
-    border-radius: $border-radius-md;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(8px);
-    cursor: pointer;
-    margin-left: auto;
-    transition: all 0.3s ease;
-
-    &:hover {
-      border-color: var(--primary-color);
-      color: var(--primary-color);
-      transform: translateY(-2px);
-    }
-  }
-
-  // 时间轴+本托布局
-  .timeline-bento-container {
-    min-height: 400px;
-  }
-
-  .timeline-bento {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
-    padding: 10px 0;
-  }
-
-  .bento-item {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: $border-radius-lg;
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    padding: 20px;
-    border-radius: $border-radius-lg;
-    cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    position: relative;
-    overflow: hidden;
+  .intensity-block {
     display: flex;
     flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 18px;
+    background: rgba(248, 245, 242, 0.86);
+  }
+
+  .intensity-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 12px;
+    font-size: 12px;
+    color: var(--text-light-color);
 
-    &.small {
-      grid-column: span 1;
-      grid-row: span 1;
-    }
-
-    &.medium {
-      grid-column: span 1;
-      grid-row: span 2;
-    }
-
-    &.large {
-      grid-column: span 2;
-      grid-row: span 2;
-    }
-
-    &:hover {
-      transform: translateY(-8px) scale(1.02);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-
-      .item-actions {
-        opacity: 1;
-      }
-    }
-
-    .date-badge {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-      color: white;
-      border-radius: $border-radius-md;
-      padding: 8px 12px;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(106, 176, 165, 0.3);
-      min-width: 50px;
-
-      .date-day {
-        font-size: 24px;
-        font-weight: 700;
-        line-height: 1;
-      }
-
-      .date-month {
-        font-size: 12px;
-        font-weight: 500;
-        margin-top: 2px;
-      }
-    }
-
-    .emotion-summary {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 40px;
-      min-height: 50px;
-      align-items: center;
-      justify-content: center;
-      padding: 10px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: $border-radius-md;
-    }
-
-    .emotion-dot {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-      position: relative;
-    }
-
-    .trigger-preview {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 14px;
-      background: rgba(106, 176, 165, 0.1);
-      border-radius: $border-radius-md;
-      font-size: $font-size-sm;
+    strong {
       color: var(--text-color);
-
-      .trigger-icon {
-        font-size: 16px;
-      }
-
-      .trigger-text {
-        font-weight: 500;
-      }
+      font-size: 14px;
     }
+  }
 
-    .mood-note {
-      font-size: $font-size-sm;
-      color: var(--text-light-color);
-      line-height: 1.5;
-      flex-grow: 1;
+  .intensity-dots {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .intensity-dot {
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(125, 125, 125, 0.18);
+    transition:
+      transform 0.25s ease,
+      background 0.25s ease,
+      box-shadow 0.25s ease;
+
+    &.active {
+      background: linear-gradient(90deg, #ffd166, #f3a683);
+      box-shadow: 0 4px 10px rgba(243, 166, 131, 0.18);
     }
+  }
 
-    .item-actions {
-      position: absolute;
-      bottom: 16px;
-      right: 16px;
-      display: flex;
-      gap: 8px;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
+  .record-note {
+    margin: 0;
+    color: var(--text-light-color);
+    font-style: italic;
+    line-height: 1.7;
+  }
 
-    .action-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  .trigger-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
 
-      &.edit-btn {
-        background: rgba(106, 176, 165, 0.9);
-        color: white;
-
-        &:hover {
-          background: var(--primary-color);
-          transform: scale(1.1);
-        }
-      }
-
-      &.delete-btn {
-        background: rgba(239, 71, 111, 0.9);
-        color: white;
-
-        &:hover {
-          background: var(--mood-angry);
-          transform: scale(1.1);
-        }
-      }
-    }
+  .trigger-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 11px;
+    border-radius: 999px;
+    background: rgba(106, 176, 165, 0.12);
+    color: var(--primary-color);
+    font-size: 12px;
+    font-weight: 600;
   }
 
   .load-more {
     text-align: center;
     margin-top: 32px;
-    margin-bottom: 20px;
   }
 }
 
-// 详情对话框样式
 .detail-dialog {
   .detail-content {
     .detail-section {
@@ -851,7 +1161,7 @@ h2 {
 
       h4 {
         font-size: $font-size-md;
-        font-weight: 600;
+        font-weight: 700;
         color: var(--text-color);
         margin-bottom: 12px;
         font-family: 'Noto Serif SC', serif;
@@ -952,26 +1262,26 @@ h2 {
 
 @media (max-width: 768px) {
   .mood-archive {
-    padding: 15px;
+    padding: 18px 14px 22px;
 
-    .skeleton-container {
-      grid-template-columns: 1fr;
+    .archive-header {
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 18px;
     }
 
-    .timeline-bento {
-      grid-template-columns: 1fr;
-      gap: 16px;
+    h2 {
+      font-size: 24px;
     }
 
-    .bento-item {
-      &.large {
-        grid-column: span 1;
-        grid-row: span 1;
-      }
+    .summary-strip {
+      width: 100%;
+      justify-content: stretch;
+    }
 
-      &.medium {
-        grid-row: span 1;
-      }
+    .summary-card {
+      flex: 1 1 0;
+      min-width: 0;
     }
   }
 }
@@ -979,10 +1289,42 @@ h2 {
 .filter-section {
       flex-direction: column;
       align-items: stretch;
+      padding: 16px;
+    }
+
+    .filter-group {
+      min-width: 0;
+      flex-basis: auto;
     }
 
     .reset-btn {
       margin-left: 0;
+      align-self: flex-start;
+    }
+
+    .records-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .record-card {
+      padding: 16px;
+    }
+
+    .record-top {
+      flex-direction: column;
+    }
+
+    .record-actions {
+      width: 100%;
+    }
+
+    .action-btn {
+      min-height: 44px;
+      flex: 1;
+    }
+
+    .record-date {
+      font-size: 22px;
     }
   }
 }

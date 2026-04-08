@@ -1,18 +1,22 @@
 import { AuthRequest } from '../middleware/auth'
 import { Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
-import {
-  createUser,
-  findUserByUsername,
-  findUserByEmail,
-  comparePassword,
-  findUserById,
-} from '../models/userModel'
+import { createUser, findUserByUsername, comparePassword, findUserById } from '../models/userModel'
 import dotenv from 'dotenv'
 import { BusinessError, HttpException } from '../utils/errors'
 import logger from '../utils/logger'
 
 dotenv.config()
+
+const buildDefaultEmail = (username: string): string => {
+  const sanitized = username
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '')
+    .slice(0, 12)
+  const prefix = sanitized || 'user'
+  const suffix = `${Date.now()}${Math.random().toString(36).slice(2, 8)}`
+  return `${prefix}_${suffix}@temp.user`
+}
 
 /**
  * 用户注册
@@ -23,7 +27,7 @@ dotenv.config()
 export const register = async (req: Request, res: Response) => {
   try {
     // 从请求体中获取注册信息
-    const { username, password, email } = req.body
+    const { username, password } = req.body
     const requestedRole = req.body?.role
     const requestedAdminFlag = req.body?.isAdmin
 
@@ -32,8 +36,8 @@ export const register = async (req: Request, res: Response) => {
     }
 
     // 简单校验
-    if (!username || !password || !email) {
-      throw new BusinessError('请提供用户名、密码和邮箱', null, req.originalUrl)
+    if (!username || !password) {
+      throw new BusinessError('请提供用户名和密码', null, req.originalUrl)
     }
 
     // 检查用户名是否已存在
@@ -46,14 +50,8 @@ export const register = async (req: Request, res: Response) => {
       )
     }
 
-    // 检查邮箱是否已存在
-    const existingEmail = await findUserByEmail(email)
-    if (existingEmail) {
-      throw new BusinessError(`邮箱 "${email}" 已被注册，请更换其他邮箱`, null, req.originalUrl)
-    }
-
     // 创建新用户
-    await createUser(username, password, email)
+    await createUser(username, password, buildDefaultEmail(username))
     // 返回成功响应
     res.status(201).json({ code: 0, message: '注册成功' })
   } catch (error: any) {

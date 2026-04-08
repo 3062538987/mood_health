@@ -71,8 +71,8 @@ export const getPasswordStrength = (password: string): 'weak' | 'medium' | 'stro
  * isValidUsername("test user"); // 返回 false（包含空格）
  */
 export const isValidUsername = (username: string): boolean => {
-  // 用户名长度 3-20 位，只能包含字母、数字、下划线
-  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/
+  // 用户名长度 3-20 位，可包含中文、字母、数字、下划线
+  const usernameRegex = /^[\u4e00-\u9fa5a-zA-Z0-9_]{3,20}$/
   return usernameRegex.test(username)
 }
 

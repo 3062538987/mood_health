@@ -71,6 +71,7 @@ export const rolePermissions: Record<UserRole, RolePermissionConfig> = {
     granted: [
       'post.audit.pending.read',
       'post.audit',
+      'audit.record.view_all',
       'activity.manage',
       'course.manage',
       'music.manage',

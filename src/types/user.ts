@@ -33,12 +33,10 @@ export interface LoginRequest {
  * @interface RegisterRequest
  * @property {string} username - 用户名
  * @property {string} password - 密码
- * @property {string} email - 邮箱
  */
 export interface RegisterRequest {
   username: string
   password: string
-  email: string
 }
 
 /**

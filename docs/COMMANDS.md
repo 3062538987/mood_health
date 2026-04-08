@@ -56,8 +56,10 @@ npm run pm2:status
 | 数据初始化别名             | `npm run db:init`               | 等价于 `demo:init:all`                                 |
 | 启动服务（Windows）        | `npm run start-all`             | 执行 `start-project.ps1`                               |
 | 启动服务（Windows，无 AI） | `npm run start-all:no-ai`       | 执行 `start-project.ps1 -NoAi`（2核2G 推荐）           |
+| 启动服务（Windows，启用 AI） | `npm run start-all:with-ai`     | 执行 `start-project.ps1 -WithAi`（需独立 AI 服务）     |
 | 启动服务（Linux/macOS）    | `npm run start-all:linux`       | 执行 `start-project.sh`                                |
 | 启动服务（Linux，无 AI）   | `npm run start-all:linux:no-ai` | 执行 `start-project.sh --no-ai`（2核2G 推荐）          |
+| 启动服务（Linux，启用 AI） | `npm run start-all:linux:with-ai` | 执行 `start-project.sh --with-ai`（需独立 AI 服务）   |
 | 启动前检查（Windows）      | `npm run start-all:check`       | 先 `doctor` 再 `start-all`                             |
 | 清理后重启（Windows）      | `npm run start-all:clean`       | 先删 PM2 进程再重启                                    |
 | PM2 状态                   | `npm run pm2:status`            | 查看 PM2 进程状态                                      |
