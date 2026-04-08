@@ -2,7 +2,15 @@ import fs from 'fs'
 import path from 'path'
 import { DatabaseSync } from 'node:sqlite'
 
-let sqliteDb: DatabaseSync | null = null
+type SqliteStatement = {
+  all: (...params: any[]) => any
+  get: (...params: any[]) => any
+  run: (...params: any[]) => any
+}
+
+type SqliteDatabase = DatabaseSync
+
+let sqliteDb: SqliteDatabase | null = null
 
 const resolveSqliteDbPath = () =>
   process.env.SQLITE_DB_PATH
@@ -16,7 +24,7 @@ const ensureDirectory = (filePath: string) => {
   }
 }
 
-const initSchema = (db: DatabaseSync) => {
+const initSchema = (db: SqliteDatabase) => {
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

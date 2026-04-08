@@ -10,7 +10,7 @@
 
 ## 1. 前置依赖
 
-- Node.js 18+
+- Node.js 22+
 - Python 3.8+
 - Redis（建议）
 - SQLite（推荐，低配主机优先）
@@ -160,6 +160,8 @@ npm run doctor
 - node/npm/python/pm2 可用性
 - 关键文件与目录存在性
 - 端口 5173/3000/8000/6379 连通性
+
+说明：后端 SQLite 运行时依赖 Node.js 内置 `node:sqlite`，因此服务器需要 Node 22+。
 
 可使用严格模式：
 

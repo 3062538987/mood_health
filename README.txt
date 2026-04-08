@@ -113,7 +113,9 @@ mood-health-web/
 - Redis：6379
 - Ollama（可选）：11434
 
-说明：当前以 `vite.config.ts` 与 `scripts/doctor.mjs` 为准，前端开发端口为 3001。若看到历史文档中的 5173，请以本 README 与项目配置为准。
+ 说明：当前以 `vite.config.ts` 与 `scripts/doctor.mjs` 为准，前端开发端口为 3001。若看到历史文档中的 5173，请以本 README 与项目配置为准。
+
+ 后端 SQLite 运行时需要 Node.js 22+，因为它直接使用内置的 `node:sqlite`。
 
 ## 启动顺序（部署建议）
 
@@ -125,7 +127,7 @@ mood-health-web/
 
 | 依赖项   | 版本要求                   | 安装方式                    | 备注                   |
 | -------- | -------------------------- | --------------------------- | ---------------------- |
-| Node.js  | 18.x 或 20.x               | nvm / 官方安装包            | 必须包含 npm           |
+| Node.js  | 22.x 或更高                | nvm / 官方安装包            | 必须包含 npm           |
 | Python   | 3.9 ~ 3.11                 | pyenv / 官方安装包          | 虚拟环境建议使用 .venv |
 | Redis    | 6.x+                       | apt / yum / 源码安装        | 建议配置密码           |
 | PM2      | 本地安装                   | npm install（脚本自动处理） | 无需全局安装           |

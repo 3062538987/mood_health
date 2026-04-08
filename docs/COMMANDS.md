@@ -33,6 +33,8 @@ npm run start-all:linux
 npm run pm2:status
 ```
 
+前提：后端服务器需使用 Node.js 22+，否则 SQLite 内置模块 `node:sqlite` 无法运行。
+
 ## 1. 项目根命令
 
 | 场景                       | 命令                            | 说明                                                   |

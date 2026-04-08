@@ -25,6 +25,9 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/compression": "^1.8.1",
