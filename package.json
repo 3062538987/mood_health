@@ -31,6 +31,7 @@
     "start-all:linux": "bash ./start-project.sh",
     "start-all:linux:no-ai": "bash ./start-project.sh --no-ai",
     "start-all:linux:with-ai": "bash ./start-project.sh --with-ai",
+    "deploy:linux": "bash ./scripts/first-deploy-linux.sh",
     "start-all:clean": "powershell -ExecutionPolicy Bypass -File start-project.ps1 -Clean",
     "start-all:check": "npm run doctor && npm run start-all",
     "sqlite:preflight": "powershell -ExecutionPolicy Bypass -File scripts/sqlite-preflight.ps1",
