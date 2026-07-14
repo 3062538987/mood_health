@@ -4,10 +4,31 @@ __pycache__/
 .env
 .venv/
 venv/
+venv.backup/
 dist/
 .DS_Store
 Thumbs.db
 *.log
+
+# Local databases and runtime state
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+dump.rdb
+*.rdb
+
+# Local backup payloads (manifests remain tracked)
+backups/legacy-sqlite/
+
+# Agent/test scratch output
+.superpowers/
+tmp/
+.tmp/
+test-results/
+playwright-report/
+screenshots/
 
 # Prevent accidental nested duplicate directories
 health/health/
