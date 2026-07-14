@@ -68,6 +68,30 @@ git log --oneline "$Base..HEAD"
 
 ## 5. 推送功能分支
 
+如果 HTTPS 推送提示无法读取用户名，而系统已安装 Git Credential Manager，可先为当前仓库启用凭据管理器并完成一次浏览器授权：
+
+```powershell
+Set-Location -LiteralPath 'D:\桌面\Code\大学生情绪健康\mood-health-web'
+
+# 只修改当前仓库的 .git/config，不影响其他仓库。
+git config --local credential.helper manager
+
+# 打开 GitHub 官方授权页；在浏览器中确认账号和仓库写入授权。
+# 不要把密码或 Personal Access Token 粘贴到聊天中。
+git credential-manager github login --browser --username '3062538987'
+
+# 登录后可用只读命令确认远端访问恢复。
+git ls-remote origin HEAD
+```
+
+如果浏览器登录无法打开，可改用设备码流程：
+
+```powershell
+git credential-manager github login --device --username '3062538987'
+```
+
+完成授权后执行推送：
+
 ```powershell
 # 首次推送并建立上游跟踪关系。
 git push --set-upstream origin $Branch
