@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'mood_health_server',
+      name: 'mood-health-server',
       cwd: __dirname,
       script: 'dist/app.js',
       instances: 1,
