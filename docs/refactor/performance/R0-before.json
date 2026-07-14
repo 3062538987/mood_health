@@ -1,0 +1,532 @@
+{
+  "schemaVersion": 1,
+  "label": "before",
+  "collectedAt": "2026-07-14T15:35:50.641Z",
+  "protocol": {
+    "baseUrl": "http://127.0.0.1:3000",
+    "warmupsPerScenario": 1,
+    "independentRunsPerScenario": 3,
+    "requestsPerRun": 5,
+    "concurrency": 1,
+    "queryPath": "/health",
+    "username": "r0_perf_nonexistent_user",
+    "passwordStored": false,
+    "resourceProfile": "Windows host; PM2 max-memory-restart 450M; no enforced 2-core/2G host cap",
+    "cpuCapacityUsedForCalculation": 20
+  },
+  "environment": {
+    "platform": "win32",
+    "release": "10.0.26200",
+    "node": "v24.13.0",
+    "cpuModel": "13th Gen Intel(R) Core(TM) i7-13700H",
+    "logicalCpuCount": 20,
+    "totalMemoryBytes": 16788504576
+  },
+  "scenarios": [
+    {
+      "name": "homepage",
+      "status": "measured",
+      "runs": [
+        {
+          "run": 1,
+          "sampleCount": 5,
+          "statusCounts": {
+            "404": 5
+          },
+          "ttfbMs": {
+            "average": 0.76,
+            "p50": 0.63,
+            "p95": 1.38
+          },
+          "totalMs": {
+            "average": 0.85,
+            "p50": 0.7,
+            "p95": 1.48
+          },
+          "rawMeasurements": [
+            {
+              "status": 404,
+              "ttfbMs": 1.38,
+              "totalMs": 1.48
+            },
+            {
+              "status": 404,
+              "ttfbMs": 0.65,
+              "totalMs": 0.74
+            },
+            {
+              "status": 404,
+              "ttfbMs": 0.57,
+              "totalMs": 0.65
+            },
+            {
+              "status": 404,
+              "ttfbMs": 0.59,
+              "totalMs": 0.68
+            },
+            {
+              "status": 404,
+              "ttfbMs": 0.63,
+              "totalMs": 0.7
+            }
+          ],
+          "process": {
+            "cpuPercent": null,
+            "cpuNote": "measurement window below 100ms",
+            "averageWorkingSetBytes": 114108416,
+            "peakWorkingSetBytes": 114368512
+          },
+          "errors": []
+        },
+        {
+          "run": 2,
+          "sampleCount": 5,
+          "statusCounts": {
+            "404": 5
+          },
+          "ttfbMs": {
+            "average": 0.87,
+            "p50": 0.79,
+            "p95": 1.26
+          },
+          "totalMs": {
+            "average": 0.96,
+            "p50": 0.89,
+            "p95": 1.42
+          },
+          "rawMeasurements": [
+            {
+              "status": 404,
+              "ttfbMs": 1.26,
+              "totalMs": 1.42
+            },
+            {
+              "status": 404,
+              "ttfbMs": 0.79,
+              "totalMs": 0.88
+            },
+            {
+              "status": 404,
+              "ttfbMs": 0.79,
+              "totalMs": 0.89
+            },
+            {
+              "status": 404,
+              "ttfbMs": 1.03,
+              "totalMs": 1.12
+            },
+            {
+              "status": 404,
+              "ttfbMs": 0.46,
+              "totalMs": 0.51
+            }
+          ],
+          "process": {
+            "cpuPercent": null,
+            "cpuNote": "measurement window below 100ms",
+            "averageWorkingSetBytes": 102266880,
+            "peakWorkingSetBytes": 118665216
+          },
+          "errors": []
+        },
+        {
+          "run": 3,
+          "sampleCount": 5,
+          "statusCounts": {
+            "404": 5
+          },
+          "ttfbMs": {
+            "average": 0.81,
+            "p50": 0.95,
+            "p95": 1.12
+          },
+          "totalMs": {
+            "average": 0.87,
+            "p50": 1.04,
+            "p95": 1.18
+          },
+          "rawMeasurements": [
+            {
+              "status": 404,
+              "ttfbMs": 1.12,
+              "totalMs": 1.18
+            },
+            {
+              "status": 404,
+              "ttfbMs": 0.95,
+              "totalMs": 1.04
+            },
+            {
+              "status": 404,
+              "ttfbMs": 1.07,
+              "totalMs": 1.14
+            },
+            {
+              "status": 404,
+              "ttfbMs": 0.48,
+              "totalMs": 0.53
+            },
+            {
+              "status": 404,
+              "ttfbMs": 0.42,
+              "totalMs": 0.47
+            }
+          ],
+          "process": {
+            "cpuPercent": null,
+            "cpuNote": "measurement window below 100ms",
+            "averageWorkingSetBytes": 89477120,
+            "peakWorkingSetBytes": 118665216
+          },
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "login",
+      "status": "measured",
+      "runs": [
+        {
+          "run": 1,
+          "sampleCount": 5,
+          "statusCounts": {
+            "401": 5
+          },
+          "ttfbMs": {
+            "average": 1.35,
+            "p50": 1.03,
+            "p95": 2.44
+          },
+          "totalMs": {
+            "average": 1.41,
+            "p50": 1.08,
+            "p95": 2.51
+          },
+          "rawMeasurements": [
+            {
+              "status": 401,
+              "ttfbMs": 2.44,
+              "totalMs": 2.51
+            },
+            {
+              "status": 401,
+              "ttfbMs": 0.99,
+              "totalMs": 1.04
+            },
+            {
+              "status": 401,
+              "ttfbMs": 0.9,
+              "totalMs": 0.93
+            },
+            {
+              "status": 401,
+              "ttfbMs": 1.41,
+              "totalMs": 1.47
+            },
+            {
+              "status": 401,
+              "ttfbMs": 1.03,
+              "totalMs": 1.08
+            }
+          ],
+          "process": {
+            "cpuPercent": null,
+            "cpuNote": "measurement window below 100ms",
+            "averageWorkingSetBytes": 90109952,
+            "peakWorkingSetBytes": 118665216
+          },
+          "errors": []
+        },
+        {
+          "run": 2,
+          "sampleCount": 5,
+          "statusCounts": {
+            "401": 5
+          },
+          "ttfbMs": {
+            "average": 1.19,
+            "p50": 1.1,
+            "p95": 1.79
+          },
+          "totalMs": {
+            "average": 1.25,
+            "p50": 1.21,
+            "p95": 1.84
+          },
+          "rawMeasurements": [
+            {
+              "status": 401,
+              "ttfbMs": 1.79,
+              "totalMs": 1.84
+            },
+            {
+              "status": 401,
+              "ttfbMs": 1.2,
+              "totalMs": 1.26
+            },
+            {
+              "status": 401,
+              "ttfbMs": 1.1,
+              "totalMs": 1.21
+            },
+            {
+              "status": 401,
+              "ttfbMs": 0.94,
+              "totalMs": 0.99
+            },
+            {
+              "status": 401,
+              "ttfbMs": 0.91,
+              "totalMs": 0.95
+            }
+          ],
+          "process": {
+            "cpuPercent": null,
+            "cpuNote": "measurement window below 100ms",
+            "averageWorkingSetBytes": 90552320,
+            "peakWorkingSetBytes": 118665216
+          },
+          "errors": []
+        },
+        {
+          "run": 3,
+          "sampleCount": 5,
+          "statusCounts": {
+            "401": 5
+          },
+          "ttfbMs": {
+            "average": 1.24,
+            "p50": 1.35,
+            "p95": 1.61
+          },
+          "totalMs": {
+            "average": 1.32,
+            "p50": 1.44,
+            "p95": 1.66
+          },
+          "rawMeasurements": [
+            {
+              "status": 401,
+              "ttfbMs": 1.61,
+              "totalMs": 1.66
+            },
+            {
+              "status": 401,
+              "ttfbMs": 1.02,
+              "totalMs": 1.1
+            },
+            {
+              "status": 401,
+              "ttfbMs": 1.35,
+              "totalMs": 1.44
+            },
+            {
+              "status": 401,
+              "ttfbMs": 1.4,
+              "totalMs": 1.49
+            },
+            {
+              "status": 401,
+              "ttfbMs": 0.84,
+              "totalMs": 0.9
+            }
+          ],
+          "process": {
+            "cpuPercent": null,
+            "cpuNote": "measurement window below 100ms",
+            "averageWorkingSetBytes": 90411008,
+            "peakWorkingSetBytes": 118665216
+          },
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "representative-database-query",
+      "status": "measured",
+      "runs": [
+        {
+          "run": 1,
+          "sampleCount": 5,
+          "statusCounts": {
+            "200": 5
+          },
+          "ttfbMs": {
+            "average": 2007.4,
+            "p50": 2007.72,
+            "p95": 2012.19
+          },
+          "totalMs": {
+            "average": 2007.53,
+            "p50": 2007.91,
+            "p95": 2012.3
+          },
+          "rawMeasurements": [
+            {
+              "status": 200,
+              "ttfbMs": 2002.79,
+              "totalMs": 2002.9
+            },
+            {
+              "status": 200,
+              "ttfbMs": 2007.72,
+              "totalMs": 2007.91
+            },
+            {
+              "status": 200,
+              "ttfbMs": 2012.19,
+              "totalMs": 2012.3
+            },
+            {
+              "status": 200,
+              "ttfbMs": 2011.62,
+              "totalMs": 2011.76
+            },
+            {
+              "status": 200,
+              "ttfbMs": 2002.66,
+              "totalMs": 2002.77
+            }
+          ],
+          "process": {
+            "cpuPercent": 0.01,
+            "averageWorkingSetBytes": 90492928,
+            "peakWorkingSetBytes": 118665216
+          },
+          "errors": []
+        },
+        {
+          "run": 2,
+          "sampleCount": 5,
+          "statusCounts": {
+            "200": 5
+          },
+          "ttfbMs": {
+            "average": 2007.03,
+            "p50": 2003.9,
+            "p95": 2016.24
+          },
+          "totalMs": {
+            "average": 2007.16,
+            "p50": 2004.04,
+            "p95": 2016.46
+          },
+          "rawMeasurements": [
+            {
+              "status": 200,
+              "ttfbMs": 2003.88,
+              "totalMs": 2003.95
+            },
+            {
+              "status": 200,
+              "ttfbMs": 2003.9,
+              "totalMs": 2004.04
+            },
+            {
+              "status": 200,
+              "ttfbMs": 2003.2,
+              "totalMs": 2003.35
+            },
+            {
+              "status": 200,
+              "ttfbMs": 2007.93,
+              "totalMs": 2008
+            },
+            {
+              "status": 200,
+              "ttfbMs": 2016.24,
+              "totalMs": 2016.46
+            }
+          ],
+          "process": {
+            "cpuPercent": 0,
+            "averageWorkingSetBytes": 90767360,
+            "peakWorkingSetBytes": 118665216
+          },
+          "errors": []
+        },
+        {
+          "run": 3,
+          "sampleCount": 5,
+          "statusCounts": {
+            "200": 5
+          },
+          "ttfbMs": {
+            "average": 2006.95,
+            "p50": 2007.19,
+            "p95": 2011.97
+          },
+          "totalMs": {
+            "average": 2007.08,
+            "p50": 2007.25,
+            "p95": 2012.11
+          },
+          "rawMeasurements": [
+            {
+              "status": 200,
+              "ttfbMs": 2007.22,
+              "totalMs": 2007.3
+            },
+            {
+              "status": 200,
+              "ttfbMs": 2005.08,
+              "totalMs": 2005.16
+            },
+            {
+              "status": 200,
+              "ttfbMs": 2003.27,
+              "totalMs": 2003.56
+            },
+            {
+              "status": 200,
+              "ttfbMs": 2011.97,
+              "totalMs": 2012.11
+            },
+            {
+              "status": 200,
+              "ttfbMs": 2007.19,
+              "totalMs": 2007.25
+            }
+          ],
+          "process": {
+            "cpuPercent": 0.02,
+            "averageWorkingSetBytes": 91023360,
+            "peakWorkingSetBytes": 118665216
+          },
+          "errors": []
+        }
+      ]
+    }
+  ],
+  "resources": {
+    "nodeApi": {
+      "status": "measured",
+      "averageCpuPercent": 0.01,
+      "peakCpuPercent": 0.02,
+      "averageWorkingSetBytes": 90761216,
+      "peakWorkingSetBytes": 118665216
+    },
+    "database": {
+      "engine": "SQLite (legacy baseline)",
+      "processAccounting": "included in Node.js API process; SQLite has no separate process",
+      "queryNote": "The health query executes SELECT 1 + 1 and also checks Redis, so Redis timeout is part of this endpoint latency.",
+      "metadata": {
+        "status": "read-only-counts",
+        "path": "mood_health_server/data/mood-health.db",
+        "rowCounts": {
+          "users": 3,
+          "moods": 2,
+          "questionnaires": 0,
+          "user_assessments": 0
+        }
+      }
+    },
+    "redis": {
+      "status": "not-running-or-not-configured"
+    }
+  },
+  "limitations": [
+    "This raw file is evidence, not a performance-improvement claim.",
+    "A before/after comparison is valid only when resource profile, data scale and protocol are identical."
+  ]
+}
