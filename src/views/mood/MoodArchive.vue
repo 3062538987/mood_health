@@ -139,7 +139,10 @@
                   <span>强度</span>
                   <strong>{{ getDisplayIntensity(record) }}/10</strong>
                 </div>
-                <div class="intensity-dots" :aria-label="`情绪强度 ${getDisplayIntensity(record)} / 10`">
+                <div
+                  class="intensity-dots"
+                  :aria-label="`情绪强度 ${getDisplayIntensity(record)} / 10`"
+                >
                   <span
                     v-for="level in 10"
                     :key="level"
@@ -204,7 +207,10 @@
           <p class="detail-note">{{ selectedRecord.event }}</p>
         </div>
 
-        <div v-if="selectedRecord && getDisplayIntensity(selectedRecord) > 0" class="detail-section">
+        <div
+          v-if="selectedRecord && getDisplayIntensity(selectedRecord) > 0"
+          class="detail-section"
+        >
           <h4>情绪强度</h4>
           <div class="intensity-bar">
             <div
@@ -621,7 +627,6 @@ const getDisplayIntensity = (record?: MoodRecord | null) => {
 
   return 0
 }
-
 
 // 获取情绪颜色
 const getMoodColor = (moodType: string) => {
@@ -1224,7 +1229,7 @@ onMounted(() => {
         font-weight: 600;
         color: var(--text-color);
         min-width: 40px;
-}
+      }
     }
   }
 }

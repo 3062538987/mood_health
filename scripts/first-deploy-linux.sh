@@ -4,7 +4,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="$SCRIPT_DIR/mood_health_server/.env"
 ENV_TEMPLATE="$SCRIPT_DIR/mood_health_server/.env.production.no-ai.example"
-LOCAL_FRONTEND_URLS="http://127.0.0.1:4173,http://127.0.0.1:3001,http://localhost:4173,http://localhost:3001"
+PUBLIC_HOST="${PUBLIC_HOST:-47.94.91.72}"
+PUBLIC_ORIGIN="http://${PUBLIC_HOST}"
+LOCAL_FRONTEND_URLS="$PUBLIC_ORIGIN,http://127.0.0.1:4173,http://127.0.0.1:3001,http://localhost:4173,http://localhost:3001"
 SQLITE_DB_PATH="$SCRIPT_DIR/mood_health_server/data/mood-health.db"
 
 cd "$SCRIPT_DIR"
@@ -41,6 +43,8 @@ set_env_value "DB_CLIENT" "sqlite"
 set_env_value "SQLITE_DB_PATH" "$SQLITE_DB_PATH"
 set_env_value "AI_ENABLED" "false"
 set_env_value "FRONTEND_URL" "$LOCAL_FRONTEND_URLS"
+
+echo "[deploy] Public origin: $PUBLIC_ORIGIN"
 
 if ! grep -q '^JWT_SECRET=' "$ENV_FILE" || grep -q '^JWT_SECRET=replace_with_a_strong_random_secret$' "$ENV_FILE"; then
   set_env_value "JWT_SECRET" "$(generate_hex_secret)"

@@ -20,7 +20,7 @@
 
 ## 2. 配置文件
 
-项目中未统一提供 `.env.example`，请按实际环境创建：
+项目中提供了可直接复制的环境模板，请按实际环境创建：
 
 - 根目录 `.env`（前端 Vite 变量）
 - `mood_health_server/.env`（后端与 AI 服务变量）
@@ -29,6 +29,7 @@
 
 - `.env.production.example`（前端生产）
 - `mood_health_server/.env.production.no-ai.example`（后端 2核2G 无 AI 推理）
+- `mood_health_server/.env.example`（后端通用示例）
 
 建议至少校验以下变量：
 
@@ -52,6 +53,19 @@
 npm run setup
 npm run build:all
 ```
+
+如果你要直接做首发部署，Linux 上建议优先用一键脚本：
+
+```bash
+npm run deploy:linux
+```
+
+这个脚本会做下面几件事：
+
+- 如果 `mood_health_server/.env` 不存在，就先从 `mood_health_server/.env.production.no-ai.example` 复制
+- 自动生成 `JWT_SECRET` 和 `ENCRYPTION_KEY`
+- 把 SQLite 路径改成当前仓库目录下的绝对路径
+- 安装依赖、构建前后端、启动 PM2、检查 `http://127.0.0.1:3000/health`
 
 安装 Python 依赖：
 
@@ -102,6 +116,12 @@ Linux/macOS 下可使用：
 chmod +x ./start-project.sh
 npm run start-all:linux
 npm run start-all:linux:no-ai
+```
+
+如果你是第一次上线，建议先执行：
+
+```bash
+npm run deploy:linux
 ```
 
 这会先执行 `doctor`，再启动 `mood-health-server`，并根据 `AI_ENABLED` 决定是否启动 `mood-ai-server`。
@@ -187,7 +207,8 @@ npm run doctor:strict
 git pull
 npm run setup
 npm run build:all
-npm run start-all
+bash ./start-project.sh --no-ai
+curl -fsS http://127.0.0.1:3000/health
 ```
 
 ### 回滚
@@ -203,15 +224,21 @@ npm run start-all
 1. `doctor` 报 `dist/app.js missing`
 
 - 执行 `npm --prefix mood_health_server run build`
+- 如果 `mood_health_server/.env` 不存在，先复制 `mood_health_server/.env.production.no-ai.example` 到 `mood_health_server/.env`
 
-2. AI 服务读取 `.env` 报编码错误（Windows）
+2. 启动脚本提示 `Environment file missing`
+
+- 执行 `cp mood_health_server/.env.production.no-ai.example mood_health_server/.env`
+- 然后检查 `JWT_SECRET` 和 `ENCRYPTION_KEY` 是否已经填好
+
+3. AI 服务读取 `.env` 报编码错误（Windows）
 
 - 设置 `PYTHONUTF8=1`，`start-project.ps1` 已自动设置
 
-3. PM2 频繁重启
+4. PM2 频繁重启
 
 - 检查 3000/8000 端口占用、Python 模型加载内存、`.env` 配置
 
-4. Redis 不可达
+5. Redis 不可达
 
 - 服务可降级运行，但缓存与部分性能能力会受影响

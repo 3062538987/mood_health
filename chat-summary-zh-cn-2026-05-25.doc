@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>毕业设计咨询聊天整理（中文版）</title>
+  <style>
+    body { font-family: "SimSun", "宋体", serif; line-height: 1.7; margin: 32px; color: #111; }
+    h1, h2 { margin: 0.8em 0 0.4em; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 18px; }
+    p, li { font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>社交媒体时代大学生情绪健康项目：聊天整理（中文版）</h1>
+  <p><strong>整理日期：</strong>2026年5月25日</p>
+
+  <h2>一、项目基本信息</h2>
+  <p><strong>项目全称：</strong>社交媒体时代大学生情绪健康现状及提升研究（心理情绪健康研究与产品设计项目）</p>
+  <p><strong>项目属性：</strong>心理学研究 + 产品设计 + 实证调研的交叉学科毕业设计。</p>
+  <p><strong>核心目标：</strong>围绕社交媒体语境下大学生情绪健康问题，构建“调研分析—理论支撑—干预方案—产品落地”的闭环体系。</p>
+
+  <h2>二、用户在本次会话中的核心问题</h2>
+  <ol>
+    <li>要求按交叉学科毕设标准，系统梳理可用于论文、开题报告、答辩PPT、中期检查的完整内容框架。</li>
+    <li>追问“技术栈与具体实现办法”。</li>
+    <li>追问“API、系统分层、技术链路（前端输入到前端输出）”。</li>
+    <li>要求将本次聊天内容整理为Word文档并放在项目根目录。</li>
+  </ol>
+
+  <h2>三、针对问题1的整理结果（毕设写作向）</h2>
+  <ol>
+    <li><strong>研究背景与意义：</strong>聚焦社交媒体高频使用对大学生情绪健康的双重影响，指出传统心理服务在覆盖率、连续性、及时性上的不足，明确本项目理论价值与现实价值。</li>
+    <li><strong>项目整体概述：</strong>明确研究对象（大学生）、应用场景（高校心理健康教育与日常自助）、研究逻辑（问题识别—机制分析—干预设计—产品验证）。</li>
+    <li><strong>三大核心模块：</strong>实证研究模块、团体辅导干预模块、线上情绪产品模块。</li>
+    <li><strong>研究方法与技术方法：</strong>文献研究、问卷调查、深度访谈、量化与质性混合分析，结合产品可用性测试与迭代优化。</li>
+    <li><strong>架构与解耦：</strong>强调研究模块与产品模块分工协同，采用低耦合设计提升复用性与扩展性。</li>
+    <li><strong>数据与内容体系：</strong>问卷维度、情绪评估维度、团辅内容框架、产品内容板块形成联动。</li>
+    <li><strong>重点难点与对策：</strong>样本质量、量表适配、干预持续性、伦理与隐私、跨学科协同等问题给出可落地解决路径。</li>
+    <li><strong>创新点与不足：</strong>突出“研用闭环、情境化干预、线上线下融合”，并客观说明外推性与纵向追踪等局限及优化方向。</li>
+  </ol>
+
+  <h2>四、针对问题2的整理结果（技术栈与实现）</h2>
+  <ol>
+    <li><strong>前端：</strong>Vue 3 + TypeScript + Vite，用于组件化界面、路由组织、状态管理与数据展示。</li>
+    <li><strong>后端：</strong>Node/Express 与 Python/FastAPI 并存。Node侧承载主要业务接口与鉴权中间件；FastAPI侧承载测评/树洞相关能力。</li>
+    <li><strong>数据层：</strong>SQLite用于结构化业务数据，Redis用于缓存与高频状态。</li>
+    <li><strong>智能策略：</strong>采用“本地兜底 + 可扩展AI服务接入”的稳健方案。</li>
+    <li><strong>部署链路：</strong>Nginx + PM2 + 脚本化启动/发布，提高可维护性与部署一致性。</li>
+  </ol>
+
+  <h2>五、针对问题3的整理结果（API、分层与技术链）</h2>
+  <ol>
+    <li><strong>主要API域：</strong>Auth、Mood、Questionnaire、Post、Activity，以及FastAPI的Assessment/Treehole。</li>
+    <li><strong>系统分层：</strong>表现层（Vue）→ 接口适配层（src/api）→ 网关中间件层（Express/FastAPI）→ 业务服务层（Controller/Service）→ 数据层（SQLite/Redis）。</li>
+    <li><strong>登录链路：</strong>前端输入凭证 → /api/auth/login → token签发 → 前端请求头携带Authorization → /api/auth/me返回用户态。</li>
+    <li><strong>情绪记录链路：</strong>前端输入情绪数据 → /api/moods/record → 后端校验入库 → /api/moods/trend 与 /api/moods/weekly-report → 前端图表展示。</li>
+    <li><strong>问卷测评链路：</strong>拉取量表与题目 → 提交 /api/questionnaires/assessments → 后端评分与结果文本生成 → 前端展示结果及历史记录。</li>
+    <li><strong>树洞回复链路：</strong>当前实现具备本地兜底文案，同时预留后端AI服务接入能力，兼顾可用性与扩展性。</li>
+  </ol>
+
+  <h2>六、可直接用于论文的结论性表述</h2>
+  <p>本项目通过“实证研究—团体干预—数字产品”三位一体路径，将心理学理论与产品设计实践进行闭环整合。在技术实现上采用前后端分离与模块化分层架构，以结构化数据支持持续评估与个性化反馈，兼顾学术规范性、服务可及性与工程可落地性。</p>
+
+  <h2>七、后续可直接补充的材料</h2>
+  <ol>
+    <li>开题报告完整版（研究目标、方法路线、进度安排、预期成果）。</li>
+    <li>论文目录与章节模板（含图表和统计结果占位）。</li>
+    <li>中期检查文本模板（已完成内容、问题、计划、风险控制）。</li>
+    <li>答辩PPT逐页讲稿（含高频问答预案）。</li>
+  </ol>
+</body>
+</html>

@@ -26,24 +26,6 @@
         <span>后台</span>
       </router-link>
     </nav>
-    <nav class="layout-mobile-tabs" aria-label="移动端主导航">
-      <router-link to="/" class="tab-item" active-class="active" end>
-        <i class="fas fa-home"></i>
-        <span>首页</span>
-      </router-link>
-      <router-link to="/mood/record" class="tab-item" active-class="active">
-        <i class="fas fa-smile"></i>
-        <span>情绪</span>
-      </router-link>
-      <router-link to="/user/profile" class="tab-item" active-class="active">
-        <i class="fas fa-user"></i>
-        <span>我的</span>
-      </router-link>
-      <router-link v-if="isAdmin" to="/admin" class="tab-item" active-class="active">
-        <i class="fas fa-user-shield"></i>
-        <span>后台</span>
-      </router-link>
-    </nav>
     <router-view />
   </div>
 </template>
