@@ -107,7 +107,7 @@ Write-Output "推送成功：$LocalSha"
 
 ## 6. 创建草稿 PR
 
-本机安装并登录 GitHub CLI 后，可使用以下命令。当前环境没有 `gh`，实际发布由已连接的 GitHub 能力完成。
+当前环境已安装 GitHub CLI 2.96.0，并通过 GitHub 官方设备授权完成登录。以下命令是本次实际采用的草稿 PR 创建方式。
 
 ```powershell
 $PrBody = @'
