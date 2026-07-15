@@ -91,6 +91,8 @@ const buildTrendSummary = (values: number[]): string => {
   return `近期情绪记录平均强度为 ${Number(average.toFixed(1))}，请结合记录内容持续观察变化。`
 }
 
+const roundOneDecimal = (value: number): number => Number(value.toFixed(1))
+
 export const createMoodService = (dependencies: MoodServiceDependencies = {}) => {
   const repository = dependencies.repository ?? createMoodRepository()
   const now = dependencies.now ?? (() => new Date())
@@ -232,6 +234,55 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
     }
   }
 
+  const getWeeklyReport = async (userId: number) => {
+    const end = now()
+    const endDate = toDateString(end)
+    const startDate = resolveTrendStartDate(end, 'week')
+    const rows = await repository.listWeeklyRows(userId, startDate, endDate)
+
+    if (rows.length === 0) {
+      return {
+        averageIntensity: 0,
+        dailyData: [],
+        mostFrequentMood: '',
+        summary: '本周暂无情绪记录。',
+      }
+    }
+
+    const totalCount = rows.reduce((sum, row) => sum + row.recordCount, 0)
+    const weightedIntensitySum = rows.reduce(
+      (sum, row) => sum + row.averageIntensity * row.recordCount,
+      0
+    )
+    const averageIntensity = roundOneDecimal(weightedIntensitySum / totalCount)
+    const dailyMap = new Map<string, { intensitySum: number; count: number }>()
+    const emotionCounts = new Map<string, number>()
+
+    for (const row of rows) {
+      const daily = dailyMap.get(row.date) ?? { intensitySum: 0, count: 0 }
+      daily.intensitySum += row.averageIntensity * row.recordCount
+      daily.count += row.recordCount
+      dailyMap.set(row.date, daily)
+      emotionCounts.set(row.emotionName, (emotionCounts.get(row.emotionName) ?? 0) + row.recordCount)
+    }
+
+    const dailyData = Array.from(dailyMap.entries())
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([date, value]) => ({
+        date,
+        averageIntensity: roundOneDecimal(value.intensitySum / value.count),
+      }))
+    const mostFrequentMood =
+      Array.from(emotionCounts.entries()).sort((left, right) => right[1] - left[1])[0]?.[0] ?? ''
+
+    return {
+      averageIntensity,
+      dailyData,
+      mostFrequentMood,
+      summary: `本周共记录 ${totalCount} 次情绪，平均强度为 ${averageIntensity}，请结合具体事件持续观察变化。`,
+    }
+  }
+
   return {
     recordMood,
     listMoods,
@@ -241,6 +292,7 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
     listTags,
     createOrGetTag,
     getMoodTrend,
+    getWeeklyReport,
   }
 }
 

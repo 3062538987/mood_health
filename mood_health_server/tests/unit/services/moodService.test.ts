@@ -13,6 +13,7 @@ const createRepository = (): jest.Mocked<MoodRepository> => ({
   listTags: jest.fn(),
   createOrGetTag: jest.fn(),
   listTrendRows: jest.fn(),
+  listWeeklyRows: jest.fn(),
 })
 
 describe('moodService', () => {
@@ -325,5 +326,44 @@ describe('moodService', () => {
       summary: '该时间范围内没有情绪记录。',
     })
     expect(repository.listTrendRows).toHaveBeenCalledWith(7, '2026-06-15', '2026-07-15')
+  })
+
+  it('builds a weekly report DTO from repository aggregates', async () => {
+    const repository = createRepository()
+    repository.listWeeklyRows.mockResolvedValue([
+      { date: '2026-07-14', emotionName: '快乐', recordCount: 2, averageIntensity: 7.5 },
+      { date: '2026-07-15', emotionName: '难过', recordCount: 1, averageIntensity: 4 },
+    ])
+    const service = createMoodService({
+      repository,
+      now: () => new Date('2026-07-15T12:00:00.000Z'),
+    })
+
+    await expect(service.getWeeklyReport(7)).resolves.toEqual({
+      averageIntensity: 6.3,
+      dailyData: [
+        { date: '2026-07-14', averageIntensity: 7.5 },
+        { date: '2026-07-15', averageIntensity: 4 },
+      ],
+      mostFrequentMood: '快乐',
+      summary: '本周共记录 3 次情绪，平均强度为 6.3，请结合具体事件持续观察变化。',
+    })
+    expect(repository.listWeeklyRows).toHaveBeenCalledWith(7, '2026-07-08', '2026-07-15')
+  })
+
+  it('returns an empty weekly report DTO when no records exist', async () => {
+    const repository = createRepository()
+    repository.listWeeklyRows.mockResolvedValue([])
+    const service = createMoodService({
+      repository,
+      now: () => new Date('2026-07-15T12:00:00.000Z'),
+    })
+
+    await expect(service.getWeeklyReport(7)).resolves.toEqual({
+      averageIntensity: 0,
+      dailyData: [],
+      mostFrequentMood: '',
+      summary: '本周暂无情绪记录。',
+    })
   })
 })
