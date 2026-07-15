@@ -1,6 +1,6 @@
 # R0 代码重构任务清单
 
-> 状态：R0 代码重构计划与数据库迁移方案均已批准；阶段 C Task 8–12 已完成，Checkpoint C 已获用户确认，准备进入阶段 D。
+> 状态：R0 代码重构计划与数据库迁移方案均已批准；阶段 D Task 13–14 已完成，Task 15–16 待执行。
 
 ## 贯穿 R0：性能基线
 
@@ -42,8 +42,8 @@
 
 ## 阶段 D：MySQL 基础设施
 
-- [ ] Task 13：建立 Docker Compose 依赖环境
-- [ ] Task 14：建立 MySQL 连接池与健康检查
+- [x] Task 13：建立 Docker Compose 依赖环境
+- [x] Task 14：建立 MySQL 连接池与健康检查
 - [ ] Task 15：建立版本化 Migration 执行器
 - [ ] Task 16：建立确定性 Seed 与测试库生命周期
 - [ ] Checkpoint D：用户确认空库可重复初始化
