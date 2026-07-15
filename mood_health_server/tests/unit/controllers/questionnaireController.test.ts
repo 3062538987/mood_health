@@ -14,12 +14,29 @@ import {
   getUserAssessmentHistory,
 } from '../../../src/models/questionnaireModel'
 
+var mockAssessmentService: {
+  listQuestionnaires: jest.Mock
+  getQuestionnaireById: jest.Mock
+  listQuestionsByQuestionnaireId: jest.Mock
+}
+
 jest.mock('../../../src/models/questionnaireModel', () => ({
   createUserAssessment: jest.fn(),
   getQuestionnaireById: jest.fn(),
   getQuestionnaires: jest.fn(),
   getQuestionsByQuestionnaireId: jest.fn(),
   getUserAssessmentHistory: jest.fn(),
+}))
+
+jest.mock('../../../src/services/assessmentService', () => ({
+  createAssessmentService: jest.fn(() => {
+    mockAssessmentService = {
+      listQuestionnaires: jest.fn(),
+      getQuestionnaireById: jest.fn(),
+      listQuestionsByQuestionnaireId: jest.fn(),
+    }
+    return mockAssessmentService
+  }),
 }))
 
 const questionnaire = {
@@ -64,9 +81,9 @@ describe('questionnaireController contract', () => {
   })
 
   it('returns complete list, detail and question envelopes', async () => {
-    jest.mocked(getQuestionnaires).mockResolvedValue([questionnaire])
-    jest.mocked(getQuestionnaireById).mockResolvedValue(questionnaire)
-    jest.mocked(getQuestionsByQuestionnaireId).mockResolvedValue([question])
+    mockAssessmentService.listQuestionnaires.mockResolvedValue([questionnaire])
+    mockAssessmentService.getQuestionnaireById.mockResolvedValue(questionnaire)
+    mockAssessmentService.listQuestionsByQuestionnaireId.mockResolvedValue([question])
     const listResponse = createResponse()
     const detailResponse = createResponse()
     const questionsResponse = createResponse()
@@ -90,6 +107,9 @@ describe('questionnaireController contract', () => {
       message: '获取问卷题目成功',
       data: [{ ...question, options: ['从不', '偶尔', '经常', '总是'] }],
     })
+    expect(getQuestionnaires).not.toHaveBeenCalled()
+    expect(getQuestionnaireById).not.toHaveBeenCalled()
+    expect(getQuestionsByQuestionnaireId).not.toHaveBeenCalled()
   })
 
   it('saves and returns a structured, non-diagnostic screening result', async () => {

@@ -2,13 +2,15 @@ import { Response, NextFunction } from "express";
 import { body, validationResult } from "express-validator";
 import { AuthRequest } from "../middleware/auth";
 import {
-  getQuestionnaires,
   getQuestionnaireById,
   getQuestionsByQuestionnaireId,
   createUserAssessment,
   getUserAssessmentHistory,
 } from "../models/questionnaireModel";
 import { apiFailure, apiSuccess } from "../utils/apiResponse";
+import { createAssessmentService } from "../services/assessmentService";
+
+const assessmentService = createAssessmentService();
 
 type ScreeningRiskLevel = "low" | "mild" | "moderate" | "high" | "unclassified";
 
@@ -88,7 +90,7 @@ export const getQuestionnaireList = async (
   next: NextFunction,
 ) => {
   try {
-    const questionnaires = await getQuestionnaires();
+    const questionnaires = await assessmentService.listQuestionnaires();
     res.json(apiSuccess(questionnaires, "获取问卷列表成功"));
   } catch (error) {
     next(error);
@@ -109,7 +111,7 @@ export const getQuestionnaireDetail = async (
 ) => {
   try {
     const questionnaireId = parseInt(req.params.id as string);
-    const questionnaire = await getQuestionnaireById(questionnaireId);
+    const questionnaire = await assessmentService.getQuestionnaireById(questionnaireId);
     if (!questionnaire) {
       return res.status(404).json(apiFailure(404, "量表不存在"));
     }
@@ -133,11 +135,11 @@ export const getQuestionnaireQuestions = async (
 ) => {
   try {
     const questionnaireId = parseInt(req.params.id as string);
-    const questionnaire = await getQuestionnaireById(questionnaireId);
+    const questionnaire = await assessmentService.getQuestionnaireById(questionnaireId);
     if (!questionnaire) {
       return res.status(404).json(apiFailure(404, "量表不存在"));
     }
-    const questions = await getQuestionsByQuestionnaireId(questionnaireId);
+    const questions = await assessmentService.listQuestionsByQuestionnaireId(questionnaireId);
     // 解析选项JSON
     const parsedQuestions = questions.map((q) => ({
       ...q,
