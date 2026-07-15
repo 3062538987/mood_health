@@ -31,4 +31,8 @@ describe('disabled legacy models', () => {
   it('keeps music storage SQLite-only until its P1/P2 migration', () => {
     expectSqliteOnlyLegacyModel(readModel('musicModel.ts'))
   })
+
+  it('keeps relaxation storage SQLite-only until its P1/P2 migration', () => {
+    expectSqliteOnlyLegacyModel(readModel('relaxModel.ts'))
+  })
 })
