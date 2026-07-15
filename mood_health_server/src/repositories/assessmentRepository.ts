@@ -1,7 +1,16 @@
-import { RowDataPacket } from 'mysql2'
+import { ResultSetHeader, RowDataPacket } from 'mysql2'
 import { getMysqlPool } from '../config/mysql'
 
 export interface AssessmentDatabase {
+  getConnection(): Promise<AssessmentConnection>
+  query<T>(sql: string, params?: unknown[]): Promise<[T, unknown]>
+}
+
+export interface AssessmentConnection {
+  beginTransaction(): Promise<void>
+  commit(): Promise<void>
+  rollback(): Promise<void>
+  release(): void
   query<T>(sql: string, params?: unknown[]): Promise<[T, unknown]>
 }
 
@@ -21,6 +30,22 @@ export interface QuestionDto {
   options: string
   sort_order: number
   is_reverse: boolean
+}
+
+export interface SubmittedAssessmentAnswerInput {
+  itemId: number
+  value: number
+  score: number
+}
+
+export interface CreateSubmittedAssessmentSessionInput {
+  userId: number
+  questionnaireId: number
+  score: number
+  riskLevel: string
+  resultText: string
+  answers: SubmittedAssessmentAnswerInput[]
+  submittedAt: Date
 }
 
 type QuestionnaireRow = RowDataPacket & {
@@ -115,10 +140,72 @@ export const createAssessmentRepository = (db: AssessmentDatabase = getMysqlPool
     return rows.map(mapQuestion)
   }
 
+  const createSubmittedSession = async (input: CreateSubmittedAssessmentSessionInput): Promise<number> => {
+    const connection = await db.getConnection()
+
+    try {
+      await connection.beginTransaction()
+      const [sessionResult] = await connection.query<ResultSetHeader>(
+        `
+          INSERT INTO assessment_sessions (
+            user_id,
+            assessment_version_id,
+            raw_score,
+            screening_level,
+            result_summary_json,
+            status,
+            started_at,
+            submitted_at,
+            created_at,
+            updated_at
+          )
+          VALUES (?, ?, ?, ?, ?, 'submitted', ?, ?, ?, ?)
+        `,
+        [
+          input.userId,
+          input.questionnaireId,
+          input.score,
+          input.riskLevel,
+          JSON.stringify({ result_text: input.resultText }),
+          input.submittedAt,
+          input.submittedAt,
+          input.submittedAt,
+          input.submittedAt,
+        ]
+      )
+      const sessionId = sessionResult.insertId
+
+      for (const answer of input.answers) {
+        await connection.query<ResultSetHeader>(
+          `
+            INSERT INTO assessment_answers (
+              session_id,
+              item_id,
+              answer_value_json,
+              score,
+              created_at
+            )
+            VALUES (?, ?, ?, ?, ?)
+          `,
+          [sessionId, answer.itemId, JSON.stringify(answer.value), answer.score, input.submittedAt]
+        )
+      }
+
+      await connection.commit()
+      return sessionId
+    } catch (error) {
+      await connection.rollback()
+      throw error
+    } finally {
+      connection.release()
+    }
+  }
+
   return {
     listQuestionnaires,
     getQuestionnaireById,
     listQuestionsByQuestionnaireId,
+    createSubmittedSession,
   }
 }
 
