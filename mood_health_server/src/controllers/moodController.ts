@@ -23,6 +23,9 @@ import { createAdviceHistory, getAdviceHistoryByUser } from '../models/adviceMod
 import { clearMoodCache } from '../utils/cache'
 import logger from '../utils/logger'
 import { apiFailure, apiSuccess } from '../utils/apiResponse'
+import { createMoodService } from '../services/moodService'
+
+const moodService = createMoodService()
 
 export const recordMood = async (req: AuthRequest, res: Response) => {
   try {
@@ -54,14 +57,14 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
       const date = recordDate || new Date().toISOString().split('T')[0]
       const resolvedTagIds = tagIds || []
 
-      await createMoodWithRelations(
+      await moodService.recordMood({
         userId,
+        note: event || '',
+        trigger: trigger || '',
+        recordedAt: new Date(`${date}T00:00:00.000Z`),
         emotions,
-        event || '',
-        resolvedTagIds,
-        trigger || '',
-        date
-      )
+        tagIds: resolvedTagIds,
+      })
       await clearMoodCache(userId)
       return res.status(201).json(apiSuccess(null, '记录成功'))
     }

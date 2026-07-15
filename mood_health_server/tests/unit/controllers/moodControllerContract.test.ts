@@ -20,6 +20,10 @@ import {
   updateMood,
 } from '../../../src/models/moodModel'
 
+var mockMoodService: {
+  recordMood: jest.Mock
+}
+
 jest.mock('../../../src/models/moodModel', () => ({
   createMood: jest.fn(),
   createMoodWithRelations: jest.fn(),
@@ -38,6 +42,15 @@ jest.mock('../../../src/models/moodModel', () => ({
   createOrGetTag: jest.fn(),
   updateMood: jest.fn(),
   updateMoodWithRelations: jest.fn(),
+}))
+
+jest.mock('../../../src/services/moodService', () => ({
+  createMoodService: jest.fn(() => {
+    mockMoodService = {
+      recordMood: jest.fn(),
+    }
+    return mockMoodService
+  }),
 }))
 
 jest.mock('../../../src/models/adviceModel', () => ({
@@ -76,14 +89,28 @@ describe('moodController response contract', () => {
   })
 
   it('returns a complete write envelope when recording a mood', async () => {
-    jest.mocked(createMood).mockResolvedValue(10)
+    mockMoodService.recordMood.mockResolvedValue(10)
     const req = createRequest({
-      body: { moodType: '平静', intensity: 6, event: '普通的一天' },
+      body: {
+        emotions: [{ emotionTypeId: 1, intensity: 6 }],
+        event: '普通的一天',
+        trigger: '学习',
+        recordDate: '2026-07-15',
+        tagIds: [2],
+      },
     })
     const res = createResponse()
 
     await recordMood(req, res)
 
+    expect(mockMoodService.recordMood).toHaveBeenCalledWith({
+      userId: 1,
+      note: '普通的一天',
+      trigger: '学习',
+      recordedAt: new Date('2026-07-15T00:00:00.000Z'),
+      emotions: [{ emotionTypeId: 1, intensity: 6 }],
+      tagIds: [2],
+    })
     expect(res.status).toHaveBeenCalledWith(201)
     expect(res.json).toHaveBeenCalledWith({ code: 0, message: '记录成功', data: null })
   })
