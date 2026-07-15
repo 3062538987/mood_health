@@ -822,7 +822,6 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
 
     refreshAutoRecommendations()
     initialized.value = true
-    await fetchAdviceHistory()
   }
 
   return {
