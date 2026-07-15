@@ -18,7 +18,7 @@ function Remove-Pm2ProcessIfExists {
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $pm2Bin = Join-Path $scriptRoot 'node_modules\pm2\bin\pm2'
 $ecosystemFile = Join-Path $scriptRoot 'mood_health_server\ecosystem.config.js'
-$distApp = Join-Path $scriptRoot 'mood_health_server\dist\app.js'
+$distServer = Join-Path $scriptRoot 'mood_health_server\dist\server.js'
 
 if (-not (Test-Path $pm2Bin)) {
   throw "PM2 not found at $pm2Bin. Run npm install in repository root first."
@@ -46,8 +46,8 @@ try {
     Remove-Pm2ProcessIfExists -Name 'mood-health-server'
   }
 
-  if (-not (Test-Path $distApp)) {
-    Write-Host '[start-project] dist/app.js missing, building backend...'
+  if (-not (Test-Path $distServer)) {
+    Write-Host '[start-project] dist/server.js missing, building backend...'
     npm --prefix mood_health_server run build
     if ($LASTEXITCODE -ne 0) {
       throw 'Backend build failed.'

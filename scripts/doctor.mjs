@@ -151,7 +151,7 @@ async function run() {
   checkFile('mood_health_server/.env', false)
   checkDir('node_modules', false)
   checkDir('mood_health_server/node_modules', false)
-  checkFile('mood_health_server/dist/app.js', false)
+  checkFile('mood_health_server/dist/server.js', false)
   if (process.platform === 'win32') {
     checkFile('start-project.ps1', true)
     checkFile('start-project.sh', false)
