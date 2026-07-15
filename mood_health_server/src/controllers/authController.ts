@@ -1,152 +1,45 @@
-import { AuthRequest } from '../middleware/auth'
 import { Request, Response } from 'express'
-import jwt from 'jsonwebtoken'
-import { createUser, findUserByUsername, comparePassword, findUserById } from '../models/userModel'
-import dotenv from 'dotenv'
-import { BusinessError, HttpException } from '../utils/errors'
-import logger from '../utils/logger'
+import { AuthRequest } from '../middleware/auth'
 import { apiSuccess } from '../utils/apiResponse'
+import { HttpException } from '../utils/errors'
+import logger from '../utils/logger'
+import { createAuthService } from '../services/authService'
 
-dotenv.config()
+const authService = createAuthService()
 
-const buildDefaultEmail = (username: string): string => {
-  const sanitized = username
-    .toLowerCase()
-    .replace(/[^a-z0-9_]/g, '')
-    .slice(0, 12)
-  const prefix = sanitized || 'user'
-  const suffix = `${Date.now()}${Math.random().toString(36).slice(2, 8)}`
-  return `${prefix}_${suffix}@temp.user`
-}
-
-/**
- * 用户注册
- * @param req 请求对象，包含用户名、密码和邮箱
- * @param res 响应对象，返回注册结果
- * @returns 201状态码表示注册成功，400表示参数错误，500表示服务器错误
- */
 export const register = async (req: Request, res: Response) => {
   try {
-    // 从请求体中获取注册信息
-    const { username, password } = req.body
-    const requestedRole = req.body?.role
-    const requestedAdminFlag = req.body?.isAdmin
-
-    if (requestedRole !== undefined || requestedAdminFlag !== undefined) {
-      throw new HttpException('管理员账号只能通过后台脚本创建', 403, null, req.originalUrl)
-    }
-
-    // 简单校验
-    if (!username || !password) {
-      throw new BusinessError('请提供用户名和密码', null, req.originalUrl)
-    }
-
-    // 检查用户名是否已存在
-    const existingUser = await findUserByUsername(username)
-    if (existingUser) {
-      throw new BusinessError(
-        `用户名 "${username}" 已存在，请更换其他用户名`,
-        null,
-        req.originalUrl
-      )
-    }
-
-    // 创建新用户
-    await createUser(username, password, buildDefaultEmail(username))
-    // 返回成功响应
+    await authService.register(req.body)
     res.status(201).json(apiSuccess(null, '注册成功'))
   } catch (error: any) {
-    if (error instanceof HttpException || error instanceof BusinessError) {
-      logger.warn('用户注册请求被拒绝', {
-        path: req.originalUrl,
-        username: req.body?.username,
-        reason: error.message,
-      })
-    }
-    // 让错误处理中间件处理错误
+    logger.warn('用户注册请求失败', {
+      path: req.originalUrl,
+      username: req.body?.username,
+      reason: error instanceof Error ? error.message : 'unknown_error',
+    })
     throw error
   }
 }
 
-/**
- * 用户登录
- * @param req 请求对象，包含用户名和密码
- * @param res 响应对象，返回登录结果和JWT令牌
- * @returns 200状态码表示登录成功，400表示参数错误，401表示认证失败，500表示服务器错误
- */
 export const login = async (req: Request, res: Response) => {
   try {
-    // 从请求体中获取登录信息
-    const { username, password } = req.body
-
-    // 简单校验
-    if (!username || !password) {
-      throw new BusinessError('请提供用户名和密码', null, req.originalUrl)
-    }
-
-    // 查找用户
-    const user = await findUserByUsername(username)
-    if (!user) {
-      throw new HttpException('用户名或密码错误', 401, null, req.originalUrl)
-    }
-
-    // 验证密码
-    const isValid = await comparePassword(password, user.password)
-    if (!isValid) {
-      throw new HttpException('用户名或密码错误', 401, null, req.originalUrl)
-    }
-
-    // 生成 JWT 令牌
-    if (!process.env.JWT_SECRET) {
-      logger.error('JWT_SECRET 未配置', { path: req.originalUrl })
-      throw new HttpException('服务配置错误', 500, null, req.originalUrl)
-    }
-
-    const token = jwt.sign(
-      { userId: user.id, username: user.username, role: user.role || 'user' },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    )
-
-    // 返回用户信息（不含密码）
-    const { password: _, ...userInfo } = user
-    res.json(apiSuccess({ token, user: userInfo }, '登录成功'))
+    const result = await authService.login(req.body)
+    res.json(apiSuccess(result, '登录成功'))
   } catch (error: any) {
-    if (error instanceof HttpException || error instanceof BusinessError) {
-      logger.warn('用户登录失败', {
-        path: req.originalUrl,
-        username: req.body?.username,
-        reason: error.message,
-      })
-    }
-    // 让错误处理中间件处理错误
+    logger.warn('用户登录失败', {
+      path: req.originalUrl,
+      username: req.body?.username,
+      reason: error instanceof Error ? error.message : 'unknown_error',
+    })
     throw error
   }
 }
 
-/**
- * 获取当前登录用户信息
- * @param req 请求对象，包含用户信息
- * @param res 响应对象，返回用户信息
- * @returns 200状态码表示成功，401表示未登录，404表示用户不存在，500表示服务器错误
- */
 export const getMe = async (req: AuthRequest, res: Response) => {
-  try {
-    // 检查用户是否已登录
-    if (!req.user) {
-      throw new HttpException('未登录', 401, null, req.originalUrl)
-    }
-
-    // 查找用户信息
-    const user = await findUserById(req.user.userId)
-    if (!user) {
-      throw new HttpException('用户不存在', 404, null, req.originalUrl)
-    }
-
-    // 返回用户信息
-    res.json(apiSuccess({ user }, '获取当前用户成功'))
-  } catch (error: any) {
-    // 让错误处理中间件处理错误
-    throw error
+  if (!req.user) {
+    throw new HttpException('未登录', 401, null, req.originalUrl)
   }
+
+  const user = await authService.getMe(req.user.userId)
+  res.json(apiSuccess({ user }, '获取当前用户成功'))
 }
