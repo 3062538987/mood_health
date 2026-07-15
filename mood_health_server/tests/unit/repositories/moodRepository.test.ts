@@ -398,4 +398,24 @@ describe('moodRepository', () => {
     expect(db.calls[0].sql).toContain('AVG(me.intensity)')
     expect(db.calls[0].params).toEqual([7, '2026-07-01', '2026-07-15'])
   })
+
+  it('lists weekly mood aggregate rows with counts from normalized MySQL tables', async () => {
+    const db = new FakeMoodPool()
+    db.queueRows([
+      { date: '2026-07-14', emotion_name: '快乐', record_count: 2, avg_intensity: '7.5000' },
+      { date: '2026-07-15', emotion_name: '难过', record_count: 1, avg_intensity: 4 },
+    ])
+    const repository = createMoodRepository(db)
+
+    await expect(
+      repository.listWeeklyRows(7, '2026-07-08', '2026-07-15')
+    ).resolves.toEqual([
+      { date: '2026-07-14', emotionName: '快乐', recordCount: 2, averageIntensity: 7.5 },
+      { date: '2026-07-15', emotionName: '难过', recordCount: 1, averageIntensity: 4 },
+    ])
+
+    expect(db.calls[0].sql).toContain('COUNT(*) AS record_count')
+    expect(db.calls[0].sql).toContain('AVG(me.intensity)')
+    expect(db.calls[0].params).toEqual([7, '2026-07-08', '2026-07-15'])
+  })
 })
