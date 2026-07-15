@@ -118,7 +118,6 @@ export const getMoodList = async (req: AuthRequest, res: Response) => {
     res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
-
 export const getWeeklyReportHandler = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.userId
