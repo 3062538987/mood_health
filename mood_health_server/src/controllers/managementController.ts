@@ -7,6 +7,9 @@ import type { AuthRequest } from '../middleware/auth'
 import { logOperation } from '../utils/operationLogger'
 import { deleteUserById, findUserById, isValidUserRole, updateUserRole } from '../models/userModel'
 import { apiFailure, apiSuccess } from '../utils/apiResponse'
+import { createManagementService } from '../services/managementService'
+
+const managementService = createManagementService()
 
 interface AdminUserItem {
   id: number
@@ -95,45 +98,7 @@ export const userManageHandler = async (req: AuthRequest, res: Response) => {
 
 export const adminUsersListHandler = async (req: AuthRequest, res: Response) => {
   try {
-    let users: AdminUserItem[] = []
-
-    if (isSqliteClient) {
-      const rows = sqliteAll(
-        `
-        SELECT id, username, email, role, created_at
-        FROM users
-        ORDER BY id DESC
-        `
-      ) as Array<{
-        id: number
-        username: string
-        email: string
-        role: string
-        created_at: string
-      }>
-
-      users = rows.map((row) => ({
-        id: Number(row.id),
-        username: String(row.username),
-        email: String(row.email),
-        role: isValidUserRole(row.role) ? row.role : 'user',
-        createdAt: String(row.created_at || ''),
-      }))
-    } else {
-      const result = await pool.request().query(`
-        SELECT id, username, email, role, created_at
-        FROM users
-        ORDER BY id DESC
-      `)
-
-      users = (result.recordset || []).map((row: any) => ({
-        id: Number(row.id),
-        username: String(row.username),
-        email: String(row.email),
-        role: isValidUserRole(row.role) ? row.role : 'user',
-        createdAt: row.created_at ? new Date(row.created_at).toISOString() : '',
-      }))
-    }
+    const users: AdminUserItem[] = await managementService.listAdminUsers()
 
     await logOperation(
       req.user!.userId,
@@ -442,193 +407,15 @@ export const adminMoodsListHandler = async (req: AuthRequest, res: Response) => 
   try {
     const { page, pageSize, userId, username, startDate, endDate, moodType } =
       parseAdminMoodListQuery(req)
-    const offset = (page - 1) * pageSize
-
-    let list: AdminMoodRecordItem[] = []
-    let total = 0
-
-    if (isSqliteClient) {
-      const conditions: string[] = []
-      const params: Array<string | number> = []
-
-      if (userId) {
-        conditions.push('m.user_id = ?')
-        params.push(userId)
-      }
-      if (username) {
-        conditions.push('u.username LIKE ?')
-        params.push(`%${username}%`)
-      }
-      if (startDate) {
-        conditions.push('date(m.record_date) >= date(?)')
-        params.push(startDate)
-      }
-      if (endDate) {
-        conditions.push('date(m.record_date) <= date(?)')
-        params.push(endDate)
-      }
-      if (moodType) {
-        conditions.push('(m.mood_type LIKE ? OR et.name LIKE ?)')
-        params.push(`%${moodType}%`, `%${moodType}%`)
-      }
-
-      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
-
-      const countRows = sqliteAll(
-        `
-          SELECT COUNT(DISTINCT m.id) as total
-          FROM moods m
-          JOIN users u ON u.id = m.user_id
-          LEFT JOIN mood_emotions me ON me.mood_id = m.id
-          LEFT JOIN emotion_types et ON et.id = me.emotion_type_id
-          ${whereClause}
-        `,
-        params
-      ) as Array<{ total: number }>
-
-      total = Number(countRows[0]?.total || 0)
-
-      const rows = sqliteAll(
-        `
-          SELECT
-            m.id,
-            m.user_id as userId,
-            u.username,
-            m.mood_type as moodTypeRaw,
-            m.intensity,
-            m.created_at as createdAt,
-            GROUP_CONCAT(DISTINCT et.name) as relationMoodTypes
-          FROM moods m
-          JOIN users u ON u.id = m.user_id
-          LEFT JOIN mood_emotions me ON me.mood_id = m.id
-          LEFT JOIN emotion_types et ON et.id = me.emotion_type_id
-          ${whereClause}
-          GROUP BY m.id, m.user_id, u.username, m.mood_type, m.intensity, m.created_at
-          ORDER BY m.created_at DESC
-          LIMIT ? OFFSET ?
-        `,
-        [...params, pageSize, offset]
-      ) as Array<{
-        id: number
-        userId: number
-        username: string
-        moodTypeRaw: string
-        relationMoodTypes?: string
-        intensity: number
-        createdAt: string
-      }>
-
-      list = rows.map((row) => {
-        const relationMoodTypes = row.relationMoodTypes
-          ? String(row.relationMoodTypes)
-              .split(',')
-              .map((item) => item.trim())
-              .filter(Boolean)
-          : []
-        const fallbackMoodTypes = row.moodTypeRaw
-          ? String(row.moodTypeRaw)
-              .split(',')
-              .map((item) => item.trim())
-              .filter(Boolean)
-          : []
-
-        return {
-          id: Number(row.id),
-          userId: Number(row.userId),
-          username: String(row.username || ''),
-          moodType: relationMoodTypes.length > 0 ? relationMoodTypes : fallbackMoodTypes,
-          intensity: Number(row.intensity || 0),
-          createdAt: String(row.createdAt || ''),
-        }
-      })
-    } else {
-      const countRequest = pool.request()
-      const listRequest = pool.request()
-      const conditions: string[] = []
-
-      if (userId) {
-        conditions.push('m.user_id = @userId')
-        countRequest.input('userId', sql.Int, userId)
-        listRequest.input('userId', sql.Int, userId)
-      }
-      if (username) {
-        conditions.push('u.username LIKE @username')
-        countRequest.input('username', sql.NVarChar(100), `%${username}%`)
-        listRequest.input('username', sql.NVarChar(100), `%${username}%`)
-      }
-      if (startDate) {
-        conditions.push('CONVERT(date, m.record_date) >= @startDate')
-        countRequest.input('startDate', sql.Date, startDate)
-        listRequest.input('startDate', sql.Date, startDate)
-      }
-      if (endDate) {
-        conditions.push('CONVERT(date, m.record_date) <= @endDate')
-        countRequest.input('endDate', sql.Date, endDate)
-        listRequest.input('endDate', sql.Date, endDate)
-      }
-      if (moodType) {
-        conditions.push('(m.mood_type LIKE @moodType OR et.name LIKE @moodType)')
-        countRequest.input('moodType', sql.NVarChar(100), `%${moodType}%`)
-        listRequest.input('moodType', sql.NVarChar(100), `%${moodType}%`)
-      }
-
-      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
-
-      const countResult = await countRequest.query(`
-        SELECT COUNT(DISTINCT m.id) as total
-        FROM moods m
-        JOIN users u ON u.id = m.user_id
-        LEFT JOIN mood_emotions me ON me.mood_id = m.id
-        LEFT JOIN emotion_types et ON et.id = me.emotion_type_id
-        ${whereClause}
-      `)
-      total = Number(countResult.recordset[0]?.total || 0)
-
-      listRequest.input('offset', sql.Int, offset)
-      listRequest.input('pageSize', sql.Int, pageSize)
-      const listResult = await listRequest.query(`
-        SELECT
-          m.id,
-          m.user_id as userId,
-          u.username,
-          m.mood_type as moodTypeRaw,
-          m.intensity,
-          m.created_at as createdAt,
-          STRING_AGG(et.name, ',') as relationMoodTypes
-        FROM moods m
-        JOIN users u ON u.id = m.user_id
-        LEFT JOIN mood_emotions me ON me.mood_id = m.id
-        LEFT JOIN emotion_types et ON et.id = me.emotion_type_id
-        ${whereClause}
-        GROUP BY m.id, m.user_id, u.username, m.mood_type, m.intensity, m.created_at
-        ORDER BY m.created_at DESC
-        OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY
-      `)
-
-      list = (listResult.recordset || []).map((row: any) => {
-        const relationMoodTypes = row.relationMoodTypes
-          ? String(row.relationMoodTypes)
-              .split(',')
-              .map((item: string) => item.trim())
-              .filter(Boolean)
-          : []
-        const fallbackMoodTypes = row.moodTypeRaw
-          ? String(row.moodTypeRaw)
-              .split(',')
-              .map((item: string) => item.trim())
-              .filter(Boolean)
-          : []
-
-        return {
-          id: Number(row.id),
-          userId: Number(row.userId),
-          username: String(row.username || ''),
-          moodType: relationMoodTypes.length > 0 ? relationMoodTypes : fallbackMoodTypes,
-          intensity: Number(row.intensity || 0),
-          createdAt: row.createdAt ? new Date(row.createdAt).toISOString() : '',
-        }
-      })
-    }
+    const { list, total } = await managementService.listAdminMoods({
+      page,
+      pageSize,
+      userId,
+      username,
+      startDate,
+      endDate,
+      moodType,
+    })
 
     return res
       .status(200)

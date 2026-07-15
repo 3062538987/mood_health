@@ -1,7 +1,13 @@
 import { NextFunction, Response } from 'express'
-import { adminMoodsListHandler, adminUsersListHandler } from '../../../src/controllers/managementController'
-import { requirePermission } from '../../../src/middleware/auth'
 import { sqliteAll } from '../../../src/config/sqlite'
+
+var mockManagementService: {
+  listAdminUsers: jest.Mock
+  listAdminMoods: jest.Mock
+} = {
+  listAdminUsers: jest.fn(),
+  listAdminMoods: jest.fn(),
+}
 
 jest.mock('../../../src/config/database', () => ({
   __esModule: true,
@@ -14,6 +20,20 @@ jest.mock('../../../src/config/sqlite', () => ({
   sqliteRun: jest.fn(),
 }))
 
+jest.mock('../../../src/config/mysql', () => ({
+  getMysqlPool: jest.fn(() => ({ query: jest.fn().mockResolvedValue([[], []]) })),
+}))
+
+jest.mock('../../../src/services/managementService', () => ({
+  createManagementService: jest.fn(() => {
+    mockManagementService = {
+      listAdminUsers: jest.fn(),
+      listAdminMoods: jest.fn(),
+    }
+    return mockManagementService
+  }),
+}))
+
 jest.mock('../../../src/utils/encryption', () => ({
   decryptField: jest.fn((value: string) => value),
 }))
@@ -22,12 +42,21 @@ jest.mock('../../../src/utils/operationLogger', () => ({
   logOperation: jest.fn().mockResolvedValue(undefined),
 }))
 
+jest.mock('../../../src/middleware/auth', () => ({
+  requirePermission: jest.fn(() => (_req: never, res: Response) => {
+    res.status(403).json({ code: 1003, message: '权限不足：该操作被禁止', data: null })
+  }),
+}))
+
 jest.mock('../../../src/models/userModel', () => ({
   deleteUserById: jest.fn(),
   findUserById: jest.fn(),
   isValidUserRole: jest.fn((role: string) => ['user', 'admin', 'super_admin'].includes(role)),
   updateUserRole: jest.fn(),
 }))
+
+const { adminMoodsListHandler, adminUsersListHandler } = require('../../../src/controllers/managementController')
+const { requirePermission } = require('../../../src/middleware/auth')
 
 const sqliteAllMock = jest.mocked(sqliteAll)
 
@@ -56,19 +85,21 @@ describe('managementController contract', () => {
   })
 
   it('returns the user list in the complete response envelope', async () => {
-    sqliteAllMock.mockReturnValueOnce([
+    mockManagementService.listAdminUsers.mockResolvedValue([
       {
         id: 2,
         username: 'student_demo',
         email: 'student@example.com',
         role: 'user',
-        created_at: '2026-01-01T00:00:00.000Z',
+        createdAt: '2026-01-01T00:00:00.000Z',
       },
-    ] as never)
+    ])
     const response = createResponse()
 
     await adminUsersListHandler(createRequest({ originalUrl: '/api/admin/users' }), response)
 
+    expect(mockManagementService.listAdminUsers).toHaveBeenCalledWith()
+    expect(sqliteAllMock).not.toHaveBeenCalled()
     expect(response.json).toHaveBeenCalledWith({
       code: 0,
       message: '获取用户列表成功',
@@ -87,20 +118,20 @@ describe('managementController contract', () => {
   })
 
   it('does not query, return or expose mood note and trigger text', async () => {
-    sqliteAllMock.mockImplementation((sqlText: string) => {
-      if (sqlText.includes('COUNT')) return [{ total: 1 }] as never
-      return [
+    mockManagementService.listAdminMoods.mockResolvedValue({
+      list: [
         {
           id: 10,
           userId: 2,
           username: 'student_demo',
-          moodTypeRaw: '平静',
+          moodType: ['平静'],
           intensity: 6,
-          note: '不应返回的私密正文',
-          trigger: '不应返回的触发因素',
           createdAt: '2026-01-01T00:00:00.000Z',
         },
-      ] as never
+      ],
+      total: 1,
+      page: 1,
+      pageSize: 20,
     })
     const response = createResponse()
 
@@ -128,8 +159,16 @@ describe('managementController contract', () => {
     })
     expect(serializedCalls).not.toContain('私密正文')
     expect(serializedCalls).not.toContain('触发因素')
-    expect(sqliteAllMock.mock.calls[1][0]).not.toContain('note_encrypted')
-    expect(sqliteAllMock.mock.calls[1][0]).not.toContain('m.trigger')
+    expect(mockManagementService.listAdminMoods).toHaveBeenCalledWith({
+      page: 1,
+      pageSize: 20,
+      userId: undefined,
+      username: undefined,
+      startDate: undefined,
+      endDate: undefined,
+      moodType: undefined,
+    })
+    expect(sqliteAllMock).not.toHaveBeenCalled()
   })
 
   it('denies a student access with the unified 403 contract', () => {
