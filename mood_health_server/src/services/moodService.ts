@@ -3,6 +3,7 @@ import { BusinessError } from '../utils/errors'
 
 type EncryptField = (value: string | null | undefined) => string | null
 type DecryptField = (value: string | null | undefined) => string | null
+type NowProvider = () => Date
 
 export interface RecordMoodEmotionInput {
   emotionTypeId: number
@@ -27,6 +28,7 @@ interface MoodServiceDependencies {
   repository?: MoodRepository
   encryptField?: EncryptField
   decryptField?: DecryptField
+  now?: NowProvider
 }
 
 export interface ListMoodOptions {
@@ -34,6 +36,8 @@ export interface ListMoodOptions {
   limit: number
   emotionTypeId?: number
 }
+
+export type MoodTrendRange = 'week' | 'month' | 'quarter'
 
 const normalizeEmotions = (emotions: RecordMoodEmotionInput[]): MoodEmotionInput[] => {
   if (!Array.isArray(emotions) || emotions.length === 0) {
@@ -69,8 +73,27 @@ const normalizeEmotions = (emotions: RecordMoodEmotionInput[]): MoodEmotionInput
   return normalized
 }
 
+const toDateString = (date: Date): string => date.toISOString().split('T')[0]
+
+const resolveTrendStartDate = (endDate: Date, range: MoodTrendRange): string => {
+  const days = range === 'quarter' ? 90 : range === 'month' ? 30 : 7
+  const startDate = new Date(endDate)
+  startDate.setUTCDate(startDate.getUTCDate() - days)
+  return toDateString(startDate)
+}
+
+const buildTrendSummary = (values: number[]): string => {
+  if (values.length === 0) {
+    return '该时间范围内没有情绪记录。'
+  }
+
+  const average = values.reduce((sum, value) => sum + value, 0) / values.length
+  return `近期情绪记录平均强度为 ${Number(average.toFixed(1))}，请结合记录内容持续观察变化。`
+}
+
 export const createMoodService = (dependencies: MoodServiceDependencies = {}) => {
   const repository = dependencies.repository ?? createMoodRepository()
+  const now = dependencies.now ?? (() => new Date())
   const encryptField =
     dependencies.encryptField ??
     ((value: string | null | undefined) => {
@@ -185,6 +208,30 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
     return { id, name: trimmedName }
   }
 
+  const getMoodTrend = async (userId: number, range: MoodTrendRange) => {
+    const end = now()
+    const endDate = toDateString(end)
+    const startDate = resolveTrendStartDate(end, range)
+    const rows = await repository.listTrendRows(userId, startDate, endDate)
+    const labels = Array.from(new Set(rows.map((row) => row.date))).sort()
+    const emotionNames = Array.from(new Set(rows.map((row) => row.emotionName)))
+    const datasets = emotionNames.map((emotionName) => ({
+      name: emotionName,
+      data: labels.map((date) => {
+        const row = rows.find(
+          (item) => item.date === date && item.emotionName === emotionName
+        )
+        return row ? row.averageIntensity : null
+      }),
+    }))
+
+    return {
+      labels,
+      datasets,
+      summary: buildTrendSummary(rows.map((row) => row.averageIntensity)),
+    }
+  }
+
   return {
     recordMood,
     listMoods,
@@ -193,6 +240,7 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
     listEmotionTypes,
     listTags,
     createOrGetTag,
+    getMoodTrend,
   }
 }
 

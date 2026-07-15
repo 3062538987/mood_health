@@ -12,6 +12,7 @@ const createRepository = (): jest.Mocked<MoodRepository> => ({
   listEmotionTypes: jest.fn(),
   listTags: jest.fn(),
   createOrGetTag: jest.fn(),
+  listTrendRows: jest.fn(),
 })
 
 describe('moodService', () => {
@@ -285,5 +286,44 @@ describe('moodService', () => {
     await expect(service.createOrGetTag('  新标签  ', 7)).resolves.toEqual({ id: 9, name: '新标签' })
 
     expect(repository.createOrGetTag).toHaveBeenCalledWith('新标签', 7)
+  })
+
+  it('builds mood trend datasets from repository aggregates', async () => {
+    const repository = createRepository()
+    repository.listTrendRows.mockResolvedValue([
+      { date: '2026-07-14', emotionName: '快乐', averageIntensity: 7.5 },
+      { date: '2026-07-15', emotionName: '快乐', averageIntensity: 8 },
+      { date: '2026-07-15', emotionName: '难过', averageIntensity: 4 },
+    ])
+    const service = createMoodService({
+      repository,
+      now: () => new Date('2026-07-15T12:00:00.000Z'),
+    })
+
+    await expect(service.getMoodTrend(7, 'week')).resolves.toEqual({
+      labels: ['2026-07-14', '2026-07-15'],
+      datasets: [
+        { name: '快乐', data: [7.5, 8] },
+        { name: '难过', data: [null, 4] },
+      ],
+      summary: '近期情绪记录平均强度为 6.5，请结合记录内容持续观察变化。',
+    })
+    expect(repository.listTrendRows).toHaveBeenCalledWith(7, '2026-07-08', '2026-07-15')
+  })
+
+  it('returns an empty mood trend DTO when no records exist', async () => {
+    const repository = createRepository()
+    repository.listTrendRows.mockResolvedValue([])
+    const service = createMoodService({
+      repository,
+      now: () => new Date('2026-07-15T12:00:00.000Z'),
+    })
+
+    await expect(service.getMoodTrend(7, 'month')).resolves.toEqual({
+      labels: [],
+      datasets: [],
+      summary: '该时间范围内没有情绪记录。',
+    })
+    expect(repository.listTrendRows).toHaveBeenCalledWith(7, '2026-06-15', '2026-07-15')
   })
 })
