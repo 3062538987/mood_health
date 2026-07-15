@@ -1,12 +1,7 @@
 /**
  * AI数据模型
- * 定义AI请求/响应的TS类型，关联现有moodModel、postModel、courseModel
+ * 定义 AI 请求/响应的 TypeScript 类型。
  */
-
-import type { Mood } from "./moodModel";
-import type { Post } from "./postModel";
-import type { Course } from "./courseModel";
-import type { Music } from "./musicModel";
 
 // 情绪分析请求接口
 export interface MoodAnalysisRequest {
