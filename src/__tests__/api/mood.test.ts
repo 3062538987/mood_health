@@ -1,5 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { analyzeMood, analyzeMoodWithRetry } from '@/api/mood'
+import request from '@/utils/request'
+import {
+  analyzeMood,
+  analyzeMoodWithRetry,
+  getMoodRecordList,
+  getMoodTrend,
+  getMoodWeeklyReport,
+  submitMoodRecord,
+} from '@/api/mood'
+
+vi.mock('@/utils/request', () => ({
+  default: vi.fn(),
+}))
+
+const requestMock = vi.mocked(request)
 
 describe('analyzeMood', () => {
   beforeEach(() => {
@@ -50,5 +64,61 @@ describe('analyzeMoodWithRetry', () => {
   it('should return result when retries are provided', async () => {
     await analyzeMoodWithRetry({ content: '测试内容', mood_level: 3 }, 3)
     expect(true).toBe(true)
+  })
+})
+
+describe('mood API contract', () => {
+  beforeEach(() => {
+    requestMock.mockReset()
+  })
+
+  it('returns the unwrapped write result after recording a mood', async () => {
+    requestMock.mockResolvedValueOnce(null)
+    const payload = {
+      intensity: 7,
+      moodType: ['快乐'],
+      moodRatio: [70],
+      event: '完成课程作业',
+      tags: ['学习'],
+      trigger: '任务完成',
+    }
+
+    await expect(submitMoodRecord(payload)).resolves.toBeNull()
+    expect(requestMock).toHaveBeenCalledWith({
+      url: '/api/moods/record',
+      method: 'post',
+      data: payload,
+    })
+  })
+
+  it('returns the unwrapped paginated mood list', async () => {
+    const result = { list: [], total: 0, page: 2, limit: 10 }
+    requestMock.mockResolvedValueOnce(result)
+
+    await expect(getMoodRecordList({ page: 2, size: 10 })).resolves.toEqual(result)
+    expect(requestMock).toHaveBeenCalledWith({
+      url: '/api/moods/list',
+      method: 'get',
+      params: { page: 2, size: 10 },
+    })
+  })
+
+  it('returns unwrapped weekly and trend DTOs', async () => {
+    const weekly = {
+      averageIntensity: 6,
+      dailyData: [],
+      mostFrequentMood: '平静',
+      summary: '本周情绪整体平稳',
+    }
+    const trend = { labels: [], datasets: [], summary: '暂无趋势数据' }
+    requestMock.mockResolvedValueOnce(weekly).mockResolvedValueOnce(trend)
+
+    await expect(getMoodWeeklyReport()).resolves.toEqual(weekly)
+    await expect(getMoodTrend('month')).resolves.toEqual(trend)
+    expect(requestMock).toHaveBeenLastCalledWith({
+      url: '/api/moods/trend',
+      method: 'get',
+      params: { range: 'month' },
+    })
   })
 })

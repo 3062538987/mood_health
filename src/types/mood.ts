@@ -32,6 +32,13 @@ export interface MoodRecord {
 export interface MoodListResponse {
   list: MoodRecord[] // 接口返回的列表数据
   total: number // 补充总条数字段
+  page: number
+  limit: number
+}
+
+export interface MoodListParams {
+  page: number
+  size: number
 }
 
 /**

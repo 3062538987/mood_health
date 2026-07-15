@@ -22,6 +22,7 @@ import {
 import { createAdviceHistory, getAdviceHistoryByUser } from '../models/adviceModel'
 import { clearMoodCache } from '../utils/cache'
 import logger from '../utils/logger'
+import { apiFailure, apiSuccess } from '../utils/apiResponse'
 
 export const recordMood = async (req: AuthRequest, res: Response) => {
   try {
@@ -43,10 +44,10 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
     if (emotions && Array.isArray(emotions) && emotions.length > 0) {
       for (const emotion of emotions) {
         if (!emotion.emotionTypeId || emotion.intensity === undefined) {
-          return res.status(400).json({ code: 400, message: '情绪数据格式错误' })
+          return res.status(400).json(apiFailure(400, '情绪数据格式错误'))
         }
         if (emotion.intensity < 1 || emotion.intensity > 10) {
-          return res.status(400).json({ code: 400, message: '强度必须在1-10之间' })
+          return res.status(400).json(apiFailure(400, '强度必须在1-10之间'))
         }
       }
 
@@ -62,7 +63,7 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
         date
       )
       await clearMoodCache(userId)
-      return res.status(201).json({ code: 0, message: '记录成功' })
+      return res.status(201).json(apiSuccess(null, '记录成功'))
     }
 
     const rawIntensity = Array.isArray(moodRatio)
@@ -70,14 +71,14 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
       : (moodRatio ?? intensity ?? intensity_score ?? level)
 
     if (!moodType || rawIntensity === undefined) {
-      return res.status(400).json({ code: 400, message: '情绪类型和强度为必填' })
+      return res.status(400).json(apiFailure(400, '情绪类型和强度为必填'))
     }
 
     const moodTypeStr = Array.isArray(moodType) ? moodType.join(',') : moodType
     const resolvedIntensity = Number(rawIntensity)
 
     if (!Number.isFinite(resolvedIntensity) || resolvedIntensity < 1 || resolvedIntensity > 10) {
-      return res.status(400).json({ code: 400, message: '强度必须在1-10之间' })
+      return res.status(400).json(apiFailure(400, '强度必须在1-10之间'))
     }
 
     const date = recordDate || new Date().toISOString().split('T')[0]
@@ -93,10 +94,10 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
       date
     )
     await clearMoodCache(userId)
-    res.status(201).json({ code: 0, message: '记录成功' })
+    res.status(201).json(apiSuccess(null, '记录成功'))
   } catch (error) {
     console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -151,10 +152,10 @@ export const getMoodList = async (req: AuthRequest, res: Response) => {
 
     const total = await getMoodTotalCount(userId)
 
-    res.json({ code: 0, data: { list: formattedMoods, total } })
+    res.json(apiSuccess({ list: formattedMoods, total, page, limit }, '获取情绪记录成功'))
   } catch (error) {
     console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -162,10 +163,10 @@ export const getWeeklyReportHandler = async (req: AuthRequest, res: Response) =>
   try {
     const userId = req.user!.userId
     const report = await getWeeklyReport(userId)
-    res.json({ code: 0, data: report })
+    res.json(apiSuccess(report, '获取情绪周报成功'))
   } catch (error) {
     console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -176,13 +177,13 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
     const { moodType, intensity, note, tags, trigger, emotions, tagIds } = req.body
 
     if (!Number.isInteger(moodId) || moodId <= 0) {
-      return res.status(400).json({ code: 400, message: '无效的记录 ID' })
+      return res.status(400).json(apiFailure(400, '无效的记录 ID'))
     }
 
     if (emotions && Array.isArray(emotions) && emotions.length > 0) {
       for (const emotion of emotions) {
         if (emotion.intensity < 1 || emotion.intensity > 10) {
-          return res.status(400).json({ code: 400, message: '强度必须在1-10之间' })
+          return res.status(400).json(apiFailure(400, '强度必须在1-10之间'))
         }
       }
 
@@ -196,11 +197,11 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
       )
 
       if (!updated) {
-        return res.status(404).json({ code: 404, message: '记录不存在' })
+        return res.status(404).json(apiFailure(404, '记录不存在'))
       }
 
       await clearMoodCache(userId)
-      return res.json({ code: 0, message: '更新成功' })
+      return res.json(apiSuccess(null, '更新成功'))
     }
 
     const moodTypeStr = Array.isArray(moodType) ? moodType.join(',') : moodType
@@ -208,7 +209,7 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
 
     const mood = await findMoodById(moodId, userId)
     if (!mood) {
-      return res.status(404).json({ code: 404, message: '记录不存在' })
+      return res.status(404).json(apiFailure(404, '记录不存在'))
     }
 
     const updated = await updateMood(
@@ -222,14 +223,14 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
     )
 
     if (!updated) {
-      return res.status(404).json({ code: 404, message: '记录不存在' })
+      return res.status(404).json(apiFailure(404, '记录不存在'))
     }
 
     await clearMoodCache(userId)
-    res.json({ code: 0, message: '更新成功' })
+    res.json(apiSuccess(null, '更新成功'))
   } catch (error) {
     console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -239,20 +240,20 @@ export const deleteMoodHandler = async (req: AuthRequest, res: Response) => {
     const moodId = parseInt(req.params.id as string)
 
     if (!Number.isInteger(moodId) || moodId <= 0) {
-      return res.status(400).json({ code: 400, message: '无效的记录 ID' })
+      return res.status(400).json(apiFailure(400, '无效的记录 ID'))
     }
 
     const deleted = await deleteMood(moodId, userId)
 
     if (!deleted) {
-      return res.status(404).json({ code: 404, message: '记录不存在' })
+      return res.status(404).json(apiFailure(404, '记录不存在'))
     }
 
     await clearMoodCache(userId)
-    res.json({ code: 0, message: '删除成功' })
+    res.json(apiSuccess(null, '删除成功'))
   } catch (error) {
     console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -262,14 +263,14 @@ export const getMoodTrend = async (req: AuthRequest, res: Response) => {
     const range = (req.query.range as string) || 'week'
 
     if (!['week', 'month', 'quarter'].includes(range)) {
-      return res.status(400).json({ code: 400, message: '无效的时间范围' })
+      return res.status(400).json(apiFailure(400, '无效的时间范围'))
     }
 
     const trendData = await getMoodTrendModel(userId, range)
-    res.json({ code: 0, data: trendData })
+    res.json(apiSuccess(trendData, '获取情绪趋势成功'))
   } catch (error) {
     console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -327,14 +328,14 @@ export const getMoodAnalysisHandler = async (req: AuthRequest, res: Response) =>
     const range = (req.query.range as string) || 'month'
 
     if (!['week', 'month', 'quarter'].includes(range)) {
-      return res.status(400).json({ code: 400, message: '无效的时间范围' })
+      return res.status(400).json(apiFailure(400, '无效的时间范围'))
     }
 
     const analysis = await getMoodAnalysis(userId, range)
-    res.json({ code: 0, data: analysis })
+    res.json(apiSuccess(analysis, '获取情绪统计成功'))
   } catch (error) {
     console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 

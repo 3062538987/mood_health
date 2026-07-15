@@ -2,6 +2,7 @@ import request from '@/utils/request'
 import {
   MoodRecord,
   MoodListResponse,
+  MoodListParams,
   MoodWeeklyReport,
   MoodTrendResponse,
   MoodTypeEnum,
@@ -74,14 +75,14 @@ const shouldRetry = (error: any): boolean => {
 }
 
 export const submitMoodRecord = (data: Omit<MoodRecord, 'id' | 'userId' | 'createTime'>) => {
-  return request({
+  return request<null>({
     url: '/api/moods/record',
     method: 'post',
     data,
   })
 }
 
-export const getMoodRecordList = (params: { page: number; size: number }) => {
+export const getMoodRecordList = (params: MoodListParams) => {
   return request<MoodListResponse>({
     url: '/api/moods/list',
     method: 'get',
