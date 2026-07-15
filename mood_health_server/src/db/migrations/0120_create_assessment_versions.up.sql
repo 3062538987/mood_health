@@ -1,0 +1,20 @@
+CREATE TABLE assessment_versions (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  instrument_id INT UNSIGNED NOT NULL,
+  version_label VARCHAR(32) NOT NULL,
+  language VARCHAR(16) NOT NULL DEFAULT 'zh-CN',
+  target_population VARCHAR(255) NULL,
+  theoretical_basis TEXT NULL,
+  source_citation TEXT NULL,
+  license_note TEXT NULL,
+  scoring_rule_json JSON NULL,
+  risk_stratification_json JSON NULL,
+  suggestion_template_json JSON NULL,
+  status VARCHAR(16) NOT NULL DEFAULT 'draft',
+  checksum CHAR(64) NOT NULL,
+  published_at DATETIME(3) NULL,
+  created_at DATETIME(3) NOT NULL,
+  UNIQUE KEY uk_assessment_versions_label (instrument_id, version_label, language),
+  CONSTRAINT fk_assessment_versions_instrument FOREIGN KEY (instrument_id) REFERENCES assessment_instruments (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT chk_assessment_versions_status CHECK (status IN ('draft', 'active', 'retired'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
