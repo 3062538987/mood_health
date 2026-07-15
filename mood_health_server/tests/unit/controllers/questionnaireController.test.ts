@@ -18,6 +18,7 @@ var mockAssessmentService: {
   listQuestionnaires: jest.Mock
   getQuestionnaireById: jest.Mock
   listQuestionsByQuestionnaireId: jest.Mock
+  createSubmittedSession: jest.Mock
 }
 
 jest.mock('../../../src/models/questionnaireModel', () => ({
@@ -34,6 +35,7 @@ jest.mock('../../../src/services/assessmentService', () => ({
       listQuestionnaires: jest.fn(),
       getQuestionnaireById: jest.fn(),
       listQuestionsByQuestionnaireId: jest.fn(),
+      createSubmittedSession: jest.fn(),
     }
     return mockAssessmentService
   }),
@@ -113,9 +115,9 @@ describe('questionnaireController contract', () => {
   })
 
   it('saves and returns a structured, non-diagnostic screening result', async () => {
-    jest.mocked(getQuestionnaireById).mockResolvedValue(questionnaire)
-    jest.mocked(getQuestionsByQuestionnaireId).mockResolvedValue([question])
-    jest.mocked(createUserAssessment).mockResolvedValue({} as never)
+    mockAssessmentService.getQuestionnaireById.mockResolvedValue(questionnaire)
+    mockAssessmentService.listQuestionsByQuestionnaireId.mockResolvedValue([question])
+    mockAssessmentService.createSubmittedSession.mockResolvedValue(31)
     const response = createResponse()
 
     await submitAssessment(
@@ -124,12 +126,16 @@ describe('questionnaireController contract', () => {
       next
     )
 
-    expect(createUserAssessment).toHaveBeenCalledWith(
-      1,
-      1,
-      1,
-      expect.stringContaining('筛查提示')
-    )
+    expect(mockAssessmentService.createSubmittedSession).toHaveBeenCalledWith({
+      userId: 1,
+      questionnaireId: 1,
+      score: 1,
+      riskLevel: 'low',
+      resultText: expect.stringContaining('筛查提示'),
+      answers: [{ itemId: 1, value: 0, score: 1 }],
+      submittedAt: expect.any(Date),
+    })
+    expect(createUserAssessment).not.toHaveBeenCalled()
     expect(response.json).toHaveBeenCalledWith({
       code: 0,
       message: '筛查结果已保存',

@@ -4,7 +4,6 @@ import { AuthRequest } from "../middleware/auth";
 import {
   getQuestionnaireById,
   getQuestionsByQuestionnaireId,
-  createUserAssessment,
   getUserAssessmentHistory,
 } from "../models/questionnaireModel";
 import { apiFailure, apiSuccess } from "../utils/apiResponse";
@@ -175,18 +174,19 @@ export const submitAssessment = async (
     const userId = req.user!.userId;
     const { questionnaire_id, answers } = req.body;
 
-    const questionnaire = await getQuestionnaireById(questionnaire_id);
+    const questionnaire = await assessmentService.getQuestionnaireById(questionnaire_id);
     if (!questionnaire) {
       return res.status(404).json(apiFailure(404, "量表不存在"));
     }
 
-    const questions = await getQuestionsByQuestionnaireId(questionnaire_id);
+    const questions = await assessmentService.listQuestionsByQuestionnaireId(questionnaire_id);
     if (questions.length !== answers.length) {
       return res.status(400).json(apiFailure(400, "答案数量与问题数量不符"));
     }
 
     // 计算得分
     let score = 0;
+    const scoredAnswers: Array<{ itemId: number; value: number; score: number }> = [];
     for (let i = 0; i < questions.length; i++) {
       const question = questions[i];
       const answer = answers[i];
@@ -198,12 +198,20 @@ export const submitAssessment = async (
       }
 
       score += questionScore;
+      scoredAnswers.push({ itemId: question.id, value: answer, score: questionScore });
     }
 
     const { riskLevel, resultText } = buildScreeningResult(questionnaire.type, score);
 
-    // 保存测评记录
-    await createUserAssessment(userId, questionnaire_id, score, resultText);
+    await assessmentService.createSubmittedSession({
+      userId,
+      questionnaireId: questionnaire_id,
+      score,
+      riskLevel,
+      resultText,
+      answers: scoredAnswers,
+      submittedAt: new Date(),
+    });
 
     res.json(
       apiSuccess(
