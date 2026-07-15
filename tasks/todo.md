@@ -1,6 +1,6 @@
 # R0 代码重构任务清单
 
-> 状态：R0 代码重构计划与数据库迁移方案均已批准；阶段 E Task 17–21 已完成，Checkpoint E2 待用户确认。
+> 状态：R0 代码重构计划与数据库迁移方案均已批准；阶段 E 已完成并通过审核，阶段 F Task 22 已完成。
 
 ## 贯穿 R0：性能基线
 
@@ -56,11 +56,11 @@
 - [x] Task 19：迁移情绪记录领域
 - [x] Task 20：迁移心理测评存储领域
 - [x] Task 21：迁移管理聚合读取
-- [ ] Checkpoint E2：用户确认现有核心领域已切换 MySQL
+- [x] Checkpoint E2：用户确认现有核心领域已切换 MySQL（2026-07-15）
 
 ## 阶段 F：旧架构清退与 R0 验收
 
-- [ ] Task 22：清退核心路径 SQL Server 分支
+- [x] Task 22：清退核心路径 SQL Server 分支
 - [ ] Task 23：清退活动与社区模块的 SQL Server 残余
 - [ ] Task 24：清退资源类模块的 SQL Server 残余
 - [ ] Task 25：删除 SQL Server 依赖与废弃脚本
