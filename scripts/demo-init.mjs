@@ -10,18 +10,21 @@ const backendRoot = path.join(root, 'mood_health_server')
 
 const runAll = process.argv.includes('--all')
 const passwordArg = process.argv.find((arg) => arg.startsWith('--password='))
-const password = passwordArg
-  ? passwordArg.slice('--password='.length)
-  : process.env.DEMO_USER_PASSWORD || '123456'
+const password = passwordArg ? passwordArg.slice('--password='.length) : process.env.DEMO_PASSWORD
 
-const target = runAll ? 'seed:demo:all' : 'seed:demo'
+const target = runAll ? 'db:seed:all' : 'db:seed:demo'
 
 console.log(`Initializing demo data with script: ${target}`)
 console.log(`Backend path: ${backendRoot}`)
 
-const result = spawnSync('npm', ['--prefix', backendRoot, 'run', target, '--', password], {
+const result = spawnSync('npm', ['--prefix', backendRoot, 'run', target], {
   stdio: 'inherit',
   shell: process.platform === 'win32',
+  env: {
+    ...process.env,
+    ALLOW_DEMO_SEED: 'true',
+    ...(password ? { DEMO_PASSWORD: password } : {}),
+  },
 })
 
 if (typeof result.status === 'number') {

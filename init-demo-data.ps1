@@ -26,10 +26,7 @@ $serverPath = Join-Path $PSScriptRoot "mood_health_server"
 $passwordText = Convert-SecureStringToPlainText -Value $Password
 
 if ([string]::IsNullOrWhiteSpace($passwordText)) {
-  $passwordText = $env:DEMO_USER_PASSWORD
-}
-if ([string]::IsNullOrWhiteSpace($passwordText)) {
-  $passwordText = "123456"
+  $passwordText = $env:DEMO_PASSWORD
 }
 
 if (-not (Test-Path $serverPath)) {
@@ -39,14 +36,28 @@ if (-not (Test-Path $serverPath)) {
 Write-Host "Initializing demo accounts and demo data..." -ForegroundColor Cyan
 Write-Host "Backend directory: $serverPath" -ForegroundColor DarkGray
 
-$target = "seed:demo"
+$target = "db:seed:demo"
 if ($All) {
-  $target = "seed:demo:all"
+  $target = "db:seed:all"
 }
 
 Write-Host "Using backend script: $target" -ForegroundColor DarkGray
 
-npm --prefix $serverPath run $target -- $passwordText
+$previousAllowDemoSeed = $env:ALLOW_DEMO_SEED
+$previousDemoPassword = $env:DEMO_PASSWORD
+
+try {
+  $env:ALLOW_DEMO_SEED = "true"
+  if (-not [string]::IsNullOrWhiteSpace($passwordText)) {
+    $env:DEMO_PASSWORD = $passwordText
+  }
+
+  npm --prefix $serverPath run $target
+}
+finally {
+  $env:ALLOW_DEMO_SEED = $previousAllowDemoSeed
+  $env:DEMO_PASSWORD = $previousDemoPassword
+}
 
 if ($LASTEXITCODE -ne 0) {
   throw "Demo data initialization failed with exit code: $LASTEXITCODE"
