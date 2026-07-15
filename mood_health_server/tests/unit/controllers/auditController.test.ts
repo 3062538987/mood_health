@@ -4,12 +4,6 @@ var mockAuditService: { list: jest.Mock } = {
   list: jest.fn(),
 }
 
-jest.mock('../../../src/config/database', () => ({
-  __esModule: true,
-  default: { request: jest.fn(() => ({ input: jest.fn(), query: jest.fn() })) },
-  isSqliteClient: false,
-}))
-
 jest.mock('../../../src/services/auditService', () => ({
   createAuditService: jest.fn(() => mockAuditService),
 }))

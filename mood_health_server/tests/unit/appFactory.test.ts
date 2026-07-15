@@ -1,13 +1,9 @@
 import express from 'express'
 
-const mockConnectDB = jest.fn().mockResolvedValue(undefined)
-
-jest.mock('../../src/config/database', () => ({
-  connectDB: mockConnectDB,
-  query: jest.fn(),
-}))
+const mockConnectMysql = jest.fn().mockResolvedValue(undefined)
 
 jest.mock('../../src/config/mysql', () => ({
+  connectMysql: mockConnectMysql,
   checkMysqlHealth: jest.fn(),
   getMysqlPool: jest.fn(() => ({
     query: jest.fn().mockResolvedValue([[], []]),
@@ -46,7 +42,7 @@ describe('application factory', () => {
     await Promise.resolve()
 
     expect(appModule.createApp).toEqual(expect.any(Function))
-    expect(mockConnectDB).not.toHaveBeenCalled()
+    expect(mockConnectMysql).not.toHaveBeenCalled()
     expect(listenSpy).not.toHaveBeenCalled()
   })
 

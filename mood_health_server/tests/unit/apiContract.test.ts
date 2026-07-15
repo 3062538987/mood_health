@@ -1,11 +1,6 @@
 import type { AddressInfo } from 'node:net'
 import type { Server } from 'node:http'
 
-jest.mock('../../src/config/database', () => ({
-  connectDB: jest.fn(),
-  query: jest.fn(),
-}))
-
 jest.mock('../../src/config/mysql', () => ({
   checkMysqlHealth: jest.fn().mockResolvedValue(true),
   getMysqlPool: jest.fn(() => ({

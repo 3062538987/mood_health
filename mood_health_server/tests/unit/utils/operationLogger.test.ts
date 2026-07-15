@@ -5,12 +5,6 @@ jest.mock('../../../src/services/auditService', () => ({
   createAuditService: jest.fn(() => ({ record: mockAuditRecord })),
 }))
 
-jest.mock('../../../src/config/database', () => ({
-  __esModule: true,
-  default: {},
-  isSqliteClient: true,
-}))
-
 jest.mock('../../../src/config/sqlite', () => ({
   sqliteRun: jest.fn(),
 }))

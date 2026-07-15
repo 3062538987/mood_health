@@ -1,7 +1,6 @@
 const mockListen = jest.fn(() => ({ close: jest.fn() }))
 const mockCreateApp = jest.fn(() => ({ listen: mockListen }))
 const mockConnectMysql = jest.fn().mockResolvedValue(undefined)
-const mockConnectDB = jest.fn().mockResolvedValue(undefined)
 
 jest.mock('../../src/app', () => ({
   createApp: mockCreateApp,
@@ -9,10 +8,6 @@ jest.mock('../../src/app', () => ({
 
 jest.mock('../../src/config/mysql', () => ({
   connectMysql: mockConnectMysql,
-}))
-
-jest.mock('../../src/config/database', () => ({
-  connectDB: mockConnectDB,
 }))
 
 jest.mock('../../src/utils/logger', () => ({
@@ -33,7 +28,6 @@ describe('server startup', () => {
     await startServer()
 
     expect(mockConnectMysql).toHaveBeenCalledTimes(1)
-    expect(mockConnectDB).not.toHaveBeenCalled()
     expect(mockListen).toHaveBeenCalledWith(3000, '127.0.0.1', expect.any(Function))
   })
 })

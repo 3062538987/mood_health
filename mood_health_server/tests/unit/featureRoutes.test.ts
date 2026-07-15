@@ -1,13 +1,6 @@
 import type { Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 
-const mockQuery = jest.fn()
-
-jest.mock('../../src/config/database', () => ({
-  connectDB: jest.fn(),
-  query: mockQuery,
-}))
-
 jest.mock('../../src/config/mysql', () => ({
   checkMysqlHealth: jest.fn().mockResolvedValue(true),
   getMysqlPool: jest.fn(() => ({
@@ -72,6 +65,5 @@ describe('disabled backend feature routes', () => {
       message: '功能未启用',
       data: null,
     })
-    expect(mockQuery).not.toHaveBeenCalled()
   })
 })
