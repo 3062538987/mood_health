@@ -52,7 +52,7 @@
 
 - [x] Task 17：迁移用户与认证领域
 - [x] Task 18：迁移轻量 RBAC 与审计基础
-- [ ] Checkpoint E1：用户确认用户、权限、审计已切换 MySQL
+- [x] Checkpoint E1：用户确认用户、权限、审计已切换 MySQL
 - [ ] Task 19：迁移情绪记录领域
 - [ ] Task 20：迁移心理测评存储领域
 - [ ] Task 21：迁移管理聚合读取
