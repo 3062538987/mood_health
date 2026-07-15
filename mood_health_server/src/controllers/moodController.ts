@@ -177,7 +177,7 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.userId
     const moodId = parseInt(req.params.id as string)
-    const { moodType, intensity, note, tags, trigger, emotions, tagIds } = req.body
+    const { moodType, intensity, note, event, tags, trigger, emotions, tagIds, recordDate } = req.body
 
     if (!Number.isInteger(moodId) || moodId <= 0) {
       return res.status(400).json(apiFailure(400, '无效的记录 ID'))
@@ -190,14 +190,17 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
         }
       }
 
-      const updated = await updateMoodWithRelations(
-        moodId,
+      const date = recordDate || new Date().toISOString().split('T')[0]
+
+      const updated = await moodService.updateMood({
+        id: moodId,
+        userId,
+        note: event ?? note ?? '',
+        trigger: trigger || '',
+        recordedAt: new Date(`${date}T00:00:00.000Z`),
         emotions,
-        note || '',
-        tagIds || [],
-        trigger || '',
-        userId
-      )
+        tagIds: tagIds || [],
+      })
 
       if (!updated) {
         return res.status(404).json(apiFailure(404, '记录不存在'))
@@ -246,7 +249,7 @@ export const deleteMoodHandler = async (req: AuthRequest, res: Response) => {
       return res.status(400).json(apiFailure(400, '无效的记录 ID'))
     }
 
-    const deleted = await deleteMood(moodId, userId)
+    const deleted = await moodService.deleteMood(userId, moodId)
 
     if (!deleted) {
       return res.status(404).json(apiFailure(404, '记录不存在'))

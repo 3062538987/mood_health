@@ -23,6 +23,8 @@ import {
 var mockMoodService: {
   recordMood: jest.Mock
   listMoods: jest.Mock
+  updateMood: jest.Mock
+  deleteMood: jest.Mock
 }
 
 jest.mock('../../../src/models/moodModel', () => ({
@@ -50,6 +52,8 @@ jest.mock('../../../src/services/moodService', () => ({
     mockMoodService = {
       recordMood: jest.fn(),
       listMoods: jest.fn(),
+      updateMood: jest.fn(),
+      deleteMood: jest.fn(),
     }
     return mockMoodService
   }),
@@ -88,6 +92,7 @@ const createRequest = (overrides: Record<string, unknown> = {}) =>
 describe('moodController response contract', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockMoodService.deleteMood.mockResolvedValue(true)
   })
 
   it('returns a complete write envelope when recording a mood', async () => {
@@ -177,6 +182,40 @@ describe('moodController response contract', () => {
     )
     await deleteMoodHandler(createRequest({ params: { id: '10' } }), deleteResponse)
 
+    expect(updateResponse.json).toHaveBeenCalledWith({ code: 0, message: '更新成功', data: null })
+    expect(deleteResponse.json).toHaveBeenCalledWith({ code: 0, message: '删除成功', data: null })
+  })
+  it('routes normalized update and delete writes through mood service', async () => {
+    mockMoodService.updateMood.mockResolvedValue(true)
+    mockMoodService.deleteMood.mockResolvedValue(true)
+    const updateResponse = createResponse()
+    const deleteResponse = createResponse()
+
+    await updateMoodHandler(
+      createRequest({
+        params: { id: '10' },
+        body: {
+          emotions: [{ emotionTypeId: 1, intensity: 8, isPrimary: true }],
+          event: 'updated-note',
+          trigger: 'updated-trigger',
+          recordDate: '2026-07-15',
+          tagIds: [2],
+        },
+      }),
+      updateResponse
+    )
+    await deleteMoodHandler(createRequest({ params: { id: '10' } }), deleteResponse)
+
+    expect(mockMoodService.updateMood).toHaveBeenCalledWith({
+      id: 10,
+      userId: 1,
+      note: 'updated-note',
+      trigger: 'updated-trigger',
+      recordedAt: new Date('2026-07-15T00:00:00.000Z'),
+      emotions: [{ emotionTypeId: 1, intensity: 8, isPrimary: true }],
+      tagIds: [2],
+    })
+    expect(mockMoodService.deleteMood).toHaveBeenCalledWith(1, 10)
     expect(updateResponse.json).toHaveBeenCalledWith({ code: 0, message: '更新成功', data: null })
     expect(deleteResponse.json).toHaveBeenCalledWith({ code: 0, message: '删除成功', data: null })
   })
