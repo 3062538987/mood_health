@@ -12,12 +12,24 @@ export const createManagementService = (dependencies: ManagementServiceDependenc
 
   const listAdminUsers = async () => repository.listAdminUsers()
 
+  const findAdminUserById = async (userId: number) => repository.findAdminUserById(userId)
+
+  const updateUserRole = async (
+    userId: number,
+    role: Parameters<ManagementRepository['updateUserRole']>[1]
+  ) => repository.updateUserRole(userId, role)
+
+  const deleteUserById = async (userId: number) => repository.deleteUserById(userId)
+
   const listAdminMoods = async (
     options: Parameters<ManagementRepository['listAdminMoods']>[0]
   ) => repository.listAdminMoods(options)
 
   return {
     listAdminUsers,
+    findAdminUserById,
+    updateUserRole,
+    deleteUserById,
     listAdminMoods,
   }
 }
