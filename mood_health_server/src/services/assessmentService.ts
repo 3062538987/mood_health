@@ -17,10 +17,15 @@ export const createAssessmentService = (dependencies: AssessmentServiceDependenc
   const listQuestionsByQuestionnaireId = async (questionnaireId: number) =>
     repository.listQuestionsByQuestionnaireId(questionnaireId)
 
+  const createSubmittedSession = async (
+    input: Parameters<AssessmentRepository['createSubmittedSession']>[0]
+  ) => repository.createSubmittedSession(input)
+
   return {
     listQuestionnaires,
     getQuestionnaireById,
     listQuestionsByQuestionnaireId,
+    createSubmittedSession,
   }
 }
 

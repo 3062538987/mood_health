@@ -12,6 +12,7 @@ const createRepository = (): jest.Mocked<AssessmentRepository> => ({
   listQuestionnaires: jest.fn(),
   getQuestionnaireById: jest.fn(),
   listQuestionsByQuestionnaireId: jest.fn(),
+  createSubmittedSession: jest.fn(),
 })
 
 describe('assessmentService', () => {
@@ -67,5 +68,35 @@ describe('assessmentService', () => {
     expect(repository.listQuestionnaires).toHaveBeenCalledWith()
     expect(repository.getQuestionnaireById).toHaveBeenCalledWith(12)
     expect(repository.listQuestionsByQuestionnaireId).toHaveBeenCalledWith(12)
+  })
+
+  it('creates a submitted assessment session through the repository boundary', async () => {
+    const repository = createRepository()
+    repository.createSubmittedSession.mockResolvedValue(31)
+    jest.mocked(createAssessmentRepository).mockReturnValue(repository)
+    const service = createAssessmentService()
+    const submittedAt = new Date('2026-07-15T12:00:00.000Z')
+
+    await expect(
+      service.createSubmittedSession({
+        userId: 7,
+        questionnaireId: 12,
+        score: 9,
+        riskLevel: 'low',
+        resultText: '筛查提示：低风险',
+        answers: [{ itemId: 21, value: 0, score: 1 }],
+        submittedAt,
+      })
+    ).resolves.toBe(31)
+
+    expect(repository.createSubmittedSession).toHaveBeenCalledWith({
+      userId: 7,
+      questionnaireId: 12,
+      score: 9,
+      riskLevel: 'low',
+      resultText: '筛查提示：低风险',
+      answers: [{ itemId: 21, value: 0, score: 1 }],
+      submittedAt,
+    })
   })
 })
