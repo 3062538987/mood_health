@@ -227,14 +227,16 @@ describe('moodController response contract', () => {
   })
 
   it('returns complete envelopes for update and delete writes', async () => {
-    jest.mocked(findMoodById).mockResolvedValue({ id: 10, mood_type: '平静', intensity: 5 } as never)
-    jest.mocked(updateMood).mockResolvedValue(true as never)
-    jest.mocked(deleteMood).mockResolvedValue(true as never)
+    mockMoodService.listEmotionTypes.mockResolvedValue([
+      { id: 5, name: 'joy', icon: 'smile', category: 'positive' },
+    ])
+    mockMoodService.updateMood.mockResolvedValue(true)
+    mockMoodService.deleteMood.mockResolvedValue(true)
     const updateResponse = createResponse()
     const deleteResponse = createResponse()
 
     await updateMoodHandler(
-      createRequest({ params: { id: '10' }, body: { moodType: '快乐', intensity: 8 } }),
+      createRequest({ params: { id: '10' }, body: { moodType: 'joy', intensity: 8 } }),
       updateResponse
     )
     await deleteMoodHandler(createRequest({ params: { id: '10' } }), deleteResponse)
@@ -275,6 +277,45 @@ describe('moodController response contract', () => {
     expect(mockMoodService.deleteMood).toHaveBeenCalledWith(1, 10)
     expect(updateResponse.json).toHaveBeenCalledWith({ code: 0, message: '更新成功', data: null })
     expect(deleteResponse.json).toHaveBeenCalledWith({ code: 0, message: '删除成功', data: null })
+  })
+
+  it('routes legacy mood update payloads through mood service', async () => {
+    mockMoodService.listEmotionTypes.mockResolvedValue([
+      { id: 4, name: 'calm', icon: 'leaf', category: 'positive' },
+    ])
+    mockMoodService.createOrGetTag.mockResolvedValue({ id: 6, name: 'sleep' })
+    mockMoodService.updateMood.mockResolvedValue(true)
+    const res = createResponse()
+
+    await updateMoodHandler(
+      createRequest({
+        params: { id: '12' },
+        body: {
+          moodType: 'calm',
+          intensity: 7,
+          note: 'legacy-update-note',
+          tags: ['sleep'],
+          trigger: 'rest',
+          recordDate: '2026-07-15',
+        },
+      }),
+      res
+    )
+
+    expect(mockMoodService.listEmotionTypes).toHaveBeenCalledWith()
+    expect(mockMoodService.createOrGetTag).toHaveBeenCalledWith('sleep', 1)
+    expect(mockMoodService.updateMood).toHaveBeenCalledWith({
+      id: 12,
+      userId: 1,
+      note: 'legacy-update-note',
+      trigger: 'rest',
+      recordedAt: new Date('2026-07-15T00:00:00.000Z'),
+      emotions: [{ emotionTypeId: 4, intensity: 7, isPrimary: true }],
+      tagIds: [6],
+    })
+    expect(findMoodById).not.toHaveBeenCalled()
+    expect(updateMood).not.toHaveBeenCalled()
+    expect(res.json).toHaveBeenCalledWith({ code: 0, message: '更新成功', data: null })
   })
 
   it('routes emotion type and tag support data through mood service', async () => {

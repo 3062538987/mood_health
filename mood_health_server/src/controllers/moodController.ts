@@ -1,13 +1,5 @@
 import { Response } from 'express'
 import { AuthRequest } from '../middleware/auth'
-import {
-  createMoodWithRelations,
-  getMoodsByUser,
-  getMoodsWithRelations,
-  findMoodById,
-  findMoodWithRelationsById,
-  updateMood,
-} from '../models/moodModel'
 import { createAdviceHistory, getAdviceHistoryByUser } from '../models/adviceModel'
 import { clearMoodCache } from '../utils/cache'
 import logger from '../utils/logger'
@@ -178,23 +170,45 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
       return res.json(apiSuccess(null, '更新成功'))
     }
 
-    const moodTypeStr = Array.isArray(moodType) ? moodType.join(',') : moodType
-    const tagsStr = Array.isArray(tags) ? tags.join(',') : tags || ''
+    const moodTypeNames = (Array.isArray(moodType) ? moodType : String(moodType || '').split(/[,，、]/))
+      .map((item) => String(item).trim())
+      .filter(Boolean)
+    const resolvedIntensity = Number(intensity)
 
-    const mood = await findMoodById(moodId, userId)
-    if (!mood) {
-      return res.status(404).json(apiFailure(404, '记录不存在'))
+    if (moodTypeNames.length === 0 || !Number.isFinite(resolvedIntensity)) {
+      return res.status(400).json(apiFailure(400, '情绪类型和强度为必填'))
     }
 
-    const updated = await updateMood(
-      moodId,
-      moodTypeStr || mood.mood_type,
-      intensity || mood.intensity,
-      note || '',
-      tagsStr,
-      trigger || '',
-      userId
-    )
+    if (resolvedIntensity < 1 || resolvedIntensity > 10) {
+      return res.status(400).json(apiFailure(400, '强度必须在1-10之间'))
+    }
+
+    const emotionTypes = await moodService.listEmotionTypes()
+    const matchedEmotions = moodTypeNames.map((name) => emotionTypes.find((type) => type.name === name))
+
+    if (matchedEmotions.some((emotion) => !emotion)) {
+      return res.status(400).json(apiFailure(400, '情绪类型不存在'))
+    }
+
+    const date = recordDate || new Date().toISOString().split('T')[0]
+    const tagNames = (Array.isArray(tags) ? tags : String(tags || '').split(/[,，、]/))
+      .map((item) => String(item).trim())
+      .filter(Boolean)
+    const resolvedTags = await Promise.all(tagNames.map((name) => moodService.createOrGetTag(name, userId)))
+
+    const updated = await moodService.updateMood({
+      id: moodId,
+      userId,
+      note: event ?? note ?? '',
+      trigger: trigger || '',
+      recordedAt: new Date(`${date}T00:00:00.000Z`),
+      emotions: matchedEmotions.map((emotion, index) => ({
+        emotionTypeId: emotion!.id,
+        intensity: resolvedIntensity,
+        isPrimary: index === 0,
+      })),
+      tagIds: resolvedTags.map((tag) => tag.id),
+    })
 
     if (!updated) {
       return res.status(404).json(apiFailure(404, '记录不存在'))
