@@ -70,7 +70,7 @@ mood-health-web/
 │   ├── user_auth/                      # Python 鉴权依赖
 │   ├── tests/                          # 后端测试
 │   ├── scripts/                        # SQL/Lua/脚本
-│   ├── data/                           # SQLite 与测试数据库
+│   ├── data/                           # 旧 SQLite 离线留存（不参与 R0 运行）
 │   ├── main.py                         # Python AI 入口
 │   ├── ecosystem.config.js             # PM2 编排
 │   ├── package.json
@@ -79,8 +79,6 @@ mood-health-web/
 │   ├── doctor.mjs
 │   ├── dev-all.mjs
 │   ├── demo-init.mjs
-│   ├── sqlite-preflight.ps1
-│   ├── sqlite-db-status.ps1
 │   └── release-smoke.ps1
 ├── docs/                               # 文档中心
 │   ├── API.md
@@ -115,13 +113,14 @@ mood-health-web/
 
  说明：当前以 `vite.config.ts` 与 `scripts/doctor.mjs` 为准，前端开发端口为 3001。若看到历史文档中的 5173，请以本 README 与项目配置为准。
 
- 后端 SQLite 运行时需要 Node.js 22+，因为它直接使用内置的 `node:sqlite`。
+ 后端运行时使用 MySQL；旧 SQLite 文件只作离线留存，不参与启动或演示数据初始化。
 
 ## 启动顺序（部署建议）
 
-1. 先启动 Redis（6379），确保缓存可用。
-2. 启动后端与 AI 服务（PM2 管理，端口 3000/8000）。
-3. 最后启动前端开发服务（3001）。
+1. 先通过 Docker Compose 启动 MySQL 与 Redis。
+2. 执行 MySQL Migration 和所需 Seed。
+3. 启动后端与 AI 服务（PM2 管理，端口 3000/8000）。
+4. 最后启动前端开发服务（3001）。
 
 ## 环境依赖清单
 
@@ -207,14 +206,14 @@ npm run dev:all
 
 ### 演示数据
 
-- `npm run demo:init`：初始化基础演示数据
-- `npm run demo:init:all`：初始化 + 账号验证
+- `npm run demo:init`：执行 MySQL Reference + Demo Seed
+- `npm run demo:init:all`：执行 MySQL Reference + Demo + Test Seed
 - `npm run db:init`：别名，等价于 `demo:init:all`
 
 可通过环境变量覆盖默认演示密码：
 
 ```powershell
-$env:DEMO_USER_PASSWORD="123456"
+$env:DEMO_PASSWORD="请设置本地演示密码"
 npm run demo:init:all
 ```
 
@@ -224,8 +223,9 @@ npm run demo:init:all
 npm --prefix mood_health_server run dev
 npm --prefix mood_health_server run build
 npm --prefix mood_health_server run test
-npm --prefix mood_health_server run seed:demo -- 123456
-npm --prefix mood_health_server run seed:demo:all
+npm --prefix mood_health_server run db:migrate
+npm --prefix mood_health_server run db:seed:demo
+npm --prefix mood_health_server run db:seed:all
 ```
 
 ## 文档索引
@@ -240,7 +240,7 @@ npm --prefix mood_health_server run seed:demo:all
 
 ## 常见问题
 
-1. `doctor` 报告 `dist/app.js missing`
+1. `doctor` 报告 `dist/server.js missing`
 
 - 执行 `npm --prefix mood_health_server run build`
 

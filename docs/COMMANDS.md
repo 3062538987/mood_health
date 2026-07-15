@@ -33,7 +33,7 @@ npm run start-all:linux
 npm run pm2:status
 ```
 
-前提：后端服务器需使用 Node.js 22+，否则 SQLite 内置模块 `node:sqlite` 无法运行。
+前提：后端服务器使用 Node.js 22+；MySQL 与 Redis 由 Docker Compose 管理。
 
 ## 1. 项目根命令
 
@@ -53,8 +53,8 @@ npm run pm2:status
 | 测试（前端单次）           | `npm run test:run`              | Vitest 单次执行                                        |
 | 测试（前端覆盖率）         | `npm run test:coverage`         | Vitest 覆盖率                                          |
 | 测试（前后端）             | `npm run test:all`              | 前端单次 + 后端 Jest                                   |
-| 演示数据（基础）           | `npm run demo:init`             | 初始化基础演示数据                                     |
-| 演示数据（全量）           | `npm run demo:init:all`         | 初始化并验证演示账号                                   |
+| 演示数据（基础）           | `npm run demo:init`             | 执行 MySQL Reference + Demo Seed                       |
+| 演示数据（全量）           | `npm run demo:init:all`         | 执行 MySQL Reference + Demo + Test Seed                |
 | 数据初始化别名             | `npm run db:init`               | 等价于 `demo:init:all`                                 |
 | 启动服务（Windows）        | `npm run start-all`             | 执行 `start-project.ps1`                               |
 | 启动服务（Windows，无 AI） | `npm run start-all:no-ai`       | 执行 `start-project.ps1 -NoAi`（2核2G 推荐）           |
@@ -74,15 +74,16 @@ npm run pm2:status
 | ------------ | ----------------------------------------------------------- | ------------------------------ |
 | 开发         | `npm --prefix mood_health_server run dev`                   | nodemon + ts-node              |
 | 构建         | `npm --prefix mood_health_server run build`                 | TypeScript 编译到 `dist/`      |
-| 生产启动     | `npm --prefix mood_health_server run start`                 | 启动 `dist/app.js`             |
-| 后端自检     | `npm --prefix mood_health_server run doctor`                | 检查 `dist/app.js` 是否存在    |
+| 生产启动     | `npm --prefix mood_health_server run start`                 | 启动 `dist/server.js`          |
+| 后端自检     | `npm --prefix mood_health_server run doctor`                | 检查 `dist/server.js` 是否存在 |
 | 测试（稳定） | `npm --prefix mood_health_server run test`                  | 默认稳定测试集（无数据库依赖） |
 | 集成测试     | `npm --prefix mood_health_server run test:integration`      | 需要数据库环境                 |
 | 测试覆盖率   | `npm --prefix mood_health_server run test:coverage`         | Jest 覆盖率                    |
 | 测试观察     | `npm --prefix mood_health_server run test:watch`            | Jest watch                     |
 | 角色权限测试 | `npm --prefix mood_health_server run test:role-permissions` | 权限脚本测试                   |
-| 种子数据     | `npm --prefix mood_health_server run seed:demo -- 123456`   | 初始化演示用户和数据           |
-| 全量种子     | `npm --prefix mood_health_server run seed:demo:all`         | 初始化并验证演示账号           |
+| Schema 迁移  | `npm --prefix mood_health_server run db:migrate`            | 执行待应用的 MySQL Migration   |
+| Demo Seed    | `npm --prefix mood_health_server run db:seed:demo`          | 初始化虚构演示账号和情绪数据   |
+| 全量 Seed    | `npm --prefix mood_health_server run db:seed:all`           | 执行 Reference、Demo、Test Seed |
 
 ## 3. 操作系统相关命令
 
@@ -126,6 +127,8 @@ npm run start-all:no-ai
 ```bash
 npm run setup
 npm run setup:python   # Windows 可选
+docker compose up -d mysql redis
+npm --prefix mood_health_server run db:migrate
 npm run doctor
 npm run demo:init:all
 npm run start-all:check
@@ -140,11 +143,14 @@ npm run test:all
 npm run build:all
 ```
 
-### SQLite 上线前回归（建议）
+### MySQL 上线前回归（建议）
 
 ```bash
-npm run sqlite:preflight
-npm run sqlite:db:status
+docker compose config
+docker compose up -d mysql redis
+docker compose ps
+npm --prefix mood_health_server run db:migrate
+npm run demo:init:all
 npm run release:smoke
 ```
 
@@ -156,37 +162,14 @@ powershell -ExecutionPolicy Bypass -File scripts/release-smoke.ps1 -SkipAiRouteC
 
 说明：`doctor` 中 Redis 端口检查由 `REDIS_REQUIRED` 控制；2核2G 无 AI 场景建议保持 `REDIS_REQUIRED=false`。
 
-```powershell
-# 1) 设定 SQLite 环境变量（建议绝对路径）
-$env:DB_CLIENT='sqlite'
-$env:SQLITE_DB_PATH='D:/deploy/mood-health/data/mood-health.db'
-
-# 2) 后端构建
-npm --prefix mood_health_server run build
-
-# 3) 初始化 SQLite schema
-npm --prefix mood_health_server run db:init:sqlite
-
-# 4) 初始化演示数据（可按需替换为生产初始化脚本）
-npm --prefix mood_health_server run seed:demo:all
-
-# 5) SQLite 冒烟测试
-npm --prefix mood_health_server run test:sqlite-smoke
-
-# 6) 启动前健康自检
-npm run doctor
-```
-
 ## 5. 相关文档
-
-遗留脚本提示：`mood_health_server/src/scripts/addAuditFields.ts`、`mood_health_server/src/scripts/addEncryptionFields.ts`、`mood_health_server/src/scripts/createCourseTable.ts`、`mood_health_server/src/scripts/createMusicTable.ts`、`mood_health_server/src/scripts/createLikeTables.ts`、`mood_health_server/src/scripts/createTreeHoleTables.ts` 为历史 SQL Server 专用脚本，SQLite 部署请使用 `db:init:sqlite` 与 `seed:demo:all`。
 
 - 部署：`DEPLOYMENT.md`
 - 测试：`docs/TESTING.md`
 - API：`docs/API.md`
-- SQLite 发布当天操作单：`docs/SQLITE_RELEASE_DAY_CHECKLIST.md`
-- SQLite 留档模板：`docs/SQLITE_RELEASE_REPORT_TEMPLATE.md`
-- SQLite 留档样例：`docs/SQLITE_RELEASE_REPORT_2026-03-30.md`
+- 历史 SQLite 发布操作单：`docs/SQLITE_RELEASE_DAY_CHECKLIST.md`（仅留档，不可作为 R0 命令）
+- 历史 SQLite 留档模板：`docs/SQLITE_RELEASE_REPORT_TEMPLATE.md`
+- 历史 SQLite 留档样例：`docs/SQLITE_RELEASE_REPORT_2026-03-30.md`
 
 ## 6. 标准目录树索引
 

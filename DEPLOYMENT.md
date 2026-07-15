@@ -3,7 +3,7 @@
 本文档用于将项目部署到生产或准生产环境。当前仓库包含三个核心服务：
 
 - 前端静态站点（Vite 构建产物）
-- Node API 服务（mood_health_server/dist/app.js）
+- Node API 服务（mood_health_server/dist/server.js）
 - Python AI 服务（mood_health_server/main.py）
 
 命令以 `docs/COMMANDS.md` 为统一索引；本文件仅保留部署场景下最关键命令，避免多处重复维护。
@@ -12,9 +12,9 @@
 
 - Node.js 22+
 - Python 3.8+
-- Redis（建议）
-- SQLite（推荐，低配主机优先）
-- SQL Server（可选，兼容模式）
+- Docker 与 Docker Compose
+- MySQL 8.4 LTS
+- Redis 7.4
 - PM2（可选，推荐用于常驻）
 - Nginx（可选，用于反向代理）
 
@@ -36,9 +36,9 @@
 - `VITE_API_BASE_URL`
 - `NODE_ENV`
 - `FRONTEND_URL`
-- `DB_CLIENT`（推荐 `sqlite`）
-- `SQLITE_DB_PATH`（建议绝对路径）
-- `DB_SERVER`、`DB_USER`、`DB_PASSWORD`、`DB_NAME`（仅 SQL Server 模式需要）
+- `MYSQL_HOST`、`MYSQL_PORT`、`MYSQL_DATABASE`
+- `MYSQL_APP_USER`、`MYSQL_APP_PASSWORD`
+- `MYSQL_MIGRATOR_USER`、`MYSQL_MIGRATOR_PASSWORD`
 - `JWT_SECRET`、`ENCRYPTION_KEY`
 - `REDIS_URL`
 - `AI_ENABLED`（2核2G 建议 `false`）
@@ -64,7 +64,7 @@ npm run deploy:linux
 
 - 如果 `mood_health_server/.env` 不存在，就先从 `mood_health_server/.env.production.no-ai.example` 复制
 - 自动生成 `JWT_SECRET` 和 `ENCRYPTION_KEY`
-- 把 SQLite 路径改成当前仓库目录下的绝对路径
+- 使用环境模板中的 MySQL 连接配置
 - 安装依赖、构建前后端、启动 PM2、检查 `http://127.0.0.1:3000/health`
 
 安装 Python 依赖：
@@ -82,10 +82,10 @@ npm run setup:python
 ## 4. 数据初始化
 
 ```bash
-# 基础演示数据
-npm run demo:init
+# Schema Migration
+npm --prefix mood_health_server run db:migrate
 
-# 全量演示数据 + 校验
+# Reference + Demo + Test Seed
 npm run demo:init:all
 ```
 
@@ -93,10 +93,10 @@ npm run demo:init:all
 
 ```bash
 # Linux/macOS
-export DEMO_USER_PASSWORD=123456
+export DEMO_PASSWORD='请设置本地演示密码'
 
 # Windows PowerShell
-$env:DEMO_USER_PASSWORD="123456"
+$env:DEMO_PASSWORD="请设置本地演示密码"
 ```
 
 ## 5. 生产启动
@@ -181,7 +181,7 @@ npm run doctor
 - 关键文件与目录存在性
 - 端口 5173/3000/8000/6379 连通性
 
-说明：后端 SQLite 运行时依赖 Node.js 内置 `node:sqlite`，因此服务器需要 Node 22+。
+说明：后端活动运行时只连接 MySQL；旧 SQLite 文件仅作离线备份，不参与启动。
 
 可使用严格模式：
 
@@ -221,7 +221,7 @@ npm run start-all
 
 ## 9. 故障排查
 
-1. `doctor` 报 `dist/app.js missing`
+1. `doctor` 报 `dist/server.js missing`
 
 - 执行 `npm --prefix mood_health_server run build`
 - 如果 `mood_health_server/.env` 不存在，先复制 `mood_health_server/.env.production.no-ai.example` 到 `mood_health_server/.env`
