@@ -272,4 +272,60 @@ describe('moodRepository', () => {
     expect(db.calls[0].sql).toContain('WHERE id = ? AND user_id = ?')
     expect(db.calls[0].params).toEqual([15, 7])
   })
+
+  it('lists active emotion types ordered for the record form', async () => {
+    const db = new FakeMoodPool()
+    db.queueRows([
+      { id: 1, code: 'happy', name: '快乐', icon: 'smile', category: 'positive', sort_order: 10 },
+    ])
+    const repository = createMoodRepository(db)
+
+    await expect(repository.listEmotionTypes()).resolves.toEqual([
+      { id: 1, code: 'happy', name: '快乐', icon: 'smile', category: 'positive', sortOrder: 10 },
+    ])
+
+    expect(db.calls[0].sql).toContain('FROM emotion_types')
+    expect(db.calls[0].sql).toContain('is_active = 1')
+    expect(db.calls[0].sql).toContain('ORDER BY sort_order')
+  })
+
+  it('lists system and owned tags for a user', async () => {
+    const db = new FakeMoodPool()
+    db.queueRows([
+      { id: 2, code: 'study', owner_user_id: null, name: '学习', is_system: 1 },
+      { id: 3, code: null, owner_user_id: 7, name: '自定义', is_system: 0 },
+    ])
+    const repository = createMoodRepository(db)
+
+    await expect(repository.listTags(7)).resolves.toEqual([
+      { id: 2, code: 'study', userId: null, name: '学习', isSystem: true },
+      { id: 3, code: null, userId: 7, name: '自定义', isSystem: false },
+    ])
+
+    expect(db.calls[0].sql).toContain('FROM tags')
+    expect(db.calls[0].sql).toContain('is_system = 1 OR owner_user_id = ?')
+    expect(db.calls[0].params).toEqual([7])
+  })
+
+  it('returns an existing tag id or creates a user-owned tag', async () => {
+    const existingDb = new FakeMoodPool()
+    existingDb.queueRows([{ id: 2 }])
+    const existingRepository = createMoodRepository(existingDb)
+
+    await expect(existingRepository.createOrGetTag('学习', 7)).resolves.toBe(2)
+
+    expect(existingDb.calls[0].sql).toContain('WHERE name = ?')
+    expect(existingDb.calls[0].params).toEqual(['学习', 7])
+
+    const createDb = new FakeMoodPool()
+    createDb.queueRows([])
+    createDb.queueRows({ insertId: 9, affectedRows: 1 } as never)
+    const createRepository = createMoodRepository(createDb)
+
+    await expect(createRepository.createOrGetTag('新标签', 7)).resolves.toBe(9)
+
+    expect(createDb.calls[1].sql).toContain('INSERT INTO tags')
+    expect(createDb.calls[1].sql).toContain('owner_user_id')
+    expect(createDb.calls[1].params).toEqual([null, 7, '新标签'])
+  })
 })

@@ -63,6 +63,23 @@ export interface MoodRecord {
   }>
 }
 
+export interface EmotionTypeRecord {
+  id: number
+  code: string
+  name: string
+  icon: string | null
+  category: string | null
+  sortOrder: number
+}
+
+export interface TagRecord {
+  id: number
+  code: string | null
+  userId: number | null
+  name: string
+  isSystem: boolean
+}
+
 type MoodRow = {
   id: number
   user_id: number
@@ -93,6 +110,27 @@ type MoodTagRow = {
 
 type CountRow = {
   total: number
+}
+
+type EmotionTypeRow = {
+  id: number
+  code: string
+  name: string
+  icon: string | null
+  category: string | null
+  sort_order: number
+}
+
+type TagRow = {
+  id: number
+  code: string | null
+  owner_user_id: number | null
+  name: string
+  is_system: number
+}
+
+type IdRow = {
+  id: number
 }
 
 const asMoodDatabase = (): MoodDatabase => ({
@@ -375,12 +413,98 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
     return Number(result.affectedRows) > 0
   }
 
+  const listEmotionTypes = async (): Promise<EmotionTypeRecord[]> => {
+    const [rows] = await db.query<EmotionTypeRow[]>(
+      `
+      SELECT
+        id,
+        code,
+        name,
+        icon,
+        category,
+        sort_order
+      FROM emotion_types
+      WHERE is_active = 1
+      ORDER BY sort_order ASC, id ASC
+      `
+    )
+
+    return rows.map((row) => ({
+      id: Number(row.id),
+      code: row.code,
+      name: row.name,
+      icon: row.icon,
+      category: row.category,
+      sortOrder: Number(row.sort_order),
+    }))
+  }
+
+  const listTags = async (userId: number): Promise<TagRecord[]> => {
+    const [rows] = await db.query<TagRow[]>(
+      `
+      SELECT
+        id,
+        code,
+        owner_user_id,
+        name,
+        is_system
+      FROM tags
+      WHERE is_system = 1 OR owner_user_id = ?
+      ORDER BY is_system DESC, name ASC
+      `,
+      [userId]
+    )
+
+    return rows.map((row) => ({
+      id: Number(row.id),
+      code: row.code,
+      userId: row.owner_user_id === null ? null : Number(row.owner_user_id),
+      name: row.name,
+      isSystem: Number(row.is_system) === 1,
+    }))
+  }
+
+  const createOrGetTag = async (name: string, userId: number): Promise<number> => {
+    const [existingRows] = await db.query<IdRow[]>(
+      `
+      SELECT id
+      FROM tags
+      WHERE name = ? AND (is_system = 1 OR owner_user_id = ?)
+      LIMIT 1
+      `,
+      [name, userId]
+    )
+
+    if (existingRows[0]) {
+      return Number(existingRows[0].id)
+    }
+
+    const [result] = await db.query<ResultSetHeader>(
+      `
+      INSERT INTO tags (
+        code,
+        owner_user_id,
+        name,
+        is_system,
+        created_at
+      )
+      VALUES (?, ?, ?, 0, UTC_TIMESTAMP(3))
+      `,
+      [null, userId, name]
+    )
+
+    return Number(result.insertId)
+  }
+
   return {
     createMood,
     listByUser,
     countByUser,
     updateMood,
     deleteMood,
+    listEmotionTypes,
+    listTags,
+    createOrGetTag,
   }
 }
 
