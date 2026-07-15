@@ -90,6 +90,15 @@ export interface MoodWeeklyRow extends MoodTrendRow {
   recordCount: number
 }
 
+export interface MoodAnalysisRow {
+  moodId: number
+  date: string
+  triggerCiphertext: string | null
+  emotionName: string
+  emotionCategory: 'positive' | 'negative' | 'neutral'
+  intensity: number
+}
+
 type MoodRow = {
   id: number
   user_id: number
@@ -151,6 +160,15 @@ type MoodTrendSqlRow = {
 
 type MoodWeeklySqlRow = MoodTrendSqlRow & {
   record_count: number | string
+}
+
+type MoodAnalysisSqlRow = {
+  mood_id: number
+  date: string
+  trigger_ciphertext: string | null
+  emotion_name: string
+  emotion_category: string | null
+  intensity: number | string
 }
 
 const asMoodDatabase = (): MoodDatabase => ({
@@ -628,6 +646,44 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
     }))
   }
 
+  const listAnalysisRows = async (
+    userId: number,
+    startDate: string,
+    endDate: string
+  ): Promise<MoodAnalysisRow[]> => {
+    const [rows] = await db.query<MoodAnalysisSqlRow[]>(
+      `
+      SELECT
+        m.id AS mood_id,
+        DATE_FORMAT(m.recorded_at, '%Y-%m-%d') AS date,
+        m.trigger_ciphertext,
+        et.name AS emotion_name,
+        et.category AS emotion_category,
+        me.intensity
+      FROM moods m
+      JOIN mood_emotions me ON me.mood_id = m.id
+      JOIN emotion_types et ON et.id = me.emotion_type_id
+      WHERE m.user_id = ?
+        AND DATE(m.recorded_at) >= ?
+        AND DATE(m.recorded_at) <= ?
+      ORDER BY m.recorded_at DESC, m.id DESC, me.is_primary DESC, et.name ASC
+      `,
+      [userId, startDate, endDate]
+    )
+
+    return rows.map((row) => ({
+      moodId: Number(row.mood_id),
+      date: row.date,
+      triggerCiphertext: row.trigger_ciphertext,
+      emotionName: row.emotion_name,
+      emotionCategory:
+        row.emotion_category === 'positive' || row.emotion_category === 'negative'
+          ? row.emotion_category
+          : 'neutral',
+      intensity: Number(row.intensity),
+    }))
+  }
+
   return {
     createMood,
     listByUser,
@@ -641,6 +697,7 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
     createOrGetTag,
     listTrendRows,
     listWeeklyRows,
+    listAnalysisRows,
   }
 }
 

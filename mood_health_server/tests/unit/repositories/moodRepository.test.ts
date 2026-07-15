@@ -418,4 +418,39 @@ describe('moodRepository', () => {
     expect(db.calls[0].sql).toContain('AVG(me.intensity)')
     expect(db.calls[0].params).toEqual([7, '2026-07-08', '2026-07-15'])
   })
+
+  it('lists mood analysis rows from normalized MySQL tables without legacy columns', async () => {
+    const db = new FakeMoodPool()
+    db.queueRows([
+      {
+        mood_id: 15,
+        date: '2026-07-15',
+        trigger_ciphertext: 'encrypted-trigger',
+        emotion_name: '焦虑',
+        emotion_category: 'negative',
+        intensity: 5,
+      },
+    ])
+    const repository = createMoodRepository(db)
+
+    await expect(
+      repository.listAnalysisRows(7, '2026-06-15', '2026-07-15')
+    ).resolves.toEqual([
+      {
+        moodId: 15,
+        date: '2026-07-15',
+        triggerCiphertext: 'encrypted-trigger',
+        emotionName: '焦虑',
+        emotionCategory: 'negative',
+        intensity: 5,
+      },
+    ])
+
+    expect(db.calls[0].sql).toContain('m.trigger_ciphertext')
+    expect(db.calls[0].sql).toContain('JOIN mood_emotions me')
+    expect(db.calls[0].sql).toContain('JOIN emotion_types et')
+    expect(db.calls[0].sql).not.toContain('mood_type')
+    expect(db.calls[0].sql).not.toContain('note_encrypted')
+    expect(db.calls[0].params).toEqual([7, '2026-06-15', '2026-07-15'])
+  })
 })
