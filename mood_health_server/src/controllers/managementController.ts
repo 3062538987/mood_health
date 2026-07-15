@@ -5,8 +5,8 @@ import { isSqliteClient } from '../config/database'
 import { sqliteAll, sqliteRun } from '../config/sqlite'
 import type { AuthRequest } from '../middleware/auth'
 import { logOperation } from '../utils/operationLogger'
-import { decryptField } from '../utils/encryption'
 import { deleteUserById, findUserById, isValidUserRole, updateUserRole } from '../models/userModel'
+import { apiFailure, apiSuccess } from '../utils/apiResponse'
 
 interface AdminUserItem {
   id: number
@@ -22,8 +22,6 @@ interface AdminMoodRecordItem {
   username: string
   moodType: string[]
   intensity: number
-  note: string
-  trigger: string
   createdAt: string
 }
 
@@ -89,9 +87,9 @@ export const userManageHandler = async (req: AuthRequest, res: Response) => {
       getClientIp(req)
     )
 
-    res.status(200).json({ code: 0, message: '用户管理操作已记录' })
+    res.status(200).json(apiSuccess(null, '用户管理操作已记录'))
   } catch (error) {
-    res.status(500).json({ code: 500, message: '用户管理操作失败' })
+    res.status(500).json(apiFailure(500, '用户管理操作失败'))
   }
 }
 
@@ -148,9 +146,9 @@ export const adminUsersListHandler = async (req: AuthRequest, res: Response) => 
       getClientIp(req)
     )
 
-    return res.status(200).json({ code: 0, data: { list: users } })
+    return res.status(200).json(apiSuccess({ list: users }, '获取用户列表成功'))
   } catch (error) {
-    return res.status(500).json({ code: 500, message: '获取用户列表失败' })
+    return res.status(500).json(apiFailure(500, '获取用户列表失败'))
   }
 }
 
@@ -159,13 +157,13 @@ export const adminUsersUpdateRoleHandler = async (req: AuthRequest, res: Respons
     const { userId, targetRole } = req.body
 
     if (!Number.isInteger(userId) || userId <= 0) {
-      return res.status(400).json({ code: 400, message: 'userId 必须是正整数' })
+      return res.status(400).json(apiFailure(400, 'userId 必须是正整数'))
     }
 
     if (!isValidUserRole(targetRole)) {
       return res
         .status(400)
-        .json({ code: 400, message: 'targetRole 非法，仅支持 user/admin/super_admin' })
+        .json(apiFailure(400, 'targetRole 非法，仅支持 user/admin/super_admin'))
     }
 
     const updateResult = await updateUserRole(userId, targetRole)
@@ -182,7 +180,7 @@ export const adminUsersUpdateRoleHandler = async (req: AuthRequest, res: Respons
         getClientIp(req)
       )
 
-      return res.status(404).json({ code: 404, message: '目标用户不存在' })
+      return res.status(404).json(apiFailure(404, '目标用户不存在'))
     }
 
     await logOperation(
@@ -196,9 +194,9 @@ export const adminUsersUpdateRoleHandler = async (req: AuthRequest, res: Respons
       getClientIp(req)
     )
 
-    return res.status(200).json({ code: 0, message: '用户角色更新成功' })
+    return res.status(200).json(apiSuccess(null, '用户角色更新成功'))
   } catch (error) {
-    return res.status(500).json({ code: 500, message: '更新用户角色失败' })
+    return res.status(500).json(apiFailure(500, '更新用户角色失败'))
   }
 }
 
@@ -207,11 +205,11 @@ export const adminUsersDeleteHandler = async (req: AuthRequest, res: Response) =
     const userId = Number(req.params.id)
 
     if (!Number.isInteger(userId) || userId <= 0) {
-      return res.status(400).json({ code: 400, message: 'userId 必须是正整数' })
+      return res.status(400).json(apiFailure(400, 'userId 必须是正整数'))
     }
 
     if (req.user?.userId === userId) {
-      return res.status(400).json({ code: 400, message: '不能删除当前登录用户' })
+      return res.status(400).json(apiFailure(400, '不能删除当前登录用户'))
     }
 
     const targetUser = await findUserById(userId)
@@ -227,11 +225,11 @@ export const adminUsersDeleteHandler = async (req: AuthRequest, res: Response) =
         getClientIp(req)
       )
 
-      return res.status(404).json({ code: 404, message: '目标用户不存在' })
+      return res.status(404).json(apiFailure(404, '目标用户不存在'))
     }
 
     if (targetUser.role === 'super_admin') {
-      return res.status(403).json({ code: 403, message: '不能删除超级管理员' })
+      return res.status(403).json(apiFailure(403, '不能删除超级管理员'))
     }
 
     const deleteResult = await deleteUserById(userId)
@@ -248,7 +246,7 @@ export const adminUsersDeleteHandler = async (req: AuthRequest, res: Response) =
         getClientIp(req)
       )
 
-      return res.status(404).json({ code: 404, message: '目标用户不存在' })
+      return res.status(404).json(apiFailure(404, '目标用户不存在'))
     }
 
     await logOperation(
@@ -262,9 +260,9 @@ export const adminUsersDeleteHandler = async (req: AuthRequest, res: Response) =
       getClientIp(req)
     )
 
-    return res.status(200).json({ code: 0, message: '用户删除成功' })
+    return res.status(200).json(apiSuccess(null, '用户删除成功'))
   } catch (error) {
-    return res.status(500).json({ code: 500, message: '删除用户失败' })
+    return res.status(500).json(apiFailure(500, '删除用户失败'))
   }
 }
 
@@ -273,13 +271,13 @@ export const roleManageHandler = async (req: AuthRequest, res: Response) => {
     const { targetUserId, targetRole } = req.body
 
     if (!Number.isInteger(targetUserId) || targetUserId <= 0) {
-      return res.status(400).json({ code: 400, message: 'targetUserId 必须是正整数' })
+      return res.status(400).json(apiFailure(400, 'targetUserId 必须是正整数'))
     }
 
     if (!isValidUserRole(targetRole)) {
       return res
         .status(400)
-        .json({ code: 400, message: 'targetRole 非法，仅支持 user/admin/super_admin' })
+        .json(apiFailure(400, 'targetRole 非法，仅支持 user/admin/super_admin'))
     }
 
     const updateResult = await updateUserRole(targetUserId, targetRole)
@@ -295,7 +293,7 @@ export const roleManageHandler = async (req: AuthRequest, res: Response) => {
         getClientIp(req)
       )
 
-      return res.status(404).json({ code: 404, message: '目标用户不存在' })
+      return res.status(404).json(apiFailure(404, '目标用户不存在'))
     }
 
     await logOperation(
@@ -309,9 +307,9 @@ export const roleManageHandler = async (req: AuthRequest, res: Response) => {
       getClientIp(req)
     )
 
-    res.status(200).json({ code: 0, message: '用户角色更新成功' })
+    res.status(200).json(apiSuccess(null, '用户角色更新成功'))
   } catch (error) {
-    res.status(500).json({ code: 500, message: '角色管理操作失败' })
+    res.status(500).json(apiFailure(500, '角色管理操作失败'))
   }
 }
 
@@ -330,9 +328,9 @@ export const systemConfigHandler = async (req: AuthRequest, res: Response) => {
       getClientIp(req)
     )
 
-    res.status(200).json({ code: 0, message: '系统配置操作已记录' })
+    res.status(200).json(apiSuccess(null, '系统配置操作已记录'))
   } catch (error) {
-    res.status(500).json({ code: 500, message: '系统配置操作失败' })
+    res.status(500).json(apiFailure(500, '系统配置操作失败'))
   }
 }
 
@@ -372,7 +370,7 @@ export const incidentFixHandler = async (req: AuthRequest, res: Response) => {
       getClientIp(req)
     )
 
-    res.status(200).json({ code: 0, message: '修复清单已记录' })
+    res.status(200).json(apiSuccess(null, '修复清单已记录'))
   } catch (error) {
     await logOperation(
       req.user!.userId,
@@ -384,7 +382,7 @@ export const incidentFixHandler = async (req: AuthRequest, res: Response) => {
       'failed',
       getClientIp(req)
     )
-    res.status(500).json({ code: 500, message: '修复清单记录失败' })
+    res.status(500).json(apiFailure(500, '修复清单记录失败'))
   }
 }
 
@@ -424,7 +422,7 @@ export const feedbackHandleHandler = async (req: AuthRequest, res: Response) => 
       getClientIp(req)
     )
 
-    res.status(200).json({ code: 0, message: '反馈闭环记录已写入' })
+    res.status(200).json(apiSuccess(null, '反馈闭环记录已写入'))
   } catch (error) {
     await logOperation(
       req.user!.userId,
@@ -436,7 +434,7 @@ export const feedbackHandleHandler = async (req: AuthRequest, res: Response) => 
       'failed',
       getClientIp(req)
     )
-    res.status(500).json({ code: 500, message: '反馈闭环记录失败' })
+    res.status(500).json(apiFailure(500, '反馈闭环记录失败'))
   }
 }
 
@@ -498,8 +496,6 @@ export const adminMoodsListHandler = async (req: AuthRequest, res: Response) => 
             u.username,
             m.mood_type as moodTypeRaw,
             m.intensity,
-            COALESCE(m.note_encrypted, '') as note,
-            COALESCE(m.trigger, '') as trigger,
             m.created_at as createdAt,
             GROUP_CONCAT(DISTINCT et.name) as relationMoodTypes
           FROM moods m
@@ -507,7 +503,7 @@ export const adminMoodsListHandler = async (req: AuthRequest, res: Response) => 
           LEFT JOIN mood_emotions me ON me.mood_id = m.id
           LEFT JOIN emotion_types et ON et.id = me.emotion_type_id
           ${whereClause}
-          GROUP BY m.id, m.user_id, u.username, m.mood_type, m.intensity, m.note_encrypted, m.trigger, m.created_at
+          GROUP BY m.id, m.user_id, u.username, m.mood_type, m.intensity, m.created_at
           ORDER BY m.created_at DESC
           LIMIT ? OFFSET ?
         `,
@@ -519,8 +515,6 @@ export const adminMoodsListHandler = async (req: AuthRequest, res: Response) => 
         moodTypeRaw: string
         relationMoodTypes?: string
         intensity: number
-        note: string
-        trigger: string
         createdAt: string
       }>
 
@@ -544,8 +538,6 @@ export const adminMoodsListHandler = async (req: AuthRequest, res: Response) => 
           username: String(row.username || ''),
           moodType: relationMoodTypes.length > 0 ? relationMoodTypes : fallbackMoodTypes,
           intensity: Number(row.intensity || 0),
-          note: decryptField(String(row.note || '')) || '',
-          trigger: String(row.trigger || ''),
           createdAt: String(row.createdAt || ''),
         }
       })
@@ -601,8 +593,6 @@ export const adminMoodsListHandler = async (req: AuthRequest, res: Response) => 
           u.username,
           m.mood_type as moodTypeRaw,
           m.intensity,
-          m.note_encrypted as note,
-          m.trigger as trigger,
           m.created_at as createdAt,
           STRING_AGG(et.name, ',') as relationMoodTypes
         FROM moods m
@@ -610,7 +600,7 @@ export const adminMoodsListHandler = async (req: AuthRequest, res: Response) => 
         LEFT JOIN mood_emotions me ON me.mood_id = m.id
         LEFT JOIN emotion_types et ON et.id = me.emotion_type_id
         ${whereClause}
-        GROUP BY m.id, m.user_id, u.username, m.mood_type, m.intensity, m.note_encrypted, m.trigger, m.created_at
+        GROUP BY m.id, m.user_id, u.username, m.mood_type, m.intensity, m.created_at
         ORDER BY m.created_at DESC
         OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY
       `)
@@ -635,23 +625,15 @@ export const adminMoodsListHandler = async (req: AuthRequest, res: Response) => 
           username: String(row.username || ''),
           moodType: relationMoodTypes.length > 0 ? relationMoodTypes : fallbackMoodTypes,
           intensity: Number(row.intensity || 0),
-          note: decryptField(String(row.note || '')) || '',
-          trigger: String(row.trigger || ''),
           createdAt: row.createdAt ? new Date(row.createdAt).toISOString() : '',
         }
       })
     }
 
-    return res.status(200).json({
-      code: 0,
-      data: {
-        list,
-        total,
-        page,
-        pageSize,
-      },
-    })
+    return res
+      .status(200)
+      .json(apiSuccess({ list, total, page, pageSize }, '获取情绪统计成功'))
   } catch (error) {
-    return res.status(500).json({ code: 500, message: '获取情绪记录失败' })
+    return res.status(500).json(apiFailure(500, '获取情绪统计失败'))
   }
 }

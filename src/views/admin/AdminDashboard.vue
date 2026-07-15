@@ -9,8 +9,8 @@
         <p>查看用户并修改角色（仅 super_admin）。</p>
       </router-link>
       <router-link class="card" to="/admin/user-moods">
-        <h3>用户情绪数据</h3>
-        <p>查看用户情绪记录，支持筛选、分页与导出。</p>
+        <h3>用户情绪统计</h3>
+        <p>查看情绪类型、强度与时间，不展示文字正文。</p>
       </router-link>
       <router-link v-if="featureFlags.nonCoreModules" class="card" to="/admin/posts">
         <h3>帖子审核</h3>

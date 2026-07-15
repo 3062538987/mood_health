@@ -4,6 +4,7 @@ import dotenv from 'dotenv'
 import logger from '../utils/logger'
 import { logOperation } from '../utils/operationLogger'
 import { UserRole, isValidUserRole } from '../models/userModel'
+import { apiFailure, businessCodeForHttpStatus } from '../utils/apiResponse'
 
 dotenv.config()
 
@@ -130,12 +131,7 @@ export interface AuthRequest extends Request {
 }
 
 const sendAuthError = (req: Request, res: Response, statusCode: number, message: string) => {
-  return res.status(statusCode).json({
-    code: statusCode,
-    message,
-    path: req.originalUrl,
-    timestamp: new Date().toISOString(),
-  })
+  return res.status(statusCode).json(apiFailure(businessCodeForHttpStatus(statusCode), message))
 }
 
 const getClientIp = (req: Request): string => {

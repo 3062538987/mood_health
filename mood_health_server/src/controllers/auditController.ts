@@ -4,6 +4,32 @@ import pool from '../config/database'
 import { isSqliteClient } from '../config/database'
 import { sqliteAll, sqliteGet } from '../config/sqlite'
 import type { AuthRequest } from '../middleware/auth'
+import { apiFailure, apiSuccess } from '../utils/apiResponse'
+
+interface AuditLogItem {
+  id: number
+  operatorId: number | null
+  operatorRole: string
+  permissionCode: string
+  operationType: string
+  targetId: string | null
+  operationTime: string
+  operationResult: string
+}
+
+const toAuditLogItem = (row: Record<string, unknown>): AuditLogItem => ({
+  id: Number(row.id),
+  operatorId: row.operator_id == null ? null : Number(row.operator_id),
+  operatorRole: String(row.operator_role || ''),
+  permissionCode: String(row.permission_code || ''),
+  operationType: String(row.operation_type || ''),
+  targetId: row.target_id == null ? null : String(row.target_id),
+  operationTime:
+    row.operation_time instanceof Date
+      ? row.operation_time.toISOString()
+      : String(row.operation_time || ''),
+  operationResult: String(row.operation_result || ''),
+})
 
 /**
  * super_admin 查询操作审计日志
@@ -52,9 +78,7 @@ export const getOperationLogsHandler = async (req: AuthRequest, res: Response) =
             permission_code,
             operation_type,
             target_id,
-            content,
             operation_time,
-            ip_address,
             operation_result
           FROM operation_logs
           WHERE ${whereClause}
@@ -73,17 +97,19 @@ export const getOperationLogsHandler = async (req: AuthRequest, res: Response) =
         params
       ) as { total: number } | undefined
 
-      return res.status(200).json({
-        code: 0,
-        data: {
-          list: logs,
+      return res.status(200).json(
+        apiSuccess(
+          {
+            list: logs.map(toAuditLogItem),
           pagination: {
             page: pageNumber,
             pageSize: pageSizeNumber,
             total: Number(countRow?.total || 0),
+            },
           },
-        },
-      })
+          '获取审计日志成功'
+        )
+      )
     }
 
     const request = pool.request()
@@ -122,9 +148,7 @@ export const getOperationLogsHandler = async (req: AuthRequest, res: Response) =
         permission_code,
         operation_type,
         target_id,
-        content,
         operation_time,
-        ip_address,
         operation_result
       FROM operation_logs
       WHERE ${whereClause}
@@ -140,19 +164,21 @@ export const getOperationLogsHandler = async (req: AuthRequest, res: Response) =
     const logs = recordsets[0] || []
     const total = recordsets[1]?.[0]?.total || 0
 
-    res.status(200).json({
-      code: 0,
-      data: {
-        list: logs,
+    res.status(200).json(
+      apiSuccess(
+        {
+          list: logs.map(toAuditLogItem),
         pagination: {
           page: pageNumber,
           pageSize: pageSizeNumber,
           total,
+          },
         },
-      },
-    })
+        '获取审计日志成功'
+      )
+    )
   } catch (error) {
     console.error('查询操作日志失败:', error)
-    res.status(500).json({ code: 500, message: '查询操作日志失败' })
+    res.status(500).json(apiFailure(500, '查询操作日志失败'))
   }
 }

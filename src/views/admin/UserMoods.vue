@@ -101,8 +101,6 @@
             <th>用户名</th>
             <th>情绪类型</th>
             <th>强度</th>
-            <th>备注</th>
-            <th>触发因素</th>
             <th>创建时间</th>
           </tr>
         </thead>
@@ -118,8 +116,6 @@
               </div>
             </td>
             <td>{{ item.intensity || '-' }}</td>
-            <td class="note-cell">{{ item.note || '-' }}</td>
-            <td class="trigger-cell">{{ item.trigger || '-' }}</td>
             <td>{{ formatDate(item.createdAt) }}</td>
           </tr>
         </tbody>
@@ -141,8 +137,6 @@
             </div>
           </div>
           <div class="row"><label>强度</label><span>{{ item.intensity || '-' }}</span></div>
-          <div class="row"><label>备注</label><p>{{ item.note || '-' }}</p></div>
-          <div class="row"><label>触发因素</label><p>{{ item.trigger || '-' }}</p></div>
         </article>
       </div>
     </div>
@@ -381,13 +375,11 @@ const csvEscape = (value: string | number) => {
 }
 
 const exportCsv = () => {
-  const headers = ['用户名', '情绪类型', '强度', '备注', '触发因素', '创建时间']
+  const headers = ['用户名', '情绪类型', '强度', '创建时间']
   const rows = records.value.map((item) => [
     item.username || '-',
     formatMoodTypes(item.moodType),
     item.intensity || '-',
-    item.note || '-',
-    item.trigger || '-',
     formatDate(item.createdAt),
   ])
 
@@ -720,13 +712,6 @@ onBeforeUnmount(() => {
   height: 8px;
   border-radius: 50%;
   display: inline-block;
-}
-
-.note-cell,
-.trigger-cell {
-  max-width: 320px;
-  white-space: pre-wrap;
-  word-break: break-word;
 }
 
 .mobile-cards {

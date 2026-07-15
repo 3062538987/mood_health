@@ -42,7 +42,6 @@
             <th>Username</th>
             <th>Mood Type</th>
             <th>Intensity</th>
-            <th>Note</th>
             <th>Created At</th>
           </tr>
         </thead>
@@ -51,7 +50,6 @@
             <td>{{ item.username || '-' }}</td>
             <td>{{ formatMoodTypes(item.moodType) }}</td>
             <td>{{ item.intensity || '-' }}</td>
-            <td class="note-cell">{{ item.note || '-' }}</td>
             <td>{{ formatDate(item.createdAt) }}</td>
           </tr>
         </tbody>
@@ -266,12 +264,6 @@ onMounted(loadMoods)
     font-weight: 600;
     white-space: nowrap;
   }
-}
-
-.note-cell {
-  max-width: 420px;
-  white-space: pre-wrap;
-  word-break: break-word;
 }
 
 .pagination {
