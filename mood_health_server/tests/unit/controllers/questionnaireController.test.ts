@@ -6,14 +6,6 @@ import {
   getUserAssessmentHistoryController,
   submitAssessment,
 } from '../../../src/controllers/questionnaireController'
-import {
-  createUserAssessment,
-  getQuestionnaireById,
-  getQuestionnaires,
-  getQuestionsByQuestionnaireId,
-  getUserAssessmentHistory,
-} from '../../../src/models/questionnaireModel'
-
 var mockAssessmentService: {
   listQuestionnaires: jest.Mock
   getQuestionnaireById: jest.Mock
@@ -21,14 +13,6 @@ var mockAssessmentService: {
   createSubmittedSession: jest.Mock
   listUserAssessmentHistory: jest.Mock
 }
-
-jest.mock('../../../src/models/questionnaireModel', () => ({
-  createUserAssessment: jest.fn(),
-  getQuestionnaireById: jest.fn(),
-  getQuestionnaires: jest.fn(),
-  getQuestionsByQuestionnaireId: jest.fn(),
-  getUserAssessmentHistory: jest.fn(),
-}))
 
 jest.mock('../../../src/services/assessmentService', () => ({
   createAssessmentService: jest.fn(() => {
@@ -111,9 +95,6 @@ describe('questionnaireController contract', () => {
       message: '获取问卷题目成功',
       data: [{ ...question, options: ['从不', '偶尔', '经常', '总是'] }],
     })
-    expect(getQuestionnaires).not.toHaveBeenCalled()
-    expect(getQuestionnaireById).not.toHaveBeenCalled()
-    expect(getQuestionsByQuestionnaireId).not.toHaveBeenCalled()
   })
 
   it('saves and returns a structured, non-diagnostic screening result', async () => {
@@ -137,7 +118,6 @@ describe('questionnaireController contract', () => {
       answers: [{ itemId: 1, value: 0, score: 1 }],
       submittedAt: expect.any(Date),
     })
-    expect(createUserAssessment).not.toHaveBeenCalled()
     expect(response.json).toHaveBeenCalledWith({
       code: 0,
       message: '筛查结果已保存',
@@ -174,6 +154,5 @@ describe('questionnaireController contract', () => {
       message: '获取筛查历史成功',
       data: history,
     })
-    expect(getUserAssessmentHistory).not.toHaveBeenCalled()
   })
 })

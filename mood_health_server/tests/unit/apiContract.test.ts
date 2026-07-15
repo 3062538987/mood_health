@@ -8,6 +8,9 @@ jest.mock('../../src/config/database', () => ({
 
 jest.mock('../../src/config/mysql', () => ({
   checkMysqlHealth: jest.fn().mockResolvedValue(true),
+  getMysqlPool: jest.fn(() => ({
+    query: jest.fn().mockResolvedValue([[], []]),
+  })),
 }))
 
 jest.mock('../../src/utils/redis.client', () => ({

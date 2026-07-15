@@ -11,19 +11,6 @@ import {
   recordMood,
   updateMoodHandler,
 } from '../../../src/controllers/moodController'
-import {
-  createMood,
-  deleteMood,
-  findMoodById,
-  getMoodAnalysis,
-  getMoodsByEmotionType,
-  getMoodsWithRelations,
-  getMoodTotalCount,
-  getMoodTrend as getMoodTrendModel,
-  getWeeklyReport,
-  updateMood,
-} from '../../../src/models/moodModel'
-
 var mockMoodService: {
   recordMood: jest.Mock
   listMoods: jest.Mock
@@ -36,26 +23,6 @@ var mockMoodService: {
   getWeeklyReport: jest.Mock
   getMoodAnalysis: jest.Mock
 }
-
-jest.mock('../../../src/models/moodModel', () => ({
-  createMood: jest.fn(),
-  createMoodWithRelations: jest.fn(),
-  deleteMood: jest.fn(),
-  findMoodById: jest.fn(),
-  findMoodWithRelationsById: jest.fn(),
-  getEmotionTypes: jest.fn(),
-  getMoodAnalysis: jest.fn(),
-  getMoodsByEmotionType: jest.fn(),
-  getMoodsByUser: jest.fn(),
-  getMoodsWithRelations: jest.fn(),
-  getMoodTotalCount: jest.fn(),
-  getMoodTrend: jest.fn(),
-  getTags: jest.fn(),
-  getWeeklyReport: jest.fn(),
-  createOrGetTag: jest.fn(),
-  updateMood: jest.fn(),
-  updateMoodWithRelations: jest.fn(),
-}))
 
 jest.mock('../../../src/services/moodService', () => ({
   createMoodService: jest.fn(() => {
@@ -168,7 +135,6 @@ describe('moodController response contract', () => {
       emotions: [{ emotionTypeId: 3, intensity: 4, isPrimary: true }],
       tagIds: [8],
     })
-    expect(createMood).not.toHaveBeenCalled()
     expect(res.status).toHaveBeenCalledWith(201)
     expect(res.json).toHaveBeenCalledWith({ code: 0, message: '记录成功', data: null })
   })
@@ -204,11 +170,8 @@ describe('moodController response contract', () => {
     await getMoodAnalysisHandler(createRequest({ query: { range: 'month' } }), statisticsResponse)
 
     expect(mockMoodService.getWeeklyReport).toHaveBeenCalledWith(1)
-    expect(getWeeklyReport).not.toHaveBeenCalled()
     expect(mockMoodService.getMoodTrend).toHaveBeenCalledWith(1, 'month')
-    expect(getMoodTrendModel).not.toHaveBeenCalled()
     expect(mockMoodService.getMoodAnalysis).toHaveBeenCalledWith(1, 'month')
-    expect(getMoodAnalysis).not.toHaveBeenCalled()
     expect(weeklyResponse.json).toHaveBeenCalledWith({
       code: 0,
       message: '获取情绪周报成功',
@@ -313,8 +276,6 @@ describe('moodController response contract', () => {
       emotions: [{ emotionTypeId: 4, intensity: 7, isPrimary: true }],
       tagIds: [6],
     })
-    expect(findMoodById).not.toHaveBeenCalled()
-    expect(updateMood).not.toHaveBeenCalled()
     expect(res.json).toHaveBeenCalledWith({ code: 0, message: '更新成功', data: null })
   })
 
@@ -357,8 +318,6 @@ describe('moodController response contract', () => {
       limit: 20,
       emotionTypeId: 2,
     })
-    expect(getMoodsByEmotionType).not.toHaveBeenCalled()
-    expect(getMoodTotalCount).not.toHaveBeenCalled()
     expect(res.json).toHaveBeenCalledWith({
       code: 0,
       message: '获取情绪记录成功',
