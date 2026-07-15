@@ -13,6 +13,10 @@ class FakeManagementDb {
     this.responses.push(rows)
   }
 
+  queueResult(result: unknown): void {
+    this.responses.push(result)
+  }
+
   async query<T>(sql: string, params: unknown[] = []): Promise<[T, unknown]> {
     this.calls.push({ sql, params })
     return [(this.responses.shift() ?? []) as T, []]
@@ -113,5 +117,52 @@ describe('managementRepository', () => {
     expect(listSql).not.toContain('trigger_ciphertext')
     expect(db.calls[0].params).toEqual(['%student%', '%焦虑%'])
     expect(db.calls[1].params).toEqual(['%student%', '%焦虑%', 20, 0])
+  })
+
+  it('finds an admin user by id through MySQL role tables', async () => {
+    const db = new FakeManagementDb()
+    db.queueRows([
+      {
+        id: 2,
+        username: 'student_demo',
+        email: 'student@example.com',
+        role_code: 'student',
+        created_at: new Date('2026-07-15T00:00:00.000Z'),
+      },
+    ])
+    const repository = createManagementRepository(db)
+
+    await expect(repository.findAdminUserById(2)).resolves.toEqual({
+      id: 2,
+      username: 'student_demo',
+      email: 'student@example.com',
+      role: 'user',
+      createdAt: '2026-07-15T00:00:00.000Z',
+    })
+    expect(db.calls[0].params).toEqual([2])
+  })
+
+  it('maps legacy admin role names to fixed MySQL role codes when updating a user', async () => {
+    const db = new FakeManagementDb()
+    db.queueRows([{ id: 3 }])
+    db.queueResult({ affectedRows: 1 })
+    const repository = createManagementRepository(db)
+
+    await expect(repository.updateUserRole(2, 'admin')).resolves.toBe(true)
+
+    expect(db.calls[0].sql).toContain('FROM roles')
+    expect(db.calls[0].params).toEqual(['counselor'])
+    expect(db.calls[1].sql).toContain('UPDATE users')
+    expect(db.calls[1].params).toEqual([3, 2])
+  })
+
+  it('deletes a user through the MySQL repository boundary', async () => {
+    const db = new FakeManagementDb()
+    db.queueResult({ affectedRows: 1 })
+    const repository = createManagementRepository(db)
+
+    await expect(repository.deleteUserById(2)).resolves.toBe(true)
+    expect(db.calls[0].sql).toContain('DELETE FROM users')
+    expect(db.calls[0].params).toEqual([2])
   })
 })

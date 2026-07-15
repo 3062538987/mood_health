@@ -1,4 +1,4 @@
-import { RowDataPacket } from 'mysql2'
+import { ResultSetHeader, RowDataPacket } from 'mysql2'
 import { getMysqlPool } from '../config/mysql'
 
 export interface ManagementDatabase {
@@ -46,6 +46,10 @@ type CountRow = RowDataPacket & {
   total: number
 }
 
+type RoleIdRow = RowDataPacket & {
+  id: number
+}
+
 type AdminMoodRow = RowDataPacket & {
   id: number
   userId: number
@@ -66,6 +70,20 @@ const toLegacyAdminRole = (roleCode: string): LegacyAdminRole => {
   return 'user'
 }
 
+const toMysqlRoleCode = (role: LegacyAdminRole): string => {
+  if (role === 'super_admin') return 'super_admin'
+  if (role === 'admin') return 'counselor'
+  return 'student'
+}
+
+const toAdminUserItem = (row: AdminUserRow): AdminUserItem => ({
+  id: Number(row.id),
+  username: String(row.username),
+  email: String(row.email),
+  role: toLegacyAdminRole(String(row.role_code)),
+  createdAt: toIsoString(row.created_at),
+})
+
 export const createManagementRepository = (db: ManagementDatabase = getMysqlPool()) => {
   const listAdminUsers = async (): Promise<AdminUserItem[]> => {
     const [rows] = await db.query<AdminUserRow[]>(`
@@ -80,13 +98,50 @@ export const createManagementRepository = (db: ManagementDatabase = getMysqlPool
       ORDER BY u.id DESC
     `)
 
-    return rows.map((row) => ({
-      id: Number(row.id),
-      username: String(row.username),
-      email: String(row.email),
-      role: toLegacyAdminRole(String(row.role_code)),
-      createdAt: toIsoString(row.created_at),
-    }))
+    return rows.map(toAdminUserItem)
+  }
+
+  const findAdminUserById = async (userId: number): Promise<AdminUserItem | null> => {
+    const [rows] = await db.query<AdminUserRow[]>(
+      `
+      SELECT
+        u.id,
+        u.username,
+        u.email,
+        r.code AS role_code,
+        u.created_at
+      FROM users u
+      JOIN roles r ON r.id = u.role_id
+      WHERE u.id = ?
+      LIMIT 1
+      `,
+      [userId]
+    )
+
+    return rows.length > 0 ? toAdminUserItem(rows[0]) : null
+  }
+
+  const updateUserRole = async (userId: number, role: LegacyAdminRole): Promise<boolean> => {
+    const [roleRows] = await db.query<RoleIdRow[]>(
+      'SELECT id FROM roles WHERE code = ? LIMIT 1',
+      [toMysqlRoleCode(role)]
+    )
+    if (roleRows.length === 0) return false
+
+    const [result] = await db.query<ResultSetHeader>(
+      `
+      UPDATE users
+      SET role_id = ?, updated_at = UTC_TIMESTAMP(3)
+      WHERE id = ?
+      `,
+      [roleRows[0].id, userId]
+    )
+    return result.affectedRows > 0
+  }
+
+  const deleteUserById = async (userId: number): Promise<boolean> => {
+    const [result] = await db.query<ResultSetHeader>('DELETE FROM users WHERE id = ?', [userId])
+    return result.affectedRows > 0
   }
 
   const buildMoodFilters = (options: AdminMoodListOptions): { where: string; params: unknown[] } => {
@@ -179,6 +234,9 @@ export const createManagementRepository = (db: ManagementDatabase = getMysqlPool
 
   return {
     listAdminUsers,
+    findAdminUserById,
+    updateUserRole,
+    deleteUserById,
     listAdminMoods,
   }
 }
