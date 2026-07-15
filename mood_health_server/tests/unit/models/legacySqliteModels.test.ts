@@ -15,4 +15,8 @@ describe('disabled legacy models', () => {
   it('keeps activity storage SQLite-only until its P1/P2 migration', () => {
     expectSqliteOnlyLegacyModel(readModel('activityModel.ts'))
   })
+
+  it('keeps post storage SQLite-only until its P1/P2 migration', () => {
+    expectSqliteOnlyLegacyModel(readModel('postModel.ts'))
+  })
 })
