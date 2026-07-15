@@ -1,4 +1,4 @@
-import { readMysqlConfig } from '../../../src/config/mysql'
+import { readMysqlConfig, readMysqlMigratorConfig } from '../../../src/config/mysql'
 
 const validEnv = {
   MYSQL_HOST: '127.0.0.1',
@@ -38,5 +38,18 @@ describe('MySQL configuration', () => {
     expect(() => readMysqlConfig({ ...validEnv, MYSQL_POOL_LIMIT: '31' })).toThrow(
       'MYSQL_POOL_LIMIT 必须是 1-30 的整数'
     )
+  })
+
+  it('uses dedicated migrator credentials for schema changes', () => {
+    expect(
+      readMysqlMigratorConfig({
+        ...validEnv,
+        MYSQL_MIGRATOR_USER: 'mood_migrator',
+        MYSQL_MIGRATOR_PASSWORD: 'migrator-password',
+      })
+    ).toMatchObject({
+      user: 'mood_migrator',
+      password: 'migrator-password',
+    })
   })
 })

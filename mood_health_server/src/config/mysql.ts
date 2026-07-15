@@ -58,6 +58,12 @@ export const readMysqlConfig = (env: Environment = process.env): MysqlConfig => 
   ),
 })
 
+export const readMysqlMigratorConfig = (env: Environment = process.env): MysqlConfig => ({
+  ...readMysqlConfig(env),
+  user: required(env, 'MYSQL_MIGRATOR_USER'),
+  password: required(env, 'MYSQL_MIGRATOR_PASSWORD'),
+})
+
 let pool: Pool | undefined
 let poolConfig: MysqlConfig | undefined
 
