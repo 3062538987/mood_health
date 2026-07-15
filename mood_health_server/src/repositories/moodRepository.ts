@@ -80,6 +80,12 @@ export interface TagRecord {
   isSystem: boolean
 }
 
+export interface MoodTrendRow {
+  date: string
+  emotionName: string
+  averageIntensity: number
+}
+
 type MoodRow = {
   id: number
   user_id: number
@@ -131,6 +137,12 @@ type TagRow = {
 
 type IdRow = {
   id: number
+}
+
+type MoodTrendSqlRow = {
+  date: string
+  emotion_name: string
+  avg_intensity: number | string
 }
 
 const asMoodDatabase = (): MoodDatabase => ({
@@ -546,6 +558,36 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
     return Number(result.insertId)
   }
 
+  const listTrendRows = async (
+    userId: number,
+    startDate: string,
+    endDate: string
+  ): Promise<MoodTrendRow[]> => {
+    const [rows] = await db.query<MoodTrendSqlRow[]>(
+      `
+      SELECT
+        DATE_FORMAT(m.recorded_at, '%Y-%m-%d') AS date,
+        et.name AS emotion_name,
+        AVG(me.intensity) AS avg_intensity
+      FROM moods m
+      JOIN mood_emotions me ON me.mood_id = m.id
+      JOIN emotion_types et ON et.id = me.emotion_type_id
+      WHERE m.user_id = ?
+        AND DATE(m.recorded_at) >= ?
+        AND DATE(m.recorded_at) <= ?
+      GROUP BY DATE_FORMAT(m.recorded_at, '%Y-%m-%d'), et.name
+      ORDER BY date ASC, et.name ASC
+      `,
+      [userId, startDate, endDate]
+    )
+
+    return rows.map((row) => ({
+      date: row.date,
+      emotionName: row.emotion_name,
+      averageIntensity: Number(row.avg_intensity),
+    }))
+  }
+
   return {
     createMood,
     listByUser,
@@ -557,6 +599,7 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
     listEmotionTypes,
     listTags,
     createOrGetTag,
+    listTrendRows,
   }
 }
 
