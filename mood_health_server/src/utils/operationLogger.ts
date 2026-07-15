@@ -1,13 +1,12 @@
-import sql from 'mssql'
 import winston from 'winston'
 import { NextFunction, Response } from 'express'
-import pool from '../config/database'
-import { isSqliteClient } from '../config/database'
-import { sqliteRun } from '../config/sqlite'
 import logger, { sanitizeForLogs, summarizeRequestBody } from './logger'
 import type { AuthRequest } from '../middleware/auth'
+import { createAuditService } from '../services/auditService'
 
 export type OperationResult = 'success' | 'failed'
+
+const auditService = createAuditService()
 
 /**
  * 通用操作审计记录函数
@@ -39,61 +38,18 @@ export const logOperation = async (
 
   // 2) 写入数据库审计表
   try {
-    if (isSqliteClient) {
-      sqliteRun(
-        `
-          INSERT INTO operation_logs (
-            operator_id,
-            operator_role,
-            permission_code,
-            operation_type,
-            target_id,
-            content,
-            ip_address,
-            operation_result
-          )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `,
-        [userId, userRole, permissionCode, operationType, targetId, content, ip, result]
-      )
-      return
-    }
-
-    if (!pool.connected) {
-      await pool.connect()
-    }
-
-    await pool
-      .request()
-      .input('operatorId', sql.Int, userId)
-      .input('operatorRole', sql.NVarChar(20), userRole)
-      .input('permissionCode', sql.NVarChar(100), permissionCode)
-      .input('operationType', sql.NVarChar(100), operationType)
-      .input('targetId', sql.NVarChar(100), targetId)
-      .input('content', sql.NVarChar(sql.MAX), content)
-      .input('ipAddress', sql.NVarChar(64), ip)
-      .input('operationResult', sql.NVarChar(20), result).query(`
-        INSERT INTO operation_logs (
-          operator_id,
-          operator_role,
-          permission_code,
-          operation_type,
-          target_id,
-          content,
-          ip_address,
-          operation_result
-        )
-        VALUES (
-          @operatorId,
-          @operatorRole,
-          @permissionCode,
-          @operationType,
-          @targetId,
-          @content,
-          @ipAddress,
-          @operationResult
-        )
-      `)
+    await auditService.record({
+      actorUserId: userId,
+      actorRoleCode: userRole,
+      permissionCode,
+      action: operationType,
+      targetType: null,
+      targetId,
+      result,
+      summary: content,
+      ipAddress: ip,
+      requestId: null,
+    })
   } catch (error) {
     logger.error('写入操作审计日志失败', {
       error,
