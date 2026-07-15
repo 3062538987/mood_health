@@ -11,8 +11,6 @@ import {
   findMoodById,
   findMoodWithRelationsById,
   updateMood,
-  updateMoodWithRelations,
-  deleteMood,
   getEmotionTypes,
   getTags,
   createOrGetTag,
