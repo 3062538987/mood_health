@@ -60,12 +60,23 @@ const DEMO_MOOD_PATTERN = [
 
 const toMysqlDateTime = (date: Date): string => date.toISOString().slice(0, 23).replace('T', ' ')
 
-const encryptedFixture = (text: string): string =>
-  JSON.stringify({
-    encrypted: Buffer.from(text, 'utf8').toString('base64'),
-    iv: crypto.createHash('sha256').update(`iv:${text}`).digest('hex').slice(0, 32),
-    authTag: crypto.createHash('sha256').update(`tag:${text}`).digest('hex').slice(0, 32),
+const encryptSeedText = (text: string, encryptionKey: string): string => {
+  const key = Buffer.from(encryptionKey, 'hex')
+  if (key.length !== 32) {
+    throw new Error('ENCRYPTION_KEY must be a 32-byte hex string')
+  }
+
+  const iv = crypto.randomBytes(16)
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv)
+  let encrypted = cipher.update(text, 'utf8', 'hex')
+  encrypted += cipher.final('hex')
+
+  return JSON.stringify({
+    encrypted,
+    iv: iv.toString('hex'),
+    authTag: cipher.getAuthTag().toString('hex'),
   })
+}
 
 const requireDemoPassword = (env: Environment): string => {
   if (env.ALLOW_DEMO_SEED !== 'true') {
@@ -77,6 +88,14 @@ const requireDemoPassword = (env: Environment): string => {
     throw new Error('DEMO_PASSWORD is required before running demo seed')
   }
   return password
+}
+
+const requireEncryptionKey = (env: Environment): string => {
+  const key = env.ENCRYPTION_KEY?.trim()
+  if (!key) {
+    throw new Error('ENCRYPTION_KEY is required before running demo seed')
+  }
+  return key
 }
 
 const readRoles = async (db: SeedDatabase): Promise<Map<string, number>> => {
@@ -112,6 +131,7 @@ export const seedDemoData = async (
   now: Date = new Date()
 ): Promise<DemoSeedResult> => {
   const password = requireDemoPassword(env)
+  const encryptionKey = requireEncryptionKey(env)
   const passwordHash = await bcrypt.hash(password, 12)
   const roles = await readRoles(db)
   const currentTime = toMysqlDateTime(now)
@@ -157,8 +177,8 @@ export const seedDemoData = async (
        VALUES (?, ?, ?, ?, ?, ?)`,
       [
         studentId,
-        encryptedFixture(item.note),
-        encryptedFixture('虚构演示触发因素'),
+        encryptSeedText(item.note, encryptionKey),
+        encryptSeedText('虚构演示触发因素', encryptionKey),
         toMysqlDateTime(recordedAt),
         currentTime,
         currentTime,

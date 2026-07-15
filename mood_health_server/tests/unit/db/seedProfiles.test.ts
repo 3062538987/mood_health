@@ -50,12 +50,22 @@ describe('profile seed', () => {
     )
   })
 
+  it('requires an encryption key before creating demo mood text', async () => {
+    await expect(
+      seedDemoData(new FakeSeedDatabase(), {
+        ALLOW_DEMO_SEED: 'true',
+        DEMO_PASSWORD: 'DemoPass123!',
+      })
+    ).rejects.toThrow('ENCRYPTION_KEY is required')
+  })
+
   it('creates fixed fictional demo accounts and mood trend data', async () => {
     const db = new FakeSeedDatabase()
 
     const result = await seedDemoData(db, {
       ALLOW_DEMO_SEED: 'true',
       DEMO_PASSWORD: 'DemoPass123!',
+      ENCRYPTION_KEY: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
     })
 
     expect(result.accounts).toEqual(['demo_student', 'demo_counselor', 'demo_super_admin'])
