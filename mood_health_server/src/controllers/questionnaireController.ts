@@ -1,64 +1,10 @@
 import { Response, NextFunction } from "express";
-import { body, validationResult } from "express-validator";
+import { body } from "express-validator";
 import { AuthRequest } from "../middleware/auth";
-import { apiFailure, apiSuccess } from "../utils/apiResponse";
+import { API_ERROR_CODES, apiFailure, apiSuccess } from "../utils/apiResponse";
 import { createAssessmentService } from "../services/assessmentService";
 
 const assessmentService = createAssessmentService();
-
-type ScreeningRiskLevel = "low" | "mild" | "moderate" | "high" | "unclassified";
-
-const SCREENING_DISCLAIMER =
-  "本结果仅用于自我筛查与风险提示，不构成医学诊断，也不能替代心理咨询师或医疗专业人员的评估。";
-
-const buildScreeningResult = (questionnaireType: string, score: number) => {
-  let riskLevel: ScreeningRiskLevel = "unclassified";
-  let riskLabel = "暂未分层";
-  let suggestion = "当前量表与评分规则仍需结合论文方向和导师要求确认，请仅将结果用于自我了解。";
-
-  if (questionnaireType === "SDS") {
-    if (score < 53) {
-      riskLevel = "low";
-      riskLabel = "较低风险";
-      suggestion = "建议继续保持规律作息，并持续关注近期情绪变化。";
-    } else if (score < 63) {
-      riskLevel = "mild";
-      riskLabel = "轻度风险提示";
-      suggestion = "建议适当调整生活节奏，与信任的人交流，并持续观察情绪困扰是否缓解。";
-    } else if (score < 73) {
-      riskLevel = "moderate";
-      riskLabel = "中度风险提示";
-      suggestion = "建议联系学校心理中心或心理咨询师，获得进一步专业评估与支持。";
-    } else {
-      riskLevel = "high";
-      riskLabel = "较高风险提示";
-      suggestion = "建议尽快联系学校心理中心、心理咨询师或医疗专业人员获得进一步评估与支持。";
-    }
-  } else if (questionnaireType === "SAS") {
-    if (score < 50) {
-      riskLevel = "low";
-      riskLabel = "较低风险";
-      suggestion = "建议继续保持规律作息，并持续关注近期紧张和担忧感受。";
-    } else if (score < 60) {
-      riskLevel = "mild";
-      riskLabel = "轻度风险提示";
-      suggestion = "建议练习放松技巧、调整生活节奏，并持续观察相关困扰是否缓解。";
-    } else if (score < 70) {
-      riskLevel = "moderate";
-      riskLabel = "中度风险提示";
-      suggestion = "建议联系学校心理中心或心理咨询师，获得进一步专业评估与支持。";
-    } else {
-      riskLevel = "high";
-      riskLabel = "较高风险提示";
-      suggestion = "建议尽快联系学校心理中心、心理咨询师或医疗专业人员获得进一步评估与支持。";
-    }
-  }
-
-  return {
-    riskLevel,
-    resultText: `筛查提示：当前得分处于${riskLabel}区间。${suggestion}`,
-  };
-};
 
 /**
  * 验证提交测评答案的参数
@@ -153,76 +99,18 @@ export const getQuestionnaireQuestions = async (
  * @returns 200状态码表示成功，400表示参数错误，404表示量表不存在，500表示服务器错误
  */
 export const submitAssessment = async (
-  req: AuthRequest,
+  _req: AuthRequest,
   res: Response,
-  next: NextFunction,
+  _next: NextFunction,
 ) => {
-  try {
-    // 验证请求参数
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res
-        .status(400)
-        .json(apiFailure(400, "参数验证失败", { details: errors.array() }));
-    }
-
-    const userId = req.user!.userId;
-    const { questionnaire_id, answers } = req.body;
-
-    const questionnaire = await assessmentService.getQuestionnaireById(questionnaire_id);
-    if (!questionnaire) {
-      return res.status(404).json(apiFailure(404, "量表不存在"));
-    }
-
-    const questions = await assessmentService.listQuestionsByQuestionnaireId(questionnaire_id);
-    if (questions.length !== answers.length) {
-      return res.status(400).json(apiFailure(400, "答案数量与问题数量不符"));
-    }
-
-    // 计算得分
-    let score = 0;
-    const scoredAnswers: Array<{ itemId: number; value: number; score: number }> = [];
-    for (let i = 0; i < questions.length; i++) {
-      const question = questions[i];
-      const answer = answers[i];
-      let questionScore = answer + 1; // 选项从0开始，得分从1开始
-
-      // 处理反向计分
-      if (question.is_reverse) {
-        questionScore = 5 - questionScore;
-      }
-
-      score += questionScore;
-      scoredAnswers.push({ itemId: question.id, value: answer, score: questionScore });
-    }
-
-    const { riskLevel, resultText } = buildScreeningResult(questionnaire.type, score);
-
-    await assessmentService.createSubmittedSession({
-      userId,
-      questionnaireId: questionnaire_id,
-      score,
-      riskLevel,
-      resultText,
-      answers: scoredAnswers,
-      submittedAt: new Date(),
-    });
-
-    res.json(
-      apiSuccess(
-        {
-          score,
-          result_text: resultText,
-          screening_type: questionnaire.type,
-          risk_level: riskLevel,
-          disclaimer: SCREENING_DISCLAIMER,
-        },
-        "筛查结果已保存",
+  res
+    .status(503)
+    .json(
+      apiFailure(
+        API_ERROR_CODES.FEATURE_DISABLED,
+        "心理测评量表尚未完成选型与审核，暂不开放提交",
       ),
     );
-  } catch (error) {
-    next(error);
-  }
 };
 
 /**

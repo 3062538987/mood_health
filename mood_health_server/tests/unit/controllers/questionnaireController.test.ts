@@ -97,10 +97,7 @@ describe('questionnaireController contract', () => {
     })
   })
 
-  it('saves and returns a structured, non-diagnostic screening result', async () => {
-    mockAssessmentService.getQuestionnaireById.mockResolvedValue(questionnaire)
-    mockAssessmentService.listQuestionsByQuestionnaireId.mockResolvedValue([question])
-    mockAssessmentService.createSubmittedSession.mockResolvedValue(31)
+  it('rejects submissions until an approved scale and scoring rule are enabled', async () => {
     const response = createResponse()
 
     await submitAssessment(
@@ -109,25 +106,13 @@ describe('questionnaireController contract', () => {
       next
     )
 
-    expect(mockAssessmentService.createSubmittedSession).toHaveBeenCalledWith({
-      userId: 1,
-      questionnaireId: 1,
-      score: 1,
-      riskLevel: 'low',
-      resultText: expect.stringContaining('筛查提示'),
-      answers: [{ itemId: 1, value: 0, score: 1 }],
-      submittedAt: expect.any(Date),
-    })
+    expect(mockAssessmentService.getQuestionnaireById).not.toHaveBeenCalled()
+    expect(mockAssessmentService.createSubmittedSession).not.toHaveBeenCalled()
+    expect(response.status).toHaveBeenCalledWith(503)
     expect(response.json).toHaveBeenCalledWith({
-      code: 0,
-      message: '筛查结果已保存',
-      data: expect.objectContaining({
-        score: 1,
-        screening_type: 'SDS',
-        risk_level: 'low',
-        result_text: expect.stringContaining('筛查提示'),
-        disclaimer: expect.stringContaining('不构成医学诊断'),
-      }),
+      code: 1403,
+      message: '心理测评量表尚未完成选型与审核，暂不开放提交',
+      data: null,
     })
   })
 
