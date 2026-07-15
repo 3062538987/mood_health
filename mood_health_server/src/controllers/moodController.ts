@@ -6,7 +6,6 @@ import {
   getMoodsByUser,
   getMoodsWithRelations,
   getWeeklyReport,
-  getMoodTrend as getMoodTrendModel,
   findMoodById,
   findMoodWithRelationsById,
   updateMood,
@@ -229,7 +228,7 @@ export const getMoodTrend = async (req: AuthRequest, res: Response) => {
       return res.status(400).json(apiFailure(400, '无效的时间范围'))
     }
 
-    const trendData = await getMoodTrendModel(userId, range)
+    const trendData = await moodService.getMoodTrend(userId, range as 'week' | 'month' | 'quarter')
     res.json(apiSuccess(trendData, '获取情绪趋势成功'))
   } catch (error) {
     console.error(error)
