@@ -3,6 +3,8 @@ import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
 import logger from '../utils/logger'
 import { apiFailure, businessCodeForHttpStatus } from '../utils/apiResponse'
+import { AccessRepository, createAccessRepository } from '../repositories/accessRepository'
+import { AuditRepository, createAuditRepository } from '../repositories/auditRepository'
 
 dotenv.config()
 
@@ -46,6 +48,19 @@ const USER_ROLES: readonly UserRole[] = ['student', 'counselor', 'super_admin', 
 
 export const isValidUserRole = (role: unknown): role is UserRole => {
   return typeof role === 'string' && USER_ROLES.includes(role as UserRole)
+}
+
+let accessRepository: AccessRepository | undefined
+let auditRepository: AuditRepository | undefined
+
+const getAccessRepository = (): AccessRepository => {
+  accessRepository = accessRepository ?? createAccessRepository()
+  return accessRepository
+}
+
+const getAuditRepository = (): AuditRepository => {
+  auditRepository = auditRepository ?? createAuditRepository()
+  return auditRepository
 }
 
 /**
@@ -208,8 +223,18 @@ const auditAccessDenied = async (
   content: string,
   ip: string
 ): Promise<void> => {
-  const { logOperation } = await import('../utils/operationLogger.js')
-  await logOperation(userId, userRole, permissionCode, 'ACCESS_DENIED', null, content, 'failed', ip)
+  await getAuditRepository().record({
+    actorUserId: userId,
+    actorRoleCode: userRole,
+    permissionCode,
+    action: 'ACCESS_DENIED',
+    targetType: null,
+    targetId: null,
+    result: 'failed',
+    summary: content,
+    ipAddress: ip,
+    requestId: null,
+  })
 }
 
 const getRoleFromToken = (role: unknown): UserRole => {
@@ -324,39 +349,22 @@ export const requireRole = (roles: string[]) => {
  * @returns {Function} Express 中间件
  */
 export const requirePermission = (permission: string) => {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
+  return async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       return sendAuthError(req, res, 401, '未登录')
     }
 
     const userRole = getNormalizedRequestRole(req)
-    const permissionConfig = rolePermissions[userRole]
+    const granted = await getAccessRepository().hasPermission(userRole, permission)
 
-    if (permissionConfig.forbidden.includes(permission as PermissionCode)) {
-      logger.warn('命中禁止权限', {
-        path: req.originalUrl,
-        username: req.user.username,
-        role: userRole,
-        permission,
-      })
-      void auditAccessDenied(
-        req.user.userId,
-        userRole,
-        permission,
-        `命中禁止权限: ${req.originalUrl}`,
-        getClientIp(req)
-      )
-      return sendAuthError(req, res, 403, '权限不足：该操作被禁止')
-    }
-
-    if (!permissionConfig.granted.includes(permission as PermissionCode)) {
+    if (!granted) {
       logger.warn('权限校验失败', {
         path: req.originalUrl,
         username: req.user.username,
         role: userRole,
         permission,
       })
-      void auditAccessDenied(
+      await auditAccessDenied(
         req.user.userId,
         userRole,
         permission,
