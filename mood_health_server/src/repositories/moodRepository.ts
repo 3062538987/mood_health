@@ -202,30 +202,7 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
     }
   }
 
-  const listByUser = async (
-    userId: number,
-    options: MoodPageOptions
-  ): Promise<MoodRecord[]> => {
-    const limit = options.limit
-    const offset = (options.page - 1) * options.limit
-    const [moodRows] = await db.query<MoodRow[]>(
-      `
-      SELECT
-        m.id,
-        m.user_id,
-        m.note_ciphertext,
-        m.trigger_ciphertext,
-        m.recorded_at,
-        m.created_at,
-        m.updated_at
-      FROM moods m
-      WHERE m.user_id = ?
-      ORDER BY m.recorded_at DESC, m.created_at DESC
-      LIMIT ? OFFSET ?
-      `,
-      [userId, limit, offset]
-    )
-
+  const hydrateMoodRows = async (moodRows: MoodRow[]): Promise<MoodRecord[]> => {
     if (moodRows.length === 0) {
       return []
     }
@@ -304,6 +281,62 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
     }))
   }
 
+  const listByUser = async (
+    userId: number,
+    options: MoodPageOptions
+  ): Promise<MoodRecord[]> => {
+    const limit = options.limit
+    const offset = (options.page - 1) * options.limit
+    const [moodRows] = await db.query<MoodRow[]>(
+      `
+      SELECT
+        m.id,
+        m.user_id,
+        m.note_ciphertext,
+        m.trigger_ciphertext,
+        m.recorded_at,
+        m.created_at,
+        m.updated_at
+      FROM moods m
+      WHERE m.user_id = ?
+      ORDER BY m.recorded_at DESC, m.created_at DESC
+      LIMIT ? OFFSET ?
+      `,
+      [userId, limit, offset]
+    )
+
+    return hydrateMoodRows(moodRows)
+  }
+
+  const listByUserAndEmotionType = async (
+    userId: number,
+    emotionTypeId: number,
+    options: MoodPageOptions
+  ): Promise<MoodRecord[]> => {
+    const limit = options.limit
+    const offset = (options.page - 1) * options.limit
+    const [moodRows] = await db.query<MoodRow[]>(
+      `
+      SELECT
+        m.id,
+        m.user_id,
+        m.note_ciphertext,
+        m.trigger_ciphertext,
+        m.recorded_at,
+        m.created_at,
+        m.updated_at
+      FROM moods m
+      JOIN mood_emotions filter_me ON filter_me.mood_id = m.id
+      WHERE m.user_id = ? AND filter_me.emotion_type_id = ?
+      ORDER BY m.recorded_at DESC, m.created_at DESC
+      LIMIT ? OFFSET ?
+      `,
+      [userId, emotionTypeId, limit, offset]
+    )
+
+    return hydrateMoodRows(moodRows)
+  }
+
   const countByUser = async (userId: number): Promise<number> => {
     const [rows] = await db.query<CountRow[]>(
       `
@@ -312,6 +345,23 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
       WHERE user_id = ?
       `,
       [userId]
+    )
+
+    return Number(rows[0]?.total ?? 0)
+  }
+
+  const countByUserAndEmotionType = async (
+    userId: number,
+    emotionTypeId: number
+  ): Promise<number> => {
+    const [rows] = await db.query<CountRow[]>(
+      `
+      SELECT COUNT(DISTINCT m.id) AS total
+      FROM moods m
+      JOIN mood_emotions filter_me ON filter_me.mood_id = m.id
+      WHERE m.user_id = ? AND filter_me.emotion_type_id = ?
+      `,
+      [userId, emotionTypeId]
     )
 
     return Number(rows[0]?.total ?? 0)
@@ -499,7 +549,9 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
   return {
     createMood,
     listByUser,
+    listByUserAndEmotionType,
     countByUser,
+    countByUserAndEmotionType,
     updateMood,
     deleteMood,
     listEmotionTypes,

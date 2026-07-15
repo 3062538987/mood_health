@@ -201,6 +201,54 @@ describe('moodRepository', () => {
     expect(db.calls[0].params).toEqual([7])
   })
 
+  it('lists a user mood page filtered by emotion type without selecting legacy columns', async () => {
+    const db = new FakeMoodPool()
+    db.queueRows([
+      {
+        id: 15,
+        user_id: 7,
+        note_ciphertext: 'encrypted-note',
+        trigger_ciphertext: null,
+        recorded_at: new Date('2026-07-15T10:00:00.000Z'),
+        created_at: new Date('2026-07-15T10:01:00.000Z'),
+        updated_at: new Date('2026-07-15T10:02:00.000Z'),
+      },
+    ])
+    db.queueRows([
+      {
+        mood_id: 15,
+        emotion_type_id: 2,
+        intensity: 6,
+        is_primary: 1,
+        emotion_code: 'sad',
+        emotion_name: '难过',
+        emotion_icon: 'cloud',
+      },
+    ])
+    db.queueRows([])
+    const repository = createMoodRepository(db)
+
+    const result = await repository.listByUserAndEmotionType(7, 2, { page: 1, limit: 20 })
+
+    expect(result).toHaveLength(1)
+    expect(result[0].emotions[0]).toMatchObject({ emotionTypeId: 2, name: '难过' })
+    expect(db.calls[0].sql).toContain('JOIN mood_emotions filter_me')
+    expect(db.calls[0].sql).toContain('filter_me.emotion_type_id = ?')
+    expect(db.calls[0].sql).not.toContain('mood_type')
+    expect(db.calls[0].params).toEqual([7, 2, 20, 0])
+  })
+
+  it('counts moods for a user filtered by emotion type', async () => {
+    const db = new FakeMoodPool()
+    db.queueRows([{ total: 2 }])
+    const repository = createMoodRepository(db)
+
+    await expect(repository.countByUserAndEmotionType(7, 2)).resolves.toBe(2)
+
+    expect(db.calls[0].sql).toContain('JOIN mood_emotions filter_me')
+    expect(db.calls[0].params).toEqual([7, 2])
+  })
+
   it('updates a user mood and replaces emotions and tags in one transaction', async () => {
     const db = new FakeMoodPool()
     db.connection.queueResult({ affectedRows: 1 })
