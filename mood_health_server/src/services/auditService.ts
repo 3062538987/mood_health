@@ -9,6 +9,7 @@ export const createAuditService = (dependencies: AuditServiceDependencies = {}) 
 
   return {
     list: (options: Parameters<AuditRepository['list']>[0]) => repository.list(options),
+    record: (input: Parameters<AuditRepository['record']>[0]) => repository.record(input),
   }
 }
 

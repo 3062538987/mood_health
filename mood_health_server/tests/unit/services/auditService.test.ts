@@ -21,4 +21,26 @@ describe('auditService', () => {
     })
     expect(repository.list).toHaveBeenCalledWith(options)
   })
+
+  it('delegates audit writes to the repository boundary', async () => {
+    const repository = createRepository()
+    repository.record.mockResolvedValue(undefined)
+    const service = createAuditService({ repository })
+    const input = {
+      actorUserId: 7,
+      actorRoleCode: 'super_admin',
+      permissionCode: 'user.manage',
+      action: 'USER_LIST',
+      targetType: null,
+      targetId: null,
+      result: 'success' as const,
+      summary: 'count=2',
+      ipAddress: '127.0.0.1',
+      requestId: null,
+    }
+
+    await service.record(input)
+
+    expect(repository.record).toHaveBeenCalledWith(input)
+  })
 })
