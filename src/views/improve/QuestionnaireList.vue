@@ -1,9 +1,9 @@
 <template>
   <div class="questionnaire-list">
     <div class="container">
-      <h2>心理测评量表</h2>
+      <h2>心理筛查问卷</h2>
       <p class="description">
-        以下是常用的心理测评量表，通过完成这些量表，您可以了解自己的情绪状态，获取专业的建议。
+        以下问卷仅用于自我筛查与风险提示，不提供医学诊断或治疗结论。
       </p>
 
       <!-- 历史记录入口 -->
@@ -50,7 +50,7 @@ const completedIds = ref<number[]>([])
 const fetchQuestionnaires = async () => {
   try {
     const res = await getQuestionnaires()
-    questionnaires.value = (res as { data: Questionnaire[] }).data
+    questionnaires.value = res
   } catch (error) {
     console.error('获取量表列表失败', error)
   }
@@ -60,7 +60,7 @@ const fetchQuestionnaires = async () => {
 const fetchCompletedIds = async () => {
   try {
     const res = await getAssessmentHistory()
-    const ids = (res as { data: any[] }).data.map((item: any) => item.questionnaireId)
+    const ids = res.map((item) => item.questionnaire_id)
     completedIds.value = Array.from(new Set(ids))
   } catch (error) {
     console.error('获取历史记录失败', error)

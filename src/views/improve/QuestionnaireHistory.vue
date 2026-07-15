@@ -2,7 +2,7 @@
   <div class="questionnaire-history">
     <div class="container">
       <h2>测评历史记录</h2>
-      <p class="description">查看您过往的心理测评记录，追踪自己的情绪变化趋势</p>
+      <p class="description">查看过往筛查记录，用于自我了解和观察近期变化</p>
 
       <!-- 历史记录列表 -->
       <div v-if="history.length > 0" class="history-list">
@@ -53,7 +53,7 @@ const history = ref<AssessmentHistory[]>([])
 const fetchHistory = async () => {
   try {
     const res = await getAssessmentHistory()
-    history.value = (res as { data: AssessmentHistory[] }).data
+    history.value = res
   } catch (error) {
     console.error('获取历史记录失败', error)
   }

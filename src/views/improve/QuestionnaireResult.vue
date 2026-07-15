@@ -1,7 +1,7 @@
 <template>
   <div class="questionnaire-result">
     <div class="container">
-      <h2>测评结果</h2>
+      <h2>筛查结果</h2>
 
       <div class="result-card card">
         <h3>{{ title }}</h3>
@@ -14,8 +14,11 @@
         </div>
 
         <div class="result-section">
-          <h4>结果解读</h4>
+          <h4>筛查提示</h4>
           <p class="result-text">{{ result }}</p>
+          <p class="screening-disclaimer">
+            本结果仅用于自我筛查与风险提示，不构成医学诊断，也不能替代专业评估。
+          </p>
         </div>
 
         <div class="recommendation-section">
@@ -25,7 +28,7 @@
             <li>适当进行体育锻炼，如散步、瑜伽等</li>
             <li>多与朋友和家人交流，分享自己的感受</li>
             <li>学习一些放松技巧，如深呼吸、冥想等</li>
-            <li>如果症状持续或加重，建议寻求专业心理咨询师的帮助</li>
+            <li>如果困扰持续或加重，建议寻求学校心理中心或专业人员的帮助</li>
           </ul>
         </div>
 
@@ -149,6 +152,12 @@ onMounted(() => {
         border-radius: $border-radius-md;
         line-height: 1.6;
         color: $text-light-color;
+      }
+      .screening-disclaimer {
+        margin-top: 12px;
+        color: $text-light-color;
+        font-size: $font-size-sm;
+        line-height: 1.6;
       }
     }
 

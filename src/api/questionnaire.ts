@@ -21,6 +21,9 @@ export interface Question {
 export interface AssessmentResult {
   score: number
   result_text: string
+  screening_type: string
+  risk_level: 'low' | 'mild' | 'moderate' | 'high' | 'unclassified'
+  disclaimer: string
 }
 
 export interface AssessmentAnswers {
@@ -40,28 +43,28 @@ export interface AssessmentHistory {
 }
 
 export const getQuestionnaires = () => {
-  return request({
+  return request<Questionnaire[]>({
     url: '/api/questionnaires',
     method: 'get',
   })
 }
 
 export const getQuestionnaireDetail = (id: number) => {
-  return request({
+  return request<Questionnaire>({
     url: `/api/questionnaires/${id}`,
     method: 'get',
   })
 }
 
 export const getQuestionnaireQuestions = (id: number) => {
-  return request({
+  return request<Question[]>({
     url: `/api/questionnaires/${id}/questions`,
     method: 'get',
   })
 }
 
 export const submitAssessment = (data: AssessmentAnswers) => {
-  return request({
+  return request<AssessmentResult>({
     url: '/api/questionnaires/assessments',
     method: 'post',
     data,
@@ -69,7 +72,7 @@ export const submitAssessment = (data: AssessmentAnswers) => {
 }
 
 export const getAssessmentHistory = () => {
-  return request({
+  return request<AssessmentHistory[]>({
     url: '/api/questionnaires/history',
     method: 'get',
   })

@@ -85,11 +85,11 @@ const fetchQuestionnaireData = async () => {
   try {
     // 获取量表详情
     const detailRes = await getQuestionnaireDetail(questionnaireId.value)
-    questionnaire.value = (detailRes as { data: Questionnaire }).data
+    questionnaire.value = detailRes
 
     // 获取问题列表
     const questionsRes = await getQuestionnaireQuestions(questionnaireId.value)
-    questions.value = (questionsRes as { data: Question[] }).data
+    questions.value = questionsRes
 
     // 初始化答案数组
     selectedAnswers.value = new Array(questions.value.length).fill(-1)
@@ -125,16 +125,11 @@ const nextQuestion = async () => {
         questionnaire_id: questionnaireId.value,
         answers: selectedAnswers.value,
       })
-      const data = (
-        res as {
-          data: { score: number; result_text: string }
-        }
-      ).data
       router.push({
         path: '/improve/questionnaire/result',
         query: {
-          score: data.score.toString(),
-          result: encodeURIComponent(data.result_text),
+          score: res.score.toString(),
+          result: encodeURIComponent(res.result_text),
           title: encodeURIComponent(questionnaire.value?.title || ''),
         },
       })
