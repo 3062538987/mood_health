@@ -3,8 +3,11 @@ import {
   deleteMoodHandler,
   getMoodAnalysisHandler,
   getMoodList,
+  getMoodTypes,
   getMoodTrend,
+  getTagsHandler,
   getWeeklyReportHandler,
+  createTagHandler,
   recordMood,
   updateMoodHandler,
 } from '../../../src/controllers/moodController'
@@ -25,6 +28,9 @@ var mockMoodService: {
   listMoods: jest.Mock
   updateMood: jest.Mock
   deleteMood: jest.Mock
+  listEmotionTypes: jest.Mock
+  listTags: jest.Mock
+  createOrGetTag: jest.Mock
 }
 
 jest.mock('../../../src/models/moodModel', () => ({
@@ -54,6 +60,9 @@ jest.mock('../../../src/services/moodService', () => ({
       listMoods: jest.fn(),
       updateMood: jest.fn(),
       deleteMood: jest.fn(),
+      listEmotionTypes: jest.fn(),
+      listTags: jest.fn(),
+      createOrGetTag: jest.fn(),
     }
     return mockMoodService
   }),
@@ -218,5 +227,32 @@ describe('moodController response contract', () => {
     expect(mockMoodService.deleteMood).toHaveBeenCalledWith(1, 10)
     expect(updateResponse.json).toHaveBeenCalledWith({ code: 0, message: '更新成功', data: null })
     expect(deleteResponse.json).toHaveBeenCalledWith({ code: 0, message: '删除成功', data: null })
+  })
+
+  it('routes emotion type and tag support data through mood service', async () => {
+    const emotionTypes = [{ id: 1, name: '快乐', icon: 'smile', category: 'positive' }]
+    const tags = [{ id: 2, name: '学习', user_id: null, is_system: true }]
+    mockMoodService.listEmotionTypes.mockResolvedValue(emotionTypes)
+    mockMoodService.listTags.mockResolvedValue(tags)
+    mockMoodService.createOrGetTag.mockResolvedValue({ id: 9, name: '新标签' })
+    const typesResponse = createResponse()
+    const tagsResponse = createResponse()
+    const createTagResponse = createResponse()
+
+    await getMoodTypes(createRequest(), typesResponse)
+    await getTagsHandler(createRequest(), tagsResponse)
+    await createTagHandler(createRequest({ body: { name: ' 新标签 ' } }), createTagResponse)
+
+    expect(mockMoodService.listEmotionTypes).toHaveBeenCalledWith()
+    expect(mockMoodService.listTags).toHaveBeenCalledWith(1)
+    expect(mockMoodService.createOrGetTag).toHaveBeenCalledWith('新标签', 1)
+    expect(typesResponse.json).toHaveBeenCalledWith({ code: 0, data: emotionTypes, message: '获取成功' })
+    expect(tagsResponse.json).toHaveBeenCalledWith({ code: 0, data: tags, message: '获取成功' })
+    expect(createTagResponse.status).toHaveBeenCalledWith(201)
+    expect(createTagResponse.json).toHaveBeenCalledWith({
+      code: 0,
+      data: { id: 9, name: '新标签' },
+      message: '创建成功',
+    })
   })
 })

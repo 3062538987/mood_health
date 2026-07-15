@@ -11,9 +11,6 @@ import {
   findMoodById,
   findMoodWithRelationsById,
   updateMood,
-  getEmotionTypes,
-  getTags,
-  createOrGetTag,
   getMoodsByEmotionType,
   getMoodAnalysis,
 } from '../models/moodModel'
@@ -280,7 +277,7 @@ export const getMoodTrend = async (req: AuthRequest, res: Response) => {
 
 export const getMoodTypes = async (req: AuthRequest, res: Response) => {
   try {
-    const emotionTypes = await getEmotionTypes()
+    const emotionTypes = await moodService.listEmotionTypes()
     const formattedTypes = emotionTypes.map((type) => ({
       id: type.id,
       name: type.name,
@@ -297,7 +294,7 @@ export const getMoodTypes = async (req: AuthRequest, res: Response) => {
 export const getTagsHandler = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.userId
-    const tags = await getTags(userId)
+    const tags = await moodService.listTags(userId)
     res.json({ code: 0, data: tags, message: '获取成功' })
   } catch (error) {
     console.error(error)
@@ -314,10 +311,10 @@ export const createTagHandler = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ code: 400, message: '标签名称不能为空' })
     }
 
-    const tagId = await createOrGetTag(name.trim(), userId)
+    const tag = await moodService.createOrGetTag(name.trim(), userId)
     res.status(201).json({
       code: 0,
-      data: { id: tagId, name: name.trim() },
+      data: tag,
       message: '创建成功',
     })
   } catch (error) {
