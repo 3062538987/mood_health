@@ -200,4 +200,76 @@ describe('moodRepository', () => {
     expect(db.calls[0].sql).toContain('COUNT(*) AS total')
     expect(db.calls[0].params).toEqual([7])
   })
+
+  it('updates a user mood and replaces emotions and tags in one transaction', async () => {
+    const db = new FakeMoodPool()
+    db.connection.queueResult({ affectedRows: 1 })
+    const repository = createMoodRepository(db)
+
+    const updated = await repository.updateMood({
+      id: 15,
+      userId: 7,
+      noteCiphertext: 'new-note',
+      triggerCiphertext: null,
+      recordedAt: new Date('2026-07-15T11:00:00.000Z'),
+      emotions: [{ emotionTypeId: 2, intensity: 6, isPrimary: true }],
+      tagIds: [4],
+    })
+
+    expect(updated).toBe(true)
+    expect(db.connection.began).toBe(true)
+    expect(db.connection.committed).toBe(true)
+    expect(db.connection.rolledBack).toBe(false)
+    expect(db.connection.released).toBe(true)
+    expect(db.connection.calls[0].sql).toContain('UPDATE moods')
+    expect(db.connection.calls[0].sql).toContain('WHERE id = ? AND user_id = ?')
+    expect(db.connection.calls[0].params).toEqual([
+      'new-note',
+      null,
+      new Date('2026-07-15T11:00:00.000Z'),
+      15,
+      7,
+    ])
+    expect(db.connection.calls[1].sql).toContain('DELETE FROM mood_emotions')
+    expect(db.connection.calls[1].params).toEqual([15])
+    expect(db.connection.calls[2].sql).toContain('INSERT INTO mood_emotions')
+    expect(db.connection.calls[2].params).toEqual([15, 2, 6, 1])
+    expect(db.connection.calls[3].sql).toContain('DELETE FROM mood_tags')
+    expect(db.connection.calls[3].params).toEqual([15])
+    expect(db.connection.calls[4].sql).toContain('INSERT INTO mood_tags')
+    expect(db.connection.calls[4].params).toEqual([15, 4])
+  })
+
+  it('rolls back and returns false when updating a mood outside the user boundary', async () => {
+    const db = new FakeMoodPool()
+    db.connection.queueResult({ affectedRows: 0 })
+    const repository = createMoodRepository(db)
+
+    const updated = await repository.updateMood({
+      id: 15,
+      userId: 7,
+      noteCiphertext: null,
+      triggerCiphertext: null,
+      recordedAt: new Date('2026-07-15T11:00:00.000Z'),
+      emotions: [{ emotionTypeId: 2, intensity: 6, isPrimary: true }],
+      tagIds: [],
+    })
+
+    expect(updated).toBe(false)
+    expect(db.connection.committed).toBe(false)
+    expect(db.connection.rolledBack).toBe(true)
+    expect(db.connection.calls).toHaveLength(1)
+  })
+
+  it('deletes a mood inside the user boundary', async () => {
+    const db = new FakeMoodPool()
+    db.queueRows({ affectedRows: 1 } as never)
+    const repository = createMoodRepository(db)
+
+    await expect(repository.deleteMood(7, 15)).resolves.toBe(true)
+
+    expect(db.calls[0].sql).toContain('DELETE FROM moods')
+    expect(db.calls[0].sql).toContain('WHERE id = ? AND user_id = ?')
+    expect(db.calls[0].params).toEqual([15, 7])
+  })
 })

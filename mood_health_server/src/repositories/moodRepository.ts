@@ -30,6 +30,10 @@ export interface CreateMoodInput {
   tagIds: number[]
 }
 
+export interface UpdateMoodInput extends CreateMoodInput {
+  id: number
+}
+
 export interface MoodPageOptions {
   page: number
   limit: number
@@ -275,10 +279,108 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
     return Number(rows[0]?.total ?? 0)
   }
 
+  const updateMood = async (input: UpdateMoodInput): Promise<boolean> => {
+    const connection = await db.getConnection()
+
+    try {
+      await connection.beginTransaction()
+
+      const [result] = await connection.query<ResultSetHeader>(
+        `
+        UPDATE moods
+        SET
+          note_ciphertext = ?,
+          trigger_ciphertext = ?,
+          recorded_at = ?,
+          updated_at = UTC_TIMESTAMP(3)
+        WHERE id = ? AND user_id = ?
+        `,
+        [
+          input.noteCiphertext,
+          input.triggerCiphertext,
+          input.recordedAt,
+          input.id,
+          input.userId,
+        ]
+      )
+
+      if (Number(result.affectedRows) === 0) {
+        await connection.rollback()
+        return false
+      }
+
+      await connection.query<ResultSetHeader>(
+        `
+        DELETE FROM mood_emotions
+        WHERE mood_id = ?
+        `,
+        [input.id]
+      )
+
+      for (const emotion of input.emotions) {
+        await connection.query<ResultSetHeader>(
+          `
+          INSERT INTO mood_emotions (
+            mood_id,
+            emotion_type_id,
+            intensity,
+            is_primary
+          )
+          VALUES (?, ?, ?, ?)
+          `,
+          [input.id, emotion.emotionTypeId, emotion.intensity, emotion.isPrimary ? 1 : 0]
+        )
+      }
+
+      await connection.query<ResultSetHeader>(
+        `
+        DELETE FROM mood_tags
+        WHERE mood_id = ?
+        `,
+        [input.id]
+      )
+
+      for (const tagId of input.tagIds) {
+        await connection.query<ResultSetHeader>(
+          `
+          INSERT INTO mood_tags (
+            mood_id,
+            tag_id
+          )
+          VALUES (?, ?)
+          `,
+          [input.id, tagId]
+        )
+      }
+
+      await connection.commit()
+      return true
+    } catch (error) {
+      await connection.rollback()
+      throw error
+    } finally {
+      connection.release()
+    }
+  }
+
+  const deleteMood = async (userId: number, moodId: number): Promise<boolean> => {
+    const [result] = await db.query<ResultSetHeader>(
+      `
+      DELETE FROM moods
+      WHERE id = ? AND user_id = ?
+      `,
+      [moodId, userId]
+    )
+
+    return Number(result.affectedRows) > 0
+  }
+
   return {
     createMood,
     listByUser,
     countByUser,
+    updateMood,
+    deleteMood,
   }
 }
 
