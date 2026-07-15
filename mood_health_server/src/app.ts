@@ -21,6 +21,7 @@ import managementRoutes from './routes/managementRoutes'
 import logger, { summarizeRequestBody } from './utils/logger'
 import redisClient from './utils/redis.client'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler'
+import { API_ERROR_CODES, apiFailure, apiSuccess } from './utils/apiResponse'
 
 dotenv.config()
 
@@ -150,12 +151,17 @@ export const createApp = () => {
       const dbResult = await query('SELECT 1 + 1 AS result')
       const redisStatus = await checkRedisWithTimeout(2000)
 
-      res.json({
-        status: 'ok',
-        database: 'connected',
-        redis: redisStatus ? 'connected' : 'disconnected',
-        result: dbResult,
-      })
+      res.json(
+        apiSuccess(
+          {
+            status: 'ok',
+            database: 'connected',
+            redis: redisStatus ? 'connected' : 'disconnected',
+            result: dbResult,
+          },
+          '服务健康'
+        )
+      )
     } catch (error) {
       logger.error('健康检查失败', { error })
 
@@ -166,13 +172,7 @@ export const createApp = () => {
         redisStatus = false
       }
 
-      res.status(500).json({
-        success: false,
-        code: 500,
-        message: '健康检查失败',
-        path: req.originalUrl,
-        timestamp: new Date().toISOString(),
-      })
+      res.status(500).json(apiFailure(API_ERROR_CODES.INTERNAL_ERROR, '健康检查失败'))
     }
   })
 
