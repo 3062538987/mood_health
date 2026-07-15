@@ -34,6 +34,7 @@ var mockMoodService: {
   createOrGetTag: jest.Mock
   getMoodTrend: jest.Mock
   getWeeklyReport: jest.Mock
+  getMoodAnalysis: jest.Mock
 }
 
 jest.mock('../../../src/models/moodModel', () => ({
@@ -68,6 +69,7 @@ jest.mock('../../../src/services/moodService', () => ({
       createOrGetTag: jest.fn(),
       getMoodTrend: jest.fn(),
       getWeeklyReport: jest.fn(),
+      getMoodAnalysis: jest.fn(),
     }
     return mockMoodService
   }),
@@ -157,7 +159,7 @@ describe('moodController response contract', () => {
     const statistics = { avgIntensity: 6, recordCount: 2 }
     mockMoodService.getWeeklyReport.mockResolvedValue(weekly)
     mockMoodService.getMoodTrend.mockResolvedValue(trend)
-    jest.mocked(getMoodAnalysis).mockResolvedValue(statistics as never)
+    mockMoodService.getMoodAnalysis.mockResolvedValue(statistics)
     const weeklyResponse = createResponse()
     const trendResponse = createResponse()
     const statisticsResponse = createResponse()
@@ -170,6 +172,8 @@ describe('moodController response contract', () => {
     expect(getWeeklyReport).not.toHaveBeenCalled()
     expect(mockMoodService.getMoodTrend).toHaveBeenCalledWith(1, 'month')
     expect(getMoodTrendModel).not.toHaveBeenCalled()
+    expect(mockMoodService.getMoodAnalysis).toHaveBeenCalledWith(1, 'month')
+    expect(getMoodAnalysis).not.toHaveBeenCalled()
     expect(weeklyResponse.json).toHaveBeenCalledWith({
       code: 0,
       message: '获取情绪周报成功',

@@ -8,7 +8,6 @@ import {
   findMoodById,
   findMoodWithRelationsById,
   updateMood,
-  getMoodAnalysis,
 } from '../models/moodModel'
 import { createAdviceHistory, getAdviceHistoryByUser } from '../models/adviceModel'
 import { clearMoodCache } from '../utils/cache'
@@ -292,7 +291,7 @@ export const getMoodAnalysisHandler = async (req: AuthRequest, res: Response) =>
       return res.status(400).json(apiFailure(400, '无效的时间范围'))
     }
 
-    const analysis = await getMoodAnalysis(userId, range)
+    const analysis = await moodService.getMoodAnalysis(userId, range as 'week' | 'month' | 'quarter')
     res.json(apiSuccess(analysis, '获取情绪统计成功'))
   } catch (error) {
     console.error(error)
