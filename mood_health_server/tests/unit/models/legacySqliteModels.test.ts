@@ -23,4 +23,8 @@ describe('disabled legacy models', () => {
   it('keeps comment storage SQLite-only until its P1/P2 migration', () => {
     expectSqliteOnlyLegacyModel(readModel('commentModel.ts'))
   })
+
+  it('keeps course storage SQLite-only until its P1/P2 migration', () => {
+    expectSqliteOnlyLegacyModel(readModel('courseModel.ts'))
+  })
 })
