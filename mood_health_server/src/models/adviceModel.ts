@@ -1,8 +1,5 @@
-import sql from 'mssql'
-import pool from '../config/database'
-import logger from '../utils/logger'
-import { isSqliteClient } from '../config/database'
 import { sqliteAll, sqliteGet, sqliteRun } from '../config/sqlite'
+import logger from '../utils/logger'
 
 export interface AdviceHistory {
   id: number
@@ -15,88 +12,39 @@ export interface AdviceHistory {
 
 let tableChecked = false
 
-const ensureAdviceHistoryTable = async (): Promise<void> => {
-  if (tableChecked) {
-    return
-  }
-
-  if (isSqliteClient) {
-    sqliteRun(`
-      CREATE TABLE IF NOT EXISTS advice_history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        mood_record_id INTEGER,
-        analysis TEXT NOT NULL,
-        suggestions TEXT NOT NULL,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      )
-    `)
-    sqliteRun('CREATE INDEX IF NOT EXISTS idx_advice_history_user_id ON advice_history(user_id)')
-    sqliteRun(
-      'CREATE INDEX IF NOT EXISTS idx_advice_history_created_at ON advice_history(created_at DESC)'
+const ensureAdviceHistoryTable = () => {
+  if (tableChecked) return
+  sqliteRun(`
+    CREATE TABLE IF NOT EXISTS advice_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      mood_record_id INTEGER,
+      analysis TEXT NOT NULL,
+      suggestions TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
-
-    tableChecked = true
-    return
-  }
-
-  await pool.request().query(`
-    IF NOT EXISTS (
-      SELECT 1 FROM sys.objects
-      WHERE object_id = OBJECT_ID(N'[dbo].[advice_history]') AND type = N'U'
-    )
-    BEGIN
-      CREATE TABLE advice_history (
-        id INT IDENTITY(1,1) PRIMARY KEY,
-        user_id INT NOT NULL,
-        mood_record_id INT NULL,
-        analysis NVARCHAR(1000) NOT NULL,
-        suggestions NVARCHAR(MAX) NOT NULL,
-        created_at DATETIME DEFAULT GETDATE(),
-        FOREIGN KEY (user_id) REFERENCES users(id),
-        FOREIGN KEY (mood_record_id) REFERENCES moods(id) ON DELETE SET NULL
-      );
-      CREATE INDEX idx_advice_history_user_id ON advice_history(user_id);
-      CREATE INDEX idx_advice_history_created_at ON advice_history(created_at DESC);
-    END
   `)
-
+  sqliteRun('CREATE INDEX IF NOT EXISTS idx_advice_history_user_id ON advice_history(user_id)')
+  sqliteRun(
+    'CREATE INDEX IF NOT EXISTS idx_advice_history_created_at ON advice_history(created_at DESC)'
+  )
   tableChecked = true
 }
 
-const getDbErrorMessage = (error: unknown): string => {
-  const err = error as {
-    message?: string
-    originalError?: { info?: { message?: string } }
-  }
-  return err?.originalError?.info?.message || err?.message || '数据库访问失败'
-}
+const getDbErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : '数据库访问失败'
 
 const normalizeSuggestions = (raw: unknown): string[] => {
-  if (Array.isArray(raw)) {
-    return raw.map((item) => String(item)).filter(Boolean)
-  }
-
-  if (typeof raw !== 'string') {
-    return []
-  }
-
-  const trimmed = raw.trim()
-  if (!trimmed) {
-    return []
-  }
-
+  if (Array.isArray(raw)) return raw.map(String).filter(Boolean)
+  if (typeof raw !== 'string' || !raw.trim()) return []
   try {
-    const parsed = JSON.parse(trimmed)
-    if (Array.isArray(parsed)) {
-      return parsed.map((item) => String(item)).filter(Boolean)
-    }
-  } catch (error) {
-    // 兼容历史脏数据：把非 JSON 文本回退为单条建议，避免整页 500。
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean)
+  } catch {
+    // 历史非 JSON 文本作为单条建议展示。
   }
-
-  return [trimmed]
+  return [raw.trim()]
 }
 
 export const createAdviceHistory = async (
@@ -106,36 +54,18 @@ export const createAdviceHistory = async (
   suggestions: string[]
 ): Promise<number> => {
   try {
-    await ensureAdviceHistoryTable()
-    const suggestionsStr = JSON.stringify(
-      suggestions.filter((item) => typeof item === 'string' && item.trim().length > 0)
+    ensureAdviceHistoryTable()
+    const result = sqliteRun(
+      `INSERT INTO advice_history (user_id, mood_record_id, analysis, suggestions)
+       VALUES (?, ?, ?, ?)`,
+      [
+        userId,
+        moodRecordId || null,
+        analysis.trim().slice(0, 1000),
+        JSON.stringify(suggestions.filter((item) => item.trim().length > 0)),
+      ]
     )
-    const safeAnalysis = analysis.trim().slice(0, 1000)
-
-    if (isSqliteClient) {
-      const insertResult = sqliteRun(
-        `
-        INSERT INTO advice_history (user_id, mood_record_id, analysis, suggestions)
-        VALUES (?, ?, ?, ?)
-        `,
-        [userId, moodRecordId || null, safeAnalysis, suggestionsStr]
-      )
-
-      return Number(insertResult.lastInsertRowid)
-    }
-
-    const result = await pool
-      .request()
-      .input('userId', sql.Int, userId)
-      .input('moodRecordId', sql.Int, moodRecordId || null)
-      .input('analysis', sql.NVarChar, safeAnalysis)
-      .input('suggestions', sql.NVarChar, suggestionsStr).query(`
-        INSERT INTO advice_history (user_id, mood_record_id, analysis, suggestions)
-        VALUES (@userId, @moodRecordId, @analysis, @suggestions);
-        SELECT SCOPE_IDENTITY() as id;
-      `)
-
-    return result.recordset[0].id
+    return Number(result.lastInsertRowid)
   } catch (error) {
     logger.error('保存 AI 建议历史失败', {
       userId,
@@ -153,82 +83,38 @@ export const getAdviceHistoryByUser = async (
   pageSize: number = 20
 ): Promise<{ list: AdviceHistory[]; total: number }> => {
   try {
-    await ensureAdviceHistoryTable()
+    ensureAdviceHistoryTable()
     const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1
     const safePageSize =
       Number.isFinite(pageSize) && pageSize > 0 ? Math.min(Math.floor(pageSize), 100) : 20
-    const offset = (safePage - 1) * safePageSize
-
-    if (isSqliteClient) {
-      const countRow = sqliteGet(
-        `
-        SELECT COUNT(*) as total
+    const count = sqliteGet('SELECT COUNT(*) AS total FROM advice_history WHERE user_id = ?', [
+      userId,
+    ]) as { total: number } | undefined
+    const rows = sqliteAll(
+      `
+        SELECT id, user_id AS userId, mood_record_id AS moodRecordId,
+               analysis, suggestions, created_at AS createdAt
         FROM advice_history
         WHERE user_id = ?
-        `,
-        [userId]
-      ) as { total: number } | undefined
-
-      const listRows = sqliteAll(
-        `
-        SELECT id,
-               user_id as userId,
-               mood_record_id as moodRecordId,
-               analysis,
-               suggestions,
-               created_at as createdAt
-        FROM advice_history
-        WHERE user_id = ?
-        ORDER BY created_at DESC
+        ORDER BY datetime(created_at) DESC
         LIMIT ? OFFSET ?
-        `,
-        [userId, safePageSize, offset]
-      ) as Array<{
-        id: number
-        userId: number
-        moodRecordId?: number
-        analysis: string
-        suggestions: unknown
-        createdAt: string | Date
-      }>
-
-      return {
-        list: listRows.map((row) => ({
-          ...row,
-          createdAt: new Date(row.createdAt),
-          suggestions: normalizeSuggestions(row.suggestions),
-        })),
-        total: Number(countRow?.total || 0),
-      }
-    }
-
-    const countResult = await pool.request().input('userId', sql.Int, userId).query(`
-        SELECT COUNT(*) as total
-        FROM advice_history
-        WHERE user_id = @userId
-      `)
-
-    const total = countResult.recordset[0].total
-
-    const listResult = await pool
-      .request()
-      .input('userId', sql.Int, userId)
-      .input('pageSize', sql.Int, safePageSize)
-      .input('offset', sql.Int, offset).query(`
-        SELECT id, user_id as userId, mood_record_id as moodRecordId,
-               analysis, suggestions, created_at as createdAt
-        FROM advice_history
-        WHERE user_id = @userId
-        ORDER BY created_at DESC
-        OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY
-      `)
-
+      `,
+      [userId, safePageSize, (safePage - 1) * safePageSize]
+    ) as Array<{
+      id: number
+      userId: number
+      moodRecordId?: number
+      analysis: string
+      suggestions: unknown
+      createdAt: string | Date
+    }>
     return {
-      list: listResult.recordset.map((row: any) => ({
+      list: rows.map((row) => ({
         ...row,
         suggestions: normalizeSuggestions(row.suggestions),
+        createdAt: new Date(row.createdAt),
       })),
-      total,
+      total: Number(count?.total || 0),
     }
   } catch (error) {
     logger.error('查询 AI 建议历史失败', {

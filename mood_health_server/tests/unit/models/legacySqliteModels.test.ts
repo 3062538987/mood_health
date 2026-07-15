@@ -39,4 +39,8 @@ describe('disabled legacy models', () => {
   it('keeps achievement storage SQLite-only until its P1/P2 migration', () => {
     expectSqliteOnlyLegacyModel(readModel('achievementModel.ts'))
   })
+
+  it('keeps legacy advice storage SQLite-only until its v1.1 migration', () => {
+    expectSqliteOnlyLegacyModel(readModel('adviceModel.ts'))
+  })
 })
