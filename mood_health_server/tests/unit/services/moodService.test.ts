@@ -5,6 +5,8 @@ const createRepository = (): jest.Mocked<MoodRepository> => ({
   createMood: jest.fn(),
   listByUser: jest.fn(),
   countByUser: jest.fn(),
+  updateMood: jest.fn(),
+  deleteMood: jest.fn(),
 })
 
 describe('moodService', () => {
@@ -158,5 +160,66 @@ describe('moodService', () => {
       page: 1,
       limit: 10,
     })
+  })
+
+  it('encrypts note and trigger before updating a mood inside the user boundary', async () => {
+    const repository = createRepository()
+    repository.updateMood.mockResolvedValue(true)
+    const encryptField = jest.fn((value: string | null | undefined) => (value ? 'encrypted-value' : null))
+    const service = createMoodService({ repository, encryptField })
+
+    const updated = await service.updateMood({
+      id: 15,
+      userId: 7,
+      note: '更新后的记录',
+      trigger: '复盘',
+      recordedAt: new Date('2026-07-15T11:00:00.000Z'),
+      emotions: [{ emotionTypeId: 2, intensity: 6, isPrimary: true }],
+      tagIds: [4],
+    })
+
+    expect(updated).toBe(true)
+    expect(repository.updateMood).toHaveBeenCalledWith({
+      id: 15,
+      userId: 7,
+      noteCiphertext: 'encrypted-value',
+      triggerCiphertext: 'encrypted-value',
+      recordedAt: new Date('2026-07-15T11:00:00.000Z'),
+      emotions: [{ emotionTypeId: 2, intensity: 6, isPrimary: true }],
+      tagIds: [4],
+    })
+    expect(JSON.stringify(repository.updateMood.mock.calls)).not.toContain('更新后的记录')
+  })
+
+  it('rejects invalid update payloads before calling the repository', async () => {
+    const repository = createRepository()
+    const service = createMoodService({
+      repository,
+      encryptField: jest.fn(),
+    })
+
+    await expect(
+      service.updateMood({
+        id: 15,
+        userId: 7,
+        note: '',
+        trigger: '',
+        recordedAt: new Date(),
+        emotions: [{ emotionTypeId: 1, intensity: 0 }],
+        tagIds: [],
+      })
+    ).rejects.toMatchObject({ statusCode: 400 })
+
+    expect(repository.updateMood).not.toHaveBeenCalled()
+  })
+
+  it('deletes a mood through the repository user boundary', async () => {
+    const repository = createRepository()
+    repository.deleteMood.mockResolvedValue(true)
+    const service = createMoodService({ repository })
+
+    await expect(service.deleteMood(7, 15)).resolves.toBe(true)
+
+    expect(repository.deleteMood).toHaveBeenCalledWith(7, 15)
   })
 })

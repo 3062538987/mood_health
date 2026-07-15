@@ -19,6 +19,10 @@ export interface RecordMoodInput {
   tagIds: number[]
 }
 
+export interface UpdateMoodServiceInput extends RecordMoodInput {
+  id: number
+}
+
 interface MoodServiceDependencies {
   repository?: MoodRepository
   encryptField?: EncryptField
@@ -127,9 +131,29 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
     }
   }
 
+  const updateMood = async (input: UpdateMoodServiceInput): Promise<boolean> => {
+    const emotions = normalizeEmotions(input.emotions)
+
+    return repository.updateMood({
+      id: input.id,
+      userId: input.userId,
+      noteCiphertext: encryptField(input.note),
+      triggerCiphertext: encryptField(input.trigger),
+      recordedAt: input.recordedAt,
+      emotions,
+      tagIds: input.tagIds,
+    })
+  }
+
+  const deleteMood = async (userId: number, moodId: number): Promise<boolean> => {
+    return repository.deleteMood(userId, moodId)
+  }
+
   return {
     recordMood,
     listMoods,
+    updateMood,
+    deleteMood,
   }
 }
 
