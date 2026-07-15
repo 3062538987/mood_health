@@ -34,8 +34,6 @@
     "deploy:linux": "bash ./scripts/first-deploy-linux.sh",
     "start-all:clean": "powershell -ExecutionPolicy Bypass -File start-project.ps1 -Clean",
     "start-all:check": "npm run doctor && npm run start-all",
-    "sqlite:preflight": "powershell -ExecutionPolicy Bypass -File scripts/sqlite-preflight.ps1",
-    "sqlite:db:status": "powershell -ExecutionPolicy Bypass -File scripts/sqlite-db-status.ps1",
     "release:smoke": "powershell -ExecutionPolicy Bypass -File scripts/release-smoke.ps1",
     "pm2:status": "node ./node_modules/pm2/bin/pm2 status",
     "pm2:logs": "node ./node_modules/pm2/bin/pm2 logs",
