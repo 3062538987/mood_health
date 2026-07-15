@@ -41,9 +41,20 @@ class FakeMoodConnection {
 
 class FakeMoodPool {
   public readonly connection = new FakeMoodConnection()
+  public readonly calls: QueryCall[] = []
+  private readonly responses: unknown[] = []
 
   async getConnection(): Promise<FakeMoodConnection> {
     return this.connection
+  }
+
+  queueRows(rows: unknown[]): void {
+    this.responses.push(rows)
+  }
+
+  async query<T>(sql: string, params: unknown[] = []): Promise<[T, unknown]> {
+    this.calls.push({ sql, params })
+    return [(this.responses.shift() ?? []) as T, []]
   }
 }
 
@@ -111,5 +122,82 @@ describe('moodRepository', () => {
     expect(db.connection.committed).toBe(false)
     expect(db.connection.rolledBack).toBe(true)
     expect(db.connection.released).toBe(true)
+  })
+
+  it('lists a user mood page with normalized emotions and tags without selecting legacy columns', async () => {
+    const db = new FakeMoodPool()
+    db.queueRows([
+      {
+        id: 15,
+        user_id: 7,
+        note_ciphertext: 'encrypted-note',
+        trigger_ciphertext: 'encrypted-trigger',
+        recorded_at: new Date('2026-07-15T10:00:00.000Z'),
+        created_at: new Date('2026-07-15T10:01:00.000Z'),
+        updated_at: new Date('2026-07-15T10:02:00.000Z'),
+      },
+    ])
+    db.queueRows([
+      {
+        mood_id: 15,
+        emotion_type_id: 1,
+        intensity: 8,
+        is_primary: 1,
+        emotion_code: 'anxious',
+        emotion_name: '焦虑',
+        emotion_icon: 'activity',
+      },
+    ])
+    db.queueRows([
+      {
+        mood_id: 15,
+        tag_id: 3,
+        tag_code: 'study',
+        tag_name: '学习',
+        is_system: 1,
+      },
+    ])
+    const repository = createMoodRepository(db)
+
+    const result = await repository.listByUser(7, { page: 2, limit: 10 })
+
+    expect(result).toEqual([
+      {
+        id: 15,
+        userId: 7,
+        noteCiphertext: 'encrypted-note',
+        triggerCiphertext: 'encrypted-trigger',
+        recordedAt: new Date('2026-07-15T10:00:00.000Z'),
+        createdAt: new Date('2026-07-15T10:01:00.000Z'),
+        updatedAt: new Date('2026-07-15T10:02:00.000Z'),
+        emotions: [
+          {
+            emotionTypeId: 1,
+            code: 'anxious',
+            name: '焦虑',
+            icon: 'activity',
+            intensity: 8,
+            isPrimary: true,
+          },
+        ],
+        tags: [{ id: 3, code: 'study', name: '学习', isSystem: true }],
+      },
+    ])
+    expect(db.calls[0].sql).toContain('FROM moods m')
+    expect(db.calls[0].sql).toContain('ORDER BY m.recorded_at DESC')
+    expect(db.calls[0].sql).not.toContain('mood_type')
+    expect(db.calls[0].sql).not.toContain('note_encrypted')
+    expect(db.calls[0].params).toEqual([7, 10, 10])
+  })
+
+  it('counts moods for a user', async () => {
+    const db = new FakeMoodPool()
+    db.queueRows([{ total: 3 }])
+    const repository = createMoodRepository(db)
+
+    await expect(repository.countByUser(7)).resolves.toBe(3)
+
+    expect(db.calls[0].sql).toContain('COUNT(*) AS total')
+    expect(db.calls[0].params).toEqual([7])
   })
 })

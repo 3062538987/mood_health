@@ -3,6 +3,8 @@ import { MoodRepository } from '../../../src/repositories/moodRepository'
 
 const createRepository = (): jest.Mocked<MoodRepository> => ({
   createMood: jest.fn(),
+  listByUser: jest.fn(),
+  countByUser: jest.fn(),
 })
 
 describe('moodService', () => {
