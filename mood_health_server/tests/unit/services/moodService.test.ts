@@ -4,7 +4,9 @@ import { MoodRepository } from '../../../src/repositories/moodRepository'
 const createRepository = (): jest.Mocked<MoodRepository> => ({
   createMood: jest.fn(),
   listByUser: jest.fn(),
+  listByUserAndEmotionType: jest.fn(),
   countByUser: jest.fn(),
+  countByUserAndEmotionType: jest.fn(),
   updateMood: jest.fn(),
   deleteMood: jest.fn(),
   listEmotionTypes: jest.fn(),
@@ -163,6 +165,29 @@ describe('moodService', () => {
       page: 1,
       limit: 10,
     })
+  })
+
+  it('lists moods filtered by emotion type when requested', async () => {
+    const repository = createRepository()
+    repository.listByUserAndEmotionType.mockResolvedValue([])
+    repository.countByUserAndEmotionType.mockResolvedValue(0)
+    const service = createMoodService({
+      repository,
+      encryptField: jest.fn(),
+      decryptField: jest.fn(),
+    })
+
+    const result = await service.listMoods(7, { page: 1, limit: 10, emotionTypeId: 2 })
+
+    expect(repository.listByUserAndEmotionType).toHaveBeenCalledWith(7, 2, {
+      page: 1,
+      limit: 10,
+      emotionTypeId: 2,
+    })
+    expect(repository.countByUserAndEmotionType).toHaveBeenCalledWith(7, 2)
+    expect(repository.listByUser).not.toHaveBeenCalled()
+    expect(repository.countByUser).not.toHaveBeenCalled()
+    expect(result).toEqual({ list: [], total: 0, page: 1, limit: 10 })
   })
 
   it('encrypts note and trigger before updating a mood inside the user boundary', async () => {

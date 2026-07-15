@@ -32,6 +32,7 @@ interface MoodServiceDependencies {
 export interface ListMoodOptions {
   page: number
   limit: number
+  emotionTypeId?: number
 }
 
 const normalizeEmotions = (emotions: RecordMoodEmotionInput[]): MoodEmotionInput[] => {
@@ -101,9 +102,15 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
   }
 
   const listMoods = async (userId: number, options: ListMoodOptions) => {
+    const shouldFilterByEmotion =
+      Number.isInteger(options.emotionTypeId) && Number(options.emotionTypeId) > 0
     const [moods, total] = await Promise.all([
-      repository.listByUser(userId, options),
-      repository.countByUser(userId),
+      shouldFilterByEmotion
+        ? repository.listByUserAndEmotionType(userId, Number(options.emotionTypeId), options)
+        : repository.listByUser(userId, options),
+      shouldFilterByEmotion
+        ? repository.countByUserAndEmotionType(userId, Number(options.emotionTypeId))
+        : repository.countByUser(userId),
     ])
 
     return {
