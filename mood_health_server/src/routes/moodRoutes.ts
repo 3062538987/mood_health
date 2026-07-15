@@ -13,8 +13,6 @@ import {
   getTagsHandler,
   createTagHandler,
   getMoodAnalysisHandler,
-  saveAdviceHandler,
-  getAdviceHistoryHandler,
 } from '../controllers/moodController'
 
 const router = Router()
@@ -55,16 +53,6 @@ router.post(
   validateRequest,
   createTagHandler
 )
-router.post(
-  '/advice/save',
-  [
-    body('analysis').notEmpty().withMessage('分析内容不能为空'),
-    body('suggestions').isArray().withMessage('建议列表必须是数组'),
-  ],
-  validateRequest,
-  saveAdviceHandler
-)
-router.get('/advice/history', getAdviceHistoryHandler)
 router.put(
   '/:id',
   [

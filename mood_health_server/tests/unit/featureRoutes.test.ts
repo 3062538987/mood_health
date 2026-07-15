@@ -31,7 +31,7 @@ describe('disabled backend feature routes', () => {
   let baseUrl: string
 
   beforeAll(async () => {
-    process.env.FEATURE_NON_CORE_MODULES_ENABLED = 'false'
+    process.env.FEATURE_NON_CORE_MODULES_ENABLED = 'true'
     process.env.ENCRYPTION_KEY = '0'.repeat(64)
     const { createApp } = await import('../../src/app')
     server = createApp().listen(0, '127.0.0.1')
@@ -56,7 +56,7 @@ describe('disabled backend feature routes', () => {
     '/api/courses',
     '/api/relax',
     '/api/achievements',
-  ])('returns the unified disabled response for %s without querying SQLite', async (path) => {
+  ])('stays disabled for %s even when a legacy environment flag is set', async (path) => {
     const response = await fetch(`${baseUrl}${path}`)
 
     expect(response.status).toBe(503)

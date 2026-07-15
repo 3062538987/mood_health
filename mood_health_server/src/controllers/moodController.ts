@@ -1,8 +1,6 @@
 import { Response } from 'express'
 import { AuthRequest } from '../middleware/auth'
-import { createAdviceHistory, getAdviceHistoryByUser } from '../models/adviceModel'
 import { clearMoodCache } from '../utils/cache'
-import logger from '../utils/logger'
 import { apiFailure, apiSuccess } from '../utils/apiResponse'
 import { createMoodService } from '../services/moodService'
 
@@ -99,7 +97,6 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
     res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
-
 export const getMoodList = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.userId
@@ -327,79 +324,3 @@ export const getMoodAnalysisHandler = async (req: AuthRequest, res: Response) =>
   }
 }
 
-export const saveAdviceHandler = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user!.userId
-    const { moodRecordId, analysis, suggestions } = req.body
-
-    if (!analysis || typeof analysis !== 'string') {
-      return res.status(400).json({ code: 400, message: '分析内容不能为空' })
-    }
-
-    if (!suggestions || !Array.isArray(suggestions)) {
-      return res.status(400).json({ code: 400, message: '建议列表不能为空' })
-    }
-
-    const normalizedMoodRecordId =
-      moodRecordId === undefined || moodRecordId === null ? undefined : Number(moodRecordId)
-    if (
-      normalizedMoodRecordId !== undefined &&
-      (!Number.isInteger(normalizedMoodRecordId) || normalizedMoodRecordId <= 0)
-    ) {
-      return res.status(400).json({ code: 400, message: 'moodRecordId 必须是正整数' })
-    }
-
-    await createAdviceHistory(userId, normalizedMoodRecordId, analysis, suggestions)
-    res.status(201).json({ code: 0, message: '保存成功' })
-  } catch (error) {
-    const err = error as {
-      message?: string
-      originalError?: { info?: { message?: string } }
-    }
-    const dbMessage = err.originalError?.info?.message || err.message || '未知异常'
-
-    logger.error('saveAdviceHandler 执行失败', {
-      userId: req.user?.userId,
-      body: {
-        moodRecordId: req.body?.moodRecordId,
-        analysisLength: typeof req.body?.analysis === 'string' ? req.body.analysis.length : 0,
-        suggestionsCount: Array.isArray(req.body?.suggestions) ? req.body.suggestions.length : 0,
-      },
-      dbMessage,
-      error,
-    })
-
-    const message =
-      dbMessage.includes('FOREIGN KEY') || dbMessage.includes('REFERENCE')
-        ? '关联的心情记录不存在，无法保存建议'
-        : 'AI 建议保存失败，请稍后重试'
-    res.status(500).json({ code: 500, message })
-  }
-}
-
-export const getAdviceHistoryHandler = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user!.userId
-    const page = parseInt(req.query.page as string) || 1
-    const pageSize = parseInt(req.query.pageSize as string) || 20
-
-    const result = await getAdviceHistoryByUser(userId, page, pageSize)
-    res.json({ code: 0, data: result })
-  } catch (error) {
-    const err = error as {
-      message?: string
-      originalError?: { info?: { message?: string } }
-    }
-    const dbMessage = err.originalError?.info?.message || err.message || '未知异常'
-
-    logger.error('getAdviceHistoryHandler 执行失败', {
-      userId: req.user?.userId,
-      page: req.query.page,
-      pageSize: req.query.pageSize,
-      dbMessage,
-      error,
-    })
-
-    res.status(500).json({ code: 500, message: 'AI 建议历史获取失败，请稍后重试' })
-  }
-}
