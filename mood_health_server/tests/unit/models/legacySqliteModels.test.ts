@@ -19,4 +19,8 @@ describe('disabled legacy models', () => {
   it('keeps post storage SQLite-only until its P1/P2 migration', () => {
     expectSqliteOnlyLegacyModel(readModel('postModel.ts'))
   })
+
+  it('keeps comment storage SQLite-only until its P1/P2 migration', () => {
+    expectSqliteOnlyLegacyModel(readModel('commentModel.ts'))
+  })
 })
