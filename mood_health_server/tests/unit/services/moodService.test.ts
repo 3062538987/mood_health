@@ -7,6 +7,9 @@ const createRepository = (): jest.Mocked<MoodRepository> => ({
   countByUser: jest.fn(),
   updateMood: jest.fn(),
   deleteMood: jest.fn(),
+  listEmotionTypes: jest.fn(),
+  listTags: jest.fn(),
+  createOrGetTag: jest.fn(),
 })
 
 describe('moodService', () => {
@@ -221,5 +224,41 @@ describe('moodService', () => {
     await expect(service.deleteMood(7, 15)).resolves.toBe(true)
 
     expect(repository.deleteMood).toHaveBeenCalledWith(7, 15)
+  })
+
+  it('lists emotion types with the existing controller DTO shape', async () => {
+    const repository = createRepository()
+    repository.listEmotionTypes.mockResolvedValue([
+      { id: 1, code: 'happy', name: '快乐', icon: 'smile', category: 'positive', sortOrder: 10 },
+    ])
+    const service = createMoodService({ repository })
+
+    await expect(service.listEmotionTypes()).resolves.toEqual([
+      { id: 1, name: '快乐', icon: 'smile', category: 'positive' },
+    ])
+  })
+
+  it('lists tags with legacy user_id and is_system field names for frontend compatibility', async () => {
+    const repository = createRepository()
+    repository.listTags.mockResolvedValue([
+      { id: 2, code: 'study', userId: null, name: '学习', isSystem: true },
+      { id: 3, code: null, userId: 7, name: '自定义', isSystem: false },
+    ])
+    const service = createMoodService({ repository })
+
+    await expect(service.listTags(7)).resolves.toEqual([
+      { id: 2, name: '学习', user_id: null, is_system: true },
+      { id: 3, name: '自定义', user_id: 7, is_system: false },
+    ])
+  })
+
+  it('trims custom tag names before create-or-get', async () => {
+    const repository = createRepository()
+    repository.createOrGetTag.mockResolvedValue(9)
+    const service = createMoodService({ repository })
+
+    await expect(service.createOrGetTag('  新标签  ', 7)).resolves.toEqual({ id: 9, name: '新标签' })
+
+    expect(repository.createOrGetTag).toHaveBeenCalledWith('新标签', 7)
   })
 })

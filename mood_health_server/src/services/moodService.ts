@@ -149,11 +149,43 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
     return repository.deleteMood(userId, moodId)
   }
 
+  const listEmotionTypes = async () => {
+    const emotionTypes = await repository.listEmotionTypes()
+
+    return emotionTypes.map((type) => ({
+      id: type.id,
+      name: type.name,
+      icon: type.icon,
+      category: type.category,
+    }))
+  }
+
+  const listTags = async (userId: number) => {
+    const tags = await repository.listTags(userId)
+
+    return tags.map((tag) => ({
+      id: tag.id,
+      name: tag.name,
+      user_id: tag.userId,
+      is_system: tag.isSystem,
+    }))
+  }
+
+  const createOrGetTag = async (name: string, userId: number) => {
+    const trimmedName = name.trim()
+    const id = await repository.createOrGetTag(trimmedName, userId)
+
+    return { id, name: trimmedName }
+  }
+
   return {
     recordMood,
     listMoods,
     updateMood,
     deleteMood,
+    listEmotionTypes,
+    listTags,
+    createOrGetTag,
   }
 }
 
