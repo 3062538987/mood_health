@@ -108,8 +108,8 @@ export const getMoodList = async (req: AuthRequest, res: Response) => {
       ? parseInt(req.query.emotionTypeId as string)
       : null
 
-    if (emotionTypeId) {
-      const moods = await getMoodsByEmotionType(userId, emotionTypeId, page, limit)
+    if (emotionTypeId && false) {
+      const moods = await getMoodsByEmotionType(userId, Number(emotionTypeId), page, limit)
 
       const formattedMoods = moods.map((mood) => {
         if (mood.emotions && mood.emotions.length > 0) {
@@ -149,7 +149,11 @@ export const getMoodList = async (req: AuthRequest, res: Response) => {
       return res.json(apiSuccess({ list: formattedMoods, total, page, limit }, '获取情绪记录成功'))
     }
 
-    const result = await moodService.listMoods(userId, { page, limit })
+    const result = await moodService.listMoods(userId, {
+      page,
+      limit,
+      ...(emotionTypeId ? { emotionTypeId } : {}),
+    })
     res.json(apiSuccess(result, '获取情绪记录成功'))
   } catch (error) {
     console.error(error)

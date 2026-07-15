@@ -16,6 +16,7 @@ import {
   deleteMood,
   findMoodById,
   getMoodAnalysis,
+  getMoodsByEmotionType,
   getMoodsWithRelations,
   getMoodTotalCount,
   getMoodTrend as getMoodTrendModel,
@@ -253,6 +254,27 @@ describe('moodController response contract', () => {
       code: 0,
       data: { id: 9, name: '新标签' },
       message: '创建成功',
+    })
+  })
+
+  it('routes emotion-type filtered list requests through mood service', async () => {
+    mockMoodService.listMoods.mockResolvedValue({ list: [], total: 0, page: 1, limit: 20 })
+    const req = createRequest({ query: { emotionTypeId: '2' } })
+    const res = createResponse()
+
+    await getMoodList(req, res)
+
+    expect(mockMoodService.listMoods).toHaveBeenCalledWith(1, {
+      page: 1,
+      limit: 20,
+      emotionTypeId: 2,
+    })
+    expect(getMoodsByEmotionType).not.toHaveBeenCalled()
+    expect(getMoodTotalCount).not.toHaveBeenCalled()
+    expect(res.json).toHaveBeenCalledWith({
+      code: 0,
+      message: '获取情绪记录成功',
+      data: { list: [], total: 0, page: 1, limit: 20 },
     })
   })
 })
