@@ -1,7 +1,6 @@
 import { Response } from 'express'
 import { AuthRequest } from '../middleware/auth'
 import {
-  createMood,
   createMoodWithRelations,
   getMoodsByUser,
   getMoodsWithRelations,
@@ -67,7 +66,9 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
       return res.status(400).json(apiFailure(400, '情绪类型和强度为必填'))
     }
 
-    const moodTypeStr = Array.isArray(moodType) ? moodType.join(',') : moodType
+    const moodTypeNames = (Array.isArray(moodType) ? moodType : String(moodType).split(/[,，、]/))
+      .map((item) => String(item).trim())
+      .filter(Boolean)
     const resolvedIntensity = Number(rawIntensity)
 
     if (!Number.isFinite(resolvedIntensity) || resolvedIntensity < 1 || resolvedIntensity > 10) {
@@ -75,17 +76,30 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
     }
 
     const date = recordDate || new Date().toISOString().split('T')[0]
-    const tagsStr = Array.isArray(tags) ? tags.join(',') : tags || ''
+    const emotionTypes = await moodService.listEmotionTypes()
+    const matchedEmotions = moodTypeNames.map((name) => emotionTypes.find((type) => type.name === name))
 
-    await createMood(
+    if (matchedEmotions.some((emotion) => !emotion)) {
+      return res.status(400).json(apiFailure(400, '情绪类型不存在'))
+    }
+
+    const tagNames = (Array.isArray(tags) ? tags : String(tags || '').split(/[,，、]/))
+      .map((item) => String(item).trim())
+      .filter(Boolean)
+    const resolvedTags = await Promise.all(tagNames.map((name) => moodService.createOrGetTag(name, userId)))
+
+    await moodService.recordMood({
       userId,
-      moodTypeStr,
-      resolvedIntensity,
-      event || '',
-      tagsStr,
-      trigger || '',
-      date
-    )
+      note: event || '',
+      trigger: trigger || '',
+      recordedAt: new Date(`${date}T00:00:00.000Z`),
+      emotions: matchedEmotions.map((emotion, index) => ({
+        emotionTypeId: emotion!.id,
+        intensity: resolvedIntensity,
+        isPrimary: index === 0,
+      })),
+      tagIds: resolvedTags.map((tag) => tag.id),
+    })
     await clearMoodCache(userId)
     res.status(201).json(apiSuccess(null, '记录成功'))
   } catch (error) {

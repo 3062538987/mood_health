@@ -138,6 +138,41 @@ describe('moodController response contract', () => {
     expect(res.json).toHaveBeenCalledWith({ code: 0, message: '记录成功', data: null })
   })
 
+  it('routes legacy mood write payloads through mood service', async () => {
+    mockMoodService.listEmotionTypes.mockResolvedValue([
+      { id: 3, name: 'anxious', icon: 'alert', category: 'negative' },
+    ])
+    mockMoodService.createOrGetTag.mockResolvedValue({ id: 8, name: 'study' })
+    mockMoodService.recordMood.mockResolvedValue(11)
+    const req = createRequest({
+      body: {
+        moodType: 'anxious',
+        intensity: 4,
+        event: 'legacy-note',
+        tags: ['study'],
+        trigger: 'exam',
+        recordDate: '2026-07-15',
+      },
+    })
+    const res = createResponse()
+
+    await recordMood(req, res)
+
+    expect(mockMoodService.listEmotionTypes).toHaveBeenCalledWith()
+    expect(mockMoodService.createOrGetTag).toHaveBeenCalledWith('study', 1)
+    expect(mockMoodService.recordMood).toHaveBeenCalledWith({
+      userId: 1,
+      note: 'legacy-note',
+      trigger: 'exam',
+      recordedAt: new Date('2026-07-15T00:00:00.000Z'),
+      emotions: [{ emotionTypeId: 3, intensity: 4, isPrimary: true }],
+      tagIds: [8],
+    })
+    expect(createMood).not.toHaveBeenCalled()
+    expect(res.status).toHaveBeenCalledWith(201)
+    expect(res.json).toHaveBeenCalledWith({ code: 0, message: '记录成功', data: null })
+  })
+
   it('returns a paginated list DTO', async () => {
     mockMoodService.listMoods.mockResolvedValue({ list: [], total: 0, page: 2, limit: 10 })
     const req = createRequest({ query: { page: '2', size: '10' } })
