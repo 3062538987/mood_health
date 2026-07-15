@@ -1,11 +1,6 @@
 import { Response, NextFunction } from "express";
 import { body, validationResult } from "express-validator";
 import { AuthRequest } from "../middleware/auth";
-import {
-  getQuestionnaireById,
-  getQuestionsByQuestionnaireId,
-  getUserAssessmentHistory,
-} from "../models/questionnaireModel";
 import { apiFailure, apiSuccess } from "../utils/apiResponse";
 import { createAssessmentService } from "../services/assessmentService";
 
@@ -244,7 +239,7 @@ export const getUserAssessmentHistoryController = async (
 ) => {
   try {
     const userId = req.user!.userId;
-    const history = await getUserAssessmentHistory(userId);
+    const history = await assessmentService.listUserAssessmentHistory(userId);
     res.json(apiSuccess(history, "获取筛查历史成功"));
   } catch (error) {
     next(error);

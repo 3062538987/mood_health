@@ -19,6 +19,7 @@ var mockAssessmentService: {
   getQuestionnaireById: jest.Mock
   listQuestionsByQuestionnaireId: jest.Mock
   createSubmittedSession: jest.Mock
+  listUserAssessmentHistory: jest.Mock
 }
 
 jest.mock('../../../src/models/questionnaireModel', () => ({
@@ -36,6 +37,7 @@ jest.mock('../../../src/services/assessmentService', () => ({
       getQuestionnaireById: jest.fn(),
       listQuestionsByQuestionnaireId: jest.fn(),
       createSubmittedSession: jest.fn(),
+      listUserAssessmentHistory: jest.fn(),
     }
     return mockAssessmentService
   }),
@@ -162,7 +164,7 @@ describe('questionnaireController contract', () => {
         type: 'SDS',
       },
     ]
-    jest.mocked(getUserAssessmentHistory).mockResolvedValue(history)
+    mockAssessmentService.listUserAssessmentHistory.mockResolvedValue(history)
     const response = createResponse()
 
     await getUserAssessmentHistoryController(createRequest(), response, next)
@@ -172,5 +174,6 @@ describe('questionnaireController contract', () => {
       message: '获取筛查历史成功',
       data: history,
     })
+    expect(getUserAssessmentHistory).not.toHaveBeenCalled()
   })
 })
