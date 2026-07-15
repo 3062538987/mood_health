@@ -11,6 +11,9 @@ export interface User {
   created_at?: string
 }
 
+const getErrorMessage = (error: unknown, fallback: string): string =>
+  error instanceof Error && error.message ? error.message : fallback
+
 export const useUserStore = defineStore('user', () => {
   const user = ref<User | null>(null)
   const token = ref<string>(localStorage.getItem('token') || '')
@@ -43,8 +46,7 @@ export const useUserStore = defineStore('user', () => {
       })
       return true
     } catch (err: unknown) {
-      const errorResponse = err as { response?: { data?: { message?: string } } }
-      error.value = errorResponse.response?.data?.message || '注册失败'
+      error.value = getErrorMessage(err, '注册失败')
       return false
     } finally {
       loading.value = false
@@ -68,8 +70,7 @@ export const useUserStore = defineStore('user', () => {
       user.value = userData
       return true
     } catch (err: unknown) {
-      const errorResponse = err as { response?: { data?: { message?: string } } }
-      error.value = errorResponse.response?.data?.message || '登录失败'
+      error.value = getErrorMessage(err, '登录失败')
       return false
     } finally {
       loading.value = false
@@ -79,11 +80,11 @@ export const useUserStore = defineStore('user', () => {
   const fetchUserInfo = async (): Promise<boolean> => {
     if (!token.value) return false
     try {
-      const response = await request<{ code: number; data: { user: User } }>({
+      const response = await request<{ user: User }>({
         url: '/api/auth/me',
         method: 'get',
       })
-      user.value = response.data.user
+      user.value = response.user
       return true
     } catch (err) {
       clearToken()

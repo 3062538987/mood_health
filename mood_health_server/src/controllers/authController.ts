@@ -5,6 +5,7 @@ import { createUser, findUserByUsername, comparePassword, findUserById } from '.
 import dotenv from 'dotenv'
 import { BusinessError, HttpException } from '../utils/errors'
 import logger from '../utils/logger'
+import { apiSuccess } from '../utils/apiResponse'
 
 dotenv.config()
 
@@ -53,7 +54,7 @@ export const register = async (req: Request, res: Response) => {
     // 创建新用户
     await createUser(username, password, buildDefaultEmail(username))
     // 返回成功响应
-    res.status(201).json({ code: 0, message: '注册成功' })
+    res.status(201).json(apiSuccess(null, '注册成功'))
   } catch (error: any) {
     if (error instanceof HttpException || error instanceof BusinessError) {
       logger.warn('用户注册请求被拒绝', {
@@ -97,7 +98,8 @@ export const login = async (req: Request, res: Response) => {
 
     // 生成 JWT 令牌
     if (!process.env.JWT_SECRET) {
-      throw new HttpException('JWT 密钥未配置', 500, null, req.originalUrl)
+      logger.error('JWT_SECRET 未配置', { path: req.originalUrl })
+      throw new HttpException('服务配置错误', 500, null, req.originalUrl)
     }
 
     const token = jwt.sign(
@@ -108,7 +110,7 @@ export const login = async (req: Request, res: Response) => {
 
     // 返回用户信息（不含密码）
     const { password: _, ...userInfo } = user
-    res.json({ code: 0, data: { token, user: userInfo } })
+    res.json(apiSuccess({ token, user: userInfo }, '登录成功'))
   } catch (error: any) {
     if (error instanceof HttpException || error instanceof BusinessError) {
       logger.warn('用户登录失败', {
@@ -142,7 +144,7 @@ export const getMe = async (req: AuthRequest, res: Response) => {
     }
 
     // 返回用户信息
-    res.json({ code: 0, data: { user } })
+    res.json(apiSuccess({ user }, '获取当前用户成功'))
   } catch (error: any) {
     // 让错误处理中间件处理错误
     throw error
