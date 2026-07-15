@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import Home from '@/views/Home.vue'
 import { useUserStore } from '@/stores/userStore'
+import { featureFlags, type FrontendFeatureFlags } from '@/config/featureFlags'
 import {
   getRouteRedirect,
   GUIDE_ROUTE_PATH,
@@ -8,7 +9,7 @@ import {
   shouldRedirectToGuide,
 } from '@/router/guards'
 
-const routes: RouteRecordRaw[] = [
+const baseRoutes: RouteRecordRaw[] = [
   {
     path: '/guide',
     component: () => import('@/views/guide/GuidePage.vue'),
@@ -52,6 +53,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/relax/RelaxLayout.vue'),
     redirect: '/relax/center',
     meta: {
+      feature: 'nonCore',
       subNav: [
         { path: '/relax/center', name: '解压中心', icon: 'fas fa-headphones' },
         { path: '/relax/history', name: '放松历史', icon: 'fas fa-history' },
@@ -98,8 +100,14 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/improve/ImproveLayout.vue'),
     redirect: '/improve/group',
     meta: {
+      disabledRedirect: '/improve/survey',
+      nonCoreSubNavPaths: ['/improve/group', '/improve/knowledge', '/improve/courses'],
       subNav: [
-        { path: '/improve/group', name: '团体辅导', icon: 'fas fa-users' },
+        {
+          path: '/improve/group',
+          name: '团体辅导',
+          icon: 'fas fa-users',
+        },
         { path: '/improve/knowledge', name: '情绪科普', icon: 'fas fa-book' },
         {
           path: '/improve/courses',
@@ -117,23 +125,28 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'group',
         component: () => import('@/views/improve/GroupActivity.vue'),
+        meta: { feature: 'nonCore' },
       },
       {
         path: 'group/:id',
         name: 'ActivityDetail',
         component: () => import('@/views/improve/ActivityDetail.vue'),
+        meta: { feature: 'nonCore' },
       },
       {
         path: 'knowledge',
         component: () => import('@/views/improve/Knowledge.vue'),
+        meta: { feature: 'nonCore' },
       },
       {
         path: 'courses',
         component: () => import('@/views/improve/Courses.vue'),
+        meta: { feature: 'nonCore' },
       },
       {
         path: 'course/:id',
         component: () => import('@/views/improve/CourseDetail.vue'),
+        meta: { feature: 'nonCore' },
       },
       {
         path: 'survey',
@@ -181,14 +194,27 @@ const routes: RouteRecordRaw[] = [
       adminOnly: true,
       roles: ['admin', 'super_admin'],
       permission: 'user.manage',
+      nonCoreSubNavPaths: ['/admin/posts', '/admin/courses', '/admin/music'],
       subNav: [
         { path: '/admin/dashboard', name: '管理首页', icon: 'fas fa-gauge-high' },
         { path: '/admin/users', name: '用户管理', icon: 'fas fa-users-cog' },
         { path: '/admin/user-moods', name: '用户情绪数据', icon: 'fas fa-chart-line' },
         { path: '/admin/moods', name: '情绪记录', icon: 'fas fa-face-smile' },
-        { path: '/admin/posts', name: '帖子审核', icon: 'fas fa-clipboard-check' },
-        { path: '/admin/courses', name: '课程管理', icon: 'fas fa-book-medical' },
-        { path: '/admin/music', name: '音乐管理', icon: 'fas fa-music' },
+        {
+          path: '/admin/posts',
+          name: '帖子审核',
+          icon: 'fas fa-clipboard-check',
+        },
+        {
+          path: '/admin/courses',
+          name: '课程管理',
+          icon: 'fas fa-book-medical',
+        },
+        {
+          path: '/admin/music',
+          name: '音乐管理',
+          icon: 'fas fa-music',
+        },
         { path: '/admin/audit-logs', name: '审计日志', icon: 'fas fa-file-shield' },
       ],
     },
@@ -215,6 +241,7 @@ const routes: RouteRecordRaw[] = [
         path: 'posts',
         component: () => import('@/views/admin/Posts.vue'),
         meta: {
+          feature: 'nonCore',
           adminOnly: true,
           roles: ['admin', 'super_admin'],
           permission: 'post.audit',
@@ -242,6 +269,7 @@ const routes: RouteRecordRaw[] = [
         path: 'courses',
         component: () => import('@/views/admin/Courses.vue'),
         meta: {
+          feature: 'nonCore',
           adminOnly: true,
           roles: ['admin', 'super_admin'],
           permission: 'course.manage',
@@ -251,6 +279,7 @@ const routes: RouteRecordRaw[] = [
         path: 'music',
         component: () => import('@/views/admin/Music.vue'),
         meta: {
+          feature: 'nonCore',
           adminOnly: true,
           roles: ['admin', 'super_admin'],
           permission: 'music.manage',
@@ -279,9 +308,52 @@ const routes: RouteRecordRaw[] = [
   },
 ]
 
+const filterRoutes = (
+  routes: readonly RouteRecordRaw[],
+  flags: FrontendFeatureFlags
+): RouteRecordRaw[] =>
+  routes.flatMap((route) => {
+    const meta = route.meta ? { ...route.meta } : undefined
+    const routeFeature = meta?.feature
+
+    if (!flags.nonCoreModules && routeFeature === 'nonCore') {
+      return []
+    }
+
+    const filteredRoute: RouteRecordRaw = { ...route }
+
+    if (meta) {
+      const subNav = meta.subNav
+      if (Array.isArray(subNav)) {
+        const nonCoreSubNavPaths = new Set(meta.nonCoreSubNavPaths || [])
+        meta.subNav = subNav.filter(
+          (item) => flags.nonCoreModules || !nonCoreSubNavPaths.has(item.path)
+        )
+      }
+
+      if (!flags.nonCoreModules && typeof meta.disabledRedirect === 'string') {
+        filteredRoute.redirect = meta.disabledRedirect
+      }
+
+      delete meta.feature
+      delete meta.disabledRedirect
+      delete meta.nonCoreSubNavPaths
+      filteredRoute.meta = meta
+    }
+
+    if (route.children) {
+      filteredRoute.children = filterRoutes(route.children, flags)
+    }
+
+    return [filteredRoute]
+  })
+
+export const createRoutes = (flags: FrontendFeatureFlags = featureFlags): RouteRecordRaw[] =>
+  filterRoutes(baseRoutes, flags)
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes,
+  routes: createRoutes(),
 })
 
 router.onError((error) => {

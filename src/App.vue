@@ -13,7 +13,7 @@
             <i class="fas fa-smile"></i> 情绪
           </router-link>
 
-          <router-link to="/relax" active-class="active">
+          <router-link v-if="featureFlags.nonCoreModules" to="/relax" active-class="active">
             <i class="fas fa-leaf"></i> 放松
           </router-link>
           <router-link to="/improve" active-class="active">
@@ -76,7 +76,7 @@
       </router-link>
     </nav>
     <!-- 成就通知 -->
-    <AchievementNotification />
+    <AchievementNotification v-if="featureFlags.nonCoreModules" />
   </div>
 </template>
 
@@ -86,6 +86,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
 import { useMoodStore } from '@/stores/moodStore'
 import AchievementNotification from '@/components/shared/AchievementNotification.vue'
+import { featureFlags } from '@/config/featureFlags'
 
 const route = useRoute()
 const router = useRouter()

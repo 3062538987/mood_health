@@ -12,15 +12,15 @@
         <h3>用户情绪数据</h3>
         <p>查看用户情绪记录，支持筛选、分页与导出。</p>
       </router-link>
-      <router-link class="card" to="/admin/posts">
+      <router-link v-if="featureFlags.nonCoreModules" class="card" to="/admin/posts">
         <h3>帖子审核</h3>
         <p>快速审核帖子内容并处理状态。</p>
       </router-link>
-      <router-link class="card" to="/admin/courses">
+      <router-link v-if="featureFlags.nonCoreModules" class="card" to="/admin/courses">
         <h3>课程管理</h3>
         <p>维护课程内容和可见状态。</p>
       </router-link>
-      <router-link class="card" to="/admin/music">
+      <router-link v-if="featureFlags.nonCoreModules" class="card" to="/admin/music">
         <h3>音乐管理</h3>
         <p>维护音乐疗愈资源信息。</p>
       </router-link>
@@ -31,6 +31,10 @@
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { featureFlags } from '@/config/featureFlags'
+</script>
 
 <style scoped lang="scss">
 .admin-page {
