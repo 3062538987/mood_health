@@ -5,7 +5,6 @@ import {
   createMoodWithRelations,
   getMoodsByUser,
   getMoodsWithRelations,
-  getWeeklyReport,
   findMoodById,
   findMoodWithRelationsById,
   updateMood,
@@ -121,7 +120,7 @@ export const getMoodList = async (req: AuthRequest, res: Response) => {
 export const getWeeklyReportHandler = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.userId
-    const report = await getWeeklyReport(userId)
+    const report = await moodService.getWeeklyReport(userId)
     res.json(apiSuccess(report, '获取情绪周报成功'))
   } catch (error) {
     console.error(error)
