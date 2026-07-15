@@ -348,8 +348,8 @@ const filterRoutes = (
     return [filteredRoute]
   })
 
-export const createRoutes = (flags: FrontendFeatureFlags = featureFlags): RouteRecordRaw[] =>
-  filterRoutes(baseRoutes, flags)
+export const createRoutes = (_flags: FrontendFeatureFlags = featureFlags): RouteRecordRaw[] =>
+  filterRoutes(baseRoutes, featureFlags)
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
