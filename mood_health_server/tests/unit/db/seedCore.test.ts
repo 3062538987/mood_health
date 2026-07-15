@@ -42,6 +42,7 @@ describe('core seed', () => {
 
     const sqlText = db.queries.map((query) => query.sql).join('\n')
     expect(sqlText).toContain('ON DUPLICATE KEY UPDATE')
+    expect(sqlText).not.toContain('created_at = created_at')
     expect(sqlText).not.toContain('assessment_instruments')
     expect(sqlText).not.toContain('assessment_versions')
     expect(db.queries.every((query) => query.params.length > 0)).toBe(true)

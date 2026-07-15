@@ -120,7 +120,7 @@ export const seedReferenceData = async (db: SeedDatabase): Promise<ReferenceSeed
          FROM roles
          JOIN permissions ON permissions.code = ?
          WHERE roles.code = ?
-         ON DUPLICATE KEY UPDATE created_at = created_at`,
+         ON DUPLICATE KEY UPDATE created_at = role_permissions.created_at`,
         [now, permissionCode, roleCode]
       )
       rolePermissionCount += 1
