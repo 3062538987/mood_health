@@ -9,21 +9,25 @@ import type { CorsOptions } from 'cors'
 import { query } from './config/database'
 import authRoutes from './routes/authRoutes'
 import moodRoutes from './routes/moodRoutes'
-import activityRoutes from './routes/activityRoutes'
-import postRoutes from './routes/postRoutes'
 import questionnaireRoutes from './routes/questionnaireRoutes'
-import musicRoutes from './routes/musicRoutes'
-import courseRoutes from './routes/courseRoutes'
-import relaxRoutes from './routes/relaxRoutes'
-import achievementRoutes from './routes/achievementRoutes'
 import auditRoutes from './routes/auditRoutes'
 import managementRoutes from './routes/managementRoutes'
 import logger, { summarizeRequestBody } from './utils/logger'
 import redisClient from './utils/redis.client'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler'
 import { API_ERROR_CODES, apiFailure, apiSuccess } from './utils/apiResponse'
+import { getFeatureFlags } from './config/featureFlags'
 
 dotenv.config()
+
+const NON_CORE_ROUTES = [
+  { path: '/api/activities', modulePath: './routes/activityRoutes' },
+  { path: '/api/posts', modulePath: './routes/postRoutes' },
+  { path: '/api/music', modulePath: './routes/musicRoutes' },
+  { path: '/api/courses', modulePath: './routes/courseRoutes' },
+  { path: '/api/relax', modulePath: './routes/relaxRoutes' },
+  { path: '/api/achievements', modulePath: './routes/achievementRoutes' },
+] as const
 
 export const createApp = () => {
   const app = express()
@@ -123,13 +127,23 @@ export const createApp = () => {
   app.use('/api/auth/login', limiter)
   app.use('/api/auth', authRoutes)
   app.use('/api/moods', moodRoutes)
-  app.use('/api/activities', activityRoutes)
-  app.use('/api/posts', postRoutes)
   app.use('/api/questionnaires', questionnaireRoutes)
-  app.use('/api/music', musicRoutes)
-  app.use('/api/courses', courseRoutes)
-  app.use('/api/relax', relaxRoutes)
-  app.use('/api/achievements', achievementRoutes)
+
+  if (getFeatureFlags().nonCoreModules) {
+    for (const route of NON_CORE_ROUTES) {
+      const routeModule = require(route.modulePath) as { default: express.Router }
+      app.use(route.path, routeModule.default)
+    }
+  } else {
+    for (const route of NON_CORE_ROUTES) {
+      app.use(route.path, (_request, response) => {
+        response
+          .status(503)
+          .json(apiFailure(API_ERROR_CODES.FEATURE_DISABLED, '功能未启用'))
+      })
+    }
+  }
+
   app.use('/api/audit', auditRoutes)
   app.use('/api', managementRoutes)
 
