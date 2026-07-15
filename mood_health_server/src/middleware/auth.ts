@@ -2,8 +2,6 @@ import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
 import logger from '../utils/logger'
-import { logOperation } from '../utils/operationLogger'
-import { UserRole, isValidUserRole } from '../models/userModel'
 import { apiFailure, businessCodeForHttpStatus } from '../utils/apiResponse'
 
 dotenv.config()
@@ -42,12 +40,73 @@ interface RolePermissionConfig {
   forbidden: readonly PermissionCode[]
 }
 
+export type UserRole = 'student' | 'counselor' | 'super_admin' | 'user' | 'admin'
+
+const USER_ROLES: readonly UserRole[] = ['student', 'counselor', 'super_admin', 'user', 'admin']
+
+export const isValidUserRole = (role: unknown): role is UserRole => {
+  return typeof role === 'string' && USER_ROLES.includes(role as UserRole)
+}
+
 /**
  * 角色-权限映射表
  * granted: 当前角色允许的权限
  * forbidden: 当前角色显式禁止的权限（命中直接 403）
  */
 export const rolePermissions: Record<UserRole, RolePermissionConfig> = {
+  student: {
+    granted: [
+      'auth.profile.read',
+      'mood.record.create',
+      'mood.record.read',
+      'mood.record.update',
+      'mood.record.delete',
+      'mood.advice.history.read',
+      'post.create',
+      'post.comment.create',
+      'post.like',
+      'activity.join',
+      'questionnaire.read',
+      'questionnaire.submit',
+      'relax.record.manage',
+      'achievement.read',
+    ],
+    forbidden: [
+      'post.audit',
+      'post.audit.pending.read',
+      'activity.manage',
+      'course.manage',
+      'music.manage',
+      'user.manage',
+      'role.manage',
+      'system.config',
+      'incident.fix',
+      'audit.record.view_all',
+      'feedback.handle',
+      'report.view',
+      'auth.register.role_assign',
+    ],
+  },
+  counselor: {
+    granted: [
+      'auth.profile.read',
+      'audit.record.view_all',
+      'report.view',
+      'feedback.handle',
+      'mood.record.read',
+      'questionnaire.submit',
+    ],
+    forbidden: [
+      'user.manage',
+      'role.manage',
+      'system.config',
+      'incident.fix',
+      'auth.register.role_assign',
+      'activity.manage',
+      'course.manage',
+      'music.manage',
+    ],
+  },
   super_admin: {
     granted: [
       'user.manage',
@@ -142,6 +201,17 @@ const getClientIp = (req: Request): string => {
   return req.ip || '-'
 }
 
+const auditAccessDenied = async (
+  userId: number,
+  userRole: string,
+  permissionCode: string,
+  content: string,
+  ip: string
+): Promise<void> => {
+  const { logOperation } = await import('../utils/operationLogger.js')
+  await logOperation(userId, userRole, permissionCode, 'ACCESS_DENIED', null, content, 'failed', ip)
+}
+
 const getRoleFromToken = (role: unknown): UserRole => {
   if (isValidUserRole(role)) {
     return role
@@ -201,14 +271,11 @@ export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction
       username: req.user.username,
       role: req.user.role,
     })
-    void logOperation(
+    void auditAccessDenied(
       req.user.userId,
       req.user.role,
       'post.audit',
-      'ACCESS_DENIED',
-      null,
       `requireAdmin 拒绝访问: ${req.originalUrl}`,
-      'failed',
       getClientIp(req)
     )
     return sendAuthError(req, res, 403, '需要管理员权限')
@@ -237,14 +304,11 @@ export const requireRole = (roles: string[]) => {
         role: req.user.role,
         requiredRoles: roles,
       })
-      void logOperation(
+      void auditAccessDenied(
         req.user.userId,
         req.user.role,
         'role.check',
-        'ACCESS_DENIED',
-        null,
         `角色校验失败: path=${req.originalUrl}, requiredRoles=${roles.join(',')}`,
-        'failed',
         getClientIp(req)
       )
       return sendAuthError(req, res, 403, '角色权限不足')
@@ -275,14 +339,11 @@ export const requirePermission = (permission: string) => {
         role: userRole,
         permission,
       })
-      void logOperation(
+      void auditAccessDenied(
         req.user.userId,
         userRole,
         permission,
-        'ACCESS_DENIED',
-        null,
         `命中禁止权限: ${req.originalUrl}`,
-        'failed',
         getClientIp(req)
       )
       return sendAuthError(req, res, 403, '权限不足：该操作被禁止')
@@ -295,14 +356,11 @@ export const requirePermission = (permission: string) => {
         role: userRole,
         permission,
       })
-      void logOperation(
+      void auditAccessDenied(
         req.user.userId,
         userRole,
         permission,
-        'ACCESS_DENIED',
-        null,
         `权限校验失败: ${req.originalUrl}`,
-        'failed',
         getClientIp(req)
       )
       return sendAuthError(req, res, 403, '权限不足')
