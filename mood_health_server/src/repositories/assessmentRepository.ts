@@ -32,6 +32,17 @@ export interface QuestionDto {
   is_reverse: boolean
 }
 
+export interface UserAssessmentHistoryDto {
+  id: number
+  user_id: number
+  questionnaire_id: number
+  score: number
+  result_text: string
+  created_at: Date | string
+  title: string
+  type: string
+}
+
 export interface SubmittedAssessmentAnswerInput {
   itemId: number
   value: number
@@ -66,6 +77,17 @@ type QuestionRow = RowDataPacket & {
   is_reverse: number | boolean
 }
 
+type UserAssessmentHistoryRow = RowDataPacket & {
+  id: number
+  user_id: number
+  questionnaire_id: number
+  score: number | string
+  result_text: string | null
+  created_at: Date | string
+  title: string
+  type: string
+}
+
 const mapQuestionnaire = (row: QuestionnaireRow): QuestionnaireDto => ({
   id: row.id,
   title: row.title,
@@ -82,6 +104,17 @@ const mapQuestion = (row: QuestionRow): QuestionDto => ({
   options: row.options,
   sort_order: row.sort_order,
   is_reverse: Boolean(row.is_reverse),
+})
+
+const mapUserAssessmentHistory = (row: UserAssessmentHistoryRow): UserAssessmentHistoryDto => ({
+  id: row.id,
+  user_id: row.user_id,
+  questionnaire_id: row.questionnaire_id,
+  score: Number(row.score),
+  result_text: row.result_text ?? '',
+  created_at: row.created_at,
+  title: row.title,
+  type: row.type,
 })
 
 export const createAssessmentRepository = (db: AssessmentDatabase = getMysqlPool()) => {
@@ -201,11 +234,36 @@ export const createAssessmentRepository = (db: AssessmentDatabase = getMysqlPool
     }
   }
 
+  const listUserAssessmentHistory = async (userId: number): Promise<UserAssessmentHistoryDto[]> => {
+    const [rows] = await db.query<UserAssessmentHistoryRow[]>(
+      `
+        SELECT
+          s.id AS id,
+          s.user_id AS user_id,
+          s.assessment_version_id AS questionnaire_id,
+          s.raw_score AS score,
+          JSON_UNQUOTE(JSON_EXTRACT(s.result_summary_json, '$.result_text')) AS result_text,
+          s.created_at AS created_at,
+          i.name AS title,
+          i.code AS type
+        FROM assessment_sessions s
+        INNER JOIN assessment_versions v ON v.id = s.assessment_version_id
+        INNER JOIN assessment_instruments i ON i.id = v.instrument_id
+        WHERE s.user_id = ?
+          AND s.status = 'submitted'
+        ORDER BY s.created_at DESC, s.id DESC
+      `,
+      [userId]
+    )
+    return rows.map(mapUserAssessmentHistory)
+  }
+
   return {
     listQuestionnaires,
     getQuestionnaireById,
     listQuestionsByQuestionnaireId,
     createSubmittedSession,
+    listUserAssessmentHistory,
   }
 }
 

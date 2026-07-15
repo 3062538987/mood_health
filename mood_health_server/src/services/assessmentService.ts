@@ -21,11 +21,15 @@ export const createAssessmentService = (dependencies: AssessmentServiceDependenc
     input: Parameters<AssessmentRepository['createSubmittedSession']>[0]
   ) => repository.createSubmittedSession(input)
 
+  const listUserAssessmentHistory = async (userId: number) =>
+    repository.listUserAssessmentHistory(userId)
+
   return {
     listQuestionnaires,
     getQuestionnaireById,
     listQuestionsByQuestionnaireId,
     createSubmittedSession,
+    listUserAssessmentHistory,
   }
 }
 

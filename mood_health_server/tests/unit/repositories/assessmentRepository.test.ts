@@ -189,4 +189,40 @@ describe('assessmentRepository', () => {
     expect(db.connection.calls[2].sql).toContain('INSERT INTO assessment_answers')
     expect(db.connection.calls[2].params).toEqual([31, 22, JSON.stringify(3), 4, new Date('2026-07-15T12:00:00.000Z')])
   })
+
+  it('lists user assessment history from submitted sessions with legacy DTO fields', async () => {
+    const db = new FakeAssessmentDb()
+    db.queueRows([
+      {
+        id: 31,
+        user_id: 7,
+        questionnaire_id: 12,
+        score: '9.00',
+        result_text: '筛查提示：低风险',
+        created_at: new Date('2026-07-15T12:00:00.000Z'),
+        title: '程序验证夹具',
+        type: 'TECHNICAL_FIXTURE',
+      },
+    ])
+    const repository = createAssessmentRepository(db)
+
+    await expect(repository.listUserAssessmentHistory(7)).resolves.toEqual([
+      {
+        id: 31,
+        user_id: 7,
+        questionnaire_id: 12,
+        score: 9,
+        result_text: '筛查提示：低风险',
+        created_at: new Date('2026-07-15T12:00:00.000Z'),
+        title: '程序验证夹具',
+        type: 'TECHNICAL_FIXTURE',
+      },
+    ])
+
+    expect(db.calls[0].sql).toContain('assessment_sessions')
+    expect(db.calls[0].sql).toContain('assessment_versions')
+    expect(db.calls[0].sql).toContain('assessment_instruments')
+    expect(db.calls[0].sql).not.toContain('user_assessments')
+    expect(db.calls[0].params).toEqual([7])
+  })
 })

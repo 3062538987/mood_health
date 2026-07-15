@@ -13,6 +13,7 @@ const createRepository = (): jest.Mocked<AssessmentRepository> => ({
   getQuestionnaireById: jest.fn(),
   listQuestionsByQuestionnaireId: jest.fn(),
   createSubmittedSession: jest.fn(),
+  listUserAssessmentHistory: jest.fn(),
 })
 
 describe('assessmentService', () => {
@@ -98,5 +99,37 @@ describe('assessmentService', () => {
       answers: [{ itemId: 21, value: 0, score: 1 }],
       submittedAt,
     })
+  })
+
+  it('lists user assessment history through the repository boundary', async () => {
+    const repository = createRepository()
+    repository.listUserAssessmentHistory.mockResolvedValue([
+      {
+        id: 31,
+        user_id: 7,
+        questionnaire_id: 12,
+        score: 9,
+        result_text: '筛查提示：低风险',
+        created_at: '2026-07-15T12:00:00.000Z',
+        title: '程序验证夹具',
+        type: 'TECHNICAL_FIXTURE',
+      },
+    ])
+    jest.mocked(createAssessmentRepository).mockReturnValue(repository)
+    const service = createAssessmentService()
+
+    await expect(service.listUserAssessmentHistory(7)).resolves.toEqual([
+      {
+        id: 31,
+        user_id: 7,
+        questionnaire_id: 12,
+        score: 9,
+        result_text: '筛查提示：低风险',
+        created_at: '2026-07-15T12:00:00.000Z',
+        title: '程序验证夹具',
+        type: 'TECHNICAL_FIXTURE',
+      },
+    ])
+    expect(repository.listUserAssessmentHistory).toHaveBeenCalledWith(7)
   })
 })
