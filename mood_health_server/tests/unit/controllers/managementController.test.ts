@@ -1,24 +1,18 @@
 import { NextFunction, Response } from 'express'
-import { sqliteAll } from '../../../src/config/sqlite'
 
 var mockManagementService: {
   listAdminUsers: jest.Mock
   listAdminMoods: jest.Mock
+  findAdminUserById: jest.Mock
+  updateUserRole: jest.Mock
+  deleteUserById: jest.Mock
 } = {
   listAdminUsers: jest.fn(),
   listAdminMoods: jest.fn(),
+  findAdminUserById: jest.fn(),
+  updateUserRole: jest.fn(),
+  deleteUserById: jest.fn(),
 }
-
-jest.mock('../../../src/config/database', () => ({
-  __esModule: true,
-  default: { request: jest.fn() },
-  isSqliteClient: true,
-}))
-
-jest.mock('../../../src/config/sqlite', () => ({
-  sqliteAll: jest.fn(),
-  sqliteRun: jest.fn(),
-}))
 
 jest.mock('../../../src/config/mysql', () => ({
   getMysqlPool: jest.fn(() => ({ query: jest.fn().mockResolvedValue([[], []]) })),
@@ -29,13 +23,12 @@ jest.mock('../../../src/services/managementService', () => ({
     mockManagementService = {
       listAdminUsers: jest.fn(),
       listAdminMoods: jest.fn(),
+      findAdminUserById: jest.fn(),
+      updateUserRole: jest.fn(),
+      deleteUserById: jest.fn(),
     }
     return mockManagementService
   }),
-}))
-
-jest.mock('../../../src/utils/encryption', () => ({
-  decryptField: jest.fn((value: string) => value),
 }))
 
 jest.mock('../../../src/utils/operationLogger', () => ({
@@ -48,17 +41,12 @@ jest.mock('../../../src/middleware/auth', () => ({
   }),
 }))
 
-jest.mock('../../../src/models/userModel', () => ({
-  deleteUserById: jest.fn(),
-  findUserById: jest.fn(),
-  isValidUserRole: jest.fn((role: string) => ['user', 'admin', 'super_admin'].includes(role)),
-  updateUserRole: jest.fn(),
-}))
-
-const { adminMoodsListHandler, adminUsersListHandler } = require('../../../src/controllers/managementController')
+const {
+  adminMoodsListHandler,
+  adminUsersListHandler,
+  adminUsersUpdateRoleHandler,
+} = require('../../../src/controllers/managementController')
 const { requirePermission } = require('../../../src/middleware/auth')
-
-const sqliteAllMock = jest.mocked(sqliteAll)
 
 const createResponse = () => {
   const response = { status: jest.fn(), json: jest.fn() }
@@ -99,7 +87,6 @@ describe('managementController contract', () => {
     await adminUsersListHandler(createRequest({ originalUrl: '/api/admin/users' }), response)
 
     expect(mockManagementService.listAdminUsers).toHaveBeenCalledWith()
-    expect(sqliteAllMock).not.toHaveBeenCalled()
     expect(response.json).toHaveBeenCalledWith({
       code: 0,
       message: '获取用户列表成功',
@@ -168,7 +155,23 @@ describe('managementController contract', () => {
       endDate: undefined,
       moodType: undefined,
     })
-    expect(sqliteAllMock).not.toHaveBeenCalled()
+  })
+
+  it('updates user roles through the management service boundary', async () => {
+    mockManagementService.updateUserRole.mockResolvedValue(true)
+    const response = createResponse()
+
+    await adminUsersUpdateRoleHandler(
+      createRequest({ body: { userId: 2, targetRole: 'admin' } }),
+      response
+    )
+
+    expect(mockManagementService.updateUserRole).toHaveBeenCalledWith(2, 'admin')
+    expect(response.json).toHaveBeenCalledWith({
+      code: 0,
+      message: '用户角色更新成功',
+      data: null,
+    })
   })
 
   it('denies a student access with the unified 403 contract', () => {

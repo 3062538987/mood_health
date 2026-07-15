@@ -1,15 +1,14 @@
 import { Response } from 'express'
-import sql from 'mssql'
-import pool from '../config/database'
-import { isSqliteClient } from '../config/database'
-import { sqliteAll, sqliteRun } from '../config/sqlite'
 import type { AuthRequest } from '../middleware/auth'
 import { logOperation } from '../utils/operationLogger'
-import { deleteUserById, findUserById, isValidUserRole, updateUserRole } from '../models/userModel'
 import { apiFailure, apiSuccess } from '../utils/apiResponse'
 import { createManagementService } from '../services/managementService'
+import type { LegacyAdminRole } from '../repositories/managementRepository'
 
 const managementService = createManagementService()
+
+const isValidUserRole = (role: unknown): role is LegacyAdminRole =>
+  role === 'user' || role === 'admin' || role === 'super_admin'
 
 interface AdminUserItem {
   id: number
@@ -131,9 +130,9 @@ export const adminUsersUpdateRoleHandler = async (req: AuthRequest, res: Respons
         .json(apiFailure(400, 'targetRole 非法，仅支持 user/admin/super_admin'))
     }
 
-    const updateResult = await updateUserRole(userId, targetRole)
+    const updated = await managementService.updateUserRole(userId, targetRole)
 
-    if ((updateResult.rowsAffected?.[0] || 0) === 0) {
+    if (!updated) {
       await logOperation(
         req.user!.userId,
         req.user!.role,
@@ -177,7 +176,7 @@ export const adminUsersDeleteHandler = async (req: AuthRequest, res: Response) =
       return res.status(400).json(apiFailure(400, '不能删除当前登录用户'))
     }
 
-    const targetUser = await findUserById(userId)
+    const targetUser = await managementService.findAdminUserById(userId)
     if (!targetUser) {
       await logOperation(
         req.user!.userId,
@@ -197,9 +196,9 @@ export const adminUsersDeleteHandler = async (req: AuthRequest, res: Response) =
       return res.status(403).json(apiFailure(403, '不能删除超级管理员'))
     }
 
-    const deleteResult = await deleteUserById(userId)
+    const deleted = await managementService.deleteUserById(userId)
 
-    if ((deleteResult.rowsAffected?.[0] || 0) === 0) {
+    if (!deleted) {
       await logOperation(
         req.user!.userId,
         req.user!.role,
@@ -245,8 +244,8 @@ export const roleManageHandler = async (req: AuthRequest, res: Response) => {
         .json(apiFailure(400, 'targetRole 非法，仅支持 user/admin/super_admin'))
     }
 
-    const updateResult = await updateUserRole(targetUserId, targetRole)
-    if ((updateResult.rowsAffected?.[0] || 0) === 0) {
+    const updated = await managementService.updateUserRole(targetUserId, targetRole)
+    if (!updated) {
       await logOperation(
         req.user!.userId,
         req.user!.role,
@@ -303,34 +302,13 @@ export const incidentFixHandler = async (req: AuthRequest, res: Response) => {
   try {
     const { issueDescription, fixContent, result = 'success' } = req.body
 
-    if (isSqliteClient) {
-      sqliteRun(
-        `
-          INSERT INTO incident_fix_list (fixer_id, fixer_role, issue_description, fix_content, result)
-          VALUES (?, ?, ?, ?, ?)
-        `,
-        [req.user!.userId, req.user!.role, issueDescription, fixContent, result]
-      )
-    } else {
-      await pool
-        .request()
-        .input('fixerId', sql.Int, req.user!.userId)
-        .input('fixerRole', sql.NVarChar(20), req.user!.role)
-        .input('issueDescription', sql.NVarChar(sql.MAX), issueDescription)
-        .input('fixContent', sql.NVarChar(sql.MAX), fixContent)
-        .input('result', sql.NVarChar(20), result).query(`
-          INSERT INTO incident_fix_list (fixer_id, fixer_role, issue_description, fix_content, result)
-          VALUES (@fixerId, @fixerRole, @issueDescription, @fixContent, @result)
-        `)
-    }
-
     await logOperation(
       req.user!.userId,
       req.user!.role,
       'incident.fix',
       'INCIDENT_FIX',
       null,
-      `issue=${String(issueDescription || '').slice(0, 120)}`,
+      `issue=${String(issueDescription || '').slice(0, 120)}; fix=${String(fixContent || '').slice(0, 120)}; result=${result}`,
       'success',
       getClientIp(req)
     )
@@ -355,34 +333,13 @@ export const feedbackHandleHandler = async (req: AuthRequest, res: Response) => 
   try {
     const { feedbackId, handleContent, closeStatus = 'closed' } = req.body
 
-    if (isSqliteClient) {
-      sqliteRun(
-        `
-          INSERT INTO feedback_close_list (handler_id, handler_role, feedback_id, handle_content, close_status)
-          VALUES (?, ?, ?, ?, ?)
-        `,
-        [req.user!.userId, req.user!.role, String(feedbackId || ''), handleContent, closeStatus]
-      )
-    } else {
-      await pool
-        .request()
-        .input('handlerId', sql.Int, req.user!.userId)
-        .input('handlerRole', sql.NVarChar(20), req.user!.role)
-        .input('feedbackId', sql.NVarChar(100), String(feedbackId || ''))
-        .input('handleContent', sql.NVarChar(sql.MAX), handleContent)
-        .input('closeStatus', sql.NVarChar(20), closeStatus).query(`
-          INSERT INTO feedback_close_list (handler_id, handler_role, feedback_id, handle_content, close_status)
-          VALUES (@handlerId, @handlerRole, @feedbackId, @handleContent, @closeStatus)
-        `)
-    }
-
     await logOperation(
       req.user!.userId,
       req.user!.role,
       'feedback.handle',
       'FEEDBACK_HANDLE',
       feedbackId ? String(feedbackId) : null,
-      `closeStatus=${closeStatus}`,
+      `closeStatus=${closeStatus}; handle=${String(handleContent || '').slice(0, 120)}`,
       'success',
       getClientIp(req)
     )
