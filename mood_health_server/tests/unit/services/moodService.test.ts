@@ -14,6 +14,7 @@ const createRepository = (): jest.Mocked<MoodRepository> => ({
   createOrGetTag: jest.fn(),
   listTrendRows: jest.fn(),
   listWeeklyRows: jest.fn(),
+  listAnalysisRows: jest.fn(),
 })
 
 describe('moodService', () => {
@@ -364,6 +365,86 @@ describe('moodService', () => {
       dailyData: [],
       mostFrequentMood: '',
       summary: '本周暂无情绪记录。',
+    })
+  })
+
+  it('builds a mood analysis DTO from normalized repository rows', async () => {
+    const repository = createRepository()
+    repository.listAnalysisRows.mockResolvedValue([
+      {
+        moodId: 1,
+        date: '2026-07-13',
+        triggerCiphertext: 'encrypted-exam',
+        emotionName: '焦虑',
+        emotionCategory: 'negative',
+        intensity: 5,
+      },
+      {
+        moodId: 2,
+        date: '2026-07-14',
+        triggerCiphertext: null,
+        emotionName: '愉快',
+        emotionCategory: 'positive',
+        intensity: 7,
+      },
+      {
+        moodId: 3,
+        date: '2026-07-15',
+        triggerCiphertext: 'encrypted-exam',
+        emotionName: '焦虑',
+        emotionCategory: 'negative',
+        intensity: 3,
+      },
+    ])
+    const decryptField = jest.fn((value: string | null | undefined) =>
+      value === 'encrypted-exam' ? '考试' : null
+    )
+    const service = createMoodService({
+      repository,
+      decryptField,
+      now: () => new Date('2026-07-15T12:00:00.000Z'),
+    })
+
+    await expect(service.getMoodAnalysis(7, 'week')).resolves.toMatchObject({
+      avgIntensity: 5,
+      positiveRatio: 0.33,
+      negativeRatio: 0.67,
+      neutralRatio: 0,
+      consecutiveLowDays: 1,
+      dominantEmotion: '焦虑',
+      emotionDistribution: [
+        { name: '焦虑', count: 2, percentage: 0.67 },
+        { name: '愉快', count: 1, percentage: 0.33 },
+      ],
+      triggerStats: { 考试: { 焦虑: 2 } },
+      trendDirection: 'stable',
+      recordCount: 3,
+      dateRange: { start: '2026-07-08', end: '2026-07-15' },
+    })
+    expect(repository.listAnalysisRows).toHaveBeenCalledWith(7, '2026-07-08', '2026-07-15')
+  })
+
+  it('returns an empty mood analysis DTO when no rows exist', async () => {
+    const repository = createRepository()
+    repository.listAnalysisRows.mockResolvedValue([])
+    const service = createMoodService({
+      repository,
+      now: () => new Date('2026-07-15T12:00:00.000Z'),
+    })
+
+    await expect(service.getMoodAnalysis(7, 'month')).resolves.toMatchObject({
+      avgIntensity: 0,
+      positiveRatio: 0,
+      negativeRatio: 0,
+      neutralRatio: 0,
+      consecutiveLowDays: 0,
+      dominantEmotion: null,
+      emotionDistribution: [],
+      triggerStats: {},
+      recommendations: ['继续记录情绪，积累足够数据后再查看统计分析。'],
+      trendDirection: 'stable',
+      recordCount: 0,
+      dateRange: { start: '2026-06-15', end: '2026-07-15' },
     })
   })
 })

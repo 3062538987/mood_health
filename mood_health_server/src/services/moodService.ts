@@ -38,6 +38,7 @@ export interface ListMoodOptions {
 }
 
 export type MoodTrendRange = 'week' | 'month' | 'quarter'
+type EmotionCategory = 'positive' | 'negative' | 'neutral'
 
 const normalizeEmotions = (emotions: RecordMoodEmotionInput[]): MoodEmotionInput[] => {
   if (!Array.isArray(emotions) || emotions.length === 0) {
@@ -92,6 +93,29 @@ const buildTrendSummary = (values: number[]): string => {
 }
 
 const roundOneDecimal = (value: number): number => Number(value.toFixed(1))
+const roundTwoDecimals = (value: number): number => Number(value.toFixed(2))
+
+const buildAnalysisRecommendations = (
+  negativeRatio: number,
+  trendDirection: 'improving' | 'declining' | 'stable',
+  consecutiveLowDays: number
+): string[] => {
+  const recommendations = ['继续保持情绪记录习惯，结合具体事件观察变化。']
+
+  if (negativeRatio >= 0.6) {
+    recommendations.push('近期负向情绪占比较高，建议安排放松、运动或与可信任的人交流。')
+  }
+
+  if (trendDirection === 'declining') {
+    recommendations.push('近期情绪强度呈下降趋势，建议回顾近期压力来源并适当调整节奏。')
+  }
+
+  if (consecutiveLowDays >= 3) {
+    recommendations.push('连续多天出现低强度负向情绪，建议及时寻求辅导员或专业人员支持。')
+  }
+
+  return recommendations.slice(0, 5)
+}
 
 export const createMoodService = (dependencies: MoodServiceDependencies = {}) => {
   const repository = dependencies.repository ?? createMoodRepository()
@@ -283,6 +307,138 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
     }
   }
 
+  const getMoodAnalysis = async (userId: number, range: MoodTrendRange) => {
+    const end = now()
+    const endDate = toDateString(end)
+    const startDate = resolveTrendStartDate(end, range)
+    const rows = await repository.listAnalysisRows(userId, startDate, endDate)
+
+    if (rows.length === 0) {
+      return {
+        summary: '该时间范围内没有情绪记录，继续记录后可查看统计分析。',
+        avgIntensity: 0,
+        positiveRatio: 0,
+        negativeRatio: 0,
+        neutralRatio: 0,
+        consecutiveLowDays: 0,
+        dominantEmotion: null,
+        emotionDistribution: [],
+        triggerStats: {},
+        recommendations: ['继续记录情绪，积累足够数据后再查看统计分析。'],
+        trendDirection: 'stable' as const,
+        recordCount: 0,
+        dateRange: { start: startDate, end: endDate },
+      }
+    }
+
+    const moods = new Map<number, { date: string; intensities: number[]; categories: Set<EmotionCategory> }>()
+    const emotionCounts = new Map<string, number>()
+    const categoryCounts = new Map<EmotionCategory, number>([
+      ['positive', 0],
+      ['negative', 0],
+      ['neutral', 0],
+    ])
+    const triggerStats: Record<string, Record<string, number>> = {}
+
+    for (const row of rows) {
+      const mood = moods.get(row.moodId) ?? {
+        date: row.date,
+        intensities: [],
+        categories: new Set<EmotionCategory>(),
+      }
+      mood.intensities.push(row.intensity)
+      mood.categories.add(row.emotionCategory)
+      moods.set(row.moodId, mood)
+      emotionCounts.set(row.emotionName, (emotionCounts.get(row.emotionName) ?? 0) + 1)
+      categoryCounts.set(row.emotionCategory, (categoryCounts.get(row.emotionCategory) ?? 0) + 1)
+
+      const trigger = decryptField(row.triggerCiphertext)
+      if (trigger) {
+        const triggerNames = trigger.split(/[,，、]/).map((item) => item.trim()).filter(Boolean)
+        for (const triggerName of triggerNames) {
+          triggerStats[triggerName] = triggerStats[triggerName] ?? {}
+          triggerStats[triggerName][row.emotionName] =
+            (triggerStats[triggerName][row.emotionName] ?? 0) + 1
+        }
+      }
+    }
+
+    const moodValues = Array.from(moods.values()).map((mood) => ({
+      date: mood.date,
+      intensity: mood.intensities.reduce((sum, value) => sum + value, 0) / mood.intensities.length,
+      hasNegative: mood.categories.has('negative'),
+    }))
+    const avgIntensity = roundOneDecimal(
+      moodValues.reduce((sum, mood) => sum + mood.intensity, 0) / moodValues.length
+    )
+    const totalEmotions = rows.length
+    const positiveRatio = roundTwoDecimals((categoryCounts.get('positive') ?? 0) / totalEmotions)
+    const negativeRatio = roundTwoDecimals((categoryCounts.get('negative') ?? 0) / totalEmotions)
+    const neutralRatio = roundTwoDecimals((categoryCounts.get('neutral') ?? 0) / totalEmotions)
+    const emotionDistribution = Array.from(emotionCounts.entries())
+      .sort((left, right) => right[1] - left[1])
+      .slice(0, 5)
+      .map(([name, count]) => ({
+        name,
+        count,
+        percentage: roundTwoDecimals(count / totalEmotions),
+      }))
+    const dominantEmotion = emotionDistribution[0]?.name ?? null
+    const dailyValues = new Map<string, { intensitySum: number; count: number; hasNegative: boolean }>()
+
+    for (const mood of moodValues) {
+      const daily = dailyValues.get(mood.date) ?? { intensitySum: 0, count: 0, hasNegative: false }
+      daily.intensitySum += mood.intensity
+      daily.count += 1
+      daily.hasNegative = daily.hasNegative || mood.hasNegative
+      dailyValues.set(mood.date, daily)
+    }
+
+    const sortedDatesDesc = Array.from(dailyValues.entries()).sort(([left], [right]) =>
+      right.localeCompare(left)
+    )
+    let consecutiveLowDays = 0
+    for (const [, value] of sortedDatesDesc) {
+      const dailyAverage = value.intensitySum / value.count
+      if (dailyAverage <= 4 && value.hasNegative) {
+        consecutiveLowDays += 1
+      } else {
+        break
+      }
+    }
+
+    const sortedDatesAsc = Array.from(dailyValues.entries()).sort(([left], [right]) =>
+      left.localeCompare(right)
+    )
+    let trendDirection: 'improving' | 'declining' | 'stable' = 'stable'
+    if (sortedDatesAsc.length >= 3) {
+      const midpoint = Math.floor(sortedDatesAsc.length / 2)
+      const firstHalf = sortedDatesAsc.slice(0, midpoint)
+      const secondHalf = sortedDatesAsc.slice(midpoint)
+      const averageFor = (items: typeof sortedDatesAsc) =>
+        items.reduce((sum, [, value]) => sum + value.intensitySum / value.count, 0) / items.length
+      const diff = averageFor(secondHalf) - averageFor(firstHalf)
+      if (diff > 0.5) trendDirection = 'improving'
+      else if (diff < -0.5) trendDirection = 'declining'
+    }
+
+    return {
+      summary: `近 ${moodValues.length} 条记录显示，平均强度为 ${avgIntensity}，请将统计结果作为自我观察参考。`,
+      avgIntensity,
+      positiveRatio,
+      negativeRatio,
+      neutralRatio,
+      consecutiveLowDays,
+      dominantEmotion,
+      emotionDistribution,
+      triggerStats,
+      recommendations: buildAnalysisRecommendations(negativeRatio, trendDirection, consecutiveLowDays),
+      trendDirection,
+      recordCount: moodValues.length,
+      dateRange: { start: startDate, end: endDate },
+    }
+  }
+
   return {
     recordMood,
     listMoods,
@@ -293,6 +449,7 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
     createOrGetTag,
     getMoodTrend,
     getWeeklyReport,
+    getMoodAnalysis,
   }
 }
 
