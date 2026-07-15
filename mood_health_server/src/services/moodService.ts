@@ -2,6 +2,7 @@ import { createMoodRepository, MoodEmotionInput, MoodRepository } from '../repos
 import { BusinessError } from '../utils/errors'
 
 type EncryptField = (value: string | null | undefined) => string | null
+type DecryptField = (value: string | null | undefined) => string | null
 
 export interface RecordMoodEmotionInput {
   emotionTypeId: number
@@ -21,6 +22,12 @@ export interface RecordMoodInput {
 interface MoodServiceDependencies {
   repository?: MoodRepository
   encryptField?: EncryptField
+  decryptField?: DecryptField
+}
+
+export interface ListMoodOptions {
+  page: number
+  limit: number
 }
 
 const normalizeEmotions = (emotions: RecordMoodEmotionInput[]): MoodEmotionInput[] => {
@@ -67,6 +74,14 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
       }
       return encryptFieldUtil(value)
     })
+  const decryptField =
+    dependencies.decryptField ??
+    ((value: string | null | undefined) => {
+      const { decryptField: decryptFieldUtil } = require('../utils/encryption') as {
+        decryptField: DecryptField
+      }
+      return decryptFieldUtil(value)
+    })
 
   const recordMood = async (input: RecordMoodInput): Promise<number> => {
     const emotions = normalizeEmotions(input.emotions)
@@ -81,8 +96,40 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
     })
   }
 
+  const listMoods = async (userId: number, options: ListMoodOptions) => {
+    const [moods, total] = await Promise.all([
+      repository.listByUser(userId, options),
+      repository.countByUser(userId),
+    ])
+
+    return {
+      list: moods.map((mood) => ({
+        id: mood.id.toString(),
+        userId: mood.userId.toString(),
+        moodType: mood.emotions.map((emotion) => emotion.name),
+        moodRatio: mood.emotions.map((emotion) => emotion.intensity * 10),
+        emotions: mood.emotions.map((emotion) => ({
+          emotionTypeId: emotion.emotionTypeId,
+          name: emotion.name,
+          icon: emotion.icon,
+          intensity: emotion.intensity,
+          isPrimary: emotion.isPrimary,
+        })),
+        tags: mood.tags.map((tag) => tag.name),
+        tagIds: mood.tags.map((tag) => tag.id),
+        event: decryptField(mood.noteCiphertext) || '',
+        trigger: decryptField(mood.triggerCiphertext) || '',
+        createTime: mood.createdAt.toISOString(),
+      })),
+      total,
+      page: options.page,
+      limit: options.limit,
+    }
+  }
+
   return {
     recordMood,
+    listMoods,
   }
 }
 

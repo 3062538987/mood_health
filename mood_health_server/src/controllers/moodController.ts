@@ -113,49 +113,49 @@ export const getMoodList = async (req: AuthRequest, res: Response) => {
       ? parseInt(req.query.emotionTypeId as string)
       : null
 
-    let moods
     if (emotionTypeId) {
-      moods = await getMoodsByEmotionType(userId, emotionTypeId, page, limit)
-    } else {
-      moods = await getMoodsWithRelations(userId, page, limit)
-    }
+      const moods = await getMoodsByEmotionType(userId, emotionTypeId, page, limit)
 
-    const formattedMoods = moods.map((mood) => {
-      if (mood.emotions && mood.emotions.length > 0) {
+      const formattedMoods = moods.map((mood) => {
+        if (mood.emotions && mood.emotions.length > 0) {
+          return {
+            id: mood.id.toString(),
+            userId: mood.user_id.toString(),
+            moodType: mood.emotions.map((e) => e.emotion_name),
+            moodRatio: mood.emotions.map((e) => e.intensity * 10),
+            emotions: mood.emotions.map((e) => ({
+              emotionTypeId: e.emotion_type_id,
+              name: e.emotion_name,
+              icon: e.emotion_icon,
+              intensity: e.intensity,
+            })),
+            tags: mood.tagList ? mood.tagList.map((t) => t.name) : [],
+            tagIds: mood.tagList ? mood.tagList.map((t) => t.id) : [],
+            event: mood.note || '',
+            trigger: mood.trigger || '',
+            createTime: mood.created_at.toISOString(),
+          }
+        }
+
         return {
           id: mood.id.toString(),
           userId: mood.user_id.toString(),
-          moodType: mood.emotions.map((e) => e.emotion_name),
-          moodRatio: mood.emotions.map((e) => e.intensity * 10),
-          emotions: mood.emotions.map((e) => ({
-            emotionTypeId: e.emotion_type_id,
-            name: e.emotion_name,
-            icon: e.emotion_icon,
-            intensity: e.intensity,
-          })),
-          tags: mood.tagList ? mood.tagList.map((t) => t.name) : [],
-          tagIds: mood.tagList ? mood.tagList.map((t) => t.id) : [],
+          moodType: mood.mood_type ? mood.mood_type.split(',') : [],
+          moodRatio: mood.intensity ? [mood.intensity * 10] : [],
+          tags: mood.tags ? mood.tags.split(',') : [],
           event: mood.note || '',
           trigger: mood.trigger || '',
           createTime: mood.created_at.toISOString(),
         }
-      }
+      })
 
-      return {
-        id: mood.id.toString(),
-        userId: mood.user_id.toString(),
-        moodType: mood.mood_type ? mood.mood_type.split(',') : [],
-        moodRatio: mood.intensity ? [mood.intensity * 10] : [],
-        tags: mood.tags ? mood.tags.split(',') : [],
-        event: mood.note || '',
-        trigger: mood.trigger || '',
-        createTime: mood.created_at.toISOString(),
-      }
-    })
+      const total = await getMoodTotalCount(userId)
 
-    const total = await getMoodTotalCount(userId)
+      return res.json(apiSuccess({ list: formattedMoods, total, page, limit }, '获取情绪记录成功'))
+    }
 
-    res.json(apiSuccess({ list: formattedMoods, total, page, limit }, '获取情绪记录成功'))
+    const result = await moodService.listMoods(userId, { page, limit })
+    res.json(apiSuccess(result, '获取情绪记录成功'))
   } catch (error) {
     console.error(error)
     res.status(500).json(apiFailure(500, '服务器错误'))

@@ -22,6 +22,7 @@ import {
 
 var mockMoodService: {
   recordMood: jest.Mock
+  listMoods: jest.Mock
 }
 
 jest.mock('../../../src/models/moodModel', () => ({
@@ -48,6 +49,7 @@ jest.mock('../../../src/services/moodService', () => ({
   createMoodService: jest.fn(() => {
     mockMoodService = {
       recordMood: jest.fn(),
+      listMoods: jest.fn(),
     }
     return mockMoodService
   }),
@@ -116,13 +118,13 @@ describe('moodController response contract', () => {
   })
 
   it('returns a paginated list DTO', async () => {
-    jest.mocked(getMoodsWithRelations).mockResolvedValue([])
-    jest.mocked(getMoodTotalCount).mockResolvedValue(0)
+    mockMoodService.listMoods.mockResolvedValue({ list: [], total: 0, page: 2, limit: 10 })
     const req = createRequest({ query: { page: '2', size: '10' } })
     const res = createResponse()
 
     await getMoodList(req, res)
 
+    expect(mockMoodService.listMoods).toHaveBeenCalledWith(1, { page: 2, limit: 10 })
     expect(res.json).toHaveBeenCalledWith({
       code: 0,
       message: '获取情绪记录成功',

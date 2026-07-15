@@ -90,4 +90,73 @@ describe('moodService', () => {
       })
     ).rejects.toMatchObject({ statusCode: 400 })
   })
+
+  it('lists moods by decrypting ciphertext and preserving pagination metadata', async () => {
+    const repository = createRepository()
+    repository.listByUser.mockResolvedValue([
+      {
+        id: 15,
+        userId: 7,
+        noteCiphertext: 'encrypted-note',
+        triggerCiphertext: 'encrypted-trigger',
+        recordedAt: new Date('2026-07-15T10:00:00.000Z'),
+        createdAt: new Date('2026-07-15T10:01:00.000Z'),
+        updatedAt: new Date('2026-07-15T10:02:00.000Z'),
+        emotions: [
+          {
+            emotionTypeId: 1,
+            code: 'anxious',
+            name: '焦虑',
+            icon: 'activity',
+            intensity: 8,
+            isPrimary: true,
+          },
+        ],
+        tags: [{ id: 3, code: 'study', name: '学习', isSystem: true }],
+      },
+    ])
+    repository.countByUser.mockResolvedValue(1)
+    const decryptField = jest.fn((value: string | null | undefined) => {
+      if (value === 'encrypted-note') return '今天压力很大'
+      if (value === 'encrypted-trigger') return '期末复习'
+      return null
+    })
+    const service = createMoodService({
+      repository,
+      encryptField: jest.fn(),
+      decryptField,
+    })
+
+    const result = await service.listMoods(7, { page: 1, limit: 10 })
+
+    expect(repository.listByUser).toHaveBeenCalledWith(7, { page: 1, limit: 10 })
+    expect(repository.countByUser).toHaveBeenCalledWith(7)
+    expect(result).toEqual({
+      list: [
+        {
+          id: '15',
+          userId: '7',
+          moodType: ['焦虑'],
+          moodRatio: [80],
+          emotions: [
+            {
+              emotionTypeId: 1,
+              name: '焦虑',
+              icon: 'activity',
+              intensity: 8,
+              isPrimary: true,
+            },
+          ],
+          tags: ['学习'],
+          tagIds: [3],
+          event: '今天压力很大',
+          trigger: '期末复习',
+          createTime: '2026-07-15T10:01:00.000Z',
+        },
+      ],
+      total: 1,
+      page: 1,
+      limit: 10,
+    })
+  })
 })
