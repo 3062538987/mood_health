@@ -1,0 +1,164 @@
+import jwt from 'jsonwebtoken'
+import { createUserRepository, DuplicateUserError, PublicUser, UserRepository } from '../repositories/userRepository'
+import { comparePassword as comparePasswordUtil, hashPassword as hashPasswordUtil } from '../utils/password'
+import { BusinessError, HttpException } from '../utils/errors'
+
+type JwtSigner = (
+  payload: { userId: number; username: string; role: string },
+  secret: string,
+  options: jwt.SignOptions
+) => string
+
+interface AuthServiceDependencies {
+  repository?: UserRepository
+  hashPassword?: (password: string) => Promise<string>
+  comparePassword?: (password: string, passwordHash: string) => Promise<boolean>
+  signJwt?: JwtSigner
+  jwtSecret?: string
+  now?: () => Date
+  randomSuffix?: () => string
+}
+
+interface RegisterInput {
+  username?: string
+  password?: string
+  role?: unknown
+  isAdmin?: unknown
+}
+
+interface LoginInput {
+  username?: string
+  password?: string
+}
+
+interface LoginResult {
+  token: string
+  user: PublicUser
+}
+
+const buildDefaultEmail = (
+  username: string,
+  now: () => Date = () => new Date(),
+  randomSuffix: () => string = () => Math.random().toString(36).slice(2, 8)
+): string => {
+  const sanitized = username
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '')
+    .slice(0, 12)
+  const prefix = sanitized || 'user'
+  return `${prefix}_${now().getTime()}${randomSuffix()}@temp.user`
+}
+
+const toPublicUser = (user: {
+  id: number
+  username: string
+  email: string
+  nickname: string | null
+  avatarUrl: string | null
+  status: PublicUser['status']
+  role: PublicUser['role']
+  createdAt: Date
+  updatedAt: Date
+  lastLoginAt: Date | null
+}): PublicUser => ({
+  id: user.id,
+  username: user.username,
+  email: user.email,
+  nickname: user.nickname,
+  avatarUrl: user.avatarUrl,
+  status: user.status,
+  role: user.role,
+  createdAt: user.createdAt,
+  updatedAt: user.updatedAt,
+  lastLoginAt: user.lastLoginAt,
+})
+
+export const createAuthService = (dependencies: AuthServiceDependencies = {}) => {
+  const repository = dependencies.repository ?? createUserRepository()
+  const hashPassword = dependencies.hashPassword ?? hashPasswordUtil
+  const comparePassword = dependencies.comparePassword ?? comparePasswordUtil
+  const signJwt = dependencies.signJwt ?? ((payload, secret, options) => jwt.sign(payload, secret, options))
+  const jwtSecret = dependencies.jwtSecret ?? process.env.JWT_SECRET
+  const now = dependencies.now
+  const randomSuffix = dependencies.randomSuffix
+
+  const register = async (input: RegisterInput): Promise<void> => {
+    if (input.role !== undefined || input.isAdmin !== undefined) {
+      throw new HttpException('管理员账号只能通过后台脚本创建', 403)
+    }
+
+    if (!input.username || !input.password) {
+      throw new BusinessError('请提供用户名和密码')
+    }
+
+    const existingUser = await repository.findAuthUserByUsername(input.username)
+    if (existingUser) {
+      throw new BusinessError(`用户名"${input.username}" 已存在，请更换其他用户名`)
+    }
+
+    const passwordHash = await hashPassword(input.password)
+
+    try {
+      await repository.createStudentUser({
+        username: input.username,
+        passwordHash,
+        email: buildDefaultEmail(input.username, now, randomSuffix),
+        nickname: null,
+      })
+    } catch (error) {
+      if (error instanceof DuplicateUserError) {
+        throw new BusinessError('用户名或邮箱已存在')
+      }
+      throw error
+    }
+  }
+
+  const login = async (input: LoginInput): Promise<LoginResult> => {
+    if (!input.username || !input.password) {
+      throw new BusinessError('请提供用户名和密码')
+    }
+
+    const user = await repository.findAuthUserByUsername(input.username)
+    if (!user) {
+      throw new HttpException('用户名或密码错误', 401)
+    }
+
+    const isValid = await comparePassword(input.password, user.passwordHash)
+    if (!isValid) {
+      throw new HttpException('用户名或密码错误', 401)
+    }
+
+    if (!jwtSecret) {
+      throw new HttpException('服务配置错误', 500)
+    }
+
+    const token = signJwt(
+      { userId: user.id, username: user.username, role: user.role },
+      jwtSecret,
+      { expiresIn: '7d' }
+    )
+
+    await repository.updateLastLoginAt(user.id)
+
+    return {
+      token,
+      user: toPublicUser(user),
+    }
+  }
+
+  const getMe = async (userId: number): Promise<PublicUser> => {
+    const user = await repository.findPublicUserById(userId)
+    if (!user) {
+      throw new HttpException('用户不存在', 404)
+    }
+    return user
+  }
+
+  return {
+    register,
+    login,
+    getMe,
+  }
+}
+
+export type AuthService = ReturnType<typeof createAuthService>
