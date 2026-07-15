@@ -24,6 +24,7 @@ backups/legacy-sqlite/
 
 # Agent/test scratch output
 .superpowers/
+.worktrees/
 tmp/
 .tmp/
 test-results/
