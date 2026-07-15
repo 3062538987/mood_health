@@ -16,12 +16,6 @@ type RequestConfigWithLoading = InternalAxiosRequestConfig & {
   showLoading?: boolean
 }
 
-export const LEGACY_RESPONSE_COMPATIBILITY = Object.freeze({
-  enabled: true,
-  removeAfter: 'Checkpoint C',
-  removalCondition: 'Tasks 9-12 no longer return code 200 or responses without a business code',
-})
-
 export class ApiRequestError extends Error {
   readonly kind: ApiRequestErrorOptions['kind']
   readonly code?: number
@@ -71,9 +65,6 @@ const isApiPayload = (value: unknown): value is ApiPayload =>
 
 const unwrapResponse = <T>(payload: unknown): T => {
   if (!isApiPayload(payload) || payload.code === undefined) {
-    if (LEGACY_RESPONSE_COMPATIBILITY.enabled) {
-      return payload as T
-    }
     throw new ApiRequestError({
       kind: 'business',
       message: '响应缺少业务状态码',
@@ -81,7 +72,7 @@ const unwrapResponse = <T>(payload: unknown): T => {
     })
   }
 
-  if (payload.code === 0 || (LEGACY_RESPONSE_COMPATIBILITY.enabled && payload.code === 200)) {
+  if (payload.code === 0) {
     return payload.data as T
   }
 

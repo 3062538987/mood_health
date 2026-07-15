@@ -121,20 +121,23 @@ describe('request response contract', () => {
     })
   })
 
-  it('keeps legacy formats centralized behind a documented removal gate', async () => {
-    const { LEGACY_RESPONSE_COMPATIBILITY } = await import('@/utils/request')
+  it('rejects the retired code 200 business response', async () => {
+    const { ApiRequestError } = await import('@/utils/request')
 
-    expect(
+    expect(() =>
       mocks.responseHandlers.fulfilled?.(
         response({ code: 200, message: 'legacy', data: { source: 'code-200' } })
       )
-    ).toEqual({ source: 'code-200' })
-    expect(mocks.responseHandlers.fulfilled?.(response({ source: 'no-code' }))).toEqual({
-      source: 'no-code',
-    })
-    expect(LEGACY_RESPONSE_COMPATIBILITY).toMatchObject({
-      enabled: true,
-      removeAfter: 'Checkpoint C',
-    })
+    ).toThrowError(ApiRequestError)
+    expect(mocks.messageError).toHaveBeenCalledWith('legacy')
+  })
+
+  it('rejects a response without a business code', async () => {
+    const { ApiRequestError } = await import('@/utils/request')
+
+    expect(() =>
+      mocks.responseHandlers.fulfilled?.(response({ source: 'no-code' }))
+    ).toThrowError(ApiRequestError)
+    expect(mocks.messageError).toHaveBeenCalledWith('响应缺少业务状态码')
   })
 })
