@@ -1,11 +1,13 @@
 import type { AddressInfo } from 'node:net'
 import type { Server } from 'node:http'
 
-const mockQuery = jest.fn().mockResolvedValue([{ result: 2 }])
-
 jest.mock('../../src/config/database', () => ({
   connectDB: jest.fn(),
-  query: mockQuery,
+  query: jest.fn(),
+}))
+
+jest.mock('../../src/config/mysql', () => ({
+  checkMysqlHealth: jest.fn().mockResolvedValue(true),
 }))
 
 jest.mock('../../src/utils/redis.client', () => ({
@@ -43,9 +45,9 @@ describe('application API contract', () => {
       message: '服务健康',
       data: {
         status: 'ok',
-        database: 'connected',
+        api: 'healthy',
+        mysql: 'connected',
         redis: 'connected',
-        result: [{ result: 2 }],
       },
     })
   })
@@ -60,6 +62,5 @@ describe('application API contract', () => {
       message: '请求的资源不存在',
       data: null,
     })
-    expect(mockQuery).toHaveBeenCalledTimes(1)
   })
 })

@@ -6,7 +6,7 @@ import morgan from 'morgan'
 import compression from 'compression'
 import rateLimit from 'express-rate-limit'
 import type { CorsOptions } from 'cors'
-import { query } from './config/database'
+import { checkMysqlHealth } from './config/mysql'
 import authRoutes from './routes/authRoutes'
 import moodRoutes from './routes/moodRoutes'
 import questionnaireRoutes from './routes/questionnaireRoutes'
@@ -17,6 +17,7 @@ import redisClient from './utils/redis.client'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler'
 import { API_ERROR_CODES, apiFailure, apiSuccess } from './utils/apiResponse'
 import { getFeatureFlags } from './config/featureFlags'
+import { createHealthHandler, HealthDependencies } from './controllers/healthController'
 
 dotenv.config()
 
@@ -29,7 +30,11 @@ const NON_CORE_ROUTES = [
   { path: '/api/achievements', modulePath: './routes/achievementRoutes' },
 ] as const
 
-export const createApp = () => {
+export interface AppDependencies {
+  health?: HealthDependencies
+}
+
+export const createApp = (dependencies: AppDependencies = {}) => {
   const app = express()
   const allowedOrigins = process.env.FRONTEND_URL
     ? process.env.FRONTEND_URL.split(',')
@@ -147,48 +152,15 @@ export const createApp = () => {
   app.use('/api/audit', auditRoutes)
   app.use('/api', managementRoutes)
 
-  app.get('/health', async (req, res) => {
-    const checkRedisWithTimeout = async (timeoutMs: number) => {
-      try {
-        return await Promise.race<boolean>([
-          redisClient.ping(),
-          new Promise<boolean>((resolve) => {
-            setTimeout(() => resolve(false), timeoutMs)
-          }),
-        ])
-      } catch {
-        return false
+  app.get(
+    '/health',
+    createHealthHandler(
+      dependencies.health ?? {
+        checkMysql: checkMysqlHealth,
+        checkRedis: () => redisClient.ping(),
       }
-    }
-
-    try {
-      const dbResult = await query('SELECT 1 + 1 AS result')
-      const redisStatus = await checkRedisWithTimeout(2000)
-
-      res.json(
-        apiSuccess(
-          {
-            status: 'ok',
-            database: 'connected',
-            redis: redisStatus ? 'connected' : 'disconnected',
-            result: dbResult,
-          },
-          '服务健康'
-        )
-      )
-    } catch (error) {
-      logger.error('健康检查失败', { error })
-
-      let redisStatus
-      try {
-        redisStatus = await checkRedisWithTimeout(2000)
-      } catch {
-        redisStatus = false
-      }
-
-      res.status(500).json(apiFailure(API_ERROR_CODES.INTERNAL_ERROR, '健康检查失败'))
-    }
-  })
+    )
+  )
 
   app.use(notFoundHandler)
   app.use(errorHandler)

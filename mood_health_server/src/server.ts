@@ -2,6 +2,7 @@ import dotenv from 'dotenv'
 import type { Server } from 'http'
 import { createApp } from './app'
 import { connectDB } from './config/database'
+import { connectMysql } from './config/mysql'
 import logger from './utils/logger'
 
 dotenv.config()
@@ -10,6 +11,7 @@ export const startServer = async (): Promise<Server> => {
   const port = Number(process.env.PORT || 3000)
   const host = process.env.HOST || '127.0.0.1'
 
+  await connectMysql()
   await connectDB()
 
   return createApp().listen(port, host, () => {

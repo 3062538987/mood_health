@@ -7,6 +7,10 @@ jest.mock('../../src/config/database', () => ({
   query: jest.fn(),
 }))
 
+jest.mock('../../src/config/mysql', () => ({
+  checkMysqlHealth: jest.fn(),
+}))
+
 jest.mock('../../src/utils/redis.client', () => ({
   __esModule: true,
   default: {
