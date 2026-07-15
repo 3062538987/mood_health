@@ -13,6 +13,7 @@ export interface MigrationFile {
   upPath: string
   downPath: string
   upSql: string
+  downSql: string
 }
 
 export interface AppliedMigration {
@@ -32,6 +33,10 @@ export interface RunMigrationsOptions {
 export interface RunMigrationsResult {
   applied: AppliedMigration[]
   skipped: AppliedMigration[]
+}
+
+export interface RollbackMigrationsResult {
+  rolledBack: AppliedMigration[]
 }
 
 const MIGRATION_FILE_PATTERN = /^(\d{4})_([a-z0-9_]+)\.(up|down)\.sql$/
@@ -83,6 +88,7 @@ export const loadMigrationFiles = (migrationsDir: string): MigrationFile[] => {
       seenVersions.add(entry.version)
 
       const upSql = fs.readFileSync(entry.upPath, 'utf8')
+      const downSql = fs.readFileSync(entry.downPath, 'utf8')
       return {
         version: entry.version,
         name: entry.name,
@@ -90,6 +96,7 @@ export const loadMigrationFiles = (migrationsDir: string): MigrationFile[] => {
         upPath: entry.upPath,
         downPath: entry.downPath,
         upSql,
+        downSql,
       }
     })
 }
@@ -144,6 +151,19 @@ const executeMigration = async (db: MigrationDatabase, migration: MigrationFile)
   }
 }
 
+const executeRollback = async (db: MigrationDatabase, migration: MigrationFile): Promise<void> => {
+  const statements = splitStatements(migration.downSql)
+  for (const [index, statement] of statements.entries()) {
+    try {
+      await db.query(statement)
+    } catch (error) {
+      throw new Error(
+        `Rollback ${migration.version}_${migration.name} failed at statement ${index + 1}: ${sanitizeError(error)}`
+      )
+    }
+  }
+}
+
 export const runMigrations = async (options: RunMigrationsOptions): Promise<RunMigrationsResult> => {
   const lockName = options.lockName ?? DEFAULT_LOCK_NAME
   const lockTimeoutSeconds = options.lockTimeoutSeconds ?? 10
@@ -176,6 +196,34 @@ export const runMigrations = async (options: RunMigrationsOptions): Promise<RunM
     }
 
     return { applied, skipped }
+  } finally {
+    await releaseLock(options.db, lockName)
+  }
+}
+
+export const rollbackMigrations = async (
+  options: RunMigrationsOptions
+): Promise<RollbackMigrationsResult> => {
+  const lockName = options.lockName ?? DEFAULT_LOCK_NAME
+  const lockTimeoutSeconds = options.lockTimeoutSeconds ?? 10
+  const migrations = loadMigrationFiles(options.migrationsDir)
+
+  await acquireLock(options.db, lockName, lockTimeoutSeconds)
+  try {
+    const appliedByVersion = await readAppliedMigrations(options.db)
+    assertAppliedChecksums(migrations, appliedByVersion)
+
+    const rolledBack: AppliedMigration[] = []
+    for (const migration of [...migrations].reverse()) {
+      const applied = appliedByVersion.get(migration.version)
+      if (!applied) continue
+
+      await executeRollback(options.db, migration)
+      await options.db.query('DELETE FROM schema_migrations WHERE version = ?', [migration.version])
+      rolledBack.push(applied)
+    }
+
+    return { rolledBack }
   } finally {
     await releaseLock(options.db, lockName)
   }

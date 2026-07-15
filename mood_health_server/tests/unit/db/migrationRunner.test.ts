@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 
-import { runMigrations, MigrationDatabase } from '../../../src/db/migrationRunner'
+import { rollbackMigrations, runMigrations, MigrationDatabase } from '../../../src/db/migrationRunner'
 
 class FakeMigrationDatabase implements MigrationDatabase {
   public readonly executedSql: string[] = []
@@ -21,15 +21,21 @@ class FakeMigrationDatabase implements MigrationDatabase {
       return [{ released: 1 }] as T[]
     }
 
-    if (sql.includes('FROM schema_migrations')) {
-      return this.appliedRows as T[]
-    }
-
     if (sql.includes('INSERT INTO schema_migrations')) {
       const [version, name, checksum] = params as string[]
       this.recorded.push({ version, name, checksum })
       this.appliedRows.push({ version, name, checksum })
       return [] as T[]
+    }
+
+    if (sql.includes('DELETE FROM schema_migrations')) {
+      const [version] = params as string[]
+      this.appliedRows = this.appliedRows.filter((row) => row.version !== version)
+      return [] as T[]
+    }
+
+    if (sql.includes('FROM schema_migrations')) {
+      return this.appliedRows as T[]
     }
 
     if (this.failOnSql && sql.includes(this.failOnSql)) {
@@ -101,5 +107,20 @@ describe('migration runner', () => {
     )
 
     expect(db.recorded.map((item) => item.version)).toEqual(['0010'])
+  })
+
+  it('rolls back applied migrations in reverse version order', async () => {
+    const dir = makeMigrationDir()
+    writeMigration(dir, '0010', 'create_roles', 'CREATE TABLE roles (id INT);')
+    writeMigration(dir, '0020', 'create_permissions', 'CREATE TABLE permissions (id INT);')
+    const db = new FakeMigrationDatabase()
+    await runMigrations({ db, migrationsDir: dir })
+
+    const result = await rollbackMigrations({ db, migrationsDir: dir })
+
+    expect(result.rolledBack.map((item) => item.version)).toEqual(['0020', '0010'])
+    expect(db.appliedRows).toEqual([])
+    expect(db.executedSql).toContain('DROP TABLE create_permissions')
+    expect(db.executedSql).toContain('DROP TABLE create_roles')
   })
 })
