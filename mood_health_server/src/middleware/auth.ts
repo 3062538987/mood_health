@@ -1,0 +1,221 @@
+import { Request, Response, NextFunction } from 'express'
+import jwt from 'jsonwebtoken'
+import dotenv from 'dotenv'
+import logger from '../utils/logger'
+import { apiFailure, businessCodeForHttpStatus } from '../utils/apiResponse'
+import { AccessRepository, createAccessRepository } from '../repositories/accessRepository'
+import { AuditRepository, createAuditRepository } from '../repositories/auditRepository'
+
+dotenv.config()
+
+export type PermissionCode =
+  | 'user.manage'
+  | 'role.manage'
+  | 'system.config'
+  | 'incident.fix'
+  | 'audit.record.view_all'
+  | 'post.audit'
+  | 'post.audit.pending.read'
+  | 'activity.manage'
+  | 'course.manage'
+  | 'music.manage'
+  | 'report.view'
+  | 'feedback.handle'
+  | 'mood.record.read'
+  | 'mood.record.create'
+  | 'mood.record.update'
+  | 'mood.record.delete'
+  | 'mood.advice.history.read'
+  | 'questionnaire.read'
+  | 'questionnaire.submit'
+  | 'post.create'
+  | 'post.comment.create'
+  | 'post.like'
+  | 'activity.join'
+  | 'relax.record.manage'
+  | 'achievement.read'
+  | 'auth.profile.read'
+  | 'auth.register.role_assign'
+
+export type UserRole = 'student' | 'counselor' | 'super_admin' | 'user' | 'admin'
+
+const USER_ROLES: readonly UserRole[] = ['student', 'counselor', 'super_admin', 'user', 'admin']
+
+export const isValidUserRole = (role: unknown): role is UserRole => {
+  return typeof role === 'string' && USER_ROLES.includes(role as UserRole)
+}
+
+let accessRepository: AccessRepository | undefined
+let auditRepository: AuditRepository | undefined
+
+const getAccessRepository = (): AccessRepository => {
+  accessRepository = accessRepository ?? createAccessRepository()
+  return accessRepository
+}
+
+const getAuditRepository = (): AuditRepository => {
+  auditRepository = auditRepository ?? createAuditRepository()
+  return auditRepository
+}
+
+interface JwtUserPayload {
+  userId: number
+  username: string
+  role: string
+}
+
+// 扩展 Request 类型，添加 user 属性
+export interface AuthRequest extends Request {
+  user?: { userId: number; username: string; role: string }
+}
+
+const sendAuthError = (req: Request, res: Response, statusCode: number, message: string) => {
+  return res.status(statusCode).json(apiFailure(businessCodeForHttpStatus(statusCode), message))
+}
+
+const getClientIp = (req: Request): string => {
+  const forwarded = req.headers['x-forwarded-for']
+  if (typeof forwarded === 'string' && forwarded.length > 0) {
+    return forwarded.split(',')[0].trim()
+  }
+  return req.ip || '-'
+}
+
+const auditAccessDenied = async (
+  userId: number,
+  userRole: string,
+  permissionCode: string,
+  content: string,
+  ip: string
+): Promise<void> => {
+  await getAuditRepository().record({
+    actorUserId: userId,
+    actorRoleCode: userRole,
+    permissionCode,
+    action: 'ACCESS_DENIED',
+    targetType: null,
+    targetId: null,
+    result: 'failed',
+    summary: content,
+    ipAddress: ip,
+    requestId: null,
+  })
+}
+
+const getRoleFromToken = (role: unknown): UserRole => {
+  if (isValidUserRole(role)) {
+    return role
+  }
+
+  logger.warn('检测到非法角色，已回退为 user', { role })
+  return 'user'
+}
+
+const getNormalizedRequestRole = (req: AuthRequest): UserRole => {
+  return getRoleFromToken(req.user?.role)
+}
+
+export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
+  const jwtSecret = process.env.JWT_SECRET
+
+  // 安全: 优先从 HttpOnly Cookie 读取 Token，防止 XSS 窃取 (VUE-AUTH-001)
+  let token: string | undefined
+  const cookieToken = req.cookies?.auth_token
+  if (cookieToken) {
+    token = cookieToken
+  } else {
+    // 兼容旧的 Authorization Header 方式
+    const authHeader = req.headers.authorization
+    if (authHeader) {
+      const [scheme, headerToken] = authHeader.split(' ')
+      if (scheme === 'Bearer' && headerToken) {
+        token = headerToken
+      }
+    }
+  }
+
+  if (!token) {
+    return sendAuthError(req, res, 401, '未提供认证令牌')
+  }
+
+  if (!jwtSecret) {
+    logger.error('JWT_SECRET 未配置', { path: req.originalUrl })
+    return sendAuthError(req, res, 500, '服务配置错误')
+  }
+
+  try {
+    const decoded = jwt.verify(token, jwtSecret) as JwtUserPayload
+    req.user = {
+      userId: decoded.userId,
+      username: decoded.username,
+      role: getRoleFromToken(decoded.role),
+    }
+    next()
+  } catch (error) {
+    logger.warn('JWT 校验失败', {
+      path: req.originalUrl,
+      reason: error instanceof Error ? error.message : 'unknown_error',
+    })
+    return sendAuthError(req, res, 401, '无效或过期令牌')
+  }
+}
+
+// 管理员权限检查
+export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (!req.user) {
+    return sendAuthError(req, res, 401, '未登录')
+  }
+
+  if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+    logger.warn('管理员权限校验失败', {
+      path: req.originalUrl,
+      username: req.user.username,
+      role: req.user.role,
+    })
+    void auditAccessDenied(
+      req.user.userId,
+      req.user.role,
+      'post.audit',
+      `requireAdmin 拒绝访问: ${req.originalUrl}`,
+      getClientIp(req)
+    )
+    return sendAuthError(req, res, 403, '需要管理员权限')
+  }
+
+  next()
+}
+
+/**
+ * 权限校验中间件
+ * @param {string} permission - 目标权限编码
+ * @returns {Function} Express 中间件
+ */
+export const requirePermission = (permission: string) => {
+  return async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return sendAuthError(req, res, 401, '未登录')
+    }
+
+    const userRole = getNormalizedRequestRole(req)
+    const granted = await getAccessRepository().hasPermission(userRole, permission)
+
+    if (!granted) {
+      logger.warn('权限校验失败', {
+        path: req.originalUrl,
+        username: req.user.username,
+        role: userRole,
+        permission,
+      })
+      await auditAccessDenied(
+        req.user.userId,
+        userRole,
+        permission,
+        `权限校验失败: ${req.originalUrl}`,
+        getClientIp(req)
+      )
+      return sendAuthError(req, res, 403, '权限不足')
+    }
+
+    next()
+  }
+}
