@@ -20,6 +20,7 @@
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
+    "test:e2e:performance": "playwright test tests/e2e/performance.spec.ts --project=chromium --workers=1",
     "test:all": "npm run test:run && npm --prefix mood_health_server run test",
     "verify:all": "npm run build:all && npm run test:all",
     "doctor": "node scripts/doctor.mjs",
@@ -52,6 +53,7 @@
     "vue-router": "^4.6.3"
   },
   "devDependencies": {
+    "@playwright/test": "1.61.1",
     "@types/dompurify": "^3.0.5",
     "@types/node": "^24.10.1",
     "@typescript-eslint/eslint-plugin": "^8.57.1",
