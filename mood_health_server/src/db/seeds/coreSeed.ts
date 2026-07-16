@@ -50,9 +50,13 @@ export const REFERENCE_PERMISSIONS: ReferencePermission[] = [
   { code: 'assessment.submit', name: '提交本人测评', description: '提交当前用户自己的测评作答' },
   { code: 'assessment.history.read_own', name: '读取本人测评历史', description: '读取当前用户自己的测评历史' },
   { code: 'report.aggregate.read', name: '读取匿名聚合统计', description: '读取不包含心理正文的匿名统计' },
+  { code: 'mood.record.read', name: '读取情绪记录', description: '读取后台情绪记录列表' },
   { code: 'user.manage', name: '管理用户', description: '停用或管理用户账号' },
   { code: 'user.role.assign', name: '分配角色', description: '为用户分配固定角色' },
+  { code: 'role.manage', name: '管理角色', description: '管理用户角色分配' },
+  { code: 'system.config', name: '管理系统配置', description: '修改系统配置项' },
   { code: 'audit.log.read', name: '读取审计日志', description: '读取系统审计日志' },
+  { code: 'audit.record.view_all', name: '读取全部审计记录', description: '读取后台审计记录列表' },
   { code: 'case.read_assigned', name: '读取已分配个案', description: '读取已分配给自己或全部个案' },
   { code: 'case.read_own', name: '读取本人个案', description: '学生读取本人个案' },
   { code: 'case.create', name: '创建个案', description: '创建风险个案' },
@@ -60,6 +64,11 @@ export const REFERENCE_PERMISSIONS: ReferencePermission[] = [
   { code: 'case.intervene', name: '记录干预', description: '在个案下记录干预措施' },
   { code: 'case.refer', name: '转介个案', description: '将个案转介至外部机构' },
   { code: 'case.close', name: '结案', description: '结案并记录结案摘要' },
+  { code: 'activity.manage', name: '管理活动', description: '创建、编辑、删除团体活动' },
+  { code: 'course.manage', name: '管理课程', description: '创建、编辑、删除课程' },
+  { code: 'music.manage', name: '管理音乐', description: '创建、编辑、删除音乐资源' },
+  { code: 'post.audit.pending.read', name: '读取待审核帖子', description: '读取待审核树洞帖子列表' },
+  { code: 'post.audit', name: '审核帖子', description: '审核树洞帖子内容' },
   { code: 'user.delete', name: '物理删除用户', description: '物理删除用户及其关联数据' },
   { code: 'prompt.manage', name: '管理 Prompt 模板', description: '创建、编辑、删除 AI Prompt 模板' },
 ]
@@ -77,7 +86,7 @@ export const ROLE_PERMISSION_CODES: Record<ReferenceRole['code'], string[]> = {
     'case.read_own',
   ],
   counselor: ['auth.profile.read', 'report.aggregate.read', 'case.read_assigned', 'case.read_own', 'case.create', 'case.intervene', 'case.refer', 'case.close'],
-  super_admin: ['auth.profile.read', 'report.aggregate.read', 'user.manage', 'user.role.assign', 'audit.log.read', 'case.read_assigned', 'case.read_own', 'case.create', 'case.assign', 'case.refer', 'case.close', 'user.delete', 'prompt.manage'],
+  super_admin: ['auth.profile.read', 'report.aggregate.read', 'mood.record.read', 'user.manage', 'user.role.assign', 'role.manage', 'system.config', 'audit.log.read', 'audit.record.view_all', 'case.read_assigned', 'case.read_own', 'case.create', 'case.assign', 'case.intervene', 'case.refer', 'case.close', 'activity.manage', 'course.manage', 'music.manage', 'post.audit.pending.read', 'post.audit', 'user.delete', 'prompt.manage'],
 }
 
 const REFERENCE_EMOTION_TYPES = [
