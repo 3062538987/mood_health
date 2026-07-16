@@ -34,7 +34,9 @@ export const apiFailure = <T = null>(
     throw new Error('失败响应必须使用非零业务码')
   }
 
-  return { code, message, data, requestId: randomUUID() }
+  const businessCode = code >= 400 && code < 600 ? businessCodeForHttpStatus(code) : code
+
+  return { code: businessCode, message, data, requestId: randomUUID() }
 }
 
 export const businessCodeForHttpStatus = (statusCode: number): number => {

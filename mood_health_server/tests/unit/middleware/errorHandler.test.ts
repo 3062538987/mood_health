@@ -34,6 +34,19 @@ describe('API response contract', () => {
       requestId: expect.any(String),
     })
   })
+
+  it('normalizes HTTP status codes to business error codes', () => {
+    expect(apiFailure(404, '不存在')).toMatchObject({
+      code: API_ERROR_CODES.NOT_FOUND,
+      message: '不存在',
+      data: null,
+    })
+    expect(apiFailure(500, '服务器错误')).toMatchObject({
+      code: API_ERROR_CODES.INTERNAL_ERROR,
+      message: '服务器错误',
+      data: null,
+    })
+  })
 })
 
 describe('error middleware contract', () => {

@@ -124,6 +124,6 @@ describe('authController contract', () => {
     await login(req, res)
 
     expect(res.status).toHaveBeenCalledWith(500)
-    expect(res.json).toHaveBeenCalledWith({ code: 500, data: null, message: '服务器内部错误', requestId: expect.any(String) })
+    expect(res.json).toHaveBeenCalledWith({ code: 1500, data: null, message: '服务器内部错误', requestId: expect.any(String) })
   })
 })
