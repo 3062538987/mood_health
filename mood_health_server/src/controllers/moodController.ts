@@ -7,6 +7,95 @@ import { createMoodService } from '../services/moodService'
 
 const moodService = createMoodService()
 
+const recordMoodWithEmotions = async (req: AuthRequest, res: Response) => {
+  const userId = req.user!.userId
+  const { emotions, event, trigger, recordDate, tagIds } = req.body
+
+  for (const emotion of emotions) {
+    if (!emotion.emotionTypeId || emotion.intensity === undefined) {
+      return res.status(400).json(apiFailure(400, '情绪数据格式错误'))
+    }
+    if (emotion.intensity < 1 || emotion.intensity > 10) {
+      return res.status(400).json(apiFailure(400, '强度必须在1-10之间'))
+    }
+  }
+
+  const date = recordDate || new Date().toISOString().split('T')[0]
+  const resolvedTagIds = tagIds || []
+
+  await moodService.recordMood({
+    userId,
+    note: event || '',
+    trigger: trigger || '',
+    recordedAt: new Date(`${date}T00:00:00.000Z`),
+    emotions,
+    tagIds: resolvedTagIds,
+  })
+  await clearMoodCache(userId)
+  return res.status(201).json(apiSuccess(null, '记录成功'))
+}
+
+// @deprecated
+const recordMoodLegacy = async (req: AuthRequest, res: Response) => {
+  const userId = req.user!.userId
+  const {
+    moodType,
+    moodRatio,
+    intensity,
+    intensity_score,
+    level,
+    event,
+    tags,
+    trigger,
+    recordDate,
+  } = req.body
+
+  const rawIntensity = Array.isArray(moodRatio)
+    ? moodRatio[0]
+    : (moodRatio ?? intensity ?? intensity_score ?? level)
+
+  if (!moodType || rawIntensity === undefined) {
+    return res.status(400).json(apiFailure(400, '情绪类型和强度为必填'))
+  }
+
+  const moodTypeNames = (Array.isArray(moodType) ? moodType : String(moodType).split(/[,，、]/))
+    .map((item) => String(item).trim())
+    .filter(Boolean)
+  const resolvedIntensity = Number(rawIntensity)
+
+  if (!Number.isFinite(resolvedIntensity) || resolvedIntensity < 1 || resolvedIntensity > 10) {
+    return res.status(400).json(apiFailure(400, '强度必须在1-10之间'))
+  }
+
+  const date = recordDate || new Date().toISOString().split('T')[0]
+  const emotionTypes = await moodService.listEmotionTypes()
+  const matchedEmotions = moodTypeNames.map((name) => emotionTypes.find((type) => type.name === name || type.code === name))
+
+  if (matchedEmotions.some((emotion) => !emotion)) {
+    return res.status(400).json(apiFailure(400, '情绪类型不存在'))
+  }
+
+  const tagNames = (Array.isArray(tags) ? tags : String(tags || '').split(/[,，、]/))
+    .map((item) => String(item).trim())
+    .filter(Boolean)
+  const resolvedTags = await Promise.all(tagNames.map((name) => moodService.createOrGetTag(name, userId)))
+
+  await moodService.recordMood({
+    userId,
+    note: event || '',
+    trigger: trigger || '',
+    recordedAt: new Date(`${date}T00:00:00.000Z`),
+    emotions: matchedEmotions.map((emotion, index) => ({
+      emotionTypeId: emotion!.id,
+      intensity: resolvedIntensity,
+      isPrimary: index === 0,
+    })),
+    tagIds: resolvedTags.map((tag) => tag.id),
+  })
+  await clearMoodCache(userId)
+  res.status(201).json(apiSuccess(null, '记录成功'))
+}
+
 export const recordMood = async (req: AuthRequest, res: Response) => {
   try {
     if (!req) {
@@ -15,90 +104,10 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
     if (!req.user) {
       return res.status(401).json(apiFailure(401, '未登录'))
     }
-    const userId = req.user.userId
-    const {
-      moodType,
-      moodRatio,
-      intensity,
-      intensity_score,
-      level,
-      event,
-      tags,
-      trigger,
-      recordDate,
-      emotions,
-      tagIds,
-    } = req.body
-
-    if (emotions && Array.isArray(emotions) && emotions.length > 0) {
-      for (const emotion of emotions) {
-        if (!emotion.emotionTypeId || emotion.intensity === undefined) {
-          return res.status(400).json(apiFailure(400, '情绪数据格式错误'))
-        }
-        if (emotion.intensity < 1 || emotion.intensity > 10) {
-          return res.status(400).json(apiFailure(400, '强度必须在1-10之间'))
-        }
-      }
-
-      const date = recordDate || new Date().toISOString().split('T')[0]
-      const resolvedTagIds = tagIds || []
-
-      await moodService.recordMood({
-        userId,
-        note: event || '',
-        trigger: trigger || '',
-        recordedAt: new Date(`${date}T00:00:00.000Z`),
-        emotions,
-        tagIds: resolvedTagIds,
-      })
-      await clearMoodCache(userId)
-      return res.status(201).json(apiSuccess(null, '记录成功'))
+    if (req.body.emotions && Array.isArray(req.body.emotions) && req.body.emotions.length > 0) {
+      return recordMoodWithEmotions(req, res)
     }
-
-    const rawIntensity = Array.isArray(moodRatio)
-      ? moodRatio[0]
-      : (moodRatio ?? intensity ?? intensity_score ?? level)
-
-    if (!moodType || rawIntensity === undefined) {
-      return res.status(400).json(apiFailure(400, '情绪类型和强度为必填'))
-    }
-
-    const moodTypeNames = (Array.isArray(moodType) ? moodType : String(moodType).split(/[,，、]/))
-      .map((item) => String(item).trim())
-      .filter(Boolean)
-    const resolvedIntensity = Number(rawIntensity)
-
-    if (!Number.isFinite(resolvedIntensity) || resolvedIntensity < 1 || resolvedIntensity > 10) {
-      return res.status(400).json(apiFailure(400, '强度必须在1-10之间'))
-    }
-
-    const date = recordDate || new Date().toISOString().split('T')[0]
-    const emotionTypes = await moodService.listEmotionTypes()
-    const matchedEmotions = moodTypeNames.map((name) => emotionTypes.find((type) => type.name === name || type.code === name))
-
-    if (matchedEmotions.some((emotion) => !emotion)) {
-      return res.status(400).json(apiFailure(400, '情绪类型不存在'))
-    }
-
-    const tagNames = (Array.isArray(tags) ? tags : String(tags || '').split(/[,，、]/))
-      .map((item) => String(item).trim())
-      .filter(Boolean)
-    const resolvedTags = await Promise.all(tagNames.map((name) => moodService.createOrGetTag(name, userId)))
-
-    await moodService.recordMood({
-      userId,
-      note: event || '',
-      trigger: trigger || '',
-      recordedAt: new Date(`${date}T00:00:00.000Z`),
-      emotions: matchedEmotions.map((emotion, index) => ({
-        emotionTypeId: emotion!.id,
-        intensity: resolvedIntensity,
-        isPrimary: index === 0,
-      })),
-      tagIds: resolvedTags.map((tag) => tag.id),
-    })
-    await clearMoodCache(userId)
-    res.status(201).json(apiSuccess(null, '记录成功'))
+    return recordMoodLegacy(req, res)
   } catch (error) {
     logger.error('记录情绪失败', { error: error instanceof Error ? error.message : 'unknown_error', userId: req?.user?.userId })
     res.status(500).json(apiFailure(500, '服务器错误'))
