@@ -84,13 +84,13 @@ const REFERENCE_EMOTION_TYPES = [
   // ===== 原有 10 种 =====
   ['calm', '平静', 'calm', 'neutral', 10],
   ['happy', '快乐', 'smile', 'positive', 20],
-  ['ight', '愉悦', 'sun', 'positive', 25],
+  ['delight', '愉悦', 'sun', 'positive', 25],
   ['neutral', '一般', 'meh', 'neutral', 30],
   ['sad', '难过', 'cloud-rain', 'negative', 40],
   ['anxious', '焦虑', 'activity', 'negative', 50],
   ['angry', '愤怒', 'flame', 'negative', 60],
   ['irritable', '烦躁', 'zap', 'negative', 65],
-  ['ex', '兴奋', 'star', 'positive', 70],
+  ['excited', '兴奋', 'star', 'positive', 70],
   ['tired', '疲惫', 'battery-low', 'neutral', 80],
   // ===== 新增：Plutchik 情绪轮 14 种 + grateful =====
   ['ecstasy', '狂喜', 'star', 'positive', 22],

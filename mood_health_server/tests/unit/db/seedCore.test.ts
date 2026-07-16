@@ -56,4 +56,19 @@ describe('core seed', () => {
     expect(sqlText).not.toContain('assessment_versions')
     expect(db.queries.every((query) => query.params.length > 0)).toBe(true)
   })
+
+  it('seeds emotion codes used by the frontend record form', async () => {
+    const db = new FakeSeedDatabase()
+
+    await seedReferenceData(db)
+
+    const seededCodes = db.queries
+      .filter((query) => query.sql.includes('INSERT INTO emotion_types'))
+      .map((query) => query.params[0])
+
+    expect(seededCodes).toContain('delight')
+    expect(seededCodes).toContain('excited')
+    expect(seededCodes).not.toContain('ight')
+    expect(seededCodes).not.toContain('ex')
+  })
 })
