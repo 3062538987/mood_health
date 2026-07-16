@@ -39,6 +39,8 @@ const expectedMigrationFiles = [
   '0160_create_cases.up.sql',
   '0170_create_case_interventions.down.sql',
   '0170_create_case_interventions.up.sql',
+  '0180_create_prompt_templates.down.sql',
+  '0180_create_prompt_templates.up.sql',
 ]
 
 describe('migration SQL files', () => {
