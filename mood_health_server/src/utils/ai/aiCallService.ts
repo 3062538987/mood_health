@@ -1,0 +1,95 @@
+/**
+ * AI 调用服务
+ * 将 Prompt 模板与 AI 客户端对接，提供统一的 AI 调用入口
+ */
+
+import { callChatCompletion } from './aiClient'
+import promptService from '../../services/promptService'
+import type { PromptTemplate } from '../../repositories/promptRepository'
+import aiConfig from '../../config/aiConfig'
+import logger from '../logger'
+
+/**
+ * 使用 Prompt 模板调用 AI
+ * @param templateName 模板名称
+ * @param variables 变量映射
+ * @param options 额外选项
+ * @returns AI 生成的文本
+ */
+export const callWithTemplate = async (
+  templateName: string,
+  variables: Record<string, string> = {},
+  options: { model?: string; temperature?: number; maxTokens?: number } = {}
+): Promise<string> => {
+  if (!aiConfig.enabled) {
+    throw new Error('AI 服务未启用，请设置 AI_ENABLED=true')
+  }
+
+  // 从数据库加载模板
+  const templates = await promptService.getActiveByCategory('assessment_interpretation')
+  const allTemplates = [
+    ...templates,
+    ...(await promptService.getActiveByCategory('mood_report')),
+    ...(await promptService.getActiveByCategory('counseling')),
+    ...(await promptService.getActiveByCategory('recommendation')),
+  ]
+  const template = allTemplates.find((t) => t.name === templateName)
+
+  if (!template) {
+    throw new Error(`Prompt 模板 "${templateName}" 不存在或未启用`)
+  }
+
+  // 填充模板变量
+  let userPrompt = template.userPromptTemplate
+  for (const [key, value] of Object.entries(variables)) {
+    userPrompt = userPrompt.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value)
+  }
+
+  const messages: Array<{ role: 'system' | 'user'; content: string }> = [
+    { role: 'system', content: template.systemPrompt },
+    { role: 'user', content: userPrompt },
+  ]
+
+  logger.info(`AI call with template: ${templateName}, model: ${options.model || template.model}`)
+
+  return callChatCompletion(messages, {
+    model: options.model || template.model,
+    temperature: options.temperature ?? template.temperature,
+    maxTokens: options.maxTokens ?? template.maxTokens,
+  })
+}
+
+/**
+ * 直接调用 AI（不使用模板）
+ * @param systemPrompt 系统提示词
+ * @param userPrompt 用户提示词
+ * @param options 选项
+ * @returns AI 生成的文本
+ */
+export const callDirect = async (
+  systemPrompt: string,
+  userPrompt: string,
+  options: { model?: string; temperature?: number; maxTokens?: number } = {}
+): Promise<string> => {
+  if (!aiConfig.enabled) {
+    throw new Error('AI 服务未启用，请设置 AI_ENABLED=true')
+  }
+
+  const messages: Array<{ role: 'system' | 'user'; content: string }> = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt },
+  ]
+
+  return callChatCompletion(messages, {
+    model: options.model || aiConfig.models.moodAnalysis,
+    temperature: options.temperature ?? 0.7,
+    maxTokens: options.maxTokens ?? 2048,
+  })
+}
+
+/**
+ * 检查 AI 是否可用
+ */
+export const isAiAvailable = (): boolean => {
+  return aiConfig.enabled && !!(aiConfig.deepseekApiKey || aiConfig.apiKey)
+}
