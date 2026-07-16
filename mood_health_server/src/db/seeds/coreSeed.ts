@@ -61,6 +61,7 @@ export const REFERENCE_PERMISSIONS: ReferencePermission[] = [
   { code: 'case.refer', name: '转介个案', description: '将个案转介至外部机构' },
   { code: 'case.close', name: '结案', description: '结案并记录结案摘要' },
   { code: 'user.delete', name: '物理删除用户', description: '物理删除用户及其关联数据' },
+  { code: 'prompt.manage', name: '管理 Prompt 模板', description: '创建、编辑、删除 AI Prompt 模板' },
 ]
 
 export const ROLE_PERMISSION_CODES: Record<ReferenceRole['code'], string[]> = {
@@ -76,7 +77,7 @@ export const ROLE_PERMISSION_CODES: Record<ReferenceRole['code'], string[]> = {
     'case.read_own',
   ],
   counselor: ['auth.profile.read', 'report.aggregate.read', 'case.read_assigned', 'case.read_own', 'case.create', 'case.intervene', 'case.refer', 'case.close'],
-  super_admin: ['auth.profile.read', 'report.aggregate.read', 'user.manage', 'user.role.assign', 'audit.log.read', 'case.read_assigned', 'case.read_own', 'case.create', 'case.assign', 'case.refer', 'case.close', 'user.delete'],
+  super_admin: ['auth.profile.read', 'report.aggregate.read', 'user.manage', 'user.role.assign', 'audit.log.read', 'case.read_assigned', 'case.read_own', 'case.create', 'case.assign', 'case.refer', 'case.close', 'user.delete', 'prompt.manage'],
 }
 
 const REFERENCE_EMOTION_TYPES = [

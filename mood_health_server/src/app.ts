@@ -13,6 +13,7 @@ import questionnaireRoutes from './routes/questionnaireRoutes'
 import auditRoutes from './routes/auditRoutes'
 import managementRoutes from './routes/managementRoutes'
 import caseRoutes from './routes/caseRoutes'
+import promptRoutes from './routes/promptRoutes'
 import logger, { summarizeRequestBody } from './utils/logger'
 import redisClient from './utils/redis.client'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler'
@@ -142,6 +143,7 @@ export const createApp = (dependencies: AppDependencies = {}) => {
 
   app.use('/api/audit', auditRoutes)
 app.use('/api/cases', caseRoutes)
+app.use('/api/prompts', promptRoutes)
 app.use('/api', managementRoutes)
 
   app.get(
