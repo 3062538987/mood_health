@@ -149,4 +149,12 @@ P0-T8 旧表处置
 P0-T9 前端流程
     ↓
 P0 Checkpoint A
+    ↓
+V1.1-T1~T7（AI 增强，详见 [V1.1 实施计划](V1.1-implementation-plan.md)）
+    ↓
+V1.1 Checkpoint B
+    ↓
+P1/P2-T1~T8（非核心模块，详见 [P1/P2 实施计划](P1-P2-implementation-plan.md)）
+    ↓
+P1/P2 Checkpoint
 ```
