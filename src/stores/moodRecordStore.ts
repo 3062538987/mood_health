@@ -5,6 +5,7 @@ import { useDebounceFn } from '@vueuse/core'
 import {
   analyzeMoodWithRetry,
   getMoodAdviceHistory,
+  getMoodTypeEnum,
   saveMoodAdvice,
   submitMoodRecord,
   type AnalyzeMoodResponse,
@@ -285,6 +286,7 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
   const aiFailureCount = ref(0)
   const aiDisabledUntil = ref<number | null>(null)
   const aiServiceMessage = ref('')
+  const emotionTypeIdByCode = ref<Record<string, number>>({})
 
   const selectedMoodMeta = computed(() =>
     moodOptions.filter((item) => selectedMoodTypes.value.includes(item.id))
@@ -762,10 +764,19 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
       const safeMoodTypes =
         selectedMoodTypes.value.length > 0 ? [...selectedMoodTypes.value] : ['neutral']
       const safeIntensity = Math.min(10, Math.max(1, Math.round(intensity.value || 5)))
+      const mappedEmotionTypes = safeMoodTypes.map((code) => ({
+        code,
+        id: emotionTypeIdByCode.value[code],
+      }))
+
+      if (mappedEmotionTypes.some((item) => !Number.isInteger(item.id))) {
+        ElMessage.error('情绪类型数据未加载，请刷新后重试')
+        return false
+      }
 
       // 使用新版 emotions 数组路径
-      const emotions = safeMoodTypes.map((typeId, index) => ({
-        emotionTypeId: typeId,
+      const emotions = mappedEmotionTypes.map((item, index) => ({
+        emotionTypeId: item.id,
         intensity: safeIntensity,
         isPrimary: index === 0,
       }))
@@ -813,6 +824,11 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
   )
 
   const initializePage = async () => {
+    const emotionTypes = await getMoodTypeEnum()
+    emotionTypeIdByCode.value = Object.fromEntries(
+      emotionTypes.map((type) => [type.code, type.id])
+    )
+
     const draft = loadDraft()
     if (draft) {
       lastDraftSavedAt.value = draft.savedAt

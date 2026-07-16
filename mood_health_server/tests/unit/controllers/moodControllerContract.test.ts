@@ -275,7 +275,7 @@ describe('moodController response contract', () => {
   })
 
   it('routes emotion type and tag support data through mood service', async () => {
-    const emotionTypes = [{ id: 1, name: '快乐', icon: 'smile', category: 'positive' }]
+    const emotionTypes = [{ id: 1, code: 'happy', name: '快乐', icon: 'smile', category: 'positive' }]
     const tags = [{ id: 2, name: '学习', user_id: null, is_system: true }]
     mockMoodService.listEmotionTypes.mockResolvedValue(emotionTypes)
     mockMoodService.listTags.mockResolvedValue(tags)

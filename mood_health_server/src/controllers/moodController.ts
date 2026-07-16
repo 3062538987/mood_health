@@ -309,6 +309,7 @@ export const getMoodTypes = async (req: AuthRequest, res: Response) => {
     const emotionTypes = await moodService.listEmotionTypes()
     const formattedTypes = emotionTypes.map((type) => ({
       id: type.id,
+      code: type.code,
       name: type.name,
       icon: type.icon,
       category: type.category,
@@ -382,4 +383,3 @@ export const getMoodAnalysisHandler = async (req: AuthRequest, res: Response) =>
     res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
-

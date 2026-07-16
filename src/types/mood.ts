@@ -24,7 +24,7 @@ export interface MoodRecord {
 }
 
 export interface CreateMoodEmotionInput {
-  emotionTypeId: number | string
+  emotionTypeId: number
   intensity: number
   isPrimary: boolean
 }
@@ -118,6 +118,9 @@ export interface MoodTrendResponse {
  * @property {string} label - 情绪类型标签
  */
 export interface MoodTypeEnum {
-  value: string
-  label: string
+  id: number
+  code: string
+  name: string
+  icon?: string | null
+  category?: string | null
 }
