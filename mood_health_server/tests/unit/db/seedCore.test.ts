@@ -16,8 +16,8 @@ describe('core seed', () => {
     const result = await seedReferenceData(db)
 
     expect(result.roles).toBe(3)
-    expect(result.permissions).toBe(12)
-    expect(result.rolePermissions).toBe(15)
+    expect(result.permissions).toBe(20)
+    expect(result.rolePermissions).toBe(29)
     expect(REFERENCE_ROLES.map((role) => role.code)).toEqual(['student', 'counselor', 'super_admin'])
     expect(REFERENCE_PERMISSIONS.map((permission) => permission.code)).toEqual([
       'auth.profile.read',
@@ -32,6 +32,14 @@ describe('core seed', () => {
       'user.manage',
       'user.role.assign',
       'audit.log.read',
+      'case.read_assigned',
+      'case.read_own',
+      'case.create',
+      'case.assign',
+      'case.intervene',
+      'case.refer',
+      'case.close',
+      'user.delete',
     ])
   })
 

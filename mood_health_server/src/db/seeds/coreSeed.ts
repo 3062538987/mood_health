@@ -53,6 +53,14 @@ export const REFERENCE_PERMISSIONS: ReferencePermission[] = [
   { code: 'user.manage', name: '管理用户', description: '停用或管理用户账号' },
   { code: 'user.role.assign', name: '分配角色', description: '为用户分配固定角色' },
   { code: 'audit.log.read', name: '读取审计日志', description: '读取系统审计日志' },
+  { code: 'case.read_assigned', name: '读取已分配个案', description: '读取已分配给自己或全部个案' },
+  { code: 'case.read_own', name: '读取本人个案', description: '学生读取本人个案' },
+  { code: 'case.create', name: '创建个案', description: '创建风险个案' },
+  { code: 'case.assign', name: '分配个案', description: '将个案分配给咨询师' },
+  { code: 'case.intervene', name: '记录干预', description: '在个案下记录干预措施' },
+  { code: 'case.refer', name: '转介个案', description: '将个案转介至外部机构' },
+  { code: 'case.close', name: '结案', description: '结案并记录结案摘要' },
+  { code: 'user.delete', name: '物理删除用户', description: '物理删除用户及其关联数据' },
 ]
 
 export const ROLE_PERMISSION_CODES: Record<ReferenceRole['code'], string[]> = {
@@ -65,9 +73,10 @@ export const ROLE_PERMISSION_CODES: Record<ReferenceRole['code'], string[]> = {
     'assessment.instrument.read',
     'assessment.submit',
     'assessment.history.read_own',
+    'case.read_own',
   ],
-  counselor: ['auth.profile.read', 'report.aggregate.read'],
-  super_admin: ['auth.profile.read', 'report.aggregate.read', 'user.manage', 'user.role.assign', 'audit.log.read'],
+  counselor: ['auth.profile.read', 'report.aggregate.read', 'case.read_assigned', 'case.read_own', 'case.create', 'case.intervene', 'case.refer', 'case.close'],
+  super_admin: ['auth.profile.read', 'report.aggregate.read', 'user.manage', 'user.role.assign', 'audit.log.read', 'case.read_assigned', 'case.read_own', 'case.create', 'case.assign', 'case.refer', 'case.close', 'user.delete'],
 }
 
 const REFERENCE_EMOTION_TYPES = [
