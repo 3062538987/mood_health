@@ -114,10 +114,6 @@ const handleLogout = () => {
 
 // 组件挂载时获取情绪数据
 onMounted(async () => {
-  // 先确保用户信息已加载
-  if (userStore.token && !userStore) {
-    await userStore.fetchUserInfo()
-  }
   if (userStore.isLoggedIn) {
     // 当用户登录时，获取最近的情绪记录
     moodStore.fetchMoodList({ page: 1, size: 10 })
