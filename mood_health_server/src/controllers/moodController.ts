@@ -67,7 +67,7 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
 
     const date = recordDate || new Date().toISOString().split('T')[0]
     const emotionTypes = await moodService.listEmotionTypes()
-    const matchedEmotions = moodTypeNames.map((name) => emotionTypes.find((type) => type.name === name))
+    const matchedEmotions = moodTypeNames.map((name) => emotionTypes.find((type) => type.name === name || type.code === name))
 
     if (matchedEmotions.some((emotion) => !emotion)) {
       return res.status(400).json(apiFailure(400, '情绪类型不存在'))
@@ -180,7 +180,7 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
     }
 
     const emotionTypes = await moodService.listEmotionTypes()
-    const matchedEmotions = moodTypeNames.map((name) => emotionTypes.find((type) => type.name === name))
+    const matchedEmotions = moodTypeNames.map((name) => emotionTypes.find((type) => type.name === name || type.code === name))
 
     if (matchedEmotions.some((emotion) => !emotion)) {
       return res.status(400).json(apiFailure(400, '情绪类型不存在'))

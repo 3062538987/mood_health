@@ -210,6 +210,7 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
 
     return emotionTypes.map((type) => ({
       id: type.id,
+      code: type.code,
       name: type.name,
       icon: type.icon,
       category: type.category,

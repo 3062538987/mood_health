@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import { AuthRequest } from '../middleware/auth'
-import { apiSuccess } from '../utils/apiResponse'
+import { apiSuccess, apiFailure } from '../utils/apiResponse'
 import { HttpException } from '../utils/errors'
 import logger from '../utils/logger'
 import { createAuthService } from '../services/authService'
@@ -36,10 +36,18 @@ export const login = async (req: Request, res: Response) => {
 }
 
 export const getMe = async (req: AuthRequest, res: Response) => {
-  if (!req.user) {
-    throw new HttpException('未登录', 401, null, req.originalUrl)
-  }
+  try {
+    if (!req.user) {
+      return res.status(401).json(apiFailure(401, '未登录'))
+    }
 
-  const user = await authService.getMe(req.user.userId)
-  res.json(apiSuccess({ user }, '获取当前用户成功'))
+    const user = await authService.getMe(req.user.userId)
+    res.json(apiSuccess({ user }, '获取当前用户成功'))
+  } catch (error) {
+    if (error instanceof HttpException) {
+      return res.status(error.statusCode).json(apiFailure(error.statusCode, error.message))
+    }
+    logger.error('获取当前用户失败', { error, userId: req.user?.userId })
+    return res.status(500).json(apiFailure(500, '获取用户信息失败'))
+  }
 }

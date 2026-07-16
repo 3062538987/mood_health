@@ -262,7 +262,7 @@ describe('moodService', () => {
     const service = createMoodService({ repository })
 
     await expect(service.listEmotionTypes()).resolves.toEqual([
-      { id: 1, name: '快乐', icon: 'smile', category: 'positive' },
+      { id: 1, code: 'happy', name: '快乐', icon: 'smile', category: 'positive' },
     ])
   })
 
