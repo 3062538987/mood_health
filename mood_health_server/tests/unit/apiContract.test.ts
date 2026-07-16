@@ -63,4 +63,15 @@ describe('application API contract', () => {
       requestId: expect.any(String),
     })
   })
+
+  it('does not turn a disallowed CORS origin into a 500 response', async () => {
+    const response = await fetch(`${baseUrl}/health`, {
+      headers: { Origin: 'https://evil.example' },
+    })
+    const body = await response.text()
+
+    expect(response.status).not.toBe(500)
+    expect(response.headers.get('access-control-allow-origin')).toBeNull()
+    expect(body).not.toContain('Not allowed by CORS')
+  })
 })
