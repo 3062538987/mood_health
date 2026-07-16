@@ -68,7 +68,7 @@ export const getQuestionnaireQuestions = async (
       return res.status(404).json(apiFailure(404, "量表不存在"));
     }
     const questions = await assessmentService.listQuestionsByQuestionnaireId(questionnaireId);
-    const parsedQuestions = questions.map((q) => ({
+    const parsedQuestions = questions.map((q: { options: string }) => ({
       ...q,
       options: JSON.parse(q.options),
     }));

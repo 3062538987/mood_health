@@ -345,6 +345,149 @@ export const createAssessmentRepository = (db: AssessmentDatabase = getMysqlPool
     }
   }
 
+  const listAllSessions = async (params: {
+    page?: number
+    pageSize?: number
+    userId?: number
+    instrumentId?: number
+    riskLevel?: string
+    startDate?: string
+    endDate?: string
+  }): Promise<{ list: Array<{ id: number; userId: number; username: string; instrumentName: string; rawScore: number; screeningLevel: string; status: string; startedAt: string; submittedAt: string }>; total: number }> => {
+    const page = params.page && params.page > 0 ? Math.floor(params.page) : 1
+    const pageSize = params.pageSize && params.pageSize > 0 ? Math.min(Math.floor(params.pageSize), 100) : 20
+    const filters: string[] = ["s.status = 'submitted'"]
+    const values: unknown[] = []
+
+    if (params.userId) {
+      filters.push('s.user_id = ?')
+      values.push(params.userId)
+    }
+    if (params.instrumentId) {
+      filters.push('ai.id = ?')
+      values.push(params.instrumentId)
+    }
+    if (params.riskLevel) {
+      filters.push('s.screening_level = ?')
+      values.push(params.riskLevel)
+    }
+    if (params.startDate) {
+      filters.push('s.submitted_at >= ?')
+      values.push(params.startDate)
+    }
+    if (params.endDate) {
+      filters.push('s.submitted_at <= ?')
+      values.push(params.endDate)
+    }
+
+    const where = filters.join(' AND ')
+
+    const [countRows] = await db.query<RowDataPacket[]>(
+      `SELECT COUNT(*) AS total FROM assessment_sessions s
+       JOIN assessment_versions av ON av.id = s.assessment_version_id
+       JOIN assessment_instruments ai ON ai.id = av.instrument_id
+       WHERE ${where}`,
+      values
+    )
+    const total = Number(countRows[0]?.total || 0)
+
+    const [rows] = await db.query<RowDataPacket[]>(
+      `SELECT s.id, s.user_id, s.raw_score, s.screening_level, s.status,
+              s.started_at, s.submitted_at,
+              u.username, ai.name AS instrument_name
+       FROM assessment_sessions s
+       JOIN assessment_versions av ON av.id = s.assessment_version_id
+       JOIN assessment_instruments ai ON ai.id = av.instrument_id
+       LEFT JOIN users u ON u.id = s.user_id
+       WHERE ${where}
+       ORDER BY s.submitted_at DESC
+       LIMIT ? OFFSET ?`,
+      [...values, pageSize, (page - 1) * pageSize]
+    )
+
+    const toIso = (v: Date | string) => (v instanceof Date ? v.toISOString() : String(v))
+
+    return {
+      list: rows.map((r) => ({
+        id: r.id,
+        userId: r.user_id,
+        username: r.username,
+        instrumentName: r.instrument_name,
+        rawScore: r.raw_score,
+        screeningLevel: r.screening_level,
+        status: r.status,
+        startedAt: toIso(r.started_at),
+        submittedAt: toIso(r.submitted_at),
+      })),
+      total,
+    }
+  }
+
+  const getSessionByIdAdmin = async (sessionId: number): Promise<{
+    id: number
+    userId: number
+    username: string
+    instrumentName: string
+    versionLabel: string
+    rawScore: number
+    screeningLevel: string
+    resultSummary: Record<string, unknown>
+    answers: Array<{ itemId: number; itemText: string; answerValue: unknown; score: number }>
+    startedAt: string
+    submittedAt: string
+  } | null> => {
+    const [rows] = await db.query<RowDataPacket[]>(
+      `SELECT
+        s.id, s.user_id, s.raw_score, s.screening_level, s.result_summary_json,
+        s.started_at, s.submitted_at,
+        u.username,
+        ai.name AS instrument_name,
+        av.version_label
+       FROM assessment_sessions s
+       JOIN assessment_versions av ON av.id = s.assessment_version_id
+       JOIN assessment_instruments ai ON ai.id = av.instrument_id
+       LEFT JOIN users u ON u.id = s.user_id
+       WHERE s.id = ? AND s.status = 'submitted'
+       LIMIT 1`,
+      [sessionId]
+    )
+    if (!rows[0]) return null
+
+    const [answerRows] = await db.query<RowDataPacket[]>(
+      `SELECT aa.item_id, ai.item_text, aa.answer_value_json, aa.score
+       FROM assessment_answers aa
+       JOIN assessment_items ai ON ai.id = aa.item_id
+       WHERE aa.session_id = ?
+       ORDER BY ai.item_order ASC`,
+      [sessionId]
+    )
+
+    const toIso = (v: Date | string) => (v instanceof Date ? v.toISOString() : String(v))
+
+    return {
+      id: rows[0].id,
+      userId: rows[0].user_id,
+      username: rows[0].username,
+      instrumentName: rows[0].instrument_name,
+      versionLabel: rows[0].version_label,
+      rawScore: rows[0].raw_score,
+      screeningLevel: rows[0].screening_level,
+      resultSummary: typeof rows[0].result_summary_json === 'string'
+        ? JSON.parse(rows[0].result_summary_json)
+        : rows[0].result_summary_json,
+      answers: answerRows.map((a) => ({
+        itemId: a.item_id,
+        itemText: a.item_text,
+        answerValue: typeof a.answer_value_json === 'string'
+          ? JSON.parse(a.answer_value_json)
+          : a.answer_value_json,
+        score: a.score,
+      })),
+      startedAt: toIso(rows[0].started_at),
+      submittedAt: toIso(rows[0].submitted_at),
+    }
+  }
+
   return {
     listQuestionnaires,
     getQuestionnaireById,
@@ -353,6 +496,8 @@ export const createAssessmentRepository = (db: AssessmentDatabase = getMysqlPool
     listUserAssessmentHistory,
     getScoringRules,
     getSessionById,
+    listAllSessions,
+    getSessionByIdAdmin,
   }
 }
 

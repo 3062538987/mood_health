@@ -14,7 +14,6 @@ const rolePermissions: Record<UserRole, readonly string[]> = {
     'user.manage',
     'role.manage',
     'system.config',
-    'incident.fix',
     'audit.record.view_all',
     'post.audit',
     'post.audit.pending.read',

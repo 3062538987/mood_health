@@ -6,11 +6,11 @@ import {
   adminUsersDeleteHandler,
   adminUsersDisableHandler,
   adminUsersUpdateRoleHandler,
-  feedbackHandleHandler,
-  incidentFixHandler,
   roleManageHandler,
   systemConfigHandler,
   userManageHandler,
+  adminAssessmentsListHandler,
+  adminAssessmentDetailHandler,
 } from '../controllers/managementController'
 import { authenticate, requirePermission } from '../middleware/auth'
 import { validateRequest } from '../middleware/validateRequest'
@@ -76,30 +76,7 @@ router.post(
   systemConfigHandler
 )
 
-router.post(
-  '/incident/fix',
-  authenticate,
-  requirePermission('incident.fix'),
-  [
-    body('issueDescription').notEmpty().withMessage('问题描述不能为空'),
-    body('fixContent').notEmpty().withMessage('修复内容不能为空'),
-    body('result').optional().isIn(['success', 'failed']),
-  ],
-  validateRequest,
-  incidentFixHandler
-)
-
-router.post(
-  '/feedback/handle',
-  authenticate,
-  requirePermission('feedback.handle'),
-  [
-    body('feedbackId').notEmpty().withMessage('反馈ID不能为空'),
-    body('handleContent').notEmpty().withMessage('处理内容不能为空'),
-    body('closeStatus').optional().isIn(['closed', 'pending']),
-  ],
-  validateRequest,
-  feedbackHandleHandler
-)
+router.get('/admin/assessments', authenticate, requirePermission('user.manage'), adminAssessmentsListHandler)
+router.get('/admin/assessments/:id', authenticate, requirePermission('user.manage'), adminAssessmentDetailHandler)
 
 export default router

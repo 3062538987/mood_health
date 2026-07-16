@@ -1,46 +1,40 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-const readModel = (name: string) =>
-  fs.readFileSync(path.resolve(__dirname, `../../../src/models/${name}`), 'utf8')
+const modelDir = path.resolve(__dirname, '../../../src/models')
+const repoDir = path.resolve(__dirname, '../../../src/repositories')
 
-const expectSqliteOnlyLegacyModel = (source: string) => {
-  expect(source).not.toContain("from 'mssql'")
-  expect(source).not.toContain("from '../config/database'")
-  expect(source).not.toContain('isSqliteClient')
-  expect(source).not.toContain('.request()')
-}
+const legacyModels = [
+  'activityModel.ts',
+  'postModel.ts',
+  'commentModel.ts',
+  'courseModel.ts',
+  'musicModel.ts',
+  'relaxModel.ts',
+  'achievementModel.ts',
+  'adviceModel.ts',
+]
 
-describe('disabled legacy models', () => {
-  it('keeps activity storage SQLite-only until its P1/P2 migration', () => {
-    expectSqliteOnlyLegacyModel(readModel('activityModel.ts'))
+const replacementRepos = [
+  'activityRepository.ts',
+  'postRepository.ts',
+  'courseRepository.ts',
+  'musicRepository.ts',
+  'relaxRepository.ts',
+  'achievementRepository.ts',
+]
+
+describe('P1/P2 migration complete — legacy SQLite models removed', () => {
+  it.each(legacyModels)('deletes legacy model file %s', (name) => {
+    const filePath = path.join(modelDir, name)
+    expect(fs.existsSync(filePath)).toBe(false)
   })
 
-  it('keeps post storage SQLite-only until its P1/P2 migration', () => {
-    expectSqliteOnlyLegacyModel(readModel('postModel.ts'))
+  it('aiModel.ts remains for AI utility use', () => {
+    expect(fs.existsSync(path.join(modelDir, 'aiModel.ts'))).toBe(true)
   })
 
-  it('keeps comment storage SQLite-only until its P1/P2 migration', () => {
-    expectSqliteOnlyLegacyModel(readModel('commentModel.ts'))
-  })
-
-  it('keeps course storage SQLite-only until its P1/P2 migration', () => {
-    expectSqliteOnlyLegacyModel(readModel('courseModel.ts'))
-  })
-
-  it('keeps music storage SQLite-only until its P1/P2 migration', () => {
-    expectSqliteOnlyLegacyModel(readModel('musicModel.ts'))
-  })
-
-  it('keeps relaxation storage SQLite-only until its P1/P2 migration', () => {
-    expectSqliteOnlyLegacyModel(readModel('relaxModel.ts'))
-  })
-
-  it('keeps achievement storage SQLite-only until its P1/P2 migration', () => {
-    expectSqliteOnlyLegacyModel(readModel('achievementModel.ts'))
-  })
-
-  it('keeps legacy advice storage SQLite-only until its v1.1 migration', () => {
-    expectSqliteOnlyLegacyModel(readModel('adviceModel.ts'))
+  it.each(replacementRepos)('has replacement MySQL repository %s', (name) => {
+    expect(fs.existsSync(path.join(repoDir, name))).toBe(true)
   })
 })

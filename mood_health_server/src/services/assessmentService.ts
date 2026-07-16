@@ -33,6 +33,19 @@ export const createAssessmentService = (dependencies: AssessmentServiceDependenc
   const getSessionDetail = async (sessionId: number) =>
     repository.getSessionById(sessionId)
 
+  const listAllSessions = async (params: {
+    page?: number
+    pageSize?: number
+    userId?: number
+    instrumentId?: number
+    riskLevel?: string
+    startDate?: string
+    endDate?: string
+  }) => repository.listAllSessions(params)
+
+  const getSessionDetailAdmin = async (sessionId: number) =>
+    repository.getSessionByIdAdmin(sessionId)
+
   const submitAssessment = async (input: SubmitAssessmentInput) => {
     // 1. 验证量表存在
     const questionnaire = await repository.getQuestionnaireById(input.questionnaireId)
@@ -86,6 +99,8 @@ export const createAssessmentService = (dependencies: AssessmentServiceDependenc
     submitAssessment,
     listUserAssessmentHistory,
     getSessionDetail,
+    listAllSessions,
+    getSessionDetailAdmin,
   }
 }
 

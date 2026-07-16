@@ -42,11 +42,6 @@ jest.mock('../../../src/services/moodService', () => ({
   }),
 }))
 
-jest.mock('../../../src/models/adviceModel', () => ({
-  createAdviceHistory: jest.fn(),
-  getAdviceHistoryByUser: jest.fn(),
-}))
-
 jest.mock('../../../src/utils/cache', () => ({
   clearMoodCache: jest.fn().mockResolvedValue(undefined),
 }))

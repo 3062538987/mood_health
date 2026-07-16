@@ -16,6 +16,8 @@ const createRepository = (): jest.Mocked<AssessmentRepository> => ({
   listUserAssessmentHistory: jest.fn(),
   getScoringRules: jest.fn(),
   getSessionById: jest.fn(),
+  listAllSessions: jest.fn(),
+  getSessionByIdAdmin: jest.fn(),
 })
 
 describe('assessmentService', () => {

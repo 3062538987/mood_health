@@ -3,9 +3,11 @@ import type { AuthRequest } from '../middleware/auth'
 import { logOperation } from '../utils/operationLogger'
 import { apiFailure, apiSuccess } from '../utils/apiResponse'
 import { createManagementService } from '../services/managementService'
+import { createAssessmentService } from '../services/assessmentService'
 import type { LegacyAdminRole } from '../repositories/managementRepository'
 
 const managementService = createManagementService()
+const assessmentService = createAssessmentService()
 
 const isValidUserRole = (role: unknown): role is LegacyAdminRole =>
   role === 'user' || role === 'admin' || role === 'super_admin'
@@ -333,68 +335,6 @@ export const systemConfigHandler = async (req: AuthRequest, res: Response) => {
   }
 }
 
-export const incidentFixHandler = async (req: AuthRequest, res: Response) => {
-  try {
-    const { issueDescription, fixContent, result = 'success' } = req.body
-
-    await logOperation(
-      req.user!.userId,
-      req.user!.role,
-      'incident.fix',
-      'INCIDENT_FIX',
-      null,
-      `issue=${String(issueDescription || '').slice(0, 120)}; fix=${String(fixContent || '').slice(0, 120)}; result=${result}`,
-      'success',
-      getClientIp(req)
-    )
-
-    res.status(200).json(apiSuccess(null, '修复清单已记录'))
-  } catch (error) {
-    await logOperation(
-      req.user!.userId,
-      req.user!.role,
-      'incident.fix',
-      'INCIDENT_FIX',
-      null,
-      '修复清单记录失败',
-      'failed',
-      getClientIp(req)
-    )
-    res.status(500).json(apiFailure(500, '修复清单记录失败'))
-  }
-}
-
-export const feedbackHandleHandler = async (req: AuthRequest, res: Response) => {
-  try {
-    const { feedbackId, handleContent, closeStatus = 'closed' } = req.body
-
-    await logOperation(
-      req.user!.userId,
-      req.user!.role,
-      'feedback.handle',
-      'FEEDBACK_HANDLE',
-      feedbackId ? String(feedbackId) : null,
-      `closeStatus=${closeStatus}; handle=${String(handleContent || '').slice(0, 120)}`,
-      'success',
-      getClientIp(req)
-    )
-
-    res.status(200).json(apiSuccess(null, '反馈闭环记录已写入'))
-  } catch (error) {
-    await logOperation(
-      req.user!.userId,
-      req.user!.role,
-      'feedback.handle',
-      'FEEDBACK_HANDLE',
-      null,
-      '反馈闭环记录失败',
-      'failed',
-      getClientIp(req)
-    )
-    res.status(500).json(apiFailure(500, '反馈闭环记录失败'))
-  }
-}
-
 export const adminMoodsListHandler = async (req: AuthRequest, res: Response) => {
   try {
     const { page, pageSize, userId, username, startDate, endDate, moodType } =
@@ -414,5 +354,40 @@ export const adminMoodsListHandler = async (req: AuthRequest, res: Response) => 
       .json(apiSuccess({ list, total, page, pageSize }, '获取情绪统计成功'))
   } catch (error) {
     return res.status(500).json(apiFailure(500, '获取情绪统计失败'))
+  }
+}
+
+export const adminAssessmentsListHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1
+    const pageSize = parseInt(req.query.pageSize as string) || 20
+    const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined
+    const instrumentId = req.query.instrumentId ? parseInt(req.query.instrumentId as string) : undefined
+    const riskLevel = req.query.riskLevel as string | undefined
+    const startDate = req.query.startDate as string | undefined
+    const endDate = req.query.endDate as string | undefined
+
+    const { list, total } = await assessmentService.listAllSessions({
+      page, pageSize, userId, instrumentId, riskLevel, startDate, endDate,
+    })
+
+    return res.status(200).json(apiSuccess({ list, total, page, pageSize }, '获取测评列表成功'))
+  } catch (error) {
+    return res.status(500).json(apiFailure(500, '获取测评列表失败'))
+  }
+}
+
+export const adminAssessmentDetailHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = parseInt(req.params.id as string)
+    const detail = await assessmentService.getSessionDetailAdmin(id)
+
+    if (!detail) {
+      return res.status(404).json(apiFailure(404, '测评会话不存在'))
+    }
+
+    return res.status(200).json(apiSuccess(detail, '获取测评详情成功'))
+  } catch (error) {
+    return res.status(500).json(apiFailure(500, '获取测评详情失败'))
   }
 }
