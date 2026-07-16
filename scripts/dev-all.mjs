@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { spawn } from 'node:child_process'
+import { spawn, execSync } from 'node:child_process'
 
 const isWin = process.platform === 'win32'
 
@@ -29,6 +29,21 @@ function startProcess(name, args) {
 }
 
 console.log('Starting frontend and backend dev servers...')
+
+// 启动前清理残留端口占用（Windows 上 spawn 孙子进程可能无法随父进程退出）
+if (isWin) {
+  for (const port of [3000, 3001]) {
+    try {
+      execSync(
+        `cmd.exe /d /s /c "for /f \"tokens=5\" %a in ('netstat -ano ^| findstr :${port} ^| findstr LISTENING') do @taskkill /F /PID %a >nul 2>&1"`,
+        { timeout: 5000, stdio: 'pipe' }
+      )
+    } catch {
+      // 端口未被占用，正常
+    }
+  }
+  console.log('Ports 3000, 3001 cleaned.')
+}
 
 const frontend = startProcess('frontend', ['run', 'dev'])
 const backend = startProcess('backend', ['--prefix', 'mood_health_server', 'run', 'dev'])
