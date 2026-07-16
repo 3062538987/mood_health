@@ -68,8 +68,10 @@ export const createApp = (dependencies: AppDependencies = {}) => {
   }
 
   app.use(helmet())
+  app.disable('x-powered-by')
   app.use(cors(corsOptions))
-  app.use(express.json())
+  // 安全: 限制请求体大小防止 DoS 攻击 (EXPRESS-BODY-001)
+  app.use(express.json({ limit: '1mb' }))
   app.use(compression())
 
   morgan.token('client-ip', (req) => {
