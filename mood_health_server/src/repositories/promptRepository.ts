@@ -10,7 +10,7 @@ export interface PromptTemplateRow extends RowDataPacket {
   category: PromptCategory
   system_prompt: string
   user_prompt_template: string
-  variables: string | null
+  variables: string | Record<string, string> | null
   model: string
   temperature: number
   max_tokens: number
@@ -61,13 +61,25 @@ export interface UpdatePromptInput {
   sortOrder?: number
 }
 
+const parseVariables = (variables: PromptTemplateRow['variables']) => {
+  if (!variables) {
+    return null
+  }
+
+  if (typeof variables === 'object') {
+    return variables
+  }
+
+  return JSON.parse(variables) as Record<string, string>
+}
+
 const mapRow = (row: PromptTemplateRow): PromptTemplate => ({
   id: row.id,
   name: row.name,
   category: row.category,
   systemPrompt: row.system_prompt,
   userPromptTemplate: row.user_prompt_template,
-  variables: row.variables ? JSON.parse(row.variables) : null,
+  variables: parseVariables(row.variables),
   model: row.model,
   temperature: row.temperature,
   maxTokens: row.max_tokens,
