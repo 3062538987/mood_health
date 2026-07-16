@@ -107,9 +107,9 @@ const themeColor = computed(() => {
 })
 
 // 退出登录
-const handleLogout = () => {
-  userStore.logout()
-  router.push('/login')
+const handleLogout = async () => {
+  await userStore.logout()
+  router.replace('/login')
 }
 
 // 组件挂载时获取情绪数据
