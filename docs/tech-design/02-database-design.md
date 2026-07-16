@@ -57,7 +57,42 @@
 │  roles   │───1:N──│role_permissions│───N:1──│ permissions     │
 └──────────┘   └──────────────┘   └─────────────────┘
 
-独立表: prompt_templates, schema_migrations
+独立表: prompt_templates, schema_migrations, musics, courses, achievement_definitions
+
+P1/P2 非核心模块:
+```
+┌──────────┐
+│  users   │
+└────┬─────┘
+     │ 1:N
+     ├──────────────┬──────────────┬──────────────┐
+     ▼              ▼              ▼              ▼
+┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐
+│  relax   │  │ activity │  │  posts   │  │    user       │
+│ records  │  │participants│ │(user_id  │  │ achievements  │
+└──────────┘  └────┬─────┘  │ SET NULL)│  └──────┬───────┘
+                   │         └────┬─────┘         │ N:1
+                   │ N:1          │ 1:N           ▼
+                   ▼              ▼         ┌──────────────┐
+              ┌──────────┐  ┌──────────┐   │ achievement   │
+              │activities│  │ comments │   │ definitions   │
+              └──────────┘  └────┬─────┘   └──────────────┘
+                                 │ 1:N       ┌──────────────┐
+                    ┌────────────┼──────┐    │  post_likes  │
+                    ▼            ▼      │    │  (post_id,   │
+              ┌──────────┐ ┌──────────┐ │    │   user_id)   │
+              │comment   │ │  users   │ │    └──────────────┘
+              │ likes    │ │(user_id  │ │
+              └──────────┘ │ SET NULL)│ │    ┌──────────────┐
+                           └──────────┘ │    │comment_likes │
+                                        │    │(comment_id,  │
+                                        │    │   user_id)   │
+                                        │    └──────────────┘
+                                        │
+                                   ┌──────────┐
+                                   │post_likes│
+                                   │(user_id) │
+                                   └──────────┘
 ```
 
 ### 1.2 关系汇总
@@ -85,6 +120,18 @@
 | assessment_sessions | cases | 1:N | source_session_id | SET NULL |
 | assessment_items | assessment_answers | 1:N | item_id | RESTRICT |
 | cases | case_interventions | 1:N | case_id | CASCADE |
+| users | relax_records | 1:N | user_id | CASCADE |
+| users | activity_participants | 1:N | user_id | CASCADE |
+| users | posts | 1:N | user_id | SET NULL |
+| users | comments | 1:N | user_id | SET NULL |
+| users | post_likes | 1:N | user_id | CASCADE |
+| users | comment_likes | 1:N | user_id | CASCADE |
+| users | user_achievements | 1:N | user_id | CASCADE |
+| activities | activity_participants | 1:N | activity_id | CASCADE |
+| posts | comments | 1:N | post_id | CASCADE |
+| posts | post_likes | 1:N | post_id | CASCADE |
+| comments | comment_likes | 1:N | comment_id | CASCADE |
+| achievement_definitions | user_achievements | 1:N | achievement_id | CASCADE |
 
 ### 1.3 数据安全设计要点
 
@@ -121,6 +168,17 @@
 | 17 | `cases` | 风险个案 | InnoDB | utf8mb4 | < 1万 |
 | 18 | `case_interventions` | 个案干预记录 | InnoDB | utf8mb4 | < 10万 |
 | 19 | `prompt_templates` | Prompt 模板 | InnoDB | utf8mb4 | < 100 |
+| 20 | `musics` | 音乐 | InnoDB | utf8mb4 | < 1000 |
+| 21 | `courses` | 课程 | InnoDB | utf8mb4 | < 1000 |
+| 22 | `relax_records` | 放松记录 | InnoDB | utf8mb4 | < 10万 |
+| 23 | `activities` | 活动 | InnoDB | utf8mb4 | < 1000 |
+| 24 | `activity_participants` | 活动参与者 | InnoDB | utf8mb4 | < 10万 |
+| 25 | `posts` | 树洞帖子 | InnoDB | utf8mb4 | < 10万 |
+| 26 | `comments` | 评论 | InnoDB | utf8mb4 | < 100万 |
+| 27 | `post_likes` | 帖子点赞 | InnoDB | utf8mb4 | < 100万 |
+| 28 | `comment_likes` | 评论点赞 | InnoDB | utf8mb4 | < 100万 |
+| 29 | `achievement_definitions` | 成就定义 | InnoDB | utf8mb4 | < 50 |
+| 30 | `user_achievements` | 用户成就 | InnoDB | utf8mb4 | < 10万 |
 
 ### 2.2 详细字段定义
 
@@ -447,6 +505,175 @@
 | sort_order | INT UNSIGNED | — | YES | 0 | 排序 | — |
 | created_at | DATETIME(3) | — | YES | UTC_TIMESTAMP(3) | 创建时间 | — |
 | updated_at | DATETIME(3) | — | YES | UTC_TIMESTAMP(3) ON UPDATE | 更新时间 | — |
+
+---
+
+#### 2.2.20 musics — 音乐
+
+| 字段名 | 类型 | 长度 | 非空 | 默认值 | 注释 | 键/索引 |
+|---|---|---|---|---|---|---|
+| id | INT UNSIGNED | — | YES | AUTO_INCREMENT | 音乐ID | PRIMARY KEY |
+| title | VARCHAR | 255 | YES | — | 标题 | — |
+| artist | VARCHAR | 255 | YES | — | 艺术家 | — |
+| url | VARCHAR | 512 | YES | — | 音频地址 | — |
+| duration | VARCHAR | 32 | YES | — | 时长 | — |
+| category | VARCHAR | 64 | YES | — | 分类 | INDEX |
+| cover | VARCHAR | 512 | NO | NULL | 封面图 | — |
+| created_at | DATETIME(3) | — | YES | CURRENT_TIMESTAMP(3) | 创建时间 | — |
+| updated_at | DATETIME(3) | — | YES | CURRENT_TIMESTAMP(3) ON UPDATE | 更新时间 | — |
+
+---
+
+#### 2.2.21 courses — 课程
+
+| 字段名 | 类型 | 长度 | 非空 | 默认值 | 注释 | 键/索引 |
+|---|---|---|---|---|---|---|
+| id | INT UNSIGNED | — | YES | AUTO_INCREMENT | 课程ID | PRIMARY KEY |
+| title | VARCHAR | 255 | YES | — | 标题 | — |
+| description | TEXT | — | YES | — | 描述 | — |
+| cover_url | VARCHAR | 512 | YES | — | 封面图 | — |
+| content | TEXT | — | YES | — | 内容 | — |
+| category | VARCHAR | 64 | YES | — | 分类 | INDEX |
+| study_count | INT UNSIGNED | — | YES | 0 | 学习次数 | — |
+| type | VARCHAR | 16 | YES | 'article' | 类型(video/article) | CHECK |
+| created_at | DATETIME(3) | — | YES | CURRENT_TIMESTAMP(3) | 创建时间 | — |
+| updated_at | DATETIME(3) | — | YES | CURRENT_TIMESTAMP(3) ON UPDATE | 更新时间 | — |
+
+---
+
+#### 2.2.22 relax_records — 放松记录
+
+| 字段名 | 类型 | 长度 | 非空 | 默认值 | 注释 | 键/索引 |
+|---|---|---|---|---|---|---|
+| id | INT UNSIGNED | — | YES | AUTO_INCREMENT | 记录ID | PRIMARY KEY |
+| user_id | INT UNSIGNED | — | YES | — | 用户ID | FK→users, INDEX |
+| activity_type | VARCHAR | 64 | YES | — | 活动类型 | INDEX |
+| start_time | DATETIME(3) | — | YES | — | 开始时间 | INDEX |
+| end_time | DATETIME(3) | — | YES | — | 结束时间 | — |
+| metrics | JSON | — | NO | NULL | 指标数据 | — |
+| mood_tag | VARCHAR | 32 | NO | NULL | 心情标签 | — |
+| created_at | DATETIME(3) | — | YES | CURRENT_TIMESTAMP(3) | 创建时间 | — |
+
+外键：`user_id` → `users.id` ON DELETE CASCADE
+复合索引：`(user_id, start_time)`
+
+---
+
+#### 2.2.23 activities — 活动
+
+| 字段名 | 类型 | 长度 | 非空 | 默认值 | 注释 | 键/索引 |
+|---|---|---|---|---|---|---|
+| id | INT UNSIGNED | — | YES | AUTO_INCREMENT | 活动ID | PRIMARY KEY |
+| title | VARCHAR | 255 | YES | — | 标题 | — |
+| description | TEXT | — | YES | — | 描述 | — |
+| start_time | DATETIME(3) | — | YES | — | 开始时间 | INDEX |
+| end_time | DATETIME(3) | — | YES | — | 结束时间 | — |
+| max_participants | INT UNSIGNED | — | YES | — | 最大参与人数 | — |
+| current_participants | INT UNSIGNED | — | YES | 0 | 当前参与人数 | — |
+| location | VARCHAR | 255 | YES | — | 地点 | — |
+| image_url | VARCHAR | 512 | NO | NULL | 活动图片 | — |
+| created_at | DATETIME(3) | — | YES | CURRENT_TIMESTAMP(3) | 创建时间 | — |
+| updated_at | DATETIME(3) | — | YES | CURRENT_TIMESTAMP(3) ON UPDATE | 更新时间 | — |
+
+复合索引：`(start_time, end_time)` 用于状态筛选
+
+---
+
+#### 2.2.24 activity_participants — 活动参与者
+
+| 字段名 | 类型 | 长度 | 非空 | 默认值 | 注释 | 键/索引 |
+|---|---|---|---|---|---|---|
+| id | INT UNSIGNED | — | YES | AUTO_INCREMENT | 记录ID | PRIMARY KEY |
+| activity_id | INT UNSIGNED | — | YES | — | 活动ID | FK→activities, UNIQUE(activity_id,user_id) |
+| user_id | INT UNSIGNED | — | YES | — | 用户ID | FK→users, INDEX |
+| joined_at | DATETIME(3) | — | YES | CURRENT_TIMESTAMP(3) | 加入时间 | — |
+
+外键：`activity_id` → `activities.id` ON DELETE CASCADE，`user_id` → `users.id` ON DELETE CASCADE
+
+---
+
+#### 2.2.25 posts — 树洞帖子
+
+| 字段名 | 类型 | 长度 | 非空 | 默认值 | 注释 | 键/索引 |
+|---|---|---|---|---|---|---|
+| id | INT UNSIGNED | — | YES | AUTO_INCREMENT | 帖子ID | PRIMARY KEY |
+| title | VARCHAR | 255 | YES | — | 标题 | — |
+| content | TEXT | — | YES | — | 内容 | — |
+| user_id | INT UNSIGNED | — | NO | NULL | 用户ID | FK→users SET NULL, INDEX |
+| is_anonymous | TINYINT UNSIGNED | — | YES | 0 | 是否匿名 | — |
+| like_count | INT UNSIGNED | — | YES | 0 | 点赞数 | — |
+| status | TINYINT UNSIGNED | — | YES | 0 | 状态(0待审/1通过/2驳回) | INDEX |
+| audit_remark | VARCHAR | 512 | NO | NULL | 审核备注 | — |
+| created_at | DATETIME(3) | — | YES | CURRENT_TIMESTAMP(3) | 创建时间 | INDEX |
+
+外键：`user_id` → `users.id` ON DELETE SET NULL
+
+---
+
+#### 2.2.26 comments — 评论
+
+| 字段名 | 类型 | 长度 | 非空 | 默认值 | 注释 | 键/索引 |
+|---|---|---|---|---|---|---|
+| id | INT UNSIGNED | — | YES | AUTO_INCREMENT | 评论ID | PRIMARY KEY |
+| post_id | INT UNSIGNED | — | YES | — | 帖子ID | FK→posts CASCADE, INDEX |
+| user_id | INT UNSIGNED | — | NO | NULL | 用户ID | FK→users SET NULL, INDEX |
+| content | TEXT | — | YES | — | 内容 | — |
+| is_anonymous | TINYINT UNSIGNED | — | YES | 0 | 是否匿名 | — |
+| like_count | INT UNSIGNED | — | YES | 0 | 点赞数 | — |
+| created_at | DATETIME(3) | — | YES | CURRENT_TIMESTAMP(3) | 创建时间 | — |
+
+外键：`post_id` → `posts.id` ON DELETE CASCADE，`user_id` → `users.id` ON DELETE SET NULL
+
+---
+
+#### 2.2.27 post_likes — 帖子点赞
+
+| 字段名 | 类型 | 长度 | 非空 | 默认值 | 注释 | 键/索引 |
+|---|---|---|---|---|---|---|
+| id | INT UNSIGNED | — | YES | AUTO_INCREMENT | 点赞ID | PRIMARY KEY |
+| post_id | INT UNSIGNED | — | YES | — | 帖子ID | FK→posts CASCADE, UNIQUE(post_id,user_id) |
+| user_id | INT UNSIGNED | — | YES | — | 用户ID | FK→users CASCADE |
+| created_at | DATETIME(3) | — | YES | CURRENT_TIMESTAMP(3) | 点赞时间 | — |
+
+---
+
+#### 2.2.28 comment_likes — 评论点赞
+
+| 字段名 | 类型 | 长度 | 非空 | 默认值 | 注释 | 键/索引 |
+|---|---|---|---|---|---|---|
+| id | INT UNSIGNED | — | YES | AUTO_INCREMENT | 点赞ID | PRIMARY KEY |
+| comment_id | INT UNSIGNED | — | YES | — | 评论ID | FK→comments CASCADE, UNIQUE(comment_id,user_id) |
+| user_id | INT UNSIGNED | — | YES | — | 用户ID | FK→users CASCADE |
+| created_at | DATETIME(3) | — | YES | CURRENT_TIMESTAMP(3) | 点赞时间 | — |
+
+---
+
+#### 2.2.29 achievement_definitions — 成就定义
+
+| 字段名 | 类型 | 长度 | 非空 | 默认值 | 注释 | 键/索引 |
+|---|---|---|---|---|---|---|
+| id | VARCHAR | 64 | YES | — | 成就编码 | PRIMARY KEY |
+| name | VARCHAR | 128 | YES | — | 成就名称 | — |
+| description | VARCHAR | 512 | YES | — | 描述 | — |
+| type | VARCHAR | 64 | YES | — | 类型(mood_records/relax_sessions/posts) | — |
+| threshold | INT UNSIGNED | — | YES | — | 达成阈值 | — |
+| icon | VARCHAR | 16 | YES | — | 图标 | — |
+| level | VARCHAR | 16 | YES | — | 等级(bronze/silver/gold) | CHECK |
+| sort_order | INT UNSIGNED | — | YES | 0 | 排序 | — |
+| created_at | DATETIME(3) | — | YES | CURRENT_TIMESTAMP(3) | 创建时间 | — |
+
+---
+
+#### 2.2.30 user_achievements — 用户成就
+
+| 字段名 | 类型 | 长度 | 非空 | 默认值 | 注释 | 键/索引 |
+|---|---|---|---|---|---|---|
+| id | INT UNSIGNED | — | YES | AUTO_INCREMENT | 记录ID | PRIMARY KEY |
+| user_id | INT UNSIGNED | — | YES | — | 用户ID | FK→users CASCADE, UNIQUE(user_id,achievement_id) |
+| achievement_id | VARCHAR | 64 | YES | — | 成就ID | FK→achievement_definitions CASCADE |
+| unlocked_at | DATETIME(3) | — | YES | CURRENT_TIMESTAMP(3) | 解锁时间 | — |
+
+外键：`user_id` → `users.id` ON DELETE CASCADE，`achievement_id` → `achievement_definitions.id` ON DELETE CASCADE
 
 ---
 
@@ -886,4 +1113,4 @@ CREATE TABLE IF NOT EXISTS prompt_templates (
 | `incident_fix_list` | 事件修复记录 | 纳入统一审计日志体系 |
 | `feedback_close_list` | 反馈关闭记录 | 纳入统一审计日志体系 |
 
-> ⚠️ **风险备注**：`managementController.ts` 中仍存在 `incidentFixHandler` 和 `feedbackHandleHandler` 两个路由处理函数，但对应数据库表已删除。这些接口当前返回 200 假成功响应，需确认是保留为占位接口还是彻底移除路由。
+> 对应的 `incidentFixHandler` 和 `feedbackHandleHandler` 路由处理函数已在 R0 Phase-F 中移除，`managementRoutes.ts` 中不再包含这两个路由。

@@ -40,13 +40,11 @@
 
 | 指标 | 数值 |
 |---|---|
-| 数据表 | 19 张（18 迁移 + 1 bootstrap） |
-| 迁移文件 | 18 个 .up.sql |
-| Repository | 8 个 |
-| Service | 6 个 |
+| 数据表 | 24 张（含 P0 新增 cases/case_interventions/prompt_templates + P1/P2 新增 6 张非核心表） |
+| 迁移文件 | 24 个 .up.sql |
+| Repository | 14 个 |
+| Service | 9 个 |
 | Controller | 15 个 |
 | 路由文件 | 15 个 |
-| 活跃 API 接口 | 39 个 |
-| 待开发 API | 4 个 |
-| 已停用模块 | 6 个（34 个接口） |
-| 待确认风险 | 10 项 |
+| 活跃 API 接口 | 69 个 |
+| 待开发 API | 0 个 |

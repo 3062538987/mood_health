@@ -245,7 +245,8 @@
 | GET | `/api/questionnaires/history` | 是 | 全部 | 测评历史 |
 | GET | `/api/questionnaires/:id` | 是 | 全部 | 测评详情 |
 | GET | `/api/questionnaires/:id/questions` | 是 | 全部 | 测评题目列表 |
-| POST | `/api/questionnaires/assessments` | 是 | 全部 | 提交测评（⚠️ 当前503） |
+| POST | `/api/questionnaires/assessments` | 是 | 全部 | 提交测评 |
+| GET | `/api/questionnaires/assessments/:id` | 是 | 全部 | 测评结果详情 |
 
 #### GET /api/questionnaires/
 
@@ -318,15 +319,57 @@
 
 #### POST /api/questionnaires/assessments
 
-> ⚠️ **状态**：当前返回 503（功能未启用），PRD 计划在 P0-T2 任务中实现
-
-**请求体**（设计）：
+**请求体**：
 ```json
 {
-  "assessmentVersionId": 1,
+  "questionnaire_id": 1,
   "answers": [
-    { "itemId": 1, "answerValue": { "selectedOption": 0 }, "score": 0 }
+    { "itemId": 1, "score": 2 },
+    { "itemId": 2, "score": 3 }
   ]
+}
+```
+
+**成功响应** (201)：
+```json
+{
+  "code": 0,
+  "message": "测评提交成功",
+  "data": {
+    "sessionId": 1,
+    "totalScore": 12,
+    "riskLevel": "moderate",
+    "riskColor": "#FFC107",
+    "suggestion": "建议关注情绪变化，如有持续低落请寻求帮助"
+  },
+  "requestId": "uuid"
+}
+```
+
+**错误码**：40001 (测评工具不存在), 40002 (测评会话不存在)
+
+---
+
+#### GET /api/questionnaires/assessments/:id
+
+**成功响应** (200)：
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "sessionId": 1,
+    "instrumentName": "PHQ-9 抑郁症筛查量表",
+    "versionLabel": "v1.0",
+    "rawScore": 12,
+    "screeningLevel": "moderate",
+    "answers": [
+      { "itemId": 1, "itemText": "做事时提不起劲或没有兴趣", "score": 2 }
+    ],
+    "startedAt": "2026-07-16T08:00:00.000Z",
+    "submittedAt": "2026-07-16T08:10:00.000Z"
+  },
+  "requestId": "uuid"
 }
 ```
 
@@ -339,6 +382,7 @@
 | GET | `/api/cases/` | 是 | admin/counselor | 个案列表 |
 | GET | `/api/cases/:id` | 是 | admin/counselor | 个案详情 |
 | POST | `/api/cases/` | 是 | admin | 创建个案 |
+| POST | `/api/cases/auto-create` | 是 | admin/counselor | 自动创建个案 |
 | PUT | `/api/cases/:id/assign` | 是 | admin | 指派咨询师 |
 | POST | `/api/cases/:id/interventions` | 是 | counselor | 添加干预记录 |
 | PUT | `/api/cases/:id/refer` | 是 | counselor | 转介个案 |
@@ -450,20 +494,49 @@
 
 ---
 
+#### POST /api/cases/auto-create
+
+**请求体**：
+```json
+{
+  "assessment_session_id": 10
+}
+```
+
+**成功响应** (201)：
+```json
+{
+  "code": 0,
+  "message": "个案自动创建成功",
+  "data": {
+    "caseId": 1,
+    "studentUserId": 5,
+    "riskLevel": "high",
+    "status": "open",
+    "created": true
+  },
+  "requestId": "uuid"
+}
+```
+
+**说明**：测评提交后若风险等级达到阈值，系统自动调用此接口创建个案。若已存在 open 状态的个案则不重复创建。
+
+---
+
 ### 5. 管理模块 (Admin)
 
 | 方法 | 路径 | 认证 | 角色 | 说明 |
 |---|---|---|---|---|
 | GET | `/api/admin/users` | 是 | admin | 用户列表 |
 | GET | `/api/admin/moods` | 是 | admin | 全量情绪记录 |
+| GET | `/api/admin/assessments` | 是 | admin | 全量测评会话列表 |
+| GET | `/api/admin/assessments/:id` | 是 | admin | 任意用户测评详情 |
 | PUT | `/api/admin/users` | 是 | admin | 更新用户角色 |
 | DELETE | `/api/admin/users/:id` | 是 | admin | 删除用户 |
 | PUT | `/api/admin/users/:id/disable` | 是 | admin | 禁用/启用用户 |
 | POST | `/api/users/manage` | 是 | admin | 用户管理（兼容） |
 | POST | `/api/roles/manage` | 是 | admin | 角色管理（兼容） |
 | POST | `/api/system/config` | 是 | admin | 系统配置（兼容） |
-| POST | `/api/incident/fix` | 是 | admin | ⚠️ 事件修复（已废弃） |
-| POST | `/api/feedback/handle` | 是 | admin | ⚠️ 反馈处理（已废弃） |
 
 #### GET /api/admin/users
 
@@ -526,6 +599,61 @@
   "code": 0,
   "message": "ok",
   "data": null,
+  "requestId": "uuid"
+}
+```
+
+---
+
+#### GET /api/admin/assessments
+
+**Query 参数**：`page`, `pageSize`, `userId`, `instrumentId`, `riskLevel`, `startDate`, `endDate`
+
+**成功响应** (200)：
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "list": [
+      {
+        "id": 1,
+        "userId": 5,
+        "username": "张三",
+        "instrumentName": "PHQ-9 抑郁症筛查量表",
+        "rawScore": 12,
+        "screeningLevel": "moderate",
+        "status": "submitted",
+        "startedAt": "2026-07-16T08:00:00.000Z",
+        "submittedAt": "2026-07-16T08:10:00.000Z"
+      }
+    ],
+    "pagination": { "page": 1, "pageSize": 20, "total": 50, "totalPages": 3 }
+  },
+  "requestId": "uuid"
+}
+```
+
+---
+
+#### GET /api/admin/assessments/:id
+
+**成功响应** (200)：
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "sessionId": 1,
+    "userId": 5,
+    "username": "张三",
+    "instrumentName": "PHQ-9 抑郁症筛查量表",
+    "rawScore": 12,
+    "screeningLevel": "moderate",
+    "answers": [ ... ],
+    "startedAt": "2026-07-16T08:00:00.000Z",
+    "submittedAt": "2026-07-16T08:10:00.000Z"
+  },
   "requestId": "uuid"
 }
 ```
@@ -746,145 +874,53 @@
 
 ---
 
-### 10. 已停用模块（当前返回 503）
+### 10. 非核心模块（P1/P2 已启用）
 
-以下模块在 R0 阶段已停用，后端路由返回 503，前端入口已隐藏：
+以下模块在 R0 阶段已停用，P1/P2 阶段完成 MySQL 迁移并重新启用：
 
-| 模块 | 路由前缀 | 停用时间 |
+| 模块 | 路由前缀 | 启用时间 | 接口数 |
+|---|---|---|---|
+| 活动 | `/api/activities` | P1/P2 | 5 |
+| 树洞帖子 | `/api/posts` | P1/P2 | 6 |
+| 音乐 | `/api/music` | P1/P2 | 3 |
+| 课程 | `/api/courses` | P1/P2 | 3 |
+| 放松 | `/api/relax` | P1/P2 | 4 |
+| 成就 | `/api/achievements` | P1/P2 | 4 |
+
+> 这些模块已从 SQLite 迁移至 MySQL Repository 模式，前端 feature flag 已调整，可通过对应路由正常访问。
+
+---
+
+## 二、P0 待开发接口（已全部实现）
+
+> P0/v1.0 规划的 4 个待开发接口已在 P0 阶段全部实现，接口详情见上方"已开发接口"对应模块。
+
+| 接口 | 原计划 | 实现状态 |
 |---|---|---|
-| 活动 | `/api/activities` | R0 |
-| 树洞帖子 | `/api/posts` | R0 |
-| 音乐 | `/api/music` | R0 |
-| 课程 | `/api/courses` | R0 |
-| 放松 | `/api/relax` | R0 |
-| 成就 | `/api/achievements` | R0 |
-
-> ⚠️ **风险备注**：停用模块的 Controller 和 Model 代码仍在仓库中，但数据结构使用旧模型（非 MySQL 迁移后的 Repository 模式）。P1/P2 阶段如需重新启用，需先完成 MySQL 迁移。
-
----
-
-## 二、待开发接口（PRD 正向设计）
-
-以下接口依据 PRD v1.0 业务需求设计，尚未开发，**后续实现必须完全对齐本文档规范**。
-
-### 1. 测评提交接口（P0-T2）
-
-| 方法 | 路径 | 认证 | 角色 | 说明 |
-|---|---|---|---|---|
-| POST | `/api/questionnaires/assessments` | 是 | 全部 | 提交测评答案 |
-
-**请求体**：
-```json
-{
-  "assessmentVersionId": 1,
-  "answers": [
-    { "itemId": 1, "answerValue": { "selectedOption": 0 }, "score": 0 }
-  ]
-}
-```
-
-**成功响应** (201)：
-```json
-{
-  "code": 0,
-  "message": "测评提交成功",
-  "data": {
-    "sessionId": 1,
-    "rawScore": 12,
-    "screeningLevel": "moderate",
-    "resultSummary": {
-      "totalScore": 12,
-      "maxScore": 27,
-      "riskLevel": "moderate",
-      "suggestions": [ "建议关注情绪变化", "如有持续低落请寻求帮助" ]
-    }
-  },
-  "requestId": "uuid"
-}
-```
-
-**错误码**：40001 (测评工具不存在), 40002 (测评会话不存在)
-
----
-
-### 2. 测评结果详情接口（P0-T3）
-
-| 方法 | 路径 | 认证 | 角色 | 说明 |
-|---|---|---|---|---|
-| GET | `/api/questionnaires/assessments/:id` | 是 | 全部 | 测评结果详情 |
-
-**成功响应** (200)：
-```json
-{
-  "code": 0,
-  "message": "ok",
-  "data": {
-    "sessionId": 1,
-    "instrumentName": "PHQ-9 抑郁症筛查量表",
-    "versionLabel": "v1.0",
-    "rawScore": 12,
-    "screeningLevel": "moderate",
-    "resultSummary": { ... },
-    "answers": [
-      { "itemId": 1, "itemText": "...", "answerValue": { "selectedOption": 0 }, "score": 0 }
-    ],
-    "startedAt": "2026-07-16T08:00:00.000Z",
-    "submittedAt": "2026-07-16T08:10:00.000Z"
-  },
-  "requestId": "uuid"
-}
-```
-
----
-
-### 3. 个案自动创建接口（P0-T4）
-
-| 方法 | 路径 | 认证 | 角色 | 说明 |
-|---|---|---|---|---|
-| POST | `/api/cases/auto-create` | 否 | 系统 | 基于测评结果自动创建个案 |
-
-**说明**：测评提交后，若 `screeningLevel` 达到 `high` 风险等级，系统自动调用此接口创建个案。此接口为内部接口，不暴露给前端。
-
-**请求体**：
-```json
-{
-  "studentUserId": 5,
-  "sourceSessionId": 10,
-  "riskLevel": "high",
-  "summary": "PHQ-9 测评得分 20，筛查等级 high"
-}
-```
-
----
-
-### 4. 管理员测评管理接口（P0-T5）
-
-| 方法 | 路径 | 认证 | 角色 | 说明 |
-|---|---|---|---|---|
-| GET | `/api/admin/assessments` | 是 | admin | 全量测评会话列表 |
-| GET | `/api/admin/assessments/:id` | 是 | admin | 任意用户测评详情 |
+| POST `/api/questionnaires/assessments` | P0-T2 | 已实现（含计分引擎 + 风险分层） |
+| GET `/api/questionnaires/assessments/:id` | P0-T3 | 已实现 |
+| POST `/api/cases/auto-create` | P0-T4 | 已实现（测评自动触发个案创建） |
+| GET `/api/admin/assessments` + `/:id` | P0-T5 | 已实现（管理员测评管理） |
 
 ---
 
 ## 三、接口分组索引
 
-| 分组 | 路由前缀 | 已实现 | 待开发 | 已停用 |
-|---|---|---|---|---|
-| 认证 | `/api/auth` | 3 | 0 | 0 |
-| 情绪 | `/api/moods` | 10 | 0 | 0 |
-| 测评 | `/api/questionnaires` | 4 | 1 | 0 |
-| 个案 | `/api/cases` | 7 | 1 | 0 |
-| 管理 | `/api/admin` | 5 | 2 | 2 |
-| 审计 | `/api/audit` | 2 | 0 | 0 |
-| AI | `/api/ai` | 2 | 0 | 0 |
-| Prompt | `/api/prompts` | 5 | 0 | 0 |
-| 健康 | `/health` | 1 | 0 | 0 |
-| 活动 | `/api/activities` | 0 | 0 | 8 |
-| 树洞 | `/api/posts` | 0 | 0 | 10 |
-| 音乐 | `/api/music` | 0 | 0 | 4 |
-| 课程 | `/api/courses` | 0 | 0 | 4 |
-| 放松 | `/api/relax` | 0 | 0 | 4 |
-| 成就 | `/api/achievements` | 0 | 0 | 4 |
-| **合计** | — | **39** | **4** | **34** |
-
-**核心功能接口总数**（排除已停用和废弃）：**43** 个（含 4 个待开发）
+| 分组 | 路由前缀 | 已实现 | 待开发 |
+|---|---|---|---|
+| 认证 | `/api/auth` | 3 | 0 |
+| 情绪 | `/api/moods` | 10 | 0 |
+| 测评 | `/api/questionnaires` | 6 | 0 |
+| 个案 | `/api/cases` | 8 | 0 |
+| 管理 | `/api/admin` | 7 | 0 |
+| 审计 | `/api/audit` | 2 | 0 |
+| AI | `/api/ai` | 2 | 0 |
+| Prompt | `/api/prompts` | 5 | 0 |
+| 健康 | `/health` | 1 | 0 |
+| 活动 | `/api/activities` | 5 | 0 |
+| 树洞 | `/api/posts` | 6 | 0 |
+| 音乐 | `/api/music` | 3 | 0 |
+| 课程 | `/api/courses` | 3 | 0 |
+| 放松 | `/api/relax` | 4 | 0 |
+| 成就 | `/api/achievements` | 4 | 0 |
+| **合计** | — | **69** | **0** |

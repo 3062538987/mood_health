@@ -282,18 +282,18 @@ npm run start-all:no-ai
 
 ## 5. 非核心功能状态
 
-以下模块在 R0 阶段已停用，前端入口和后端路由均返回 503（功能未启用）：
+以下模块在 R0 阶段已停用，P1/P2 阶段已完成 MySQL 迁移并重新启用：
 
 | 模块 | 路由前缀 | 状态 |
 |---|---|---|
-| 活动 | `/api/activities` | 已停用 |
-| 树洞帖子 | `/api/posts` | 已停用 |
-| 音乐 | `/api/music` | 已停用 |
-| 课程 | `/api/courses` | 已停用 |
-| 放松 | `/api/relax` | 已停用 |
-| 成就 | `/api/achievements` | 已停用 |
+| 活动 | `/api/activities` | P1/P2 已启用 |
+| 树洞帖子 | `/api/posts` | P1/P2 已启用 |
+| 音乐 | `/api/music` | P1/P2 已启用 |
+| 课程 | `/api/courses` | P1/P2 已启用 |
+| 放松 | `/api/relax` | P1/P2 已启用 |
+| 成就 | `/api/achievements` | P1/P2 已启用 |
 
-这些模块的源码保留在仓库中，计划在 P1/P2 阶段迁移至 MySQL 后重新启用。
+这些模块已从 SQLite 模型迁移至 MySQL Repository 模式，前端 feature flag 已调整，可通过对应路由正常访问。
 
 ---
 
