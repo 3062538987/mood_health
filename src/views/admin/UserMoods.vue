@@ -38,8 +38,8 @@
             <button
               type="button"
               class="emotion-trigger"
-              @click="toggleEmotionDropdown"
               :aria-expanded="isEmotionDropdownOpen"
+              @click="toggleEmotionDropdown"
             >
               <div v-if="filters.emotions.length === 0" class="placeholder">请选择情绪类型</div>
               <div v-else class="selected-tags in-trigger">
