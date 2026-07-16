@@ -65,9 +65,9 @@
 - [x] Task 24：清退资源类模块的 SQL Server 残余
 - [x] Task 25：删除 SQL Server 依赖与废弃脚本
 - [x] Task 26：实现 SQLite 活动运行路径零访问
-- [ ] Task 27：删除前端旧响应兼容并完成 R0 验收
-- [ ] 完成 Task PERF 重构后复测与论文可引用对比
-- [ ] Checkpoint F：用户批准 R0 架构稳定验收
+- [x] Task 27：删除前端旧响应兼容并完成 R0 验收
+- [x] 完成 Task PERF 重构后复测与论文可引用对比
+- [ ] Checkpoint F：用户批准 R0 架构稳定验收（待确认）
 
 ## R0 后续
 
