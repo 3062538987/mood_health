@@ -1,7 +1,10 @@
+import { randomUUID } from 'node:crypto'
+
 export interface ApiResponse<T> {
   code: number
   message: string
   data: T
+  requestId: string
 }
 
 export const API_ERROR_CODES = {
@@ -19,6 +22,7 @@ export const apiSuccess = <T>(data: T, message = '操作成功'): ApiResponse<T>
   code: 0,
   message,
   data,
+  requestId: randomUUID(),
 })
 
 export const apiFailure = <T = null>(
@@ -30,7 +34,7 @@ export const apiFailure = <T = null>(
     throw new Error('失败响应必须使用非零业务码')
   }
 
-  return { code, message, data }
+  return { code, message, data, requestId: randomUUID() }
 }
 
 export const businessCodeForHttpStatus = (statusCode: number): number => {

@@ -47,6 +47,7 @@ describe('application API contract', () => {
         mysql: 'connected',
         redis: 'connected',
       },
+      requestId: expect.any(String),
     })
   })
 
@@ -59,6 +60,7 @@ describe('application API contract', () => {
       code: 1004,
       message: '请求的资源不存在',
       data: null,
+      requestId: expect.any(String),
     })
   })
 })

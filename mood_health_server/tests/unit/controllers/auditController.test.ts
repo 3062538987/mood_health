@@ -80,6 +80,7 @@ describe('auditController contract', () => {
         ],
         pagination: { page: 1, pageSize: 20, total: 1 },
       },
+      requestId: expect.any(String),
     })
   })
 })

@@ -86,16 +86,19 @@ describe('questionnaireController contract', () => {
       code: 0,
       message: '获取问卷列表成功',
       data: [questionnaire],
+      requestId: expect.any(String),
     })
     expect(detailResponse.json).toHaveBeenCalledWith({
       code: 0,
       message: '获取问卷详情成功',
       data: questionnaire,
+      requestId: expect.any(String),
     })
     expect(questionsResponse.json).toHaveBeenCalledWith({
       code: 0,
       message: '获取问卷题目成功',
       data: [{ ...question, options: ['从不', '偶尔', '经常', '总是'] }],
+      requestId: expect.any(String),
     })
   })
 
@@ -132,6 +135,7 @@ describe('questionnaireController contract', () => {
         riskColor: 'yellow',
         suggestion: '建议关注',
       },
+      requestId: expect.any(String),
     })
   })
 
@@ -157,6 +161,7 @@ describe('questionnaireController contract', () => {
       code: 0,
       message: '获取筛查历史成功',
       data: history,
+      requestId: expect.any(String),
     })
   })
 })

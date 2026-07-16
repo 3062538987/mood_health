@@ -97,7 +97,7 @@ describe('moodController response contract', () => {
       tagIds: [2],
     })
     expect(res.status).toHaveBeenCalledWith(201)
-    expect(res.json).toHaveBeenCalledWith({ code: 0, message: '记录成功', data: null })
+    expect(res.json).toHaveBeenCalledWith({ code: 0, message: '记录成功', data: null, requestId: expect.any(String) })
   })
 
   it('routes legacy mood write payloads through mood service', async () => {
@@ -131,7 +131,7 @@ describe('moodController response contract', () => {
       tagIds: [8],
     })
     expect(res.status).toHaveBeenCalledWith(201)
-    expect(res.json).toHaveBeenCalledWith({ code: 0, message: '记录成功', data: null })
+    expect(res.json).toHaveBeenCalledWith({ code: 0, message: '记录成功', data: null, requestId: expect.any(String) })
   })
 
   it('returns a paginated list DTO', async () => {
@@ -146,6 +146,7 @@ describe('moodController response contract', () => {
       code: 0,
       message: '获取情绪记录成功',
       data: { list: [], total: 0, page: 2, limit: 10 },
+      requestId: expect.any(String),
     })
   })
 
@@ -171,16 +172,19 @@ describe('moodController response contract', () => {
       code: 0,
       message: '获取情绪周报成功',
       data: weekly,
+      requestId: expect.any(String),
     })
     expect(trendResponse.json).toHaveBeenCalledWith({
       code: 0,
       message: '获取情绪趋势成功',
       data: trend,
+      requestId: expect.any(String),
     })
     expect(statisticsResponse.json).toHaveBeenCalledWith({
       code: 0,
       message: '获取情绪统计成功',
       data: statistics,
+      requestId: expect.any(String),
     })
   })
 
@@ -199,8 +203,8 @@ describe('moodController response contract', () => {
     )
     await deleteMoodHandler(createRequest({ params: { id: '10' } }), deleteResponse)
 
-    expect(updateResponse.json).toHaveBeenCalledWith({ code: 0, message: '更新成功', data: null })
-    expect(deleteResponse.json).toHaveBeenCalledWith({ code: 0, message: '删除成功', data: null })
+    expect(updateResponse.json).toHaveBeenCalledWith({ code: 0, message: '更新成功', data: null, requestId: expect.any(String) })
+    expect(deleteResponse.json).toHaveBeenCalledWith({ code: 0, message: '删除成功', data: null, requestId: expect.any(String) })
   })
   it('routes normalized update and delete writes through mood service', async () => {
     mockMoodService.updateMood.mockResolvedValue(true)
@@ -233,8 +237,8 @@ describe('moodController response contract', () => {
       tagIds: [2],
     })
     expect(mockMoodService.deleteMood).toHaveBeenCalledWith(1, 10)
-    expect(updateResponse.json).toHaveBeenCalledWith({ code: 0, message: '更新成功', data: null })
-    expect(deleteResponse.json).toHaveBeenCalledWith({ code: 0, message: '删除成功', data: null })
+    expect(updateResponse.json).toHaveBeenCalledWith({ code: 0, message: '更新成功', data: null, requestId: expect.any(String) })
+    expect(deleteResponse.json).toHaveBeenCalledWith({ code: 0, message: '删除成功', data: null, requestId: expect.any(String) })
   })
 
   it('routes legacy mood update payloads through mood service', async () => {
@@ -271,7 +275,7 @@ describe('moodController response contract', () => {
       emotions: [{ emotionTypeId: 4, intensity: 7, isPrimary: true }],
       tagIds: [6],
     })
-    expect(res.json).toHaveBeenCalledWith({ code: 0, message: '更新成功', data: null })
+    expect(res.json).toHaveBeenCalledWith({ code: 0, message: '更新成功', data: null, requestId: expect.any(String) })
   })
 
   it('routes emotion type and tag support data through mood service', async () => {
@@ -291,13 +295,14 @@ describe('moodController response contract', () => {
     expect(mockMoodService.listEmotionTypes).toHaveBeenCalledWith()
     expect(mockMoodService.listTags).toHaveBeenCalledWith(1)
     expect(mockMoodService.createOrGetTag).toHaveBeenCalledWith('新标签', 1)
-    expect(typesResponse.json).toHaveBeenCalledWith({ code: 0, data: emotionTypes, message: '获取成功' })
-    expect(tagsResponse.json).toHaveBeenCalledWith({ code: 0, data: tags, message: '获取成功' })
+    expect(typesResponse.json).toHaveBeenCalledWith({ code: 0, data: emotionTypes, message: '获取成功', requestId: expect.any(String) })
+    expect(tagsResponse.json).toHaveBeenCalledWith({ code: 0, data: tags, message: '获取成功', requestId: expect.any(String) })
     expect(createTagResponse.status).toHaveBeenCalledWith(201)
     expect(createTagResponse.json).toHaveBeenCalledWith({
       code: 0,
       data: { id: 9, name: '新标签' },
       message: '创建成功',
+      requestId: expect.any(String),
     })
   })
 
@@ -317,6 +322,7 @@ describe('moodController response contract', () => {
       code: 0,
       message: '获取情绪记录成功',
       data: { list: [], total: 0, page: 1, limit: 20 },
+      requestId: expect.any(String),
     })
   })
 })

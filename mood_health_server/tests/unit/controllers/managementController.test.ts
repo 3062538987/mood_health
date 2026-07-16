@@ -37,7 +37,12 @@ jest.mock('../../../src/utils/operationLogger', () => ({
 
 jest.mock('../../../src/middleware/auth', () => ({
   requirePermission: jest.fn(() => (_req: never, res: Response) => {
-    res.status(403).json({ code: 1003, message: '权限不足：该操作被禁止', data: null })
+    res.status(403).json({
+      code: 1003,
+      message: '权限不足：该操作被禁止',
+      data: null,
+      requestId: 'test-request-id',
+    })
   }),
 }))
 
@@ -101,6 +106,7 @@ describe('managementController contract', () => {
           },
         ],
       },
+      requestId: expect.any(String),
     })
   })
 
@@ -143,6 +149,7 @@ describe('managementController contract', () => {
         page: 1,
         pageSize: 20,
       },
+      requestId: expect.any(String),
     })
     expect(serializedCalls).not.toContain('私密正文')
     expect(serializedCalls).not.toContain('触发因素')
@@ -171,6 +178,7 @@ describe('managementController contract', () => {
       code: 0,
       message: '用户角色更新成功',
       data: null,
+      requestId: expect.any(String),
     })
   })
 
@@ -194,6 +202,7 @@ describe('managementController contract', () => {
       code: 1003,
       message: '权限不足：该操作被禁止',
       data: null,
+      requestId: expect.any(String),
     })
   })
 })
