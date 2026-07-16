@@ -74,18 +74,15 @@ describe('feature-aware routes', () => {
     '/improve/courses',
     '/admin/posts',
     '/admin/music',
-  ])(
-    'resolves disabled URL %s to the catch-all route without loading its page',
-    (path) => {
-      const router = createRouter({
-        history: createMemoryHistory(),
-        routes: createRoutes({ nonCoreModules: false }),
-      })
+  ])('resolves disabled URL %s to the catch-all route without loading its page', (path) => {
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: createRoutes({ nonCoreModules: false }),
+    })
 
-      const matched = router.resolve(path).matched
-      expect(matched[matched.length - 1]?.name).toBe('NotFound')
-    }
-  )
+    const matched = router.resolve(path).matched
+    expect(matched[matched.length - 1]?.name).toBe('NotFound')
+  })
 
   it.each(['/mood/record', '/improve/survey', '/user/profile', '/admin/users'])(
     'keeps core URL %s available',

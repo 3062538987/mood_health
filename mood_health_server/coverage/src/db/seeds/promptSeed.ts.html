@@ -1,0 +1,409 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for src/db/seeds/promptSeed.ts</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../prettify.css" />
+    <link rel="stylesheet" href="../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../../index.html">All files</a> / <a href="index.html">src/db/seeds</a> promptSeed.ts</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/8</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/0</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/1</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>0/7</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">export interface SeedDatabase {
+  query&lt;T = unknown&gt;(sql: string, params?: unknown[]): Promise&lt;T[]&gt;
+}
+&nbsp;
+export interface PromptSeedResult {
+  count: number
+}
+&nbsp;
+const DEFAULT_PROMPTS = <span class="cstat-no" title="statement not covered" >[</span>
+  {
+    name: 'PHQ-9 量表解读',
+    category: 'assessment_interpretation',
+    system_prompt: '你是一位专业的心理健康顾问，负责解读心理健康测评结果。请用温和、专业、非评判性的语气。避免给出诊断，强调你提供的是参考信息而非医疗建议。如果分数较高，建议寻求专业帮助。',
+    user_prompt_template: '请根据以下测评结果，提供专业解读和建议：\n\n量表名称：{{scaleName}}\n总分：{{totalScore}}/{{maxScore}}\n各题得分：{{itemScores}}\n风险等级：{{riskLevel}}\n\n请输出：\n1. 结果概述\n2. 分数解读\n3. 建议（含生活建议和专业建议）',
+    variables: JSON.stringify({ scaleName: '量表名称', totalScore: '总分', maxScore: '满分', itemScores: '各题得分', riskLevel: '风险等级' }),
+    model: 'deepseek-chat',
+    temperature: 0.5,
+    max_tokens: 1024,
+    sort_order: 1,
+  },
+  {
+    name: 'GAD-7 量表解读',
+    category: 'assessment_interpretation',
+    system_prompt: '你是一位专业的心理健康顾问，负责解读焦虑量表测评结果。请用温和、专业、非评判性的语气。避免给出诊断，强调你提供的是参考信息而非医疗建议。',
+    user_prompt_template: '请根据以下焦虑量表测评结果，提供专业解读和建议：\n\n量表名称：{{scaleName}}\n总分：{{totalScore}}/{{maxScore}}\n各题得分：{{itemScores}}\n风险等级：{{riskLevel}}\n\n请输出：\n1. 结果概述\n2. 分数解读\n3. 建议（含放松技巧和专业建议）',
+    variables: JSON.stringify({ scaleName: '量表名称', totalScore: '总分', maxScore: '满分', itemScores: '各题得分', riskLevel: '风险等级' }),
+    model: 'deepseek-chat',
+    temperature: 0.5,
+    max_tokens: 1024,
+    sort_order: 2,
+  },
+  {
+    name: '周度情绪报告',
+    category: 'mood_report',
+    system_prompt: '你是一位细腻的心理健康观察者，负责分析用户一周的情绪变化趋势。请用温暖、鼓励的语气撰写报告。重点发现积极变化，温和地指出需要注意的方面。',
+    user_prompt_template: '请根据以下用户一周的情绪数据，生成一份温暖的周度情绪报告：\n\n用户称呼：{{userName}}\n时间范围：{{dateRange}}\n情绪记录数：{{recordCount}}\n主要情绪：{{primaryEmotions}}\n情绪变化趋势：{{trend}}\n\n请输出：\n1. 本周情绪概览\n2. 亮点与积极变化\n3. 需要关注的方面\n4. 下周小建议',
+    variables: JSON.stringify({ userName: '用户称呼', dateRange: '时间范围', recordCount: '记录数', primaryEmotions: '主要情绪', trend: '趋势描述' }),
+    model: 'deepseek-chat',
+    temperature: 0.7,
+    max_tokens: 1024,
+    sort_order: 3,
+  },
+  {
+    name: '月度情绪报告',
+    category: 'mood_report',
+    system_prompt: '你是一位细心的心理健康数据分析师，负责分析用户一个月的情绪变化趋势。请用温暖、数据驱动的语气撰写报告。注意呈现月度总体趋势，并给出可操作的建议。',
+    user_prompt_template: '请根据以下用户一个月的情绪数据，生成一份全面的月度情绪报告：\n\n用户称呼：{{userName}}\n时间范围：{{dateRange}}\n情绪记录数：{{recordCount}}\n主要情绪分布：{{emotionDistribution}}\n月度趋势：{{trend}}\n高光时刻：{{highlights}}\n低谷时刻：{{lowPoints}}\n\n请输出：\n1. 月度情绪总览\n2. 情绪分布分析\n3. 趋势与模式\n4. 改善建议',
+    variables: JSON.stringify({ userName: '用户称呼', dateRange: '时间范围', recordCount: '记录数', emotionDistribution: '情绪分布', trend: '趋势描述', highlights: '高光时刻', lowPoints: '低谷时刻' }),
+    model: 'deepseek-chat',
+    temperature: 0.7,
+    max_tokens: 1536,
+    sort_order: 4,
+  },
+  {
+    name: 'AI 心理咨询',
+    category: 'counseling',
+    system_prompt: '你是一位富有同理心的心理咨询师。请以温暖、非评判的方式回应。遵循以下原则：\n1. 积极倾听，回应中体现"我听到了你的感受"\n2. 不替代专业心理治疗，建议"必要时可寻求专业帮助"\n3. 避免给出诊断性结论\n4. 鼓励用户表达感受\n5. 如有紧急风险信号，引导用户拨打心理援助热线\n6. 保持回复简洁，200字以内',
+    user_prompt_template: '用户说："{{message}}"\n\n用户当前情绪：{{currentMood}}\n对话历史：{{context}}\n\n请以心理咨询师的身份回应。',
+    variables: JSON.stringify({ message: '用户消息', currentMood: '当前情绪', context: '对话历史' }),
+    model: 'deepseek-chat',
+    temperature: 0.8,
+    max_tokens: 512,
+    sort_order: 5,
+  },
+  {
+    name: '个性化内容推荐',
+    category: 'recommendation',
+    system_prompt: '你是一位了解用户心理状态的内容推荐专家。根据用户当前情绪和偏好，推荐适合的放松内容。推荐应个性化、有针对性。',
+    user_prompt_template: '请根据以下信息，推荐适合的放松内容：\n\n用户情绪：{{mood}}\n用户偏好：{{preferences}}\n最近活动：{{recentActivities}}\n推荐数量：{{limit}}\n\n请输出 JSON 格式的推荐列表，每项包含：type, title, description, reason。',
+    variables: JSON.stringify({ mood: '当前情绪', preferences: '用户偏好', recentActivities: '最近活动', limit: '推荐数量' }),
+    model: 'deepseek-chat',
+    temperature: 0.7,
+    max_tokens: 1024,
+    sort_order: 6,
+  },
+]
+&nbsp;
+export const <span class="cstat-no" title="statement not covered" >seedPromptTemplates = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >a</span>sync </span>(db: SeedDatabase): Promise&lt;PromptSeedResult&gt; =&gt; {</span>
+  let count = <span class="cstat-no" title="statement not covered" >0</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  for (const prompt of DEFAULT_PROMPTS) {</span>
+<span class="cstat-no" title="statement not covered" >    await db.query(</span>
+      `INSERT INTO prompt_templates (name, category, system_prompt, user_prompt_template, variables, model, temperature, max_tokens, sort_order)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         system_prompt = VALUES(system_prompt),
+         user_prompt_template = VALUES(user_prompt_template),
+         variables = VALUES(variables),
+         model = VALUES(model),
+         temperature = VALUES(temperature),
+         max_tokens = VALUES(max_tokens),
+         sort_order = VALUES(sort_order)`,
+      [
+        prompt.name,
+        prompt.category,
+        prompt.system_prompt,
+        prompt.user_prompt_template,
+        prompt.variables,
+        prompt.model,
+        prompt.temperature,
+        prompt.max_tokens,
+        prompt.sort_order,
+      ]
+    )
+<span class="cstat-no" title="statement not covered" >    count++</span>
+  }
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  return { count }</span>
+}</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-07-16T07:24:51.093Z
+            </div>
+        <script src="../../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../../sorter.js"></script>
+        <script src="../../../block-navigation.js"></script>
+    </body>
+</html>
+    

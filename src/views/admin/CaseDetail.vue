@@ -1,9 +1,7 @@
 <template>
   <div class="case-detail-page">
     <div class="page-header">
-      <button class="back-btn" @click="$router.push('/admin/cases')">
-        &larr; 返回列表
-      </button>
+      <button class="back-btn" @click="$router.push('/admin/cases')">&larr; 返回列表</button>
       <h2>个案详情 #{{ caseData?.case.id }}</h2>
     </div>
 
@@ -27,7 +25,10 @@
           </div>
           <div class="info-item">
             <label>风险等级</label>
-            <span v-if="caseData.case.riskLevel" :class="['risk-tag', riskClass(caseData.case.riskLevel)]">
+            <span
+              v-if="caseData.case.riskLevel"
+              :class="['risk-tag', riskClass(caseData.case.riskLevel)]"
+            >
               {{ riskLabel(caseData.case.riskLevel) }}
             </span>
             <span v-else class="text-muted">-</span>
@@ -83,7 +84,11 @@
             class="action-textarea"
             rows="3"
           ></textarea>
-          <button class="action-btn primary" :disabled="actionLoading" @click="handleAddIntervention">
+          <button
+            class="action-btn primary"
+            :disabled="actionLoading"
+            @click="handleAddIntervention"
+          >
             {{ actionLoading ? '提交中...' : '添加干预' }}
           </button>
         </div>
@@ -124,24 +129,18 @@
         </div>
       </div>
 
-      <div v-else-if="isAdmin" class="state-block text-muted">
-        个案已结案或已转介，无法继续操作
-      </div>
+      <div v-else-if="isAdmin" class="state-block text-muted">个案已结案或已转介，无法继续操作</div>
 
       <!-- 干预记录 -->
       <div class="interventions-card">
         <h3>干预记录（{{ interventions.length }}）</h3>
-        <div v-if="interventions.length === 0" class="state-block text-muted">
-          暂无干预记录
-        </div>
+        <div v-if="interventions.length === 0" class="state-block text-muted">暂无干预记录</div>
         <div v-else class="intervention-list">
-          <div
-            v-for="item in interventions"
-            :key="item.id"
-            class="intervention-item"
-          >
+          <div v-for="item in interventions" :key="item.id" class="intervention-item">
             <div class="intervention-header">
-              <span :class="['intervention-type-tag', interventionTypeClass(item.interventionType)]">
+              <span
+                :class="['intervention-type-tag', interventionTypeClass(item.interventionType)]"
+              >
                 {{ interventionTypeLabel(item.interventionType) }}
               </span>
               <span class="intervention-time">{{ formatDate(item.createdAt) }}</span>
@@ -220,20 +219,29 @@ const statusClass = (s: CaseStatus) => {
 }
 
 const riskLabels: Record<string, string> = {
-  low: '低风险', mild: '轻度', moderate: '中度', high: '高风险',
+  low: '低风险',
+  mild: '轻度',
+  moderate: '中度',
+  high: '高风险',
 }
 
 const riskLabel = (l: string) => riskLabels[l] || l
 
 const riskClass = (l: string) => {
   const map: Record<string, string> = {
-    low: 'risk-low', mild: 'risk-mild', moderate: 'risk-moderate', high: 'risk-high',
+    low: 'risk-low',
+    mild: 'risk-mild',
+    moderate: 'risk-moderate',
+    high: 'risk-high',
   }
   return map[l] || ''
 }
 
 const interventionTypeLabels: Record<InterventionType, string> = {
-  note: '备注', interview: '访谈', referral: '转介', closure: '结案',
+  note: '备注',
+  interview: '访谈',
+  referral: '转介',
+  closure: '结案',
 }
 
 const interventionTypeLabel = (t: InterventionType) => interventionTypeLabels[t] || t
@@ -395,7 +403,9 @@ onMounted(() => {
   color: $text-light-color;
 }
 
-.info-card, .actions-card, .interventions-card {
+.info-card,
+.actions-card,
+.interventions-card {
   background: $white;
   border-radius: 8px;
   padding: 20px;
@@ -442,7 +452,8 @@ onMounted(() => {
   }
 }
 
-.status-tag, .risk-tag {
+.status-tag,
+.risk-tag {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 4px;
@@ -450,16 +461,43 @@ onMounted(() => {
   font-weight: 500;
 }
 
-.status-open { background-color: #fff3e0; color: #e65100; }
-.status-assigned { background-color: #e3f2fd; color: #1565c0; }
-.status-progress { background-color: #e8f5e9; color: #2e7d32; }
-.status-referred { background-color: #f3e5f5; color: #7b1fa2; }
-.status-closed { background-color: #eceff1; color: #546e7a; }
+.status-open {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+.status-assigned {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+.status-progress {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+.status-referred {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+}
+.status-closed {
+  background-color: #eceff1;
+  color: #546e7a;
+}
 
-.risk-low { background-color: #e8f5e9; color: #2e7d32; }
-.risk-mild { background-color: #fff8e1; color: #f57f17; }
-.risk-moderate { background-color: #fff3e0; color: #e65100; }
-.risk-high { background-color: #ffebee; color: #c62828; }
+.risk-low {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+.risk-mild {
+  background-color: #fff8e1;
+  color: #f57f17;
+}
+.risk-moderate {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+.risk-high {
+  background-color: #ffebee;
+  color: #c62828;
+}
 
 .action-row {
   margin-bottom: 16px;
@@ -480,7 +518,9 @@ onMounted(() => {
   }
 }
 
-.action-input, .action-select, .action-textarea {
+.action-input,
+.action-select,
+.action-textarea {
   width: 100%;
   padding: 8px 12px;
   border: 1px solid $border-color;
@@ -513,9 +553,16 @@ onMounted(() => {
     cursor: not-allowed;
   }
 
-  &.primary { background-color: $primary-color; }
-  &.warning { background-color: $warning-color; color: $text-color; }
-  &.success { background-color: $success-color; }
+  &.primary {
+    background-color: $primary-color;
+  }
+  &.warning {
+    background-color: $warning-color;
+    color: $text-color;
+  }
+  &.success {
+    background-color: $success-color;
+  }
 }
 
 .intervention-list {
@@ -545,10 +592,22 @@ onMounted(() => {
   font-weight: 500;
 }
 
-.itype-note { background-color: #e8f5e9; color: #2e7d32; }
-.itype-interview { background-color: #e3f2fd; color: #1565c0; }
-.itype-referral { background-color: #f3e5f5; color: #7b1fa2; }
-.itype-closure { background-color: #eceff1; color: #546e7a; }
+.itype-note {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+.itype-interview {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+.itype-referral {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+}
+.itype-closure {
+  background-color: #eceff1;
+  color: #546e7a;
+}
 
 .intervention-time {
   font-size: $font-size-sm;

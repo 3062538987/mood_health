@@ -35,11 +35,7 @@
         <div class="action-buttons">
           <button class="btn secondary" @click="backToList">返回量表列表</button>
           <button class="btn primary" @click="retryAssessment">重新测试</button>
-          <button
-            class="btn ai-btn"
-            :disabled="aiLoading"
-            @click="loadAiInterpretation"
-          >
+          <button class="btn ai-btn" :disabled="aiLoading" @click="loadAiInterpretation">
             {{ aiLoading ? 'AI 分析中...' : aiContent ? '刷新 AI 解读' : 'AI 智能解读' }}
           </button>
         </div>
@@ -91,7 +87,7 @@ const aiContentHtml = computed(() => {
   return aiContent.value
     .replace(/\n\n/g, '</p><p>')
     .replace(/\n/g, '<br>')
-    .replace(/^(.+)$/gm, (_, p1) => p1 ? `<p>${p1}</p>` : '')
+    .replace(/^(.+)$/gm, (_, p1) => (p1 ? `<p>${p1}</p>` : ''))
     .replace(/<\/p><p>/g, '</p><p>')
 })
 
@@ -119,10 +115,14 @@ const loadAiInterpretation = async () => {
       totalScore: numScore,
       maxScore,
       itemScores: [],
-      riskLevel: numScore >= (scaleType.value === 'gad-7' ? 15 : 20) ? 'high'
-        : numScore >= (scaleType.value === 'gad-7' ? 10 : 15) ? 'moderate'
-        : numScore >= (scaleType.value === 'gad-7' ? 5 : 5) ? 'mild'
-        : 'low',
+      riskLevel:
+        numScore >= (scaleType.value === 'gad-7' ? 15 : 20)
+          ? 'high'
+          : numScore >= (scaleType.value === 'gad-7' ? 10 : 15)
+            ? 'moderate'
+            : numScore >= (scaleType.value === 'gad-7' ? 5 : 5)
+              ? 'mild'
+              : 'low',
     })
     aiContent.value = res.content
     ElMessage.success('AI 解读生成成功')
@@ -267,44 +267,44 @@ onMounted(() => {
 }
 
 .ai-section {
-    margin-top: 24px;
-    padding: 20px;
-    background: linear-gradient(135deg, #f5f0ff 0%, #ede7f6 100%);
-    border-radius: $border-radius-md;
-    border: 1px solid #d1c4e9;
-    text-align: left;
+  margin-top: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f5f0ff 0%, #ede7f6 100%);
+  border-radius: $border-radius-md;
+  border: 1px solid #d1c4e9;
+  text-align: left;
 
-    h4 {
-      margin-bottom: 12px;
-      color: #5e35b1;
-    }
+  h4 {
+    margin-bottom: 12px;
+    color: #5e35b1;
+  }
 
-    .ai-content {
-      line-height: 1.8;
-      color: $text-color;
-      font-size: $font-size-md;
+  .ai-content {
+    line-height: 1.8;
+    color: $text-color;
+    font-size: $font-size-md;
 
-      :deep(p) {
-        margin-bottom: 8px;
-      }
-    }
-
-    .ai-disclaimer {
-      margin-top: 12px;
-      font-size: $font-size-sm;
-      color: $text-light-color;
-      font-style: italic;
+    :deep(p) {
+      margin-bottom: 8px;
     }
   }
 
-  .ai-error {
-    margin-top: 16px;
-    padding: 12px;
-    background-color: #fff3e0;
-    border-radius: $border-radius-md;
-    color: #e65100;
+  .ai-disclaimer {
+    margin-top: 12px;
     font-size: $font-size-sm;
+    color: $text-light-color;
+    font-style: italic;
   }
+}
+
+.ai-error {
+  margin-top: 16px;
+  padding: 12px;
+  background-color: #fff3e0;
+  border-radius: $border-radius-md;
+  color: #e65100;
+  font-size: $font-size-sm;
+}
 
 @media (max-width: 768px) {
   .questionnaire-result {

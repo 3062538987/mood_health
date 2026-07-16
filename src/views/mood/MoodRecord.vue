@@ -319,7 +319,13 @@ const getMoodLabel = (moodId: string) => {
 
 const toRgb = (hexColor: string) => {
   const hex = hexColor.replace('#', '')
-  const normalized = hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex
+  const normalized =
+    hex.length === 3
+      ? hex
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : hex
   const value = Number.parseInt(normalized, 16)
   const r = (value >> 16) & 255
   const g = (value >> 8) & 255

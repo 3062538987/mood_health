@@ -135,9 +135,9 @@ describe('request response contract', () => {
   it('rejects a response without a business code', async () => {
     const { ApiRequestError } = await import('@/utils/request')
 
-    expect(() =>
-      mocks.responseHandlers.fulfilled?.(response({ source: 'no-code' }))
-    ).toThrowError(ApiRequestError)
+    expect(() => mocks.responseHandlers.fulfilled?.(response({ source: 'no-code' }))).toThrowError(
+      ApiRequestError
+    )
     expect(mocks.messageError).toHaveBeenCalledWith('响应缺少业务状态码')
   })
 })

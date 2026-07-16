@@ -1,11 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import request from '@/utils/request'
-import {
-  getMoodRecordList,
-  getMoodTrend,
-  getMoodWeeklyReport,
-  submitMoodRecord,
-} from '@/api/mood'
+import { getMoodRecordList, getMoodTrend, getMoodWeeklyReport, submitMoodRecord } from '@/api/mood'
 
 vi.mock('@/utils/request', () => ({
   default: vi.fn(),

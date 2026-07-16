@@ -39,10 +39,7 @@
             <td class="summary-cell">{{ item.summary || '-' }}</td>
             <td>{{ formatDate(item.createdAt) }}</td>
             <td>
-              <router-link
-                :to="`/admin/cases/${item.id}`"
-                class="detail-link"
-              >
+              <router-link :to="`/admin/cases/${item.id}`" class="detail-link">
                 查看详情
               </router-link>
             </td>
@@ -172,7 +169,8 @@ onMounted(() => {
   overflow: hidden;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 
-  th, td {
+  th,
+  td {
     padding: 12px 16px;
     text-align: left;
     border-bottom: 1px solid $border-color;

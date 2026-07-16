@@ -2,9 +2,7 @@
   <div class="questionnaire-list">
     <div class="container">
       <h2>心理筛查问卷</h2>
-      <p class="description">
-        以下问卷仅用于自我筛查与风险提示，不提供医学诊断或治疗结论。
-      </p>
+      <p class="description">以下问卷仅用于自我筛查与风险提示，不提供医学诊断或治疗结论。</p>
 
       <!-- 历史记录入口 -->
       <div class="history-link" @click="goToHistory">
