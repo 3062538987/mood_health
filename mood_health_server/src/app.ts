@@ -67,7 +67,23 @@ export const createApp = (dependencies: AppDependencies = {}) => {
     credentials: true,
   }
 
-  app.use(helmet())
+  // 安全: 配置 CSP 作为 XSS 纵深防御 (EXPRESS-HEADERS-001)
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+          connectSrc: ["'self'", 'http://localhost:*', 'ws://localhost:*'],
+          fontSrc: ["'self'", 'https://cdnjs.cloudflare.com'],
+          objectSrc: ["'none'"],
+          frameAncestors: ["'none'"],
+        },
+      },
+    })
+  )
   app.disable('x-powered-by')
   app.use(cors(corsOptions))
   // 安全: 限制请求体大小防止 DoS 攻击 (EXPRESS-BODY-001)
