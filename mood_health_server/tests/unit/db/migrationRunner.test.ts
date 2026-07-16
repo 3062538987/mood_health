@@ -109,7 +109,7 @@ describe('migration runner', () => {
     expect(db.recorded.map((item) => item.version)).toEqual(['0010'])
   })
 
-  it('rolls back applied migrations in reverse version order', async () => {
+  it('rolls back one applied migration by default', async () => {
     const dir = makeMigrationDir()
     writeMigration(dir, '0010', 'create_roles', 'CREATE TABLE roles (id INT);')
     writeMigration(dir, '0020', 'create_permissions', 'CREATE TABLE permissions (id INT);')
@@ -117,6 +117,21 @@ describe('migration runner', () => {
     await runMigrations({ db, migrationsDir: dir })
 
     const result = await rollbackMigrations({ db, migrationsDir: dir })
+
+    expect(result.rolledBack.map((item) => item.version)).toEqual(['0020'])
+    expect(db.appliedRows.map((item) => item.version)).toEqual(['0010'])
+    expect(db.executedSql).toContain('DROP TABLE create_permissions')
+    expect(db.executedSql).not.toContain('DROP TABLE create_roles')
+  })
+
+  it('rolls back the requested number of applied migrations in reverse version order', async () => {
+    const dir = makeMigrationDir()
+    writeMigration(dir, '0010', 'create_roles', 'CREATE TABLE roles (id INT);')
+    writeMigration(dir, '0020', 'create_permissions', 'CREATE TABLE permissions (id INT);')
+    const db = new FakeMigrationDatabase()
+    await runMigrations({ db, migrationsDir: dir })
+
+    const result = await rollbackMigrations({ db, migrationsDir: dir, steps: 2 })
 
     expect(result.rolledBack.map((item) => item.version)).toEqual(['0020', '0010'])
     expect(db.appliedRows).toEqual([])

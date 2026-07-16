@@ -57,6 +57,19 @@ const printStatus = async (db: MigrationDatabase): Promise<void> => {
   }
 }
 
+const parseRollbackSteps = (args: string[]): number => {
+  const stepIndex = args.findIndex((arg) => arg === '--step' || arg === '--steps')
+  if (stepIndex === -1) return 1
+
+  const rawValue = args[stepIndex + 1]
+  const steps = Number(rawValue)
+  if (!Number.isInteger(steps) || steps < 1) {
+    throw new Error('Rollback --step must be a positive integer')
+  }
+
+  return steps
+}
+
 export const runMigrationCommand = async (command = process.argv[2] ?? 'up'): Promise<void> => {
   const pool = createMigrationPool()
   const db = new MysqlMigrationDatabase(pool)
@@ -71,7 +84,7 @@ export const runMigrationCommand = async (command = process.argv[2] ?? 'up'): Pr
     }
 
     if (command === 'down') {
-      const result = await rollbackMigrations({ db, migrationsDir })
+      const result = await rollbackMigrations({ db, migrationsDir, steps: parseRollbackSteps(process.argv.slice(3)) })
       console.log(`Rolled back ${result.rolledBack.length} migration(s).`)
       return
     }
