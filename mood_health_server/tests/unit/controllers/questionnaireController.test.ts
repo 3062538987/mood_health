@@ -10,8 +10,9 @@ var mockAssessmentService: {
   listQuestionnaires: jest.Mock
   getQuestionnaireById: jest.Mock
   listQuestionsByQuestionnaireId: jest.Mock
-  createSubmittedSession: jest.Mock
+  submitAssessment: jest.Mock
   listUserAssessmentHistory: jest.Mock
+  getSessionDetail: jest.Mock
 }
 
 jest.mock('../../../src/services/assessmentService', () => ({
@@ -20,8 +21,9 @@ jest.mock('../../../src/services/assessmentService', () => ({
       listQuestionnaires: jest.fn(),
       getQuestionnaireById: jest.fn(),
       listQuestionsByQuestionnaireId: jest.fn(),
-      createSubmittedSession: jest.fn(),
+      submitAssessment: jest.fn(),
       listUserAssessmentHistory: jest.fn(),
+      getSessionDetail: jest.fn(),
     }
     return mockAssessmentService
   }),
@@ -97,22 +99,39 @@ describe('questionnaireController contract', () => {
     })
   })
 
-  it('rejects submissions until an approved scale and scoring rule are enabled', async () => {
+  it('accepts assessment submissions and returns scoring result', async () => {
     const response = createResponse()
+    mockAssessmentService.submitAssessment.mockResolvedValue({
+      sessionId: 1,
+      totalScore: 8,
+      riskLevel: '中风险',
+      riskColor: 'yellow',
+      suggestion: '建议关注',
+    })
 
     await submitAssessment(
-      createRequest({ body: { questionnaire_id: 1, answers: [0] } }),
+      createRequest({
+        body: { questionnaire_id: 1, answers: [{ itemId: 21, score: 2 }] },
+      }),
       response,
       next
     )
 
-    expect(mockAssessmentService.getQuestionnaireById).not.toHaveBeenCalled()
-    expect(mockAssessmentService.createSubmittedSession).not.toHaveBeenCalled()
-    expect(response.status).toHaveBeenCalledWith(503)
+    expect(mockAssessmentService.submitAssessment).toHaveBeenCalledWith({
+      userId: 1,
+      questionnaireId: 1,
+      answers: [{ itemId: 21, score: 2 }],
+    })
     expect(response.json).toHaveBeenCalledWith({
-      code: 1403,
-      message: '心理测评量表尚未完成选型与审核，暂不开放提交',
-      data: null,
+      code: 0,
+      message: '测评提交成功',
+      data: {
+        sessionId: 1,
+        totalScore: 8,
+        riskLevel: '中风险',
+        riskColor: 'yellow',
+        suggestion: '建议关注',
+      },
     })
   })
 

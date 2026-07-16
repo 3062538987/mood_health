@@ -14,6 +14,8 @@ const createRepository = (): jest.Mocked<AssessmentRepository> => ({
   listQuestionsByQuestionnaireId: jest.fn(),
   createSubmittedSession: jest.fn(),
   listUserAssessmentHistory: jest.fn(),
+  getScoringRules: jest.fn(),
+  getSessionById: jest.fn(),
 })
 
 describe('assessmentService', () => {
@@ -71,34 +73,52 @@ describe('assessmentService', () => {
     expect(repository.listQuestionsByQuestionnaireId).toHaveBeenCalledWith(12)
   })
 
-  it('creates a submitted assessment session through the repository boundary', async () => {
+  it('submits assessment through scoring engine and returns result', async () => {
     const repository = createRepository()
+    repository.getQuestionnaireById.mockResolvedValue({
+      id: 1,
+      title: '测试量表',
+      description: '测试用',
+      type: 'TEST',
+      created_at: '2026-07-15T00:00:00.000Z',
+    })
+    repository.getScoringRules.mockResolvedValue({
+      scoringRule: { type: 'sum', min_score: 0, max_score: 15, reverse_items: [] },
+      riskStratification: {
+        levels: [
+          { label: '低风险', range: [0, 4], color: 'green' },
+          { label: '中风险', range: [5, 9], color: 'yellow' },
+          { label: '高风险', range: [10, 15], color: 'red' },
+        ],
+      },
+      suggestionTemplate: {
+        levels: { '低风险': '正常', '中风险': '关注', '高风险': '干预' },
+      },
+    })
     repository.createSubmittedSession.mockResolvedValue(31)
     jest.mocked(createAssessmentRepository).mockReturnValue(repository)
     const service = createAssessmentService()
-    const submittedAt = new Date('2026-07-15T12:00:00.000Z')
 
-    await expect(
-      service.createSubmittedSession({
-        userId: 7,
-        questionnaireId: 12,
-        score: 9,
-        riskLevel: 'low',
-        resultText: '筛查提示：低风险',
-        answers: [{ itemId: 21, value: 0, score: 1 }],
-        submittedAt,
-      })
-    ).resolves.toBe(31)
-
-    expect(repository.createSubmittedSession).toHaveBeenCalledWith({
+    const result = await service.submitAssessment({
       userId: 7,
-      questionnaireId: 12,
-      score: 9,
-      riskLevel: 'low',
-      resultText: '筛查提示：低风险',
-      answers: [{ itemId: 21, value: 0, score: 1 }],
-      submittedAt,
+      questionnaireId: 1,
+      answers: [
+        { itemId: 1, score: 2 },
+        { itemId: 2, score: 3 },
+        { itemId: 3, score: 3 },
+      ],
     })
+
+    expect(result).toMatchObject({
+      sessionId: 31,
+      totalScore: 8,
+      riskLevel: '中风险',
+      riskColor: 'yellow',
+      suggestion: '关注',
+    })
+    expect(repository.getQuestionnaireById).toHaveBeenCalledWith(1)
+    expect(repository.getScoringRules).toHaveBeenCalledWith(1)
+    expect(repository.createSubmittedSession).toHaveBeenCalled()
   })
 
   it('lists user assessment history through the repository boundary', async () => {

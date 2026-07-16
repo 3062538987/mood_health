@@ -9,11 +9,13 @@ import {
   closeCase,
   listMyCases,
   getCaseDetail,
+  autoCreateCase,
   validateCreateCase,
   validateAssignCase,
   validateAddIntervention,
   validateReferCase,
   validateCloseCase,
+  validateAutoCreateCase,
 } from '../controllers/caseController'
 
 const router = Router()
@@ -25,6 +27,9 @@ router.get('/', listMyCases)
 
 // 创建个案
 router.post('/', validateCreateCase, validateRequest, createCase)
+
+// 自动创建个案（从测评会话）
+router.post('/auto-create', validateAutoCreateCase, validateRequest, autoCreateCase)
 
 // 获取个案详情
 router.get('/:id', getCaseDetail)

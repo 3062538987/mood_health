@@ -5,13 +5,19 @@ import {
   CaseInterventionDto,
   InterventionType,
 } from '../repositories/caseRepository'
+import {
+  AssessmentRepository,
+  createAssessmentRepository,
+} from '../repositories/assessmentRepository'
 
 export interface CaseServiceDependencies {
   repository?: CaseRepository
+  assessmentRepository?: AssessmentRepository
 }
 
 export const createCaseService = (dependencies: CaseServiceDependencies = {}) => {
   const repository = dependencies.repository ?? createCaseRepository()
+  const getAssessmentRepo = () => dependencies.assessmentRepository ?? createAssessmentRepository()
 
   const createCase = async (input: {
     studentUserId: number
@@ -137,6 +143,64 @@ export const createCaseService = (dependencies: CaseServiceDependencies = {}) =>
     return { case: c, interventions }
   }
 
+  const autoCreateCase = async (assessmentSessionId: number): Promise<{
+    caseId: number
+    studentUserId: number
+    riskLevel: string
+    status: string
+    created: boolean
+  }> => {
+    // 1. 获取测评会话
+    const session = await getAssessmentRepo().getSessionById(assessmentSessionId)
+    if (!session) {
+      throw new Error('测评会话不存在')
+    }
+
+    const riskLevel = session.screeningLevel
+
+    // 2. 仅高风险自动创建个案
+    if (riskLevel !== '高风险') {
+      return {
+        caseId: 0,
+        studentUserId: session.userId,
+        riskLevel,
+        status: 'skipped',
+        created: false,
+      }
+    }
+
+    // 3. 检查是否已有未结案的个案
+    const existingCases = await repository.findByStudentId(session.userId)
+    const openCase = existingCases.find(
+      (c) => c.status === 'open' || c.status === 'in_progress' || c.status === 'referred'
+    )
+    if (openCase) {
+      return {
+        caseId: openCase.id,
+        studentUserId: session.userId,
+        riskLevel: openCase.riskLevel || riskLevel,
+        status: openCase.status,
+        created: false,
+      }
+    }
+
+    // 4. 创建新个案
+    const summary = `${session.instrumentName} ${session.versionLabel} 测评得分 ${session.rawScore}，风险等级：${riskLevel}`
+    const newCase = await repository.createCase({
+      studentUserId: session.userId,
+      riskLevel,
+      summary,
+    })
+
+    return {
+      caseId: newCase.id,
+      studentUserId: session.userId,
+      riskLevel,
+      status: newCase.status,
+      created: true,
+    }
+  }
+
   return {
     createCase,
     assignCase,
@@ -145,7 +209,6 @@ export const createCaseService = (dependencies: CaseServiceDependencies = {}) =>
     closeCase,
     listMyCases,
     getCaseDetail,
+    autoCreateCase,
   }
 }
-
-export type CaseService = ReturnType<typeof createCaseService>

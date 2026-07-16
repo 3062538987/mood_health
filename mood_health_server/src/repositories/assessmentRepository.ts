@@ -258,12 +258,101 @@ export const createAssessmentRepository = (db: AssessmentDatabase = getMysqlPool
     return rows.map(mapUserAssessmentHistory)
   }
 
+  const getScoringRules = async (versionId: number): Promise<{
+    scoringRule: Record<string, unknown>
+    riskStratification: Record<string, unknown>
+    suggestionTemplate: Record<string, unknown>
+  } | null> => {
+    const [rows] = await db.query<RowDataPacket[]>(
+      `SELECT scoring_rule_json, risk_stratification_json, suggestion_template_json
+       FROM assessment_versions
+       WHERE id = ? AND status = 'active'
+       LIMIT 1`,
+      [versionId]
+    )
+    if (!rows[0]) return null
+    return {
+      scoringRule: (typeof rows[0].scoring_rule_json === 'string'
+        ? JSON.parse(rows[0].scoring_rule_json)
+        : rows[0].scoring_rule_json) as Record<string, unknown>,
+      riskStratification: (typeof rows[0].risk_stratification_json === 'string'
+        ? JSON.parse(rows[0].risk_stratification_json)
+        : rows[0].risk_stratification_json) as Record<string, unknown>,
+      suggestionTemplate: (typeof rows[0].suggestion_template_json === 'string'
+        ? JSON.parse(rows[0].suggestion_template_json)
+        : rows[0].suggestion_template_json) as Record<string, unknown>,
+    }
+  }
+
+  const getSessionById = async (sessionId: number): Promise<{
+    id: number
+    userId: number
+    instrumentName: string
+    versionLabel: string
+    rawScore: number
+    screeningLevel: string
+    resultSummary: Record<string, unknown>
+    answers: Array<{ itemId: number; itemText: string; answerValue: unknown; score: number }>
+    startedAt: string
+    submittedAt: string
+  } | null> => {
+    const [rows] = await db.query<RowDataPacket[]>(
+      `SELECT
+        s.id, s.user_id, s.raw_score, s.screening_level, s.result_summary_json,
+        s.started_at, s.submitted_at,
+        ai.name AS instrument_name,
+        av.version_label
+       FROM assessment_sessions s
+       JOIN assessment_versions av ON av.id = s.assessment_version_id
+       JOIN assessment_instruments ai ON ai.id = av.instrument_id
+       WHERE s.id = ? AND s.status = 'submitted'
+       LIMIT 1`,
+      [sessionId]
+    )
+    if (!rows[0]) return null
+
+    const [answerRows] = await db.query<RowDataPacket[]>(
+      `SELECT aa.item_id, ai.item_text, aa.answer_value_json, aa.score
+       FROM assessment_answers aa
+       JOIN assessment_items ai ON ai.id = aa.item_id
+       WHERE aa.session_id = ?
+       ORDER BY ai.item_order ASC`,
+      [sessionId]
+    )
+
+    const toIso = (v: Date | string) => (v instanceof Date ? v.toISOString() : String(v))
+
+    return {
+      id: rows[0].id,
+      userId: rows[0].user_id,
+      instrumentName: rows[0].instrument_name,
+      versionLabel: rows[0].version_label,
+      rawScore: rows[0].raw_score,
+      screeningLevel: rows[0].screening_level,
+      resultSummary: typeof rows[0].result_summary_json === 'string'
+        ? JSON.parse(rows[0].result_summary_json)
+        : rows[0].result_summary_json,
+      answers: answerRows.map((a) => ({
+        itemId: a.item_id,
+        itemText: a.item_text,
+        answerValue: typeof a.answer_value_json === 'string'
+          ? JSON.parse(a.answer_value_json)
+          : a.answer_value_json,
+        score: a.score,
+      })),
+      startedAt: toIso(rows[0].started_at),
+      submittedAt: toIso(rows[0].submitted_at),
+    }
+  }
+
   return {
     listQuestionnaires,
     getQuestionnaireById,
     listQuestionsByQuestionnaireId,
     createSubmittedSession,
     listUserAssessmentHistory,
+    getScoringRules,
+    getSessionById,
   }
 }
 

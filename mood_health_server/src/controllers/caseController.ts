@@ -6,6 +6,10 @@ import { createCaseService } from '../services/caseService'
 
 const caseService = createCaseService()
 
+export const validateAutoCreateCase = [
+  body('assessment_session_id').isInt({ min: 1 }).withMessage('测评会话ID必须是正整数'),
+]
+
 export const validateCreateCase = [
   body('studentUserId').isInt({ min: 1 }).withMessage('学生用户ID必须是正整数'),
   body('riskLevel').optional().isString().withMessage('风险等级必须是字符串'),
@@ -132,6 +136,17 @@ export const getCaseDetail = async (req: AuthRequest, res: Response, next: NextF
       return res.status(404).json(apiFailure(404, '个案不存在'))
     }
     res.json(apiSuccess(detail, '获取个案详情成功'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const autoCreateCase = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { assessment_session_id } = req.body as { assessment_session_id: number }
+    const result = await caseService.autoCreateCase(assessment_session_id)
+    const message = result.created ? '测评高风险，已自动创建个案' : '个案已存在或无需创建'
+    res.status(201).json(apiSuccess(result, message))
   } catch (error) {
     next(error)
   }

@@ -3,6 +3,7 @@ import { body } from "express-validator";
 import { AuthRequest } from "../middleware/auth";
 import { API_ERROR_CODES, apiFailure, apiSuccess } from "../utils/apiResponse";
 import { createAssessmentService } from "../services/assessmentService";
+import { HttpException } from "../utils/errors";
 
 const assessmentService = createAssessmentService();
 
@@ -12,17 +13,12 @@ const assessmentService = createAssessmentService();
 export const validateSubmitAssessment = [
   body("questionnaire_id").isInt({ min: 1 }).withMessage("问卷ID必须是正整数"),
   body("answers").isArray().withMessage("答案必须是数组"),
-  body("answers.*")
-    .isInt({ min: 0, max: 4 })
-    .withMessage("每个答案必须是0-4之间的整数"),
+  body("answers.*.itemId").isInt({ min: 1 }).withMessage("题目ID必须是正整数"),
+  body("answers.*.score").isInt({ min: 0, max: 4 }).withMessage("每个答案分数必须是0-4之间的整数"),
 ];
 
 /**
  * 获取量表列表
- * @param req 请求对象
- * @param res 响应对象
- * @param next 下一个中间件
- * @returns 200状态码表示成功，500表示服务器错误
  */
 export const getQuestionnaireList = async (
   req: AuthRequest,
@@ -39,10 +35,6 @@ export const getQuestionnaireList = async (
 
 /**
  * 获取量表详情
- * @param req 请求对象，包含量表ID
- * @param res 响应对象
- * @param next 下一个中间件
- * @returns 200状态码表示成功，404表示量表不存在，500表示服务器错误
  */
 export const getQuestionnaireDetail = async (
   req: AuthRequest,
@@ -63,10 +55,6 @@ export const getQuestionnaireDetail = async (
 
 /**
  * 获取量表问题列表
- * @param req 请求对象，包含量表ID
- * @param res 响应对象
- * @param next 下一个中间件
- * @returns 200状态码表示成功，404表示量表不存在，500表示服务器错误
  */
 export const getQuestionnaireQuestions = async (
   req: AuthRequest,
@@ -80,7 +68,6 @@ export const getQuestionnaireQuestions = async (
       return res.status(404).json(apiFailure(404, "量表不存在"));
     }
     const questions = await assessmentService.listQuestionsByQuestionnaireId(questionnaireId);
-    // 解析选项JSON
     const parsedQuestions = questions.map((q) => ({
       ...q,
       options: JSON.parse(q.options),
@@ -93,32 +80,66 @@ export const getQuestionnaireQuestions = async (
 
 /**
  * 提交测评答案
- * @param req 请求对象，包含量表ID和答案数组
- * @param res 响应对象
- * @param next 下一个中间件
- * @returns 200状态码表示成功，400表示参数错误，404表示量表不存在，500表示服务器错误
+ * 按照 API 契约规范（docs/tech-design/03-api-contract.md）实现：
+ * - 请求体: { questionnaire_id, answers: [{ itemId, score }] }
+ * - 响应: { code: 0, data: { sessionId, totalScore, riskLevel, suggestion } }
  */
 export const submitAssessment = async (
-  _req: AuthRequest,
+  req: AuthRequest,
   res: Response,
-  _next: NextFunction,
+  next: NextFunction,
 ) => {
-  res
-    .status(503)
-    .json(
-      apiFailure(
-        API_ERROR_CODES.FEATURE_DISABLED,
-        "心理测评量表尚未完成选型与审核，暂不开放提交",
-      ),
-    );
+  try {
+    const userId = req.user!.userId;
+    const { questionnaire_id, answers } = req.body;
+
+    if (!questionnaire_id || !answers || !Array.isArray(answers) || answers.length === 0) {
+      return res.status(400).json(apiFailure(80001, "请提供完整的测评答案"));
+    }
+
+    const result = await assessmentService.submitAssessment({
+      userId,
+      questionnaireId: questionnaire_id,
+      answers: answers.map((a: { itemId: number; score: number }) => ({
+        itemId: a.itemId,
+        score: a.score,
+      })),
+    });
+
+    res.status(201).json(apiSuccess(result, "测评提交成功"));
+  } catch (error) {
+    if (error instanceof HttpException) {
+      return res.status(error.statusCode).json(apiFailure(error.statusCode, error.message));
+    }
+    next(error);
+  }
+};
+
+/**
+ * 获取测评结果详情
+ * 按照 API 契约规范实现
+ */
+export const getAssessmentDetail = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const sessionId = parseInt(req.params.id as string);
+    const detail = await assessmentService.getSessionDetail(sessionId);
+
+    if (!detail) {
+      return res.status(404).json(apiFailure(40002, "测评会话不存在"));
+    }
+
+    res.json(apiSuccess(detail, "获取测评详情成功"));
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
  * 获取用户的问卷历史记录
- * @param req 请求对象
- * @param res 响应对象
- * @param next 下一个中间件
- * @returns 200 状态码表示成功，500 表示服务器错误
  */
 export const getUserAssessmentHistoryController = async (
   req: AuthRequest,
