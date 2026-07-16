@@ -78,7 +78,7 @@ h3 {
   margin: 0;
   color: #526662;
   font-size: 1.3rem;
-  font-family: 'Noto Serif SC', serif;
+  font-family: Georgia, 'Times New Roman', 'Microsoft YaHei', serif;
 }
 
 p {

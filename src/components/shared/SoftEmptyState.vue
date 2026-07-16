@@ -233,7 +233,7 @@ h3 {
   margin: 0;
   font-size: 1.5rem;
   color: #4d5f5b;
-  font-family: 'Noto Serif SC', serif;
+  font-family: Georgia, 'Times New Roman', 'Microsoft YaHei', serif;
 }
 
 p {

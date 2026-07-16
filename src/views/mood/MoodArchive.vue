@@ -1151,7 +1151,7 @@ onMounted(() => {
         font-weight: 700;
         color: var(--text-color);
         margin-bottom: 12px;
-        font-family: 'Noto Serif SC', serif;
+        font-family: Georgia, 'Times New Roman', 'Microsoft YaHei', serif;
       }
 
       .detail-emotions {
