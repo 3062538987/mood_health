@@ -6,9 +6,12 @@ import {
 } from '../repositories/assessmentRepository'
 import { scoreAssessment, ScoringRule, RiskStratification, SuggestionTemplate } from '../utils/scoringEngine'
 import { HttpException } from '../utils/errors'
+import { createCaseService, type CaseService } from './caseService'
+import logger from '../utils/logger'
 
 export interface AssessmentServiceDependencies {
   repository?: AssessmentRepository
+  caseService?: CaseService
 }
 
 export interface SubmitAssessmentInput {
@@ -19,6 +22,7 @@ export interface SubmitAssessmentInput {
 
 export const createAssessmentService = (dependencies: AssessmentServiceDependencies = {}) => {
   const repository = dependencies.repository ?? createAssessmentRepository()
+  const caseService = dependencies.caseService ?? createCaseService()
 
   const listQuestionnaires = async () => repository.listQuestionnaires()
 
@@ -85,6 +89,15 @@ export const createAssessmentService = (dependencies: AssessmentServiceDependenc
 
     // 5. 创建会话
     const sessionId = await repository.createSubmittedSession(sessionInput)
+
+    // 6. 高风险自动创建个案
+    if (scoringResult.riskLevel === '高风险') {
+      try {
+        await caseService.autoCreateCase(sessionId)
+      } catch (error) {
+        logger.error('自动创建个案失败', { sessionId, error })
+      }
+    }
 
     return {
       sessionId,

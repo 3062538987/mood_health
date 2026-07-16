@@ -8,6 +8,12 @@ jest.mock('../../../src/repositories/assessmentRepository', () => ({
   createAssessmentRepository: jest.fn(),
 }))
 
+jest.mock('../../../src/services/caseService', () => ({
+  createCaseService: jest.fn(() => ({
+    autoCreateCase: jest.fn().mockResolvedValue({ created: true }),
+  })),
+}))
+
 const createRepository = (): jest.Mocked<AssessmentRepository> => ({
   listQuestionnaires: jest.fn(),
   getQuestionnaireById: jest.fn(),

@@ -212,3 +212,5 @@ export const createCaseService = (dependencies: CaseServiceDependencies = {}) =>
     autoCreateCase,
   }
 }
+
+export type CaseService = ReturnType<typeof createCaseService>
