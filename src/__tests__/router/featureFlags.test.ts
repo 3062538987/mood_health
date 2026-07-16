@@ -52,18 +52,19 @@ describe('feature-aware routes', () => {
       '/admin/user-moods',
       '/admin/moods',
       '/admin/audit-logs',
+      '/admin/cases',
     ])
   })
 
-  it('keeps non-core routes removed even when a legacy caller requests them', () => {
+  it('keeps non-core routes when enabled', () => {
     const routes = createRoutes({ nonCoreModules: true })
 
-    expect(findRoute(routes, '/relax')).toBeUndefined()
-    expect(findRoute(routes, 'group')).toBeUndefined()
-    expect(findRoute(routes, 'knowledge')).toBeUndefined()
-    expect(findRoute(routes, 'courses')).toBeUndefined()
-    expect(findRoute(routes, 'posts')).toBeUndefined()
-    expect(findRoute(routes, 'music')).toBeUndefined()
+    expect(findRoute(routes, '/relax')).toBeDefined()
+    expect(findRoute(routes, 'group')).toBeDefined()
+    expect(findRoute(routes, 'knowledge')).toBeDefined()
+    expect(findRoute(routes, 'courses')).toBeDefined()
+    expect(findRoute(routes, 'posts')).toBeDefined()
+    expect(findRoute(routes, 'music')).toBeDefined()
   })
 
   it.each([
