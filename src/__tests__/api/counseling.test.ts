@@ -3,6 +3,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 declare global {
   const vi: any
 }
+
+const requestMock = vi.hoisted(() => vi.fn())
+
+vi.mock('@/utils/request', () => ({
+  default: requestMock,
+}))
 import {
   sendCounselingMessage,
   sendCounselingMessageWithContext,
@@ -13,6 +19,12 @@ import {
 describe('心理咨询API测试', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    requestMock.mockResolvedValue({
+      response: '后端 AI 回复',
+      mood: '焦虑',
+      riskLevel: 'low',
+      hasRiskContent: false,
+    })
   })
 
   afterEach(() => {
@@ -25,9 +37,16 @@ describe('心理咨询API测试', () => {
         message: '我最近感到很焦虑，不知道该怎么办',
       })
 
+      expect(requestMock).toHaveBeenCalledWith({
+        url: '/api/ai/counseling',
+        method: 'post',
+        data: {
+          message: '我最近感到很焦虑，不知道该怎么办',
+        },
+      })
       expect(result.riskLevel).toBe('low')
       expect(result.mood).toBe('焦虑')
-      expect(result.response.length).toBeGreaterThan(0)
+      expect(result.response).toBe('后端 AI 回复')
     })
 
     it('应该在消息为空时抛出错误', async () => {
@@ -42,7 +61,12 @@ describe('心理咨询API测试', () => {
       )
     })
 
-    it('应对低落情绪给出本地回复', async () => {
+    it('应通过后端处理低落情绪回复', async () => {
+      requestMock.mockResolvedValueOnce({
+        response: '后端低落回复',
+        mood: '低落',
+        riskLevel: 'low',
+      })
       const result = await sendCounselingMessage({
         message: '最近有点难过和低落',
       })
@@ -51,7 +75,12 @@ describe('心理咨询API测试', () => {
       expect(result.riskLevel).toBe('low')
     })
 
-    it('应对一般内容给出平静回复', async () => {
+    it('应通过后端处理一般内容回复', async () => {
+      requestMock.mockResolvedValueOnce({
+        response: '后端平静回复',
+        mood: '平静',
+        riskLevel: 'low',
+      })
       const result = await sendCounselingMessage({
         message: '我想把今天的安排理清楚',
       })
@@ -76,6 +105,14 @@ describe('心理咨询API测试', () => {
         context,
       })
 
+      expect(requestMock).toHaveBeenCalledWith({
+        url: '/api/ai/counseling',
+        method: 'post',
+        data: {
+          message: '项目 deadlines 快到了，我担心完成不了',
+          context,
+        },
+      })
       expect(result.riskLevel).toBe('low')
       expect(result.response.length).toBeGreaterThan(0)
     })
