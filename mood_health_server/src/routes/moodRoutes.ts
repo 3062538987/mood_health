@@ -17,6 +17,8 @@ import {
 
 const router = Router()
 
+router.get('/types', getMoodTypes)
+
 router.use(authenticate)
 
 router.post(
@@ -45,7 +47,6 @@ router.get('/list', getMoodList)
 router.get('/weekly-report', getWeeklyReportHandler)
 router.get('/trend', getMoodTrend)
 router.get('/analysis', getMoodAnalysisHandler)
-router.get('/types', getMoodTypes)
 router.get('/tags', getTagsHandler)
 router.post(
   '/tags',

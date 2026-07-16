@@ -92,4 +92,12 @@ describe('application API contract', () => {
     expect(csp).toContain('http://localhost:*')
     expect(csp).toContain('http://127.0.0.1:*')
   })
+
+  it('keeps public mood metadata readable while protecting private mood records', async () => {
+    const typesResponse = await fetch(`${baseUrl}/api/moods/types`)
+    const listResponse = await fetch(`${baseUrl}/api/moods/list`)
+
+    expect(typesResponse.status).toBe(200)
+    expect(listResponse.status).toBe(401)
+  })
 })
