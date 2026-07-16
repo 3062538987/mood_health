@@ -35,6 +35,10 @@ const expectedMigrationFiles = [
   '0140_create_assessment_sessions.up.sql',
   '0150_create_assessment_answers.down.sql',
   '0150_create_assessment_answers.up.sql',
+  '0160_create_cases.down.sql',
+  '0160_create_cases.up.sql',
+  '0170_create_case_interventions.down.sql',
+  '0170_create_case_interventions.up.sql',
 ]
 
 describe('migration SQL files', () => {
