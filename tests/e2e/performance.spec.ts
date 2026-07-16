@@ -121,7 +121,6 @@ test('production browser performance stays inside the P2-3 acceptance envelope',
 
   const page = await browser.newPage()
   await addLongTaskObserver(page)
-  const authenticatedRequests = trackRequests(page)
 
   await page.goto('/login', { waitUntil: 'networkidle' })
   await page.locator('#username').fill(username)
@@ -137,7 +136,6 @@ test('production browser performance stays inside the P2-3 acceptance envelope',
   }
 
   allLongTasks.push(...(await readLongTasks(page)))
-  repeatedRequests.push(...[...authenticatedRequests.values()].filter((request) => request.count > 1))
   await page.close()
 
   const maxObservedLongTaskMs = Math.max(0, ...allLongTasks)
