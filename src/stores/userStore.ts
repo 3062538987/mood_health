@@ -14,9 +14,10 @@ export interface User {
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error && error.message ? error.message : fallback
 
+// 安全: Token 通过 HttpOnly Cookie 存储，Pinia 中仅保留内存副本用于 UI 状态判断 (VUE-AUTH-001)
 export const useUserStore = defineStore('user', () => {
   const user = ref<User | null>(null)
-  const token = ref<string>(localStorage.getItem('token') || '')
+  const token = ref<string>('')
   const loading = ref(false)
   const error = ref<string>('')
 
@@ -29,13 +30,11 @@ export const useUserStore = defineStore('user', () => {
 
   const setToken = (newToken: string) => {
     token.value = newToken
-    localStorage.setItem('token', newToken)
   }
 
   const clearToken = () => {
     token.value = ''
     user.value = null
-    localStorage.removeItem('token')
   }
 
   const register = async (username: string, password: string, email: string): Promise<boolean> => {
@@ -81,13 +80,14 @@ export const useUserStore = defineStore('user', () => {
   }
 
   const fetchUserInfo = async (): Promise<boolean> => {
-    if (!token.value) return false
     try {
       const response = await request<{ user: User }>({
         url: '/api/auth/me',
         method: 'get',
       })
       user.value = response.user
+      // 安全: Cookie 中的 Token 对前端不可见，用占位值标记已登录状态
+      token.value = 'httpOnly'
       return true
     } catch (err) {
       clearToken()
@@ -95,14 +95,18 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await request({ url: '/api/auth/logout', method: 'post' })
+    } catch {
+      // 即使清除 Cookie 失败也清除本地状态
+    }
     clearToken()
   }
 
+  // 安全: 页面刷新后通过 /api/auth/me 恢复登录状态（Cookie 自动发送）(VUE-AUTH-001)
   const init = async () => {
-    if (token.value) {
-      await fetchUserInfo()
-    }
+    await fetchUserInfo()
   }
 
   return {

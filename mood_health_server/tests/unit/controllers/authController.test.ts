@@ -44,9 +44,13 @@ const createResponse = () => {
   const response = {
     status: jest.fn(),
     json: jest.fn(),
+    cookie: jest.fn(),
+    clearCookie: jest.fn(),
   }
   response.status.mockReturnValue(response)
   response.json.mockReturnValue(response)
+  response.cookie.mockReturnValue(response)
+  response.clearCookie.mockReturnValue(response)
   return response as unknown as Response
 }
 

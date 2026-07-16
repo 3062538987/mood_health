@@ -7,7 +7,7 @@
 
 import { Router } from 'express'
 import { body } from 'express-validator'
-import { register, login, getMe } from '../controllers/authController'
+import { register, login, logout, getMe } from '../controllers/authController'
 import { authenticate } from '../middleware/auth'
 import { validateRequest } from '../middleware/validateRequest'
 
@@ -85,5 +85,13 @@ router.post(
  * Headers: { "Authorization": "Bearer eyJhbGciOiJIUzI1NiIs..." }
  */
 router.get('/me', authenticate, getMe)
+
+/**
+ * 用户退出登录接口
+ * @route POST /api/auth/logout
+ * @description 清除 HttpOnly Cookie 中的认证令牌
+ * @access 公开
+ */
+router.post('/logout', logout)
 
 export default router

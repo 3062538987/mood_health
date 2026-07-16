@@ -86,7 +86,6 @@ describe('request response contract', () => {
 
   it('normalizes a 401 HTTP error and clears the expired login', async () => {
     const { ApiRequestError } = await import('@/utils/request')
-    localStorage.setItem('token', 'expired-token')
 
     const promise = mocks.responseHandlers.rejected?.({
       config: {},
@@ -100,7 +99,6 @@ describe('request response contract', () => {
       code: 1002,
       message: '登录已过期，请重新登录',
     })
-    expect(localStorage.getItem('token')).toBeNull()
     expect(mocks.routerPush).toHaveBeenCalledWith('/login')
   })
 

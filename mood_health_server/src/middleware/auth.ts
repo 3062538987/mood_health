@@ -252,14 +252,25 @@ const getNormalizedRequestRole = (req: AuthRequest): UserRole => {
 
 export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
   const jwtSecret = process.env.JWT_SECRET
-  const authHeader = req.headers.authorization
-  if (!authHeader) {
-    return sendAuthError(req, res, 401, '未提供认证令牌')
+
+  // 安全: 优先从 HttpOnly Cookie 读取 Token，防止 XSS 窃取 (VUE-AUTH-001)
+  let token: string | undefined
+  const cookieToken = req.cookies?.auth_token
+  if (cookieToken) {
+    token = cookieToken
+  } else {
+    // 兼容旧的 Authorization Header 方式
+    const authHeader = req.headers.authorization
+    if (authHeader) {
+      const [scheme, headerToken] = authHeader.split(' ')
+      if (scheme === 'Bearer' && headerToken) {
+        token = headerToken
+      }
+    }
   }
 
-  const [scheme, token] = authHeader.split(' ')
-  if (scheme !== 'Bearer' || !token) {
-    return sendAuthError(req, res, 401, '令牌格式错误')
+  if (!token) {
+    return sendAuthError(req, res, 401, '未提供认证令牌')
   }
 
   if (!jwtSecret) {

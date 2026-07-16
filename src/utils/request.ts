@@ -87,6 +87,7 @@ const unwrapResponse = <T>(payload: unknown): T => {
 const service = axios.create({
   baseURL: apiBaseUrl,
   timeout: 10000,
+  withCredentials: true, // 安全: 发送 HttpOnly Cookie 认证令牌 (VUE-AUTH-001)
   headers: {
     'Content-Type': 'application/json',
   },
@@ -104,10 +105,7 @@ service.interceptors.request.use(
       config.url = config.url.slice(4)
     }
 
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
+    // 安全: Token 通过 HttpOnly Cookie 自动发送，无需手动添加 Authorization 头 (VUE-AUTH-001)
     return config
   },
   (error: unknown) => {
@@ -157,7 +155,6 @@ service.interceptors.response.use(
       switch (status) {
         case 401:
           message = '登录已过期，请重新登录'
-          localStorage.removeItem('token')
           router.push('/login')
           break
         case 403:

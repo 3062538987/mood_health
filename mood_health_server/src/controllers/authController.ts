@@ -7,6 +7,16 @@ import { createAuthService } from '../services/authService'
 
 const authService = createAuthService()
 
+// 安全: 设置 HttpOnly Cookie 防止 XSS 窃取 Token (VUE-AUTH-001)
+const TOKEN_COOKIE = 'auth_token'
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7天
+  path: '/',
+}
+
 export const register = async (req: Request, res: Response) => {
   try {
     await authService.register(req.body)
@@ -24,6 +34,8 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
   try {
     const result = await authService.login(req.body)
+    // 安全: 将 JWT 存入 HttpOnly Cookie，防止 XSS 读取 (VUE-AUTH-001)
+    res.cookie(TOKEN_COOKIE, result.token, COOKIE_OPTIONS)
     res.json(apiSuccess(result, '登录成功'))
   } catch (error: any) {
     logger.warn('用户登录失败', {
@@ -33,6 +45,11 @@ export const login = async (req: Request, res: Response) => {
     })
     throw error
   }
+}
+
+export const logout = async (_req: Request, res: Response) => {
+  res.clearCookie(TOKEN_COOKIE, { path: '/' })
+  res.json(apiSuccess(null, '已退出登录'))
 }
 
 export const getMe = async (req: AuthRequest, res: Response) => {

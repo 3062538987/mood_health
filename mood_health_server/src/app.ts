@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
+import cookieParser from 'cookie-parser'
 import dotenv from 'dotenv'
 import morgan from 'morgan'
 import compression from 'compression'
@@ -85,6 +86,7 @@ export const createApp = (dependencies: AppDependencies = {}) => {
     })
   )
   app.disable('x-powered-by')
+  app.use(cookieParser())
   app.use(cors(corsOptions))
   // 安全: 限制请求体大小防止 DoS 攻击 (EXPRESS-BODY-001)
   app.use(express.json({ limit: '1mb' }))
