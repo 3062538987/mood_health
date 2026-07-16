@@ -21,6 +21,7 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "test:all": "npm run test:run && npm --prefix mood_health_server run test",
+    "verify:all": "npm run build:all && npm run test:all",
     "doctor": "node scripts/doctor.mjs",
     "doctor:strict": "node scripts/doctor.mjs --strict",
     "setup": "npm install && npm --prefix mood_health_server install",
