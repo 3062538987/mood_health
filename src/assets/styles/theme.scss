@@ -1,0 +1,101 @@
+/* 主题颜色变量 */
+$primary-color: #6ab0a5; // 主色：柔和蓝绿色
+$primary-light: #8bc4b9; // 主色浅色版本
+$secondary-color: #f3a683; // 辅助色：暖橙色
+$accent-color: #e76f51; // 强调色：珊瑚红
+$success-color: #06d6a0; // 成功色：绿色
+$success-light: #4cd964; // 成功色浅色版本
+$warning-color: #ffd166; // 警告色：黄色
+$danger-color: #ef476f; // 危险色：红色
+$text-color: #4a4a4a; // 正文色
+$text-light-color: #7d7d7d; // 次要文字色
+$bg-color: #f8f5f2; // 背景色：暖白
+$bg-light: #f1ede9; // 浅背景色
+$white: #ffffff; // 白色
+$border-color: #e9e6e3; // 边框色
+
+/* 情绪色彩系统 */
+$mood-happy: #ffd166; // 快乐：暖黄
+$mood-sad: #06d6a0; // 悲伤：深蓝绿色
+$mood-angry: #ef476f; // 愤怒：红色
+$mood-anxious: #118ab2; // 焦虑：蓝色
+$mood-calm: #073b4c; // 平静：深蓝
+$mood-neutral: #8d99ae; // 中性：灰色
+
+/* 深色模式颜色变量 */
+$dark-bg-color: #1a1e24; // 深色背景
+$dark-text-color: #e0e0e0; // 深色文字
+$dark-text-light-color: #a0a0a0; // 深色次要文字
+$dark-primary-color: #8ab3a0; // 深色主色
+$dark-secondary-color: #f5b69b; // 深色辅助色
+$dark-accent-color: #f08a72; // 深色强调色
+$dark-bg-light: #252a30; // 深色浅背景
+$dark-border-color: #3a4048; // 深色边框
+
+/* 文本样式变量 */
+$font-size-xs: 10px;
+$font-size-sm: 12px;
+$font-size-md: 14px;
+$font-size-lg: 16px;
+$font-size-xl: 20px;
+$font-size-xxl: 24px;
+
+/* 阴影样式 */
+$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
+$shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
+$shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+$dark-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+$dark-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+$dark-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+/* 圆角样式 */
+$border-radius-sm: 4px;
+$border-radius-md: 8px;
+$border-radius-lg: 12px;
+$border-radius-full: 50%;
+
+/* CSS 自定义属性（变量） */
+:root {
+  --primary-color: #{$primary-color};
+  --primary-light: #{$primary-light};
+  --secondary-color: #{$secondary-color};
+  --accent-color: #{$accent-color};
+  --success-color: #{$success-color};
+  --success-light: #{$success-light};
+  --warning-color: #{$warning-color};
+  --danger-color: #{$danger-color};
+  --text-color: #{$text-color};
+  --text-light-color: #{$text-light-color};
+  --bg-color: #{$bg-color};
+  --bg-light: #{$bg-light};
+  --white: #{$white};
+  --border-color: #{$border-color};
+  --shadow-sm: #{$shadow-sm};
+  --shadow-md: #{$shadow-md};
+  --shadow-lg: #{$shadow-lg};
+
+  /* 情绪色彩变量 */
+  --mood-happy: #{$mood-happy};
+  --mood-sad: #{$mood-sad};
+  --mood-angry: #{$mood-angry};
+  --mood-anxious: #{$mood-anxious};
+  --mood-calm: #{$mood-calm};
+  --mood-neutral: #{$mood-neutral};
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary-color: #{$dark-primary-color};
+    --secondary-color: #{$dark-secondary-color};
+    --accent-color: #{$dark-accent-color};
+    --text-color: #{$dark-text-color};
+    --text-light-color: #{$dark-text-light-color};
+    --bg-color: #{$dark-bg-color};
+    --bg-light: #{$dark-bg-light};
+    --white: #{$dark-bg-light};
+    --border-color: #{$dark-border-color};
+    --shadow-sm: #{$dark-shadow-sm};
+    --shadow-md: #{$dark-shadow-md};
+    --shadow-lg: #{$dark-shadow-lg};
+  }
+}

@@ -1,0 +1,120 @@
+import {
+  AssessmentRepository,
+  createAssessmentRepository,
+  CreateSubmittedAssessmentSessionInput,
+  SubmittedAssessmentAnswerInput,
+} from '../repositories/assessmentRepository'
+import { scoreAssessment, ScoringRule, RiskStratification, SuggestionTemplate } from '../utils/scoringEngine'
+import { HttpException } from '../utils/errors'
+import { createCaseService, type CaseService } from './caseService'
+import logger from '../utils/logger'
+
+export interface AssessmentServiceDependencies {
+  repository?: AssessmentRepository
+  caseService?: CaseService
+}
+
+export interface SubmitAssessmentInput {
+  userId: number
+  questionnaireId: number
+  answers: Array<{ itemId: number; score: number }>
+}
+
+export const createAssessmentService = (dependencies: AssessmentServiceDependencies = {}) => {
+  const repository = dependencies.repository ?? createAssessmentRepository()
+  const caseService = dependencies.caseService ?? createCaseService()
+
+  const listQuestionnaires = async () => repository.listQuestionnaires()
+
+  const getQuestionnaireById = async (id: number) => repository.getQuestionnaireById(id)
+
+  const listQuestionsByQuestionnaireId = async (questionnaireId: number) =>
+    repository.listQuestionsByQuestionnaireId(questionnaireId)
+
+  const listUserAssessmentHistory = async (userId: number) =>
+    repository.listUserAssessmentHistory(userId)
+
+  const getSessionDetail = async (sessionId: number) =>
+    repository.getSessionById(sessionId)
+
+  const listAllSessions = async (params: {
+    page?: number
+    pageSize?: number
+    userId?: number
+    instrumentId?: number
+    riskLevel?: string
+    startDate?: string
+    endDate?: string
+  }) => repository.listAllSessions(params)
+
+  const getSessionDetailAdmin = async (sessionId: number) =>
+    repository.getSessionByIdAdmin(sessionId)
+
+  const submitAssessment = async (input: SubmitAssessmentInput) => {
+    // 1. 验证量表存在
+    const questionnaire = await repository.getQuestionnaireById(input.questionnaireId)
+    if (!questionnaire) {
+      throw new HttpException('测评工具不存在', 404)
+    }
+
+    // 2. 获取计分规则
+    const rules = await repository.getScoringRules(input.questionnaireId)
+    if (!rules) {
+      throw new HttpException('测评计分规则未配置', 500)
+    }
+
+    // 3. 计分
+    const scoringResult = scoreAssessment(
+      input.answers,
+      rules.scoringRule as unknown as ScoringRule,
+      rules.riskStratification as unknown as RiskStratification,
+      rules.suggestionTemplate as unknown as SuggestionTemplate
+    )
+
+    // 4. 构建插入数据
+    const now = new Date()
+    const sessionInput: CreateSubmittedAssessmentSessionInput = {
+      userId: input.userId,
+      questionnaireId: input.questionnaireId,
+      score: scoringResult.totalScore,
+      riskLevel: scoringResult.riskLevel,
+      resultText: JSON.stringify(scoringResult),
+      answers: input.answers.map((a) => ({
+        itemId: a.itemId,
+        value: a.score,
+        score: a.score,
+      })) as SubmittedAssessmentAnswerInput[],
+      submittedAt: now,
+    }
+
+    // 5. 创建会话
+    const sessionId = await repository.createSubmittedSession(sessionInput)
+
+    // 6. 高风险自动创建个案
+    if (scoringResult.riskLevel === '高风险') {
+      try {
+        await caseService.autoCreateCase(sessionId)
+      } catch (error) {
+        logger.error('自动创建个案失败', { sessionId, error })
+      }
+    }
+
+    return {
+      sessionId,
+      ...scoringResult,
+    }
+  }
+
+  return {
+    listQuestionnaires,
+    getQuestionnaireById,
+    listQuestionsByQuestionnaireId,
+    submitAssessment,
+    listUserAssessmentHistory,
+    getSessionDetail,
+    listAllSessions,
+    getSessionDetailAdmin,
+  }
+}
+
+export type AssessmentService = ReturnType<typeof createAssessmentService>

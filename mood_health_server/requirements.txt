@@ -1,0 +1,17 @@
+# 模型服务依赖
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# 核心AI依赖
+torch==2.1.0
+transformers==4.36.0
+
+# 其他依赖
+requests==2.31.0
+python-dotenv==1.0.0
+
+# 缓存和限流依赖
+redis==5.0.1
+slowapi==0.1.9
