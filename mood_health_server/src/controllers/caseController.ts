@@ -117,7 +117,7 @@ export const closeCase = async (req: AuthRequest, res: Response, next: NextFunct
 
 export const listMyCases = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const cases = await caseService.listMyCases(req.user!.userId, req.user!.roleCode)
+    const cases = await caseService.listMyCases(req.user!.userId, req.user!.role)
     res.json(apiSuccess(cases, '获取个案列表成功'))
   } catch (error) {
     next(error)

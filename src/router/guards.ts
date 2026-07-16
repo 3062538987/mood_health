@@ -7,7 +7,7 @@ const GUIDE_PATH = '/guide'
 const LOGIN_PATH = '/login'
 
 type UserStore = ReturnType<typeof useUserStore>
-type UserRole = 'user' | 'admin' | 'super_admin'
+type UserRole = 'user' | 'admin' | 'super_admin' | 'counselor'
 
 const rolePermissions: Record<UserRole, readonly string[]> = {
   super_admin: [
@@ -21,6 +21,12 @@ const rolePermissions: Record<UserRole, readonly string[]> = {
     'course.manage',
     'music.manage',
     'mood.record.read',
+    'case.read_assigned',
+    'case.create',
+    'case.assign',
+    'case.intervene',
+    'case.refer',
+    'case.close',
   ],
   admin: [
     'user.manage',
@@ -30,12 +36,25 @@ const rolePermissions: Record<UserRole, readonly string[]> = {
     'music.manage',
     'audit.record.view_all',
     'mood.record.read',
+    'case.read_assigned',
+    'case.create',
+    'case.assign',
+    'case.intervene',
+    'case.refer',
+    'case.close',
+  ],
+  counselor: [
+    'case.read_assigned',
+    'case.intervene',
+    'case.refer',
+    'case.close',
+    'mood.record.read',
   ],
   user: [],
 }
 
 const normalizeRole = (role: string | undefined): UserRole => {
-  if (role === 'admin' || role === 'super_admin') {
+  if (role === 'admin' || role === 'counselor' || role === 'super_admin') {
     return role
   }
   return 'user'

@@ -22,7 +22,10 @@ export const useUserStore = defineStore('user', () => {
 
   const isLoggedIn = computed(() => !!token.value && !!user.value)
   const username = computed(() => user.value?.username || '')
-  const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'super_admin')
+  const isAdmin = computed(() => {
+    const role = user.value?.role
+    return role === 'admin' || role === 'super_admin' || role === 'counselor'
+  })
 
   const setToken = (newToken: string) => {
     token.value = newToken
