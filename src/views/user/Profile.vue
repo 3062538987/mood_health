@@ -7,6 +7,15 @@
       <div class="user-info-card">
         <div class="avatar">
           <div class="avatar-placeholder">👤</div>
+          <input
+            id="avatar-upload"
+            class="avatar-upload-input"
+            type="file"
+            accept="image/*"
+            @change="handleAvatarUpload"
+          />
+          <label class="avatar-upload-label" for="avatar-upload">上传头像</label>
+          <p v-if="avatarFileName" class="avatar-file-name">{{ avatarFileName }}</p>
         </div>
         <div class="user-details">
           <h2 class="username">{{ displayUsername }}</h2>
@@ -68,6 +77,11 @@
             <h4 class="card-title">设置</h4>
             <p class="card-description">账号和隐私设置</p>
           </div>
+          <div class="function-card download-card" @click="downloadMoodReport">
+            <div class="card-icon">📥</div>
+            <h4 class="card-title">下载报告</h4>
+            <p class="card-description">导出个人情绪健康概览</p>
+          </div>
         </div>
       </div>
     </div>
@@ -93,6 +107,7 @@ const recentEmotions = ref<Record<string, number>>({})
 const groupActivityCount = ref(0)
 const favoriteKnowledgeCount = ref(0)
 const favoriteToolsCount = ref(0)
+const avatarFileName = ref('')
 const emotionEntries = computed(() => Object.entries(recentEmotions.value))
 
 const moodLabelMap: Record<string, string> = {
@@ -163,6 +178,32 @@ const goToSetting = () => {
   router.push('/user/setting')
 }
 
+const handleAvatarUpload = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  avatarFileName.value = file?.name || ''
+}
+
+const downloadMoodReport = () => {
+  const report = {
+    username: displayUsername.value,
+    userId: displayUserId.value,
+    emotionScore: emotionScore.value,
+    recentEmotions: recentEmotions.value,
+    groupActivityCount: groupActivityCount.value,
+    generatedAt: new Date().toISOString(),
+  }
+  const blob = new Blob([JSON.stringify(report, null, 2)], {
+    type: 'application/json;charset=utf-8',
+  })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `mood-report-${displayUserId.value}.json`
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
 onMounted(() => {
   loadProfileData().catch(() => {
     emotionScore.value = 0
@@ -203,6 +244,8 @@ onMounted(() => {
   gap: 20px;
 
   .avatar {
+    text-align: center;
+
     .avatar-placeholder {
       width: 100px;
       height: 100px;
@@ -213,6 +256,32 @@ onMounted(() => {
       justify-content: center;
       font-size: 50px;
       color: white;
+    }
+
+    .avatar-upload-input {
+      display: none;
+    }
+
+    .avatar-upload-label {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #4f46e5;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .avatar-file-name {
+      margin: 6px 0 0;
+      color: #666;
+      font-size: 12px;
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 

@@ -29,6 +29,15 @@
             <i class="fas fa-user-shield"></i> 管理后台
           </router-link>
         </div>
+        <form class="global-search" role="search" @submit.prevent="handleGlobalSearch">
+          <input
+            v-model="searchKeyword"
+            type="search"
+            aria-label="全站搜索"
+            placeholder="搜索情绪、课程、活动"
+          />
+          <button type="submit">搜索</button>
+        </form>
         <div class="nav-user">
           <template v-if="userStore.isLoggedIn">
             <span class="username">{{ userStore.username }}</span>
@@ -81,7 +90,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
 import { useMoodStore } from '@/stores/moodStore'
@@ -92,6 +101,7 @@ const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const moodStore = useMoodStore()
+const searchKeyword = ref('')
 
 // 判断当前是否是登录/注册页面
 const isAuthPage = computed(() => {
@@ -110,6 +120,15 @@ const themeColor = computed(() => {
 const handleLogout = async () => {
   await userStore.logout()
   router.replace('/login')
+}
+
+const handleGlobalSearch = () => {
+  const keyword = searchKeyword.value.trim()
+  if (!keyword) {
+    return
+  }
+  router.push({ path: '/mood/archive', query: { keyword } })
+  searchKeyword.value = ''
 }
 
 // 组件挂载时获取情绪数据
@@ -260,6 +279,30 @@ onMounted(async () => {
       background: #e74c3c;
       color: white;
     }
+  }
+}
+
+.global-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  input {
+    width: 180px;
+    padding: 8px 12px;
+    border: 1px solid #d8e2ef;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: var(--text-color);
+  }
+
+  button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 999px;
+    background: var(--theme-color, var(--primary-color));
+    color: #fff;
+    cursor: pointer;
   }
 }
 
