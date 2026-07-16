@@ -13,6 +13,7 @@ const createRoute = (overrides: Partial<RouteLocationNormalized> = {}) =>
 const createUserStore = (overrides = {}) => ({
   token: '',
   user: null,
+  authInitialized: false,
   isLoggedIn: false,
   isAdmin: false,
   fetchUserInfo: vi.fn().mockResolvedValue(true),
@@ -34,8 +35,16 @@ describe('router guards', () => {
       expect(userStore.fetchUserInfo).toHaveBeenCalledTimes(1)
     })
 
-    it('在没有 token 时不拉取用户信息', async () => {
+    it('在没有内存 token 时也尝试通过 Cookie 恢复一次用户信息', async () => {
       const userStore = createUserStore()
+
+      await initializeUserState(userStore as never)
+
+      expect(userStore.fetchUserInfo).toHaveBeenCalledTimes(1)
+    })
+
+    it('认证状态已初始化后不重复恢复用户信息', async () => {
+      const userStore = createUserStore({ authInitialized: true })
 
       await initializeUserState(userStore as never)
 

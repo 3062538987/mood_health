@@ -20,6 +20,7 @@ export const useUserStore = defineStore('user', () => {
   const token = ref<string>('')
   const loading = ref(false)
   const error = ref<string>('')
+  const authInitialized = ref(false)
 
   const isLoggedIn = computed(() => !!token.value && !!user.value)
   const username = computed(() => user.value?.username || '')
@@ -70,6 +71,7 @@ export const useUserStore = defineStore('user', () => {
       const { token: newToken, user: userData } = response
       setToken(newToken)
       user.value = userData
+      authInitialized.value = true
       return true
     } catch (err: unknown) {
       error.value = getErrorMessage(err, '登录失败')
@@ -92,6 +94,8 @@ export const useUserStore = defineStore('user', () => {
     } catch (err) {
       clearToken()
       return false
+    } finally {
+      authInitialized.value = true
     }
   }
 
@@ -102,11 +106,14 @@ export const useUserStore = defineStore('user', () => {
       // 即使清除 Cookie 失败也清除本地状态
     }
     clearToken()
+    authInitialized.value = true
   }
 
   // 安全: 页面刷新后通过 /api/auth/me 恢复登录状态（Cookie 自动发送）(VUE-AUTH-001)
   const init = async () => {
-    await fetchUserInfo()
+    if (!authInitialized.value) {
+      await fetchUserInfo()
+    }
   }
 
   return {
@@ -114,6 +121,7 @@ export const useUserStore = defineStore('user', () => {
     token,
     loading,
     error,
+    authInitialized,
     isLoggedIn,
     username,
     isAdmin,
