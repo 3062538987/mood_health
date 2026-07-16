@@ -41,6 +41,14 @@ test-results/
 playwright-report/
 screenshots/
 
+# Local credential screenshots and bundled Windows Redis binaries/docs
+tasks/deepseek-key.jpg
+Redis on Windows*.docx
+Windows Service Documentation.docx
+redis/*.exe
+redis/*.pdb
+redis/*.dll
+
 # Prevent accidental nested duplicate directories
 health/health/
 mood_health_server/mood_health_server/
