@@ -48,6 +48,7 @@ Windows Service Documentation.docx
 redis/*.exe
 redis/*.pdb
 redis/*.dll
+/redis/
 
 # Prevent accidental nested duplicate directories
 health/health/
