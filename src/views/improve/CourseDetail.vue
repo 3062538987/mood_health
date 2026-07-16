@@ -31,7 +31,7 @@
 
         <!-- 文章内容 -->
         <div v-else class="article-container">
-          <div class="article-content" v-html="course.content"></div>
+          <div class="article-content" v-html="sanitizedContent"></div>
         </div>
       </div>
     </div>
@@ -51,8 +51,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import DOMPurify from 'dompurify'
 import { buildApiUrl } from '@/utils/apiBase'
 
 const route = useRoute()
@@ -60,6 +61,12 @@ const router = useRouter()
 
 const course = ref<any>(null)
 const loading = ref(true)
+
+// 安全: 对 HTML 内容进行消毒防止 XSS 攻击 (VUE-XSS-001)
+const sanitizedContent = computed(() => {
+  if (!course.value?.content) return ''
+  return DOMPurify.sanitize(course.value.content)
+})
 
 const fetchCourseDetail = async () => {
   loading.value = true

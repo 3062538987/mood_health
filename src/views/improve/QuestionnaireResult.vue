@@ -56,6 +56,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import DOMPurify from 'dompurify'
 import { getInterpretation } from '@/api/ai'
 import { ElMessage } from 'element-plus'
 
@@ -83,12 +84,14 @@ const aiContent = ref('')
 const aiError = ref('')
 const aiLoading = ref(false)
 
+// 安全: 对 AI 生成内容进行 HTML 消毒防止 XSS 攻击 (VUE-XSS-001)
 const aiContentHtml = computed(() => {
-  return aiContent.value
+  const rawHtml = aiContent.value
     .replace(/\n\n/g, '</p><p>')
     .replace(/\n/g, '<br>')
     .replace(/^(.+)$/gm, (_, p1) => (p1 ? `<p>${p1}</p>` : ''))
     .replace(/<\/p><p>/g, '</p><p>')
+  return DOMPurify.sanitize(rawHtml)
 })
 
 // 返回量表列表
