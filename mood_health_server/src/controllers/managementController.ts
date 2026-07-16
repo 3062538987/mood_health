@@ -164,6 +164,41 @@ export const adminUsersUpdateRoleHandler = async (req: AuthRequest, res: Respons
   }
 }
 
+export const adminUsersDisableHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = Number(req.params.id)
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json(apiFailure(400, 'userId 必须是正整数'))
+    }
+
+    if (req.user?.userId === userId) {
+      return res.status(400).json(apiFailure(400, '不能停用当前登录用户'))
+    }
+
+    const disabled = await managementService.disableUser(userId)
+
+    if (!disabled) {
+      return res.status(404).json(apiFailure(404, '目标用户不存在或已停用'))
+    }
+
+    await logOperation(
+      req.user!.userId,
+      req.user!.role,
+      'user.manage',
+      'USER_DISABLE',
+      String(userId),
+      'status=disabled',
+      'success',
+      getClientIp(req)
+    )
+
+    return res.status(200).json(apiSuccess(null, '用户已停用'))
+  } catch (error) {
+    return res.status(500).json(apiFailure(500, '停用用户失败'))
+  }
+}
+
 export const adminUsersDeleteHandler = async (req: AuthRequest, res: Response) => {
   try {
     const userId = Number(req.params.id)

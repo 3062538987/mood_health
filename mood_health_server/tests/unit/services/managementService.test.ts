@@ -13,6 +13,7 @@ const createRepository = (): jest.Mocked<ManagementRepository> => ({
   findAdminUserById: jest.fn(),
   updateUserRole: jest.fn(),
   deleteUserById: jest.fn(),
+  disableUser: jest.fn(),
   listAdminMoods: jest.fn(),
 })
 

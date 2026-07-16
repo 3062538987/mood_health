@@ -4,6 +4,7 @@ import {
   adminMoodsListHandler,
   adminUsersListHandler,
   adminUsersDeleteHandler,
+  adminUsersDisableHandler,
   adminUsersUpdateRoleHandler,
   feedbackHandleHandler,
   incidentFixHandler,
@@ -40,6 +41,8 @@ router.put(
 )
 
 router.delete('/admin/users/:id', authenticate, requirePermission('user.manage'), adminUsersDeleteHandler)
+
+router.put('/admin/users/:id/disable', authenticate, requirePermission('user.manage'), adminUsersDisableHandler)
 
 router.post(
   '/users/manage',

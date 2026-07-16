@@ -21,6 +21,8 @@ export const createManagementService = (dependencies: ManagementServiceDependenc
 
   const deleteUserById = async (userId: number) => repository.deleteUserById(userId)
 
+  const disableUser = async (userId: number) => repository.disableUser(userId)
+
   const listAdminMoods = async (
     options: Parameters<ManagementRepository['listAdminMoods']>[0]
   ) => repository.listAdminMoods(options)
@@ -30,6 +32,7 @@ export const createManagementService = (dependencies: ManagementServiceDependenc
     findAdminUserById,
     updateUserRole,
     deleteUserById,
+    disableUser,
     listAdminMoods,
   }
 }

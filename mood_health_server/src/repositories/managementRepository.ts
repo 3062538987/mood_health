@@ -1,4 +1,5 @@
 import { ResultSetHeader, RowDataPacket } from 'mysql2'
+import { createUserRepository } from './userRepository'
 import { getMysqlPool } from '../config/mysql'
 
 export interface ManagementDatabase {
@@ -140,8 +141,14 @@ export const createManagementRepository = (db: ManagementDatabase = getMysqlPool
   }
 
   const deleteUserById = async (userId: number): Promise<boolean> => {
-    const [result] = await db.query<ResultSetHeader>('DELETE FROM users WHERE id = ?', [userId])
-    return result.affectedRows > 0
+    const userRepo = createUserRepository(db)
+    const result = await userRepo.deleteUser(userId)
+    return result.deleted
+  }
+
+  const disableUser = async (userId: number): Promise<boolean> => {
+    const userRepo = createUserRepository(db)
+    return userRepo.disableUser(userId)
   }
 
   const buildMoodFilters = (options: AdminMoodListOptions): { where: string; params: unknown[] } => {
@@ -237,6 +244,7 @@ export const createManagementRepository = (db: ManagementDatabase = getMysqlPool
     findAdminUserById,
     updateUserRole,
     deleteUserById,
+    disableUser,
     listAdminMoods,
   }
 }

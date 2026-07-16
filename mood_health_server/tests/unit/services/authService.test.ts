@@ -33,6 +33,8 @@ const createRepository = (): jest.Mocked<UserRepository> => ({
   findPublicUserById: jest.fn(),
   createStudentUser: jest.fn(),
   updateLastLoginAt: jest.fn(),
+  disableUser: jest.fn(),
+  deleteUser: jest.fn(),
 })
 
 describe('authService', () => {

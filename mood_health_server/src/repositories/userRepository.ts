@@ -199,11 +199,43 @@ export const createUserRepository = (db: MysqlExecutor = getMysqlPool()) => {
     )
   }
 
+  const disableUser = async (id: number): Promise<boolean> => {
+    const [result] = await db.query<ResultSetHeader>(
+      `UPDATE users SET status = 'disabled', updated_at = UTC_TIMESTAMP(3) WHERE id = ? AND status = 'active'`,
+      [id]
+    )
+    return result.affectedRows > 0
+  }
+
+  const deleteUser = async (id: number): Promise<{ deleted: boolean; username: string | null }> => {
+    const [rows] = await db.query<UserRow[]>(
+      'SELECT username FROM users WHERE id = ? LIMIT 1',
+      [id]
+    )
+    if (rows.length === 0) {
+      return { deleted: false, username: null }
+    }
+    const username = rows[0].username
+
+    await db.query<ResultSetHeader>('DELETE FROM mood_records WHERE user_id = ?', [id])
+    await db.query<ResultSetHeader>('DELETE FROM assessment_sessions WHERE user_id = ?', [id])
+    await db.query<ResultSetHeader>('DELETE FROM case_interventions WHERE case_id IN (SELECT id FROM cases WHERE student_user_id = ?)', [id])
+    await db.query<ResultSetHeader>('DELETE FROM cases WHERE student_user_id = ?', [id])
+    await db.query<ResultSetHeader>('DELETE FROM audit_logs WHERE actor_user_id = ?', [id])
+    await db.query<ResultSetHeader>('DELETE FROM user_roles WHERE user_id = ?', [id])
+    await db.query<ResultSetHeader>('DELETE FROM refresh_tokens WHERE user_id = ?', [id])
+    await db.query<ResultSetHeader>('DELETE FROM users WHERE id = ?', [id])
+
+    return { deleted: true, username }
+  }
+
   return {
     findAuthUserByUsername,
     findPublicUserById,
     createStudentUser,
     updateLastLoginAt,
+    disableUser,
+    deleteUser,
   }
 }
 

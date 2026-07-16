@@ -156,13 +156,24 @@ describe('managementRepository', () => {
     expect(db.calls[1].params).toEqual([3, 2])
   })
 
-  it('deletes a user through the MySQL repository boundary', async () => {
+  it('deletes a user with cascade cleanup through the MySQL repository boundary', async () => {
     const db = new FakeManagementDb()
-    db.queueResult({ affectedRows: 1 })
+    // SELECT username first
+    db.queueRows([{ username: 'student_demo' }])
+    // cascade DELETEs: mood_records, assessment_sessions, case_interventions,
+    // cases, audit_logs, user_roles, refresh_tokens, users
+    for (let i = 0; i < 8; i++) {
+      db.queueResult({ affectedRows: 1 })
+    }
     const repository = createManagementRepository(db)
 
     await expect(repository.deleteUserById(2)).resolves.toBe(true)
-    expect(db.calls[0].sql).toContain('DELETE FROM users')
+    // First call is SELECT username
+    expect(db.calls[0].sql).toContain('SELECT username FROM users')
     expect(db.calls[0].params).toEqual([2])
+    // Last call is DELETE FROM users
+    const lastCall = db.calls[db.calls.length - 1]
+    expect(lastCall.sql).toContain('DELETE FROM users')
+    expect(lastCall.params).toEqual([2])
   })
 })
