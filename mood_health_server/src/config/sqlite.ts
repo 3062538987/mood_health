@@ -143,28 +143,6 @@ const initSchema = (db: SqliteDatabase) => {
       FOREIGN KEY (operator_id) REFERENCES users(id) ON DELETE SET NULL
     );
 
-    CREATE TABLE IF NOT EXISTS incident_fix_list (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      fixer_id INTEGER,
-      fixer_role TEXT NOT NULL,
-      issue_description TEXT NOT NULL,
-      fix_content TEXT NOT NULL,
-      result TEXT DEFAULT 'success',
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (fixer_id) REFERENCES users(id) ON DELETE SET NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS feedback_close_list (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      handler_id INTEGER,
-      handler_role TEXT NOT NULL,
-      feedback_id TEXT NOT NULL,
-      handle_content TEXT NOT NULL,
-      close_status TEXT DEFAULT 'closed',
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (handler_id) REFERENCES users(id) ON DELETE SET NULL
-    );
-
     CREATE TABLE IF NOT EXISTS posts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
@@ -257,8 +235,6 @@ const initSchema = (db: SqliteDatabase) => {
     CREATE INDEX IF NOT EXISTS idx_operation_logs_time ON operation_logs(operation_time DESC);
     CREATE INDEX IF NOT EXISTS idx_operation_logs_role ON operation_logs(operator_role);
     CREATE INDEX IF NOT EXISTS idx_operation_logs_permission ON operation_logs(permission_code);
-    CREATE INDEX IF NOT EXISTS idx_incident_fix_created_at ON incident_fix_list(created_at DESC);
-    CREATE INDEX IF NOT EXISTS idx_feedback_close_created_at ON feedback_close_list(created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_posts_status_created_at ON posts(status, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_comments_post_created_at ON comments(post_id, created_at ASC);
     CREATE INDEX IF NOT EXISTS idx_post_likes_post_user ON post_likes(post_id, user_id);
