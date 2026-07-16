@@ -17,13 +17,13 @@ const findRoute = (routes: readonly RouteRecordRaw[], path: string): RouteRecord
 }
 
 describe('frontend feature flags', () => {
-  it('keeps non-core modules disabled by default', () => {
-    expect(getFeatureFlags({})).toEqual({ nonCoreModules: false })
+  it('keeps non-core modules enabled by default', () => {
+    expect(getFeatureFlags({})).toEqual({ nonCoreModules: true })
   })
 
   it.each(['true', '1', 'yes', 'on', ' TRUE '])('ignores the retired enable value %s', (value) => {
     expect(getFeatureFlags({ VITE_FEATURE_NON_CORE_MODULES_ENABLED: value })).toEqual({
-      nonCoreModules: false,
+      nonCoreModules: true,
     })
   })
 })
