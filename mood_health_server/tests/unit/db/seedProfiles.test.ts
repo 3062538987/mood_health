@@ -74,7 +74,7 @@ describe('profile seed', () => {
     expect(serializedParams).not.toContain('DemoPass123!')
   })
 
-  it('creates only an invisible technical assessment fixture for test profile', async () => {
+  it('creates a complete technical assessment fixture for test profile', async () => {
     const db = new FakeSeedDatabase()
 
     const result = await seedTestData(db)
@@ -82,7 +82,11 @@ describe('profile seed', () => {
     expect(result.assessmentCode).toBe('TECHNICAL_FIXTURE')
     const sqlText = db.queries.map((query) => query.sql).join('\n')
     expect(sqlText).toContain('assessment_instruments')
-    expect(sqlText).toContain('draft')
+    expect(sqlText).toContain('active')
+    expect(sqlText).toContain('scoring_rule_json')
+    expect(sqlText).toContain('risk_stratification_json')
+    expect(sqlText).toContain('suggestion_template_json')
+    expect(sqlText).toContain('assessment_items')
     expect(sqlText).not.toContain('SDS')
     expect(sqlText).not.toContain('SAS')
   })

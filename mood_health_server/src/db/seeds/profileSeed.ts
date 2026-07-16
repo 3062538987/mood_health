@@ -196,25 +196,129 @@ export const seedDemoData = async (
   return { accounts: DEMO_USERS.map((user) => user.username), moods: moodCount }
 }
 
+const TECHNICAL_TEST_ITEMS = [
+  {
+    order: 1,
+    text: '最近两周，您是否感到情绪低落、沮丧或绝望？',
+    type: 'single_choice',
+  },
+  {
+    order: 2,
+    text: '最近两周，您是否对做事缺乏兴趣或乐趣？',
+    type: 'single_choice',
+  },
+  {
+    order: 3,
+    text: '最近两周，您是否感到紧张、焦虑或无法放松？',
+    type: 'single_choice',
+  },
+  {
+    order: 4,
+    text: '最近两周，您是否因为担忧而影响睡眠？',
+    type: 'single_choice',
+  },
+  {
+    order: 5,
+    text: '最近两周，您是否感到精力不足或疲惫？',
+    type: 'single_choice',
+  },
+] as const
+
+const TECHNICAL_OPTIONS_JSON = JSON.stringify([
+  { label: '从不', value: 0 },
+  { label: '几天', value: 1 },
+  { label: '一半以上', value: 2 },
+  { label: '几乎每天', value: 3 },
+])
+
+const SCORING_RULE_JSON = JSON.stringify({
+  type: 'sum',
+  min_score: 0,
+  max_score: 15,
+  reverse_items: [],
+})
+
+const RISK_STRATIFICATION_JSON = JSON.stringify({
+  levels: [
+    { label: '低风险', range: [0, 4], color: 'green' },
+    { label: '中风险', range: [5, 8], color: 'yellow' },
+    { label: '高风险', range: [9, 12], color: 'orange' },
+    { label: '极高风险', range: [13, 15], color: 'red' },
+  ],
+})
+
+const SUGGESTION_TEMPLATE_JSON = JSON.stringify({
+  levels: {
+    '低风险': '您的情绪状态整体良好，建议保持当前的生活节奏和社交活动。',
+    '中风险': '您近期可能有一些情绪波动，建议关注自己的睡眠和作息规律，适当增加体育锻炼。',
+    '高风险': '您近期的情绪状态值得关注，建议与信任的人聊聊，或联系学校心理咨询中心。',
+    '极高风险': '您近期的情绪困扰较为明显，强烈建议尽快联系学校心理咨询中心或拨打心理援助热线。',
+  },
+})
+
 export const seedTestData = async (db: SeedDatabase, now: Date = new Date()): Promise<TestSeedResult> => {
   const currentTime = toMysqlDateTime(now)
-  const checksum = crypto.createHash('sha256').update('TECHNICAL_FIXTURE:v1').digest('hex')
+  const checksum = crypto.createHash('sha256').update('TECHNICAL_FIXTURE:v2').digest('hex')
 
   await db.query(
     `INSERT INTO assessment_instruments (code, name, description, status, created_at, updated_at)
-     VALUES (?, ?, ?, 'draft', ?, ?)
-     ON DUPLICATE KEY UPDATE name = VALUES(name), description = VALUES(description), status = 'draft', updated_at = VALUES(updated_at)`,
-    ['TECHNICAL_FIXTURE', '程序验证夹具', '仅用于自动化测试，不面向用户展示，不代表心理量表。', currentTime, currentTime]
+     VALUES (?, ?, ?, 'active', ?, ?)
+     ON DUPLICATE KEY UPDATE name = VALUES(name), description = VALUES(description), status = 'active', updated_at = VALUES(updated_at)`,
+    [
+      'TECHNICAL_FIXTURE',
+      '情绪状态快速筛查',
+      '技术测试量表（5 题），用于验证测评流程，不代表真实心理量表。',
+      currentTime,
+      currentTime,
+    ]
+  )
+
+  await db.query(
+    `DELETE FROM assessment_items
+     WHERE assessment_version_id IN (
+       SELECT id FROM assessment_versions
+       WHERE instrument_id = (SELECT id FROM assessment_instruments WHERE code = ?)
+     )`,
+    ['TECHNICAL_FIXTURE']
   )
 
   await db.query(
     `INSERT INTO assessment_versions (instrument_id, version_label, language, target_population, theoretical_basis, source_citation, license_note, scoring_rule_json, risk_stratification_json, suggestion_template_json, status, checksum, created_at)
-     SELECT id, ?, 'zh-CN', ?, ?, ?, ?, NULL, NULL, NULL, 'draft', ?, ?
+     SELECT id, ?, 'zh-CN', ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?
      FROM assessment_instruments
      WHERE code = ?
-     ON DUPLICATE KEY UPDATE status = 'draft', checksum = VALUES(checksum)`,
-    ['v1', 'technical-test-only', 'none', 'internal fixture', 'not applicable', checksum, currentTime, 'TECHNICAL_FIXTURE']
+     ON DUPLICATE KEY UPDATE
+       scoring_rule_json = VALUES(scoring_rule_json),
+       risk_stratification_json = VALUES(risk_stratification_json),
+       suggestion_template_json = VALUES(suggestion_template_json),
+       status = 'active',
+       checksum = VALUES(checksum)`,
+    [
+      'v1',
+      '大学生（技术测试）',
+      '技术测试夹具，不代表任何正式心理量表理论。',
+      '内部技术测试，非正式量表。',
+      '技术测试用途，无正式授权。',
+      SCORING_RULE_JSON,
+      RISK_STRATIFICATION_JSON,
+      SUGGESTION_TEMPLATE_JSON,
+      checksum,
+      currentTime,
+      'TECHNICAL_FIXTURE',
+    ]
   )
+
+  for (const item of TECHNICAL_TEST_ITEMS) {
+    await db.query(
+      `INSERT INTO assessment_items (assessment_version_id, item_order, item_text, item_type, options_json, reverse_scored, created_at)
+       SELECT av.id, ?, ?, ?, ?, 0, ?
+       FROM assessment_versions av
+       JOIN assessment_instruments ai ON ai.id = av.instrument_id
+       WHERE ai.code = ? AND av.version_label = 'v1'
+       ON DUPLICATE KEY UPDATE item_text = VALUES(item_text), item_type = VALUES(item_type), options_json = VALUES(options_json)`,
+      [item.order, item.text, item.type, TECHNICAL_OPTIONS_JSON, currentTime, 'TECHNICAL_FIXTURE']
+    )
+  }
 
   return { assessmentCode: 'TECHNICAL_FIXTURE' }
 }
