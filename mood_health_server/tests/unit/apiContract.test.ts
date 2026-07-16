@@ -74,4 +74,22 @@ describe('application API contract', () => {
     expect(response.headers.get('access-control-allow-origin')).toBeNull()
     expect(body).not.toContain('Not allowed by CORS')
   })
+
+  it('allows the production preview origin used by browser performance tests', async () => {
+    const response = await fetch(`${baseUrl}/health`, {
+      headers: { Origin: 'http://127.0.0.1:4173' },
+    })
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get('access-control-allow-origin')).toBe('http://127.0.0.1:4173')
+  })
+
+  it('allows localhost and 127.0.0.1 API connections in the CSP', async () => {
+    const response = await fetch(`${baseUrl}/health`)
+    const csp = response.headers.get('content-security-policy')
+
+    expect(csp).toContain('connect-src')
+    expect(csp).toContain('http://localhost:*')
+    expect(csp).toContain('http://127.0.0.1:*')
+  })
 })

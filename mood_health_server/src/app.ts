@@ -38,17 +38,20 @@ export interface AppDependencies {
 
 export const createApp = (dependencies: AppDependencies = {}) => {
   const app = express()
-  const allowedOrigins = process.env.FRONTEND_URL
+  const defaultAllowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'http://localhost:3003',
+    'http://127.0.0.1:4173',
+  ]
+  const configuredAllowedOrigins = process.env.FRONTEND_URL
     ? process.env.FRONTEND_URL.split(',')
         .map((origin) => origin.trim())
         .filter(Boolean)
-    : [
-        'http://localhost:5173',
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'http://localhost:3002',
-        'http://localhost:3003',
-      ]
+    : []
+  const allowedOrigins = [...new Set([...defaultAllowedOrigins, ...configuredAllowedOrigins])]
 
   const corsOptions: CorsOptions = {
     origin(origin, callback) {
@@ -77,7 +80,7 @@ export const createApp = (dependencies: AppDependencies = {}) => {
           scriptSrc: ["'self'", "'unsafe-inline'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
           imgSrc: ["'self'", 'data:', 'https:'],
-          connectSrc: ["'self'", 'http://localhost:*', 'ws://localhost:*'],
+          connectSrc: ["'self'", 'http://localhost:*', 'http://127.0.0.1:*', 'ws://localhost:*', 'ws://127.0.0.1:*'],
           fontSrc: ["'self'", 'https://cdnjs.cloudflare.com'],
           objectSrc: ["'none'"],
           frameAncestors: ["'none'"],
