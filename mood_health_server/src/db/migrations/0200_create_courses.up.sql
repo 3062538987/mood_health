@@ -1,0 +1,14 @@
+CREATE TABLE courses (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  cover_url VARCHAR(512) NOT NULL,
+  content TEXT NOT NULL,
+  category VARCHAR(64) NOT NULL,
+  study_count INT UNSIGNED NOT NULL DEFAULT 0,
+  type VARCHAR(16) NOT NULL DEFAULT 'article',
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  INDEX idx_courses_category (category),
+  CONSTRAINT chk_courses_type CHECK (type IN ('video', 'article'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci

@@ -1,17 +1,10 @@
 import { Request, Response } from 'express'
 import { AuthRequest } from '../middleware/auth'
-import {
-  createPost,
-  getPosts,
-  getPostById,
-  likePost,
-  getPendingPosts,
-  getPostAuditStats,
-  auditPost,
-} from '../models/postModel'
-import { createComment, getCommentsByPostId, likeComment } from '../models/commentModel'
+import { createPostRepository } from '../repositories/postRepository'
 import logger from '../utils/logger'
 import { filterContent, shouldAutoReject, shouldMarkForReview } from '../utils/contentFilter'
+
+const postRepo = createPostRepository()
 
 /**
  * 创建帖子
@@ -38,10 +31,10 @@ export const createPostHandler = async (req: AuthRequest, res: Response) => {
       })
     }
 
-    const post = await createPost({
+    const post = await postRepo.createPost({
       title,
       content,
-      user_id: userId,
+      userId,
       isAnonymous: isAnonymous || false,
     })
     res.status(201).json({
@@ -63,7 +56,7 @@ export const getPostsHandler = async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1
     const pageSize = parseInt(req.query.pageSize as string) || 10
 
-    const posts = await getPosts(page, pageSize)
+    const posts = await postRepo.findPosts(page, pageSize)
     res.status(200).json({ code: 0, data: posts })
   } catch (error) {
     logger.error('获取帖子列表失败', { error, query: req.query })
@@ -82,12 +75,12 @@ export const getPostByIdHandler = async (req: Request, res: Response) => {
       return res.status(400).json({ code: 400, message: '无效的帖子ID' })
     }
 
-    const post = await getPostById(id)
+    const post = await postRepo.findPostById(id)
     if (!post) {
       return res.status(404).json({ code: 404, message: '帖子不存在' })
     }
 
-    const comments = await getCommentsByPostId(id)
+    const comments = await postRepo.findCommentsByPostId(id)
     res.status(200).json({ code: 0, data: { ...post, comments } })
   } catch (error) {
     console.error('获取帖子详情失败:', error)
@@ -103,7 +96,7 @@ export const getCommentsHandler = async (req: Request, res: Response) => {
       return res.status(400).json({ code: 400, message: '无效的帖子ID' })
     }
 
-    const comments = await getCommentsByPostId(id)
+    const comments = await postRepo.findCommentsByPostId(id)
     res.status(200).json({ code: 0, data: comments })
   } catch (error) {
     logger.error('获取评论列表失败', { error, postId: req.params.id })
@@ -123,7 +116,7 @@ export const likePostHandler = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ code: 400, message: '无效的帖子ID' })
     }
 
-    const post = await likePost(id, userId)
+    const post = await postRepo.likePost(id, userId)
     if (!post) {
       return res.status(404).json({ code: 404, message: '帖子不存在' })
     }
@@ -152,14 +145,14 @@ export const createCommentHandler = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ code: 400, message: '评论内容不能为空' })
     }
 
-    const post = await getPostById(postId)
+    const post = await postRepo.findPostById(postId)
     if (!post) {
       return res.status(404).json({ code: 404, message: '帖子不存在' })
     }
 
-    const comment = await createComment({
-      post_id: postId,
-      user_id: userId,
+    const comment = await postRepo.createComment({
+      postId,
+      userId,
       content,
       isAnonymous: isAnonymous || false,
     })
@@ -182,7 +175,7 @@ export const likeCommentHandler = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ code: 400, message: '无效的评论ID' })
     }
 
-    const comment = await likeComment(id, userId)
+    const comment = await postRepo.likeComment(id, userId)
     if (!comment) {
       return res.status(404).json({ code: 404, message: '评论不存在' })
     }
@@ -203,7 +196,7 @@ export const getPendingPostsHandler = async (req: AuthRequest, res: Response) =>
     const pageSize = parseInt(req.query.pageSize as string) || 10
     const status = parseInt(req.query.status as string)
 
-    const posts = await getPendingPosts(page, pageSize, Number.isNaN(status) ? 0 : status)
+    const posts = await postRepo.findPendingPosts(page, pageSize, Number.isNaN(status) ? 0 : status)
     res.status(200).json({ code: 0, data: posts })
   } catch (error) {
     console.error('获取待审核帖子列表失败:', error)
@@ -216,7 +209,7 @@ export const getPendingPostsHandler = async (req: AuthRequest, res: Response) =>
  */
 export const getPostAuditStatsHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const stats = await getPostAuditStats()
+    const stats = await postRepo.getAuditStats()
     res.status(200).json({ code: 0, data: stats })
   } catch (error) {
     console.error('获取帖子审核统计失败:', error)
@@ -240,7 +233,7 @@ export const auditPostHandler = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ code: 400, message: '无效的审核状态' })
     }
 
-    const post = await auditPost(id, { status, audit_remark })
+    const post = await postRepo.auditPost(id, { status, auditRemark: audit_remark })
     if (!post) {
       return res.status(404).json({ code: 404, message: '帖子不存在' })
     }

@@ -1,12 +1,9 @@
 import { Response } from "express";
 import { AuthRequest } from "../middleware/auth";
-import {
-  getRelaxRecordById,
-  getRelaxRecords,
-  getRelaxStatistics,
-  logRelaxError,
-  saveRelaxRecord,
-} from "../models/relaxModel";
+import { createRelaxRepository } from "../repositories/relaxRepository";
+import logger from "../utils/logger";
+
+const relaxRepo = createRelaxRepository();
 
 export const saveRelaxRecordHandler = async (
   req: AuthRequest,
@@ -20,7 +17,7 @@ export const saveRelaxRecordHandler = async (
       return res.status(400).json({ code: 400, message: "放松记录参数不完整" });
     }
 
-    const record = await saveRelaxRecord(userId, {
+    const record = await relaxRepo.create(userId, {
       activityType,
       startTime,
       endTime,
@@ -29,7 +26,7 @@ export const saveRelaxRecordHandler = async (
     });
     res.status(201).json({ code: 0, data: record });
   } catch (error) {
-    logRelaxError("保存放松记录失败", error, { userId: req.user?.userId });
+    logger.error("保存放松记录失败", { error, userId: req.user?.userId });
     res
       .status(500)
       .json({ code: 500, message: "保存放松记录失败，请稍后重试" });
@@ -42,7 +39,7 @@ export const getRelaxRecordsHandler = async (
 ) => {
   try {
     const userId = req.user!.userId;
-    const data = await getRelaxRecords(userId, {
+    const data = await relaxRepo.findAll(userId, {
       startDate: req.query.startDate as string | undefined,
       endDate: req.query.endDate as string | undefined,
       activityType: req.query.activityType as string | undefined,
@@ -51,7 +48,7 @@ export const getRelaxRecordsHandler = async (
     });
     res.json({ code: 0, data });
   } catch (error) {
-    logRelaxError("获取放松记录失败", error, { userId: req.user?.userId });
+    logger.error("获取放松记录失败", { error, userId: req.user?.userId });
     res
       .status(500)
       .json({ code: 500, message: "获取放松记录失败，请稍后重试" });
@@ -64,13 +61,13 @@ export const getRelaxStatisticsHandler = async (
 ) => {
   try {
     const userId = req.user!.userId;
-    const data = await getRelaxStatistics(userId, {
+    const data = await relaxRepo.getStatistics(userId, {
       startDate: req.query.startDate as string | undefined,
       endDate: req.query.endDate as string | undefined,
     });
     res.json({ code: 0, data });
   } catch (error) {
-    logRelaxError("获取放松统计失败", error, { userId: req.user?.userId });
+    logger.error("获取放松统计失败", { error, userId: req.user?.userId });
     res
       .status(500)
       .json({ code: 500, message: "获取放松统计失败，请稍后重试" });
@@ -88,17 +85,14 @@ export const getRelaxRecordDetailHandler = async (
       return res.status(400).json({ code: 400, message: "无效的记录 ID" });
     }
 
-    const record = await getRelaxRecordById(userId, id);
+    const record = await relaxRepo.findById(userId, id);
     if (!record) {
       return res.status(404).json({ code: 404, message: "放松记录不存在" });
     }
 
     res.json({ code: 0, data: record });
   } catch (error) {
-    logRelaxError("获取放松记录详情失败", error, {
-      userId: req.user?.userId,
-      id: req.params.id,
-    });
+    logger.error("获取放松记录详情失败", { error, userId: req.user?.userId, id: req.params.id });
     res
       .status(500)
       .json({ code: 500, message: "获取放松记录详情失败，请稍后重试" });

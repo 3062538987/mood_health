@@ -7,7 +7,7 @@ interface FeatureFlagEnvironment {
 }
 
 export const getFeatureFlags = (_environment: FeatureFlagEnvironment): FrontendFeatureFlags => ({
-  nonCoreModules: false,
+  nonCoreModules: true,
 })
 
 export const featureFlags = getFeatureFlags(import.meta.env)

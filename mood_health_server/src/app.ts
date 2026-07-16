@@ -15,6 +15,12 @@ import managementRoutes from './routes/managementRoutes'
 import caseRoutes from './routes/caseRoutes'
 import promptRoutes from './routes/promptRoutes'
 import aiInterpretationRoutes from './routes/aiInterpretationRoutes'
+import activityRoutes from './routes/activityRoutes'
+import postRoutes from './routes/postRoutes'
+import musicRoutes from './routes/musicRoutes'
+import courseRoutes from './routes/courseRoutes'
+import relaxRoutes from './routes/relaxRoutes'
+import achievementRoutes from './routes/achievementRoutes'
 import logger, { summarizeRequestBody } from './utils/logger'
 import redisClient from './utils/redis.client'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler'
@@ -23,14 +29,7 @@ import { createHealthHandler, HealthDependencies } from './controllers/healthCon
 
 dotenv.config()
 
-const NON_CORE_ROUTES = [
-  '/api/activities',
-  '/api/posts',
-  '/api/music',
-  '/api/courses',
-  '/api/relax',
-  '/api/achievements',
-] as const
+const NON_CORE_ROUTES = [] as const
 
 export interface AppDependencies {
   health?: HealthDependencies
@@ -146,6 +145,12 @@ export const createApp = (dependencies: AppDependencies = {}) => {
 app.use('/api/cases', caseRoutes)
 app.use('/api/prompts', promptRoutes)
 app.use('/api/ai', aiInterpretationRoutes)
+app.use('/api/activities', activityRoutes)
+app.use('/api/posts', postRoutes)
+app.use('/api/music', musicRoutes)
+app.use('/api/courses', courseRoutes)
+app.use('/api/relax', relaxRoutes)
+app.use('/api/achievements', achievementRoutes)
 app.use('/api', managementRoutes)
 
   app.get(

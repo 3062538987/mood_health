@@ -1,19 +1,16 @@
 import { Response } from "express";
 import { AuthRequest } from "../middleware/auth";
-import {
-  checkAchievements,
-  getAchievementProgress,
-  getAllAchievements,
-  getUserAchievements,
-} from "../models/achievementModel";
+import { createAchievementRepository } from "../repositories/achievementRepository";
 import logger from "../utils/logger";
+
+const achievementRepo = createAchievementRepository();
 
 export const getAchievementsHandler = async (
   _req: AuthRequest,
   res: Response,
 ) => {
   try {
-    const data = await getAllAchievements();
+    const data = await achievementRepo.getAllDefinitions();
     res.json({ code: 0, data });
   } catch (error) {
     logger.error("获取成就列表失败", { error });
@@ -28,7 +25,7 @@ export const getUserAchievementsHandler = async (
   res: Response,
 ) => {
   try {
-    const data = await getUserAchievements(req.user!.userId);
+    const data = await achievementRepo.getUserAchievements(req.user!.userId);
     res.json({ code: 0, data });
   } catch (error) {
     logger.error("获取用户成就失败", { userId: req.user?.userId, error });
@@ -43,7 +40,7 @@ export const checkAchievementsHandler = async (
   res: Response,
 ) => {
   try {
-    const data = await checkAchievements(req.user!.userId);
+    const data = await achievementRepo.checkAndUnlock(req.user!.userId);
     res.json({ code: 0, data });
   } catch (error) {
     logger.error("检查成就失败", { userId: req.user?.userId, error });
@@ -56,7 +53,7 @@ export const getAchievementProgressHandler = async (
   res: Response,
 ) => {
   try {
-    const data = await getAchievementProgress(req.user!.userId);
+    const data = await achievementRepo.getAchievementProgress(req.user!.userId);
     res.json({ code: 0, data });
   } catch (error) {
     logger.error("获取成就进度失败", { userId: req.user?.userId, error });

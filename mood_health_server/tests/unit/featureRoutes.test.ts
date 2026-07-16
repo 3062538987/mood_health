@@ -13,20 +13,7 @@ jest.mock('../../src/utils/redis.client', () => ({
   default: { ping: jest.fn() },
 }))
 
-for (const routeModule of [
-  '../../src/routes/activityRoutes',
-  '../../src/routes/postRoutes',
-  '../../src/routes/musicRoutes',
-  '../../src/routes/courseRoutes',
-  '../../src/routes/relaxRoutes',
-  '../../src/routes/achievementRoutes',
-]) {
-  jest.mock(routeModule, () => {
-    throw new Error(`disabled route module was imported: ${routeModule}`)
-  })
-}
-
-describe('disabled backend feature routes', () => {
+describe('enabled non-core feature routes', () => {
   let server: Server
   let baseUrl: string
 
@@ -56,14 +43,10 @@ describe('disabled backend feature routes', () => {
     '/api/courses',
     '/api/relax',
     '/api/achievements',
-  ])('stays disabled for %s even when a legacy environment flag is set', async (path) => {
+  ])('is enabled for %s and returns a non-503 response', async (path) => {
     const response = await fetch(`${baseUrl}${path}`)
 
-    expect(response.status).toBe(503)
-    await expect(response.json()).resolves.toEqual({
-      code: 1403,
-      message: '功能未启用',
-      data: null,
-    })
+    // Routes are now enabled — should not return 503
+    expect(response.status).not.toBe(503)
   })
 })

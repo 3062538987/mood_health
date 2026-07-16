@@ -41,6 +41,18 @@ const expectedMigrationFiles = [
   '0170_create_case_interventions.up.sql',
   '0180_create_prompt_templates.down.sql',
   '0180_create_prompt_templates.up.sql',
+  '0190_create_musics.down.sql',
+  '0190_create_musics.up.sql',
+  '0200_create_courses.down.sql',
+  '0200_create_courses.up.sql',
+  '0210_create_relax_records.down.sql',
+  '0210_create_relax_records.up.sql',
+  '0220_create_activities.down.sql',
+  '0220_create_activities.up.sql',
+  '0230_create_posts.down.sql',
+  '0230_create_posts.up.sql',
+  '0240_create_achievements.down.sql',
+  '0240_create_achievements.up.sql',
 ]
 
 describe('migration SQL files', () => {

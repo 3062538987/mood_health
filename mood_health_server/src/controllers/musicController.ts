@@ -1,11 +1,7 @@
 import { Request, Response } from "express";
-import {
-  getMusicList as getMusicListModel,
-  getMusicById as getMusicByIdModel,
-  createMusic as createMusicModel,
-  updateMusic as updateMusicModel,
-  deleteMusic as deleteMusicModel,
-} from "../models/musicModel";
+import { createMusicRepository } from "../repositories/musicRepository";
+
+const musicRepo = createMusicRepository();
 
 // 获取音乐列表
 export const getMusicList = async (
@@ -14,7 +10,7 @@ export const getMusicList = async (
 ): Promise<void> => {
   try {
     const { category } = req.query;
-    const musicList = await getMusicListModel(category as string);
+    const musicList = await musicRepo.findAll(category as string | undefined);
 
     res.status(200).json({
       success: true,
@@ -37,7 +33,7 @@ export const getMusicById = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const music = await getMusicByIdModel(parseInt(id as string));
+    const music = await musicRepo.findById(parseInt(id as string));
 
     if (!music) {
       res.status(404).json({
@@ -68,7 +64,7 @@ export const createMusic = async (
 ): Promise<void> => {
   try {
     const { title, artist, url, duration, category, cover } = req.body;
-    const music = await createMusicModel({
+    const music = await musicRepo.create({
       title,
       artist,
       url,
@@ -99,7 +95,7 @@ export const updateMusic = async (
   try {
     const { id } = req.params;
     const { title, artist, url, duration, category, cover } = req.body;
-    const music = await updateMusicModel(parseInt(id as string), {
+    const music = await musicRepo.update(parseInt(id as string), {
       title,
       artist,
       url,
@@ -137,7 +133,7 @@ export const deleteMusic = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const success = await deleteMusicModel(parseInt(id as string));
+    const success = await musicRepo.remove(parseInt(id as string));
 
     if (!success) {
       res.status(404).json({

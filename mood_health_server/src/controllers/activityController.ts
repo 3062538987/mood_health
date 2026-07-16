@@ -2,26 +2,17 @@ import { Request, Response } from 'express'
 import { AuthRequest } from '../middleware/auth'
 import { setCache, getCache, clearActivityCache } from '../utils/cache'
 import {
-  getActivities,
-  getActivitiesCount,
-  getActivityById,
-  joinActivity,
-  cancelJoinActivity,
-  getUserJoinedActivities,
-  hasUserJoined,
-  createActivity,
-  updateActivity,
-  deleteActivity,
-  getActivityParticipants,
+  createActivityRepository,
   type ActivityFilter,
-} from '../models/activityModel'
+} from '../repositories/activityRepository'
+
+const activityRepo = createActivityRepository()
 
 export const getActivityList = async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 10
 
-    // 构建筛选条件
     const filter: ActivityFilter = {}
 
     if (req.query.title) {
@@ -41,7 +32,6 @@ export const getActivityList = async (req: Request, res: Response) => {
       filter.status = statusParam.split(',')
     }
 
-    // 有筛选条件时不使用缓存
     const hasFilter = Object.keys(filter).length > 0
     const cacheKey = `activities:list:${page}:${limit}:${JSON.stringify(filter)}`
 
@@ -52,10 +42,9 @@ export const getActivityList = async (req: Request, res: Response) => {
       }
     }
 
-    // 并行获取活动列表和总数
     const [activities, total] = await Promise.all([
-      getActivities(page, limit, filter),
-      getActivitiesCount(filter),
+      activityRepo.findAll(page, limit, filter),
+      activityRepo.count(filter),
     ])
 
     const pagination = {
@@ -71,11 +60,9 @@ export const getActivityList = async (req: Request, res: Response) => {
         list: activities,
         pagination,
       },
-      // 兼容仍直接读取 response.pagination 的调用方
       pagination,
     }
 
-    // 无筛选条件时缓存结果
     if (!hasFilter) {
       await setCache(cacheKey, response, 600)
     }
@@ -90,7 +77,7 @@ export const getActivityList = async (req: Request, res: Response) => {
 export const getActivityDetail = async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id as string)
-    const activity = await getActivityById(id)
+    const activity = await activityRepo.findById(id)
     if (!activity) {
       return res.status(404).json({ code: 404, message: '活动不存在' })
     }
@@ -101,55 +88,37 @@ export const getActivityDetail = async (req: Request, res: Response) => {
   }
 }
 
-/**
- * 清除活动列表缓存
- */
 export const joinActivityHandler = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.userId
     const activityId = parseInt(req.params.id as string)
 
-    const activity = await getActivityById(activityId)
+    const activity = await activityRepo.findById(activityId)
     if (!activity) {
       return res.status(404).json({ code: 404, message: '活动不存在' })
     }
 
-    const alreadyJoined = await hasUserJoined(activityId, userId)
+    const alreadyJoined = await activityRepo.hasUserJoined(activityId, userId)
     if (alreadyJoined) {
       return res.status(400).json({ code: 400, message: '您已经报名过该活动' })
     }
 
-    await joinActivity(activityId, userId)
-
-    // 报名成功后清除活动列表缓存
+    await activityRepo.join(activityId, userId)
     await clearActivityCache()
 
     res.json({ code: 0, message: '报名成功' })
   } catch (error: any) {
     console.error('报名活动失败:', error)
 
-    // 处理特定的业务错误
     switch (error.message) {
       case 'ACTIVITY_FULL':
-        return res.status(400).json({
-          code: 400,
-          message: '报名失败，活动名额已满',
-        })
+        return res.status(400).json({ code: 400, message: '报名失败，活动名额已满' })
       case 'ALREADY_JOINED':
-        return res.status(400).json({
-          code: 400,
-          message: '您已经报名过该活动',
-        })
+        return res.status(400).json({ code: 400, message: '您已经报名过该活动' })
       case 'TRANSACTION_TIMEOUT':
-        return res.status(500).json({
-          code: 500,
-          message: '报名超时，请稍后重试',
-        })
+        return res.status(500).json({ code: 500, message: '报名超时，请稍后重试' })
       default:
-        return res.status(500).json({
-          code: 500,
-          message: '报名失败，请稍后重试',
-        })
+        return res.status(500).json({ code: 500, message: '报名失败，请稍后重试' })
     }
   }
 }
@@ -159,19 +128,17 @@ export const cancelJoinActivityHandler = async (req: AuthRequest, res: Response)
     const userId = req.user!.userId
     const activityId = parseInt(req.params.id as string)
 
-    const activity = await getActivityById(activityId)
+    const activity = await activityRepo.findById(activityId)
     if (!activity) {
       return res.status(404).json({ code: 404, message: '活动不存在' })
     }
 
-    const alreadyJoined = await hasUserJoined(activityId, userId)
+    const alreadyJoined = await activityRepo.hasUserJoined(activityId, userId)
     if (!alreadyJoined) {
       return res.status(400).json({ code: 400, message: '您尚未报名该活动' })
     }
 
-    await cancelJoinActivity(activityId, userId)
-
-    // 取消报名后清除活动列表缓存
+    await activityRepo.cancelJoin(activityId, userId)
     await clearActivityCache()
 
     res.json({ code: 0, message: '已取消报名' })
@@ -180,20 +147,11 @@ export const cancelJoinActivityHandler = async (req: AuthRequest, res: Response)
 
     switch (error.message) {
       case 'NOT_JOINED':
-        return res.status(400).json({
-          code: 400,
-          message: '您尚未报名该活动',
-        })
+        return res.status(400).json({ code: 400, message: '您尚未报名该活动' })
       case 'TRANSACTION_TIMEOUT':
-        return res.status(500).json({
-          code: 500,
-          message: '取消报名超时，请稍后重试',
-        })
+        return res.status(500).json({ code: 500, message: '取消报名超时，请稍后重试' })
       default:
-        return res.status(500).json({
-          code: 500,
-          message: '取消报名失败，请稍后重试',
-        })
+        return res.status(500).json({ code: 500, message: '取消报名失败，请稍后重试' })
     }
   }
 }
@@ -201,7 +159,7 @@ export const cancelJoinActivityHandler = async (req: AuthRequest, res: Response)
 export const getMyJoinedActivities = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.userId
-    const activities = await getUserJoinedActivities(userId)
+    const activities = await activityRepo.getUserJoinedActivities(userId)
     res.json({ code: 0, data: activities })
   } catch (error) {
     console.error(error)
@@ -217,17 +175,16 @@ export const createActivityHandler = async (req: AuthRequest, res: Response) => 
       return res.status(400).json({ code: 400, message: '请提供完整的活动信息' })
     }
 
-    const activityId = await createActivity(
+    const activityId = await activityRepo.create({
       title,
-      description || '',
+      description: description || '',
       startTime,
       endTime,
       maxParticipants,
       location,
-      imageUrl
-    )
+      imageUrl,
+    })
 
-    // 清除活动列表缓存
     await clearActivityCache()
 
     res.status(201).json({ code: 0, message: '活动创建成功', data: { id: activityId } })
@@ -242,23 +199,21 @@ export const updateActivityHandler = async (req: AuthRequest, res: Response) => 
     const id = parseInt(req.params.id as string)
     const { title, description, startTime, endTime, maxParticipants, location, imageUrl } = req.body
 
-    const activity = await getActivityById(id)
+    const activity = await activityRepo.findById(id)
     if (!activity) {
       return res.status(404).json({ code: 404, message: '活动不存在' })
     }
 
-    await updateActivity(
-      id,
-      title || activity.title,
-      description || activity.description,
-      startTime || activity.start_time,
-      endTime || activity.end_time,
-      maxParticipants || activity.max_participants,
-      location || activity.location,
-      imageUrl || activity.image_url
-    )
+    await activityRepo.update(id, {
+      title: title || activity.title,
+      description: description || activity.description,
+      startTime: startTime || activity.startTime,
+      endTime: endTime || activity.endTime,
+      maxParticipants: maxParticipants || activity.maxParticipants,
+      location: location || activity.location,
+      imageUrl: imageUrl || activity.imageUrl,
+    })
 
-    // 清除活动列表缓存
     await clearActivityCache()
 
     res.json({ code: 0, message: '活动更新成功' })
@@ -272,14 +227,12 @@ export const deleteActivityHandler = async (req: AuthRequest, res: Response) => 
   try {
     const id = parseInt(req.params.id as string)
 
-    const activity = await getActivityById(id)
+    const activity = await activityRepo.findById(id)
     if (!activity) {
       return res.status(404).json({ code: 404, message: '活动不存在' })
     }
 
-    await deleteActivity(id)
-
-    // 清除活动列表缓存
+    await activityRepo.remove(id)
     await clearActivityCache()
 
     res.json({ code: 0, message: '活动删除成功' })
@@ -289,21 +242,16 @@ export const deleteActivityHandler = async (req: AuthRequest, res: Response) => 
   }
 }
 
-/**
- * 获取活动详情（包含参与者列表）
- */
 export const getActivityDetailWithParticipants = async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id as string)
 
-    // 获取活动详情
-    const activity = await getActivityById(id)
+    const activity = await activityRepo.findById(id)
     if (!activity) {
       return res.status(404).json({ code: 404, message: '活动不存在' })
     }
 
-    // 获取参与者列表
-    const participants = await getActivityParticipants(id)
+    const participants = await activityRepo.getParticipants(id)
 
     res.json({
       code: 0,
