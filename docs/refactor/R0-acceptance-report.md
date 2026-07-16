@@ -51,8 +51,10 @@ R0 阶段 F 及全部前置任务已完成。所有自动化测试、构建和�
 | 项目 | 状态 |
 |---|---|
 | 重构前数据 | [R0-before.json](performance/R0-before.json) 已采集 |
-| 重构后数据 | 待 Task PERF 采集 |
-| 对比报告 | 待 Task PERF 完成后更新 |
+| 重构后数据 | [R0-after.json](performance/R0-after.json) 已采集 |
+| 对比报告 | [R0-performance-baseline.md](R0-performance-baseline.md) 已完成 |
+
+> 注意：前后测量在不同物理主机上执行，且未施加 2 核 2G 资源限制，因此不声称性能提升。详见对比报告。
 
 ### 3.3 自动化测试结果
 
