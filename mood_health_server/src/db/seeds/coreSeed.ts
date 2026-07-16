@@ -82,11 +82,15 @@ export const ROLE_PERMISSION_CODES: Record<ReferenceRole['code'], string[]> = {
 
 const REFERENCE_EMOTION_TYPES = [
   ['calm', '平静', 'calm', 'neutral', 10],
-  ['happy', '愉快', 'smile', 'positive', 20],
-  ['sad', '低落', 'cloud-rain', 'negative', 30],
-  ['anxious', '焦虑', 'activity', 'negative', 40],
-  ['angry', '烦躁', 'flame', 'negative', 50],
-  ['tired', '疲惫', 'battery-low', 'neutral', 60],
+  ['happy', '快乐', 'smile', 'positive', 20],
+  ['delight', '愉悦', 'sun', 'positive', 25],
+  ['neutral', '一般', 'meh', 'neutral', 30],
+  ['sad', '难过', 'cloud-rain', 'negative', 40],
+  ['anxious', '焦虑', 'activity', 'negative', 50],
+  ['angry', '愤怒', 'flame', 'negative', 60],
+  ['irritable', '烦躁', 'zap', 'negative', 65],
+  ['excited', '兴奋', 'star', 'positive', 70],
+  ['tired', '疲惫', 'battery-low', 'neutral', 80],
 ] as const
 
 const REFERENCE_SYSTEM_TAGS = [
