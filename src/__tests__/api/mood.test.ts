@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import request from '@/utils/request'
-import { getMoodRecordList, getMoodTrend, getMoodWeeklyReport, submitMoodRecord } from '@/api/mood'
+import {
+  getMoodRecordList,
+  getMoodTrend,
+  getMoodWeeklyReport,
+  submitMoodRecord,
+  type CreateMoodRecordInput,
+} from '@/api/mood'
 
 vi.mock('@/utils/request', () => ({
   default: vi.fn(),
@@ -15,13 +21,12 @@ describe('mood API contract', () => {
 
   it('returns the unwrapped write result after recording a mood', async () => {
     requestMock.mockResolvedValueOnce(null)
-    const payload = {
-      intensity: 7,
-      moodType: ['快乐'],
-      moodRatio: [70],
+    const payload: CreateMoodRecordInput = {
+      emotions: [{ emotionTypeId: 1, intensity: 7, isPrimary: true }],
       event: '完成课程作业',
       tags: ['学习'],
       trigger: '任务完成',
+      tagIds: [],
     }
 
     await expect(submitMoodRecord(payload)).resolves.toBeNull()
