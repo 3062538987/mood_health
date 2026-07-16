@@ -1,10 +1,11 @@
 import dotenv from 'dotenv'
+
+dotenv.config()
+
 import type { Server } from 'http'
 import { createApp } from './app'
 import { connectMysql } from './config/mysql'
 import logger from './utils/logger'
-
-dotenv.config()
 
 export const startServer = async (): Promise<Server> => {
   const port = Number(process.env.PORT || 3000)

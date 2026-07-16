@@ -36,7 +36,7 @@ services:
     mem_limit: 768m
 
   redis:
-    image: redis:7.4.5-alpine
+    image: redis:7-alpine
     restart: unless-stopped
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
