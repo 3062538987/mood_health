@@ -252,8 +252,8 @@ const handleKeydown = (e: KeyboardEvent) => {
     .progress-bar {
       width: 100%;
       height: 8px;
-      background-color: $bg-light;
-      border-radius: $border-radius-full;
+      background-color: $bg-warm;
+      border-radius: $radius-full;
       overflow: hidden;
       margin-bottom: 8px;
       .progress-fill {
@@ -272,7 +272,7 @@ const handleKeydown = (e: KeyboardEvent) => {
   // 问题内容
   .question-content {
     background-color: $white;
-    border-radius: $border-radius-md;
+    border-radius: $radius-md;
     box-shadow: $shadow-sm;
     padding: 24px;
     margin-bottom: 30px;
@@ -296,7 +296,7 @@ const handleKeydown = (e: KeyboardEvent) => {
         gap: 10px;
         padding: 16px;
         border: 2px solid $border-color;
-        border-radius: $border-radius-md;
+        border-radius: $radius-md;
         cursor: pointer;
         transition: all 0.3s ease;
         &:hover {
@@ -329,7 +329,7 @@ const handleKeydown = (e: KeyboardEvent) => {
     color: $danger-color;
     background-color: rgba($danger-color, 0.08);
     border: 1px solid rgba($danger-color, 0.35);
-    border-radius: $border-radius-md;
+    border-radius: $radius-md;
     line-height: 1.5;
   }
 
@@ -347,7 +347,7 @@ const handleKeydown = (e: KeyboardEvent) => {
     width: 24px;
     height: 24px;
     border-radius: 6px;
-    background: $bg-light;
+    background: $bg-warm;
     color: $text-light-color;
     font-size: 12px;
     font-weight: 600;

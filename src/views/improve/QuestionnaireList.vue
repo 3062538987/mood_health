@@ -239,7 +239,7 @@ onMounted(() => {
       }
 
       .completed-badge {
-        background: $success-light;
+        background: rgba(124, 184, 154, 0.15);
         color: $success-color;
         padding: 4px 10px;
         border-radius: 12px;

@@ -119,7 +119,7 @@ onMounted(() => {
       .score-circle {
         width: 120px;
         height: 120px;
-        border-radius: $border-radius-full;
+        border-radius: 50%;
         background-color: $primary-color;
         display: flex;
         align-items: center;
@@ -148,8 +148,8 @@ onMounted(() => {
       }
       .result-text {
         padding: 16px;
-        background-color: $bg-light;
-        border-radius: $border-radius-md;
+        background-color: $bg-warm;
+        border-radius: $radius-md;
         line-height: 1.6;
         color: $text-light-color;
       }

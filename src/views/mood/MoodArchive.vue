@@ -1194,7 +1194,7 @@ onMounted(() => {
         gap: 16px;
         padding: 12px;
         background: rgba(255, 255, 255, 0.5);
-        border-radius: $border-radius-md;
+        border-radius: $radius-md;
       }
 
       .emotion-dot-large {
@@ -1230,7 +1230,7 @@ onMounted(() => {
         padding: 6px 14px;
         background: rgba(106, 176, 165, 0.15);
         color: var(--primary-color);
-        border-radius: $border-radius-full;
+        border-radius: $radius-full;
         font-size: $font-size-sm;
         font-weight: 500;
       }

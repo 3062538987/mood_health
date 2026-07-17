@@ -33,8 +33,8 @@ const baseRoutes: RouteRecordRaw[] = [
     meta: {
       subNav: [
         { path: '/mood/record', name: '情绪记录', icon: 'fas fa-pencil-alt' },
-        // 第二版隐藏，待开发完成取消注释
-        // { path: '/mood/archive', name: '情绪档案', icon: 'fas fa-archive' },
+        { path: '/mood/archive', name: '情绪档案', icon: 'fas fa-archive' },
+        { path: '/mood/insight', name: '情绪洞察', icon: 'fas fa-chart-pie' },
       ],
     },
     children: [
@@ -45,6 +45,10 @@ const baseRoutes: RouteRecordRaw[] = [
       {
         path: 'archive',
         component: () => import('@/views/mood/MoodArchive.vue'),
+      },
+      {
+        path: 'insight',
+        component: () => import('@/views/mood/MoodInsight.vue'),
       },
     ],
   },

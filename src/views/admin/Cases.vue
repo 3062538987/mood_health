@@ -177,7 +177,7 @@ onMounted(() => {
   }
 
   th {
-    background-color: $bg-light;
+    background-color: $bg-warm;
     color: $text-color;
     font-weight: 600;
     white-space: nowrap;

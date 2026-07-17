@@ -389,7 +389,7 @@ onMounted(() => {
   color: $primary-color;
   cursor: pointer;
   &:hover {
-    background: $bg-light;
+    background: $bg-warm;
   }
 }
 
