@@ -336,14 +336,88 @@ export class RecommendService {
 
     try {
       const result = await this.getRecommendations(request);
+      // 用真实内容匹配推荐项
+      const enrichedItems = await this.enrichWithRealContent(result.items);
       return {
         ...result,
+        items: enrichedItems,
         explanation: `${baseReason}，为您推荐以下内容`,
       };
     } catch (error) {
       logger.error("Personalized recommendation failed:", error);
       return this.getLocalRecommendations(mood, limit);
     }
+  }
+
+  /**
+   * 用真实数据库内容匹配推荐项
+   * 将硬编码的推荐ID替换为真实数据库中的内容
+   */
+  private async enrichWithRealContent(
+    items: RecommendationItem[],
+  ): Promise<RecommendationItem[]> {
+    const pool = getMysqlPool();
+    const enriched: RecommendationItem[] = [];
+
+    for (const item of items) {
+      try {
+        if (item.type === 'music') {
+          const [rows] = await pool.query<RowDataPacket[]>(
+            `SELECT id, title, description, url, cover_url
+             FROM musics WHERE is_active = 1 LIMIT 1`
+          );
+          if (rows.length > 0) {
+            enriched.push({
+              ...item,
+              id: String(rows[0].id),
+              title: rows[0].title as string,
+              description: rows[0].description as string || item.description,
+              url: `/api/music/${rows[0].id}`,
+              cover: rows[0].cover_url as string || item.cover,
+            });
+            continue;
+          }
+        } else if (item.type === 'course') {
+          const [rows] = await pool.query<RowDataPacket[]>(
+            `SELECT id, title, description, cover_url
+             FROM courses WHERE is_active = 1 LIMIT 1`
+          );
+          if (rows.length > 0) {
+            enriched.push({
+              ...item,
+              id: String(rows[0].id),
+              title: rows[0].title as string,
+              description: rows[0].description as string || item.description,
+              url: `/api/courses/${rows[0].id}`,
+              cover: rows[0].cover_url as string || item.cover,
+            });
+            continue;
+          }
+        } else if (item.type === 'activity') {
+          const [rows] = await pool.query<RowDataPacket[]>(
+            `SELECT id, title, description, cover_url
+             FROM activities WHERE is_active = 1 LIMIT 1`
+          );
+          if (rows.length > 0) {
+            enriched.push({
+              ...item,
+              id: String(rows[0].id),
+              title: rows[0].title as string,
+              description: rows[0].description as string || item.description,
+              url: `/api/activities/${rows[0].id}`,
+              cover: rows[0].cover_url as string || item.cover,
+            });
+            continue;
+          }
+        }
+        // 无匹配内容时保留原始推荐
+        enriched.push(item);
+      } catch {
+        enriched.push(item);
+      }
+    }
+
+    return enriched;
   }
 }
 
