@@ -1,0 +1,1 @@
+ALTER TABLE posts ADD COLUMN risk_level VARCHAR(20) DEFAULT 'low' AFTER needs_review;

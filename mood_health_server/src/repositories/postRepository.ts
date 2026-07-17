@@ -46,6 +46,8 @@ export interface CreatePostInput {
   content: string
   userId: number | null
   isAnonymous: boolean
+  riskLevel?: 'low' | 'medium' | 'high'
+  needsReview?: number
 }
 
 export interface CreateCommentInput {
@@ -116,9 +118,11 @@ const mapComment = (row: CommentRow): CommentDto => ({
 export const createPostRepository = (db: PostDatabase = getMysqlPool()) => {
   // --- Posts ---
   const createPost = async (input: CreatePostInput): Promise<PostDto> => {
+    const needsReview = input.needsReview ?? 0
+    const riskLevel = input.riskLevel || 'low'
     const [result] = await db.query<ResultSetHeader>(
-      'INSERT INTO posts (title, content, user_id, is_anonymous, status) VALUES (?, ?, ?, ?, ?)',
-      [input.title, input.content, input.userId, input.isAnonymous ? 1 : 0, 0]
+      'INSERT INTO posts (title, content, user_id, is_anonymous, status, needs_review, risk_level) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [input.title, input.content, input.userId, input.isAnonymous ? 1 : 0, needsReview > 0 ? 0 : 1, needsReview, riskLevel]
     )
     const [rows] = await db.query<PostRow[]>(
       'SELECT * FROM posts WHERE id = ? LIMIT 1',

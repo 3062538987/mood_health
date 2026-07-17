@@ -11,6 +11,7 @@ import {
   getPendingPostsHandler,
   getPostAuditStatsHandler,
   auditPostHandler,
+  getPostAuditLogsHandler,
 } from '../controllers/postController'
 import { authenticate, requirePermission } from '../middleware/auth'
 import { validateRequest } from '../middleware/validateRequest'
@@ -58,6 +59,14 @@ router.post(
   ],
   validateRequest,
   auditPostHandler
+)
+
+// 帖子审核日志（管理员）
+router.get(
+  '/admin/audit-logs/:id',
+  authenticate,
+  requirePermission('post.audit.pending.read'),
+  getPostAuditLogsHandler
 )
 
 // 发布帖子（需要认证）

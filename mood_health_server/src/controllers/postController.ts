@@ -1,10 +1,13 @@
 import { Request, Response } from 'express'
 import { AuthRequest } from '../middleware/auth'
 import { createPostRepository } from '../repositories/postRepository'
+import { createAuditService } from '../services/auditService'
 import logger from '../utils/logger'
 import { filterContent, shouldAutoReject, shouldMarkForReview } from '../utils/contentFilter'
+import contentAuditService from '../utils/ai/contentAuditService'
 
 const postRepo = createPostRepository()
+const auditService = createAuditService()
 
 /**
  * 创建帖子
@@ -22,25 +25,60 @@ export const createPostHandler = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ code: 400, message: '标题不能为空' })
     }
 
+    // 基础敏感词过滤
     const filterResult = filterContent(content)
     if (shouldAutoReject(content)) {
       return res.status(400).json({
         code: 400,
         message: '内容包含敏感词，无法发布',
         detectedWords: filterResult.detectedWords,
+        riskLevel: 'high',
+        helpResources: [
+          '如果您正在经历困难，请拨打心理援助热线：400-161-9995',
+          '全国24小时心理危机干预热线：010-82951332',
+        ],
       })
     }
+
+    // AI深度审核分级
+    let riskLevel: string = 'low'
+    try {
+      const auditResult = await contentAuditService.auditContent({ content, type: 'post' })
+      if (!auditResult.isSafe) {
+        if (auditResult.severity === 'high') {
+          return res.status(400).json({
+            code: 400,
+            message: 'AI 检测到高风险内容，无法发布',
+            detectedIssues: auditResult.detectedIssues,
+            riskLevel: 'high',
+            helpResources: [
+              '如果您正在经历困难，请拨打心理援助热线：400-161-9995',
+              '全国24小时心理危机干预热线：010-82951332',
+            ],
+          })
+        }
+        riskLevel = auditResult.severity === 'medium' ? 'medium' : 'low'
+      }
+    } catch {
+      // AI 审核失败时降级为基础过滤
+      riskLevel = 'low'
+    }
+
+    const needsReview = riskLevel === 'medium' || shouldMarkForReview(content)
 
     const post = await postRepo.createPost({
       title,
       content,
       userId,
       isAnonymous: isAnonymous || false,
+      riskLevel: riskLevel as 'low' | 'medium' | 'high',
+      needsReview: needsReview ? 1 : 0,
     })
+
     res.status(201).json({
       code: 0,
       data: post,
-      message: shouldMarkForReview(content) ? '内容已提交，等待审核' : '发布成功',
+      message: needsReview ? '内容已提交，等待审核' : '发布成功',
     })
   } catch (error) {
     console.error('创建帖子失败:', error)
@@ -224,6 +262,7 @@ export const auditPostHandler = async (req: AuthRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id as string)
     const { status, audit_remark } = req.body
+    const operatorId = req.user!.userId
 
     if (isNaN(id)) {
       return res.status(400).json({ code: 400, message: '无效的帖子ID' })
@@ -233,14 +272,70 @@ export const auditPostHandler = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ code: 400, message: '无效的审核状态' })
     }
 
+    const existingPost = await postRepo.findPostById(id)
+    if (!existingPost) {
+      return res.status(404).json({ code: 404, message: '帖子不存在' })
+    }
+
     const post = await postRepo.auditPost(id, { status, auditRemark: audit_remark })
     if (!post) {
       return res.status(404).json({ code: 404, message: '帖子不存在' })
     }
 
+    // 记录审核操作日志
+    const action = status === 1 ? 'post.approve' : 'post.reject'
+    try {
+      await auditService.record({
+        actorUserId: operatorId,
+        actorRoleCode: 'admin',
+        permissionCode: 'admin.access',
+        action,
+        targetType: 'post',
+        targetId: String(id),
+        result: 'success',
+        summary: audit_remark || `审核: ${status === 1 ? '通过' : '拒绝'}`,
+        ipAddress: null,
+        requestId: null,
+      })
+    } catch {
+      // 日志写入失败不影响审核操作
+    }
+
     res.status(200).json({ code: 0, data: post })
   } catch (error) {
     console.error('审核帖子失败:', error)
+    res.status(500).json({ code: 500, message: '服务器内部错误' })
+  }
+}
+
+/**
+ * 获取帖子审核日志（管理员）
+ */
+export const getPostAuditLogsHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const postId = parseInt(req.params.id as string)
+
+    if (isNaN(postId)) {
+      return res.status(400).json({ code: 400, message: '无效的帖子ID' })
+    }
+
+    // 查询审核日志，按 action 过滤 post 相关操作
+    const logs = await auditService.list({
+      page: 1,
+      pageSize: 50,
+    })
+
+    // 过滤出该帖子的审核日志
+    const auditList = logs as any
+    const postLogs = Array.isArray(auditList.data)
+      ? auditList.data.filter((item: any) => {
+          return item.targetId === String(postId) || item.operationType?.startsWith('post.')
+        })
+      : []
+
+    res.status(200).json({ code: 0, data: postLogs })
+  } catch (error) {
+    console.error('获取审核日志失败:', error)
     res.status(500).json({ code: 500, message: '服务器内部错误' })
   }
 }
