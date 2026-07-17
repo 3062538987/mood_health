@@ -239,6 +239,16 @@ export const createManagementRepository = (db: ManagementDatabase = getMysqlPool
     }
   }
 
+  const safeCount = async (query: string, params: unknown[]): Promise<number> => {
+    try {
+      const [rows] = await db.query<CountRow[]>(query, params)
+      return Number(rows[0]?.total || 0)
+    } catch (err) {
+      console.error(`[managementRepository] Query failed: ${query.substring(0, 80)}`, (err as Error).message)
+      return 0
+    }
+  }
+
   const getKpiStats = async (startDate?: string, endDate?: string) => {
     const dateFilter = (startDate && endDate)
       ? 'WHERE created_at >= ? AND created_at <= ?'
@@ -249,73 +259,41 @@ export const createManagementRepository = (db: ManagementDatabase = getMysqlPool
       ? 'WHERE joined_at >= ? AND joined_at <= ?'
       : ''
 
-    const [userRows] = await db.query<CountRow[]>(
-      `SELECT COUNT(*) as total FROM users ${dateFilter}`,
-      dateParams,
-    )
-    const [newUserRows] = await db.query<CountRow[]>(
-      `SELECT COUNT(*) as total FROM users ${dateFilter}`,
-      dateParams,
-    )
-    const [moodRows] = await db.query<CountRow[]>(
-      `SELECT COUNT(*) as total FROM moods ${dateFilter}`,
-      dateParams,
-    )
-    const [moodUserRows] = await db.query<CountRow[]>(
-      `SELECT COUNT(DISTINCT user_id) as total FROM moods ${dateFilter}`,
-      dateParams,
-    )
-    const [assessmentRows] = await db.query<CountRow[]>(
-      `SELECT COUNT(*) as total FROM assessment_sessions ${dateFilter}`,
-      dateParams,
-    )
-    const [assessmentUserRows] = await db.query<CountRow[]>(
-      `SELECT COUNT(DISTINCT user_id) as total FROM assessment_sessions ${dateFilter}`,
-      dateParams,
-    )
-    const [postRows] = await db.query<CountRow[]>(
-      `SELECT COUNT(*) as total FROM posts ${dateFilter}`,
-      dateParams,
-    )
-    const [pendingPostRows] = await db.query<CountRow[]>(
-      `SELECT COUNT(*) as total FROM posts WHERE status = 0 ${startDate && endDate ? 'AND created_at >= ? AND created_at <= ?' : ''}`,
-      dateParams,
-    )
-    const [activityRows] = await db.query<CountRow[]>(
-      `SELECT COUNT(*) as total FROM activities ${dateFilter}`,
-      dateParams,
-    )
-    const [activityParticipantRows] = await db.query<CountRow[]>(
-      `SELECT COUNT(DISTINCT user_id) as total FROM activity_participants ${apDateFilter}`,
-      dateParams,
-    )
-    const [aiRows] = await db.query<CountRow[]>(
-      `SELECT COUNT(*) as total FROM ai_analysis_history ${dateFilter}`,
-      dateParams,
-    )
-    const [aiUserRows] = await db.query<CountRow[]>(
-      `SELECT COUNT(DISTINCT user_id) as total FROM ai_analysis_history ${dateFilter}`,
-      dateParams,
-    )
-    const [relaxRows] = await db.query<CountRow[]>(
-      `SELECT COUNT(*) as total FROM relax_records ${dateFilter}`,
-      dateParams,
-    )
+    const [
+      totalUsers, newUsers, totalMoodRecords, moodRecordUsers,
+      totalAssessments, assessmentUsers, totalPosts, pendingPosts,
+      totalActivities, activityParticipants, totalAiCalls, aiUsers,
+      totalRelaxSessions,
+    ] = await Promise.all([
+      safeCount(`SELECT COUNT(*) as total FROM users ${dateFilter}`, dateParams),
+      safeCount(`SELECT COUNT(*) as total FROM users ${dateFilter}`, dateParams),
+      safeCount(`SELECT COUNT(*) as total FROM moods ${dateFilter}`, dateParams),
+      safeCount(`SELECT COUNT(DISTINCT user_id) as total FROM moods ${dateFilter}`, dateParams),
+      safeCount(`SELECT COUNT(*) as total FROM assessment_sessions ${dateFilter}`, dateParams),
+      safeCount(`SELECT COUNT(DISTINCT user_id) as total FROM assessment_sessions ${dateFilter}`, dateParams),
+      safeCount(`SELECT COUNT(*) as total FROM posts ${dateFilter}`, dateParams),
+      safeCount(`SELECT COUNT(*) as total FROM posts WHERE status = 0 ${startDate && endDate ? 'AND created_at >= ? AND created_at <= ?' : ''}`, dateParams),
+      safeCount(`SELECT COUNT(*) as total FROM activities ${dateFilter}`, dateParams),
+      safeCount(`SELECT COUNT(DISTINCT user_id) as total FROM activity_participants ${apDateFilter}`, dateParams),
+      safeCount(`SELECT COUNT(*) as total FROM ai_analysis_history ${dateFilter}`, dateParams),
+      safeCount(`SELECT COUNT(DISTINCT user_id) as total FROM ai_analysis_history ${dateFilter}`, dateParams),
+      safeCount(`SELECT COUNT(*) as total FROM relax_records ${dateFilter}`, dateParams),
+    ])
 
     return {
-      totalUsers: Number(userRows[0]?.total || 0),
-      newUsers: Number(newUserRows[0]?.total || 0),
-      totalMoodRecords: Number(moodRows[0]?.total || 0),
-      moodRecordUsers: Number(moodUserRows[0]?.total || 0),
-      totalAssessments: Number(assessmentRows[0]?.total || 0),
-      assessmentUsers: Number(assessmentUserRows[0]?.total || 0),
-      totalPosts: Number(postRows[0]?.total || 0),
-      pendingPosts: Number(pendingPostRows[0]?.total || 0),
-      totalActivities: Number(activityRows[0]?.total || 0),
-      activityParticipants: Number(activityParticipantRows[0]?.total || 0),
-      totalAiCalls: Number(aiRows[0]?.total || 0),
-      aiUsers: Number(aiUserRows[0]?.total || 0),
-      totalRelaxSessions: Number(relaxRows[0]?.total || 0),
+      totalUsers,
+      newUsers,
+      totalMoodRecords,
+      moodRecordUsers,
+      totalAssessments,
+      assessmentUsers,
+      totalPosts,
+      pendingPosts,
+      totalActivities,
+      activityParticipants,
+      totalAiCalls,
+      aiUsers,
+      totalRelaxSessions,
     }
   }
 
@@ -413,32 +391,22 @@ export const createManagementRepository = (db: ManagementDatabase = getMysqlPool
   const getModuleUsage = async (startDate: string, endDate: string) => {
     const params = [startDate, endDate]
 
-    const [moodCount] = await db.query<CountRow[]>(
-      'SELECT COUNT(*) as total FROM moods WHERE created_at >= ? AND created_at <= ?', params,
-    )
-    const [assessmentCount] = await db.query<CountRow[]>(
-      'SELECT COUNT(*) as total FROM assessment_sessions WHERE created_at >= ? AND created_at <= ?', params,
-    )
-    const [postCount] = await db.query<CountRow[]>(
-      'SELECT COUNT(*) as total FROM posts WHERE created_at >= ? AND created_at <= ?', params,
-    )
-    const [activityCount] = await db.query<CountRow[]>(
-      'SELECT COUNT(*) as total FROM activities WHERE created_at >= ? AND created_at <= ?', params,
-    )
-    const [relaxCount] = await db.query<CountRow[]>(
-      'SELECT COUNT(*) as total FROM relax_records WHERE created_at >= ? AND created_at <= ?', params,
-    )
-    const [aiCount] = await db.query<CountRow[]>(
-      'SELECT COUNT(*) as total FROM ai_analysis_history WHERE created_at >= ? AND created_at <= ?', params,
-    )
+    const [moodCount, assessmentCount, postCount, activityCount, relaxCount, aiCount] = await Promise.all([
+      safeCount('SELECT COUNT(*) as total FROM moods WHERE created_at >= ? AND created_at <= ?', params),
+      safeCount('SELECT COUNT(*) as total FROM assessment_sessions WHERE created_at >= ? AND created_at <= ?', params),
+      safeCount('SELECT COUNT(*) as total FROM posts WHERE created_at >= ? AND created_at <= ?', params),
+      safeCount('SELECT COUNT(*) as total FROM activities WHERE created_at >= ? AND created_at <= ?', params),
+      safeCount('SELECT COUNT(*) as total FROM relax_records WHERE created_at >= ? AND created_at <= ?', params),
+      safeCount('SELECT COUNT(*) as total FROM ai_analysis_history WHERE created_at >= ? AND created_at <= ?', params),
+    ])
 
     return [
-      { name: '情绪记录', metric: '条', count: Number(moodCount[0]?.total || 0), description: '用户情绪记录总数' },
-      { name: '心理测评', metric: '次', count: Number(assessmentCount[0]?.total || 0), description: '测评提交次数' },
-      { name: '树洞社区', metric: '条', count: Number(postCount[0]?.total || 0), description: '社区内容发布数' },
-      { name: '活动', metric: '个', count: Number(activityCount[0]?.total || 0), description: '活动创建数' },
-      { name: '放松疗愈', metric: '次', count: Number(relaxCount[0]?.total || 0), description: '放松练习次数' },
-      { name: 'AI 分析', metric: '次', count: Number(aiCount[0]?.total || 0), description: 'AI 分析调用次数' },
+      { name: '情绪记录', metric: '条', count: moodCount, description: '用户情绪记录总数' },
+      { name: '心理测评', metric: '次', count: assessmentCount, description: '测评提交次数' },
+      { name: '树洞社区', metric: '条', count: postCount, description: '社区内容发布数' },
+      { name: '活动', metric: '个', count: activityCount, description: '活动创建数' },
+      { name: '放松疗愈', metric: '次', count: relaxCount, description: '放松练习次数' },
+      { name: 'AI 分析', metric: '次', count: aiCount, description: 'AI 分析调用次数' },
     ]
   }
 

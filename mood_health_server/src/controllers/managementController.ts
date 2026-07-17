@@ -400,6 +400,7 @@ export const getKpiStatsHandler = async (req: AuthRequest, res: Response) => {
     const stats = await managementService.getKpiStats(startDate, endDate)
     return res.status(200).json(apiSuccess(stats, '获取 KPI 统计成功'))
   } catch (error) {
+    console.error('[getKpiStats] Error:', error)
     return res.status(500).json(apiFailure(500, '获取 KPI 统计失败'))
   }
 }
@@ -415,6 +416,7 @@ export const getMoodTrendHandler = async (req: AuthRequest, res: Response) => {
     const trend = await managementService.getMoodTrend(startDate, endDate, granularity || 'day')
     return res.status(200).json(apiSuccess(trend, '获取情绪趋势成功'))
   } catch (error) {
+    console.error('[getMoodTrend] Error:', error)
     return res.status(500).json(apiFailure(500, '获取情绪趋势失败'))
   }
 }
@@ -428,6 +430,7 @@ export const getMoodDistributionHandler = async (req: AuthRequest, res: Response
     const distribution = await managementService.getMoodDistribution(startDate, endDate)
     return res.status(200).json(apiSuccess(distribution, '获取情绪分布成功'))
   } catch (error) {
+    console.error('[getMoodDistribution] Error:', error)
     return res.status(500).json(apiFailure(500, '获取情绪分布失败'))
   }
 }
@@ -445,6 +448,7 @@ export const getAssessmentDistributionHandler = async (req: AuthRequest, res: Re
     )
     return res.status(200).json(apiSuccess(distribution, '获取测评分布成功'))
   } catch (error) {
+    console.error('[getAssessmentDistribution] Error:', error)
     return res.status(500).json(apiFailure(500, '获取测评分布失败'))
   }
 }
@@ -458,6 +462,7 @@ export const getModuleUsageHandler = async (req: AuthRequest, res: Response) => 
     const usage = await managementService.getModuleUsage(startDate, endDate)
     return res.status(200).json(apiSuccess(usage, '获取模块使用统计成功'))
   } catch (error) {
+    console.error('[getModuleUsage] Error:', error)
     return res.status(500).json(apiFailure(500, '获取模块使用统计失败'))
   }
 }
