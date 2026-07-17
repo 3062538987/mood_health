@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { authenticate } from '../middleware/auth'
 import { validateRequest } from '../middleware/validateRequest'
 import { validateInterpretation, interpretAssessmentHandler, validateMoodReport, generateMoodReportHandler } from '../controllers/aiInterpretationController'
+import { counselingHandler } from '../controllers/counselingController'
 
 const router = Router()
 
@@ -9,5 +10,6 @@ router.use(authenticate)
 
 router.post('/interpret', validateInterpretation, validateRequest, interpretAssessmentHandler)
 router.post('/report', validateMoodReport, validateRequest, generateMoodReportHandler)
+router.post('/counseling', counselingHandler)
 
 export default router
