@@ -56,7 +56,7 @@ describe('questionnaire API contract', () => {
     }
     requestMock.mockResolvedValueOnce(screeningResult)
 
-    await expect(submitAssessment({ questionnaire_id: 1, answers: [0] })).resolves.toEqual(
+    await expect(submitAssessment({ questionnaire_id: 1, answers: [{ itemId: 1, score: 0 }] })).resolves.toEqual(
       screeningResult
     )
   })

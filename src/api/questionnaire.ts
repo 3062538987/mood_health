@@ -26,9 +26,14 @@ export interface AssessmentResult {
   disclaimer: string
 }
 
+export interface AssessmentAnswer {
+  itemId: number
+  score: number
+}
+
 export interface AssessmentAnswers {
   questionnaire_id: number
-  answers: number[]
+  answers: AssessmentAnswer[]
 }
 
 export interface AssessmentHistory {

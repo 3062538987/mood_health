@@ -185,7 +185,7 @@ const nextQuestion = async () => {
       isSubmitting.value = true
       const res = await submitAssessment({
         questionnaire_id: questionnaireId.value,
-        answers: selectedAnswers.value,
+        answers: questions.value.map((q, i) => ({ itemId: q.id, score: selectedAnswers.value[i] })),
       })
       router.push({
         path: '/improve/questionnaire/result',

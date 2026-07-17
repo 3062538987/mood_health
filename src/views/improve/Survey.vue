@@ -93,7 +93,7 @@ const submitSurvey = async () => {
   try {
     const submitData = {
       questionnaire_id: currentQuestionnaire.value.id,
-      answers: allQuestions.map((question) => answers.value[question.id]),
+      answers: allQuestions.map((question) => ({ itemId: question.id, score: answers.value[question.id] })),
     }
     await submitAssessment(submitData)
     ElMessage.success('筛查结果已保存')

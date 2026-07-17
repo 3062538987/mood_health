@@ -244,6 +244,10 @@ export const createManagementRepository = (db: ManagementDatabase = getMysqlPool
       ? 'WHERE created_at >= ? AND created_at <= ?'
       : ''
     const dateParams = (startDate && endDate) ? [startDate, endDate] : []
+    // activity_participants uses joined_at instead of created_at
+    const apDateFilter = (startDate && endDate)
+      ? 'WHERE joined_at >= ? AND joined_at <= ?'
+      : ''
 
     const [userRows] = await db.query<CountRow[]>(
       `SELECT COUNT(*) as total FROM users ${dateFilter}`,
@@ -274,7 +278,7 @@ export const createManagementRepository = (db: ManagementDatabase = getMysqlPool
       dateParams,
     )
     const [pendingPostRows] = await db.query<CountRow[]>(
-      `SELECT COUNT(*) as total FROM posts WHERE status = 'pending' ${startDate && endDate ? 'AND created_at >= ? AND created_at <= ?' : ''}`,
+      `SELECT COUNT(*) as total FROM posts WHERE status = 0 ${startDate && endDate ? 'AND created_at >= ? AND created_at <= ?' : ''}`,
       dateParams,
     )
     const [activityRows] = await db.query<CountRow[]>(
@@ -282,7 +286,7 @@ export const createManagementRepository = (db: ManagementDatabase = getMysqlPool
       dateParams,
     )
     const [activityParticipantRows] = await db.query<CountRow[]>(
-      `SELECT COUNT(DISTINCT user_id) as total FROM activity_participants ${dateFilter}`,
+      `SELECT COUNT(DISTINCT user_id) as total FROM activity_participants ${apDateFilter}`,
       dateParams,
     )
     const [aiRows] = await db.query<CountRow[]>(
@@ -318,10 +322,11 @@ export const createManagementRepository = (db: ManagementDatabase = getMysqlPool
   const getMoodTrend = async (startDate: string, endDate: string, granularity: 'day' | 'week' = 'day') => {
     const groupFormat = granularity === 'week' ? '%Y-%u' : '%Y-%m-%d'
     const [rows] = await db.query<Array<RowDataPacket & { date: string; count: number; avgIntensity: number }>>(
-      `SELECT DATE_FORMAT(created_at, '${groupFormat}') as date, COUNT(*) as count, AVG(intensity) as avgIntensity
-       FROM moods
-       WHERE created_at >= ? AND created_at <= ?
-       GROUP BY DATE_FORMAT(created_at, '${groupFormat}')
+      `SELECT DATE_FORMAT(m.created_at, '${groupFormat}') as date, COUNT(DISTINCT m.id) as count, AVG(me.intensity) as avgIntensity
+       FROM moods m
+       LEFT JOIN mood_emotions me ON me.mood_id = m.id
+       WHERE m.created_at >= ? AND m.created_at <= ?
+       GROUP BY DATE_FORMAT(m.created_at, '${groupFormat}')
        ORDER BY date`,
       [startDate, endDate],
     )
@@ -353,16 +358,17 @@ export const createManagementRepository = (db: ManagementDatabase = getMysqlPool
     let instrumentFilter = ''
     const params: unknown[] = [startDate, endDate]
     if (instrumentId) {
-      instrumentFilter = 'AND a.instrument_id = ?'
+      instrumentFilter = 'AND av.instrument_id = ?'
       params.push(instrumentId)
     }
 
     const [instrumentRows] = await db.query<Array<RowDataPacket & { id: number; name: string; count: number }>>(
-      `SELECT a.instrument_id as id, ai.title as name, COUNT(*) as count
+      `SELECT av.instrument_id as id, ai.name as name, COUNT(*) as count
        FROM assessment_sessions a
-       LEFT JOIN assessment_instruments ai ON ai.id = a.instrument_id
+       JOIN assessment_versions av ON av.id = a.assessment_version_id
+       LEFT JOIN assessment_instruments ai ON ai.id = av.instrument_id
        WHERE a.created_at >= ? AND a.created_at <= ? ${instrumentFilter}
-       GROUP BY a.instrument_id, ai.title
+       GROUP BY av.instrument_id, ai.name
        ORDER BY count DESC`,
       params,
     )
@@ -370,28 +376,30 @@ export const createManagementRepository = (db: ManagementDatabase = getMysqlPool
     const [scoreRows] = await db.query<Array<RowDataPacket & { range: string; count: number }>>(
       `SELECT
          CASE
-           WHEN total_score < 10 THEN '0-10'
-           WHEN total_score < 20 THEN '10-20'
-           WHEN total_score < 30 THEN '20-30'
+           WHEN raw_score < 10 THEN '0-10'
+           WHEN raw_score < 20 THEN '10-20'
+           WHEN raw_score < 30 THEN '20-30'
            ELSE '30+'
          END as \`range\`,
          COUNT(*) as count
-       FROM assessment_sessions
-       WHERE created_at >= ? AND created_at <= ? ${instrumentFilter}
+       FROM assessment_sessions a
+       JOIN assessment_versions av ON av.id = a.assessment_version_id
+       WHERE a.created_at >= ? AND a.created_at <= ? ${instrumentFilter}
        GROUP BY CASE
-         WHEN total_score < 10 THEN '0-10'
-         WHEN total_score < 20 THEN '10-20'
-         WHEN total_score < 30 THEN '20-30'
+         WHEN raw_score < 10 THEN '0-10'
+         WHEN raw_score < 20 THEN '10-20'
+         WHEN raw_score < 30 THEN '20-30'
          ELSE '30+'
        END`,
       params,
     )
 
     const [riskRows] = await db.query<Array<RowDataPacket & { level: string; count: number }>>(
-      `SELECT risk_level as level, COUNT(*) as count
-       FROM assessment_sessions
-       WHERE created_at >= ? AND created_at <= ? ${instrumentFilter}
-       GROUP BY risk_level`,
+      `SELECT screening_level as level, COUNT(*) as count
+       FROM assessment_sessions a
+       JOIN assessment_versions av ON av.id = a.assessment_version_id
+       WHERE a.created_at >= ? AND a.created_at <= ? ${instrumentFilter}
+       GROUP BY screening_level`,
       params,
     )
 
