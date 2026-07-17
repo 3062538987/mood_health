@@ -97,9 +97,11 @@ describe('request response contract', () => {
       kind: 'http',
       status: 401,
       code: 1002,
-      message: '登录已过期，请重新登录',
+      message: '令牌已过期',
     })
     expect(mocks.routerPush).toHaveBeenCalledWith('/login')
+    // 401 应静默跳转，不弹错误提示
+    expect(mocks.messageError).not.toHaveBeenCalled()
   })
 
   it('normalizes a 500 HTTP error without exposing a different error shape', async () => {
