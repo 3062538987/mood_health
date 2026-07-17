@@ -117,90 +117,105 @@ const saveAlert = async (
 
 export const createMoodAlertService = () => {
   const detectAlerts = async (userId: number): Promise<MoodAlert[]> => {
-    const alerts: MoodAlert[] = []
+    try {
+      const alerts: MoodAlert[] = []
 
-    const [continuousLow, highFluctuation] = await Promise.all([
-      checkContinuousLow(userId),
-      checkHighFluctuation(userId),
-    ])
+      const [continuousLow, highFluctuation] = await Promise.all([
+        checkContinuousLow(userId),
+        checkHighFluctuation(userId),
+      ])
 
-    if (continuousLow.triggered) {
-      const alreadyAlerted = await hasRecentAlert(userId, 'continuous_low')
-      if (!alreadyAlerted) {
-        const id = await saveAlert(
-          userId,
-          'continuous_low',
-          '最近3天情绪持续处于较低水平，建议关注自己的情绪状态，适当安排放松活动或与信任的人交流。',
-          continuousLow.recordIds
-        )
-        alerts.push({
-          id,
-          type: 'continuous_low',
-          message: '最近3天情绪持续处于较低水平，建议关注自己的情绪状态，适当安排放松活动或与信任的人交流。',
-          triggerRecords: continuousLow.recordIds,
-          isRead: false,
-          createdAt: new Date().toISOString(),
-        })
+      if (continuousLow.triggered) {
+        const alreadyAlerted = await hasRecentAlert(userId, 'continuous_low')
+        if (!alreadyAlerted) {
+          const id = await saveAlert(
+            userId,
+            'continuous_low',
+            '最近3天情绪持续处于较低水平，建议关注自己的情绪状态，适当安排放松活动或与信任的人交流。',
+            continuousLow.recordIds
+          )
+          alerts.push({
+            id,
+            type: 'continuous_low',
+            message: '最近3天情绪持续处于较低水平，建议关注自己的情绪状态，适当安排放松活动或与信任的人交流。',
+            triggerRecords: continuousLow.recordIds,
+            isRead: false,
+            createdAt: new Date().toISOString(),
+          })
+        }
       }
-    }
 
-    if (highFluctuation.triggered) {
-      const alreadyAlerted = await hasRecentAlert(userId, 'high_fluctuation')
-      if (!alreadyAlerted) {
-        const id = await saveAlert(
-          userId,
-          'high_fluctuation',
-          '最近3天情绪波动较大，情绪起伏明显，建议回顾近期事件并尝试稳定情绪节奏。',
-          highFluctuation.recordIds
-        )
-        alerts.push({
-          id,
-          type: 'high_fluctuation',
-          message: '最近3天情绪波动较大，情绪起伏明显，建议回顾近期事件并尝试稳定情绪节奏。',
-          triggerRecords: highFluctuation.recordIds,
-          isRead: false,
-          createdAt: new Date().toISOString(),
-        })
+      if (highFluctuation.triggered) {
+        const alreadyAlerted = await hasRecentAlert(userId, 'high_fluctuation')
+        if (!alreadyAlerted) {
+          const id = await saveAlert(
+            userId,
+            'high_fluctuation',
+            '最近3天情绪波动较大，情绪起伏明显，建议回顾近期事件并尝试稳定情绪节奏。',
+            highFluctuation.recordIds
+          )
+          alerts.push({
+            id,
+            type: 'high_fluctuation',
+            message: '最近3天情绪波动较大，情绪起伏明显，建议回顾近期事件并尝试稳定情绪节奏。',
+            triggerRecords: highFluctuation.recordIds,
+            isRead: false,
+            createdAt: new Date().toISOString(),
+          })
+        }
       }
-    }
 
-    return alerts
+      return alerts
+    } catch (error) {
+      console.error('检测提醒失败（可能表未创建）:', error)
+      return []
+    }
   }
 
   const getAlerts = async (userId: number): Promise<MoodAlert[]> => {
-    const pool = getMysqlPool()
-    const [rows] = await pool.query<MoodAlertRow[]>(
-      `
+    try {
+      const pool = getMysqlPool()
+      const [rows] = await pool.query<MoodAlertRow[]>(
+        `
       SELECT id, user_id, alert_type, alert_message, trigger_records, is_read, created_at
       FROM mood_alerts
       WHERE user_id = ?
       ORDER BY created_at DESC
       LIMIT 20
       `,
-      [userId]
-    )
+        [userId]
+      )
 
-    return rows.map((row) => ({
-      id: Number(row.id),
-      type: row.alert_type,
-      message: row.alert_message,
-      triggerRecords: row.trigger_records ? JSON.parse(row.trigger_records) : [],
-      isRead: Number(row.is_read) === 1,
-      createdAt: new Date(row.created_at).toISOString(),
-    }))
+      return rows.map((row) => ({
+        id: Number(row.id),
+        type: row.alert_type,
+        message: row.alert_message,
+        triggerRecords: row.trigger_records ? JSON.parse(row.trigger_records) : [],
+        isRead: Number(row.is_read) === 1,
+        createdAt: new Date(row.created_at).toISOString(),
+      }))
+    } catch (error) {
+      console.error('获取提醒列表失败（可能表未创建）:', error)
+      return []
+    }
   }
 
   const markAsRead = async (userId: number, alertId: number): Promise<boolean> => {
-    const pool = getMysqlPool()
-    const [result] = await pool.query<ResultSetHeader>(
-      `
+    try {
+      const pool = getMysqlPool()
+      const [result] = await pool.query<ResultSetHeader>(
+        `
       UPDATE mood_alerts
       SET is_read = 1
       WHERE id = ? AND user_id = ?
       `,
-      [alertId, userId]
-    )
-    return Number(result.affectedRows) > 0
+        [alertId, userId]
+      )
+      return Number(result.affectedRows) > 0
+    } catch (error) {
+      console.error('标记提醒已读失败（可能表未创建）:', error)
+      return false
+    }
   }
 
   return {
