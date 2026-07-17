@@ -308,6 +308,48 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
     }
   }
 
+  const getPeriodComparison = async (userId: number, period: 'week' | 'month') => {
+    const rows = await repository.getPeriodComparison(userId, period)
+    const currentRow = rows.find((r) => r.period_label === 'current')
+    const previousRow = rows.find((r) => r.period_label === 'previous')
+
+    const thisPeriod = {
+      count: currentRow?.record_count ?? 0,
+      avgIntensity: currentRow?.avg_intensity ?? 0,
+    }
+    const lastPeriod = {
+      count: previousRow?.record_count ?? 0,
+      avgIntensity: previousRow?.avg_intensity ?? 0,
+    }
+
+    const countChange = lastPeriod.count > 0
+      ? roundTwoDecimals((thisPeriod.count - lastPeriod.count) / lastPeriod.count)
+      : thisPeriod.count > 0 ? 1 : 0
+    const intensityDiff = roundOneDecimal(thisPeriod.avgIntensity - lastPeriod.avgIntensity)
+
+    const changeDescription = thisPeriod.count === 0 && lastPeriod.count === 0
+      ? '两个周期均无记录，开始记录后可查看趋势对比。'
+      : lastPeriod.count === 0
+        ? `本期新增 ${thisPeriod.count} 条记录，暂无上期数据可对比。`
+        : thisPeriod.count === 0
+          ? '本期暂无记录。'
+          : countChange > 0
+            ? `记录次数较上期增加 ${Math.round(countChange * 100)}%，平均强度变化 ${intensityDiff >= 0 ? '+' : ''}${intensityDiff}`
+            : countChange < 0
+              ? `记录次数较上期减少 ${Math.round(Math.abs(countChange) * 100)}%，平均强度变化 ${intensityDiff >= 0 ? '+' : ''}${intensityDiff}`
+              : `记录次数与上期持平，平均强度变化 ${intensityDiff >= 0 ? '+' : ''}${intensityDiff}`
+
+    return {
+      thisPeriod,
+      lastPeriod,
+      change: {
+        countRate: countChange,
+        intensityDiff,
+      },
+      changeDescription,
+    }
+  }
+
   const getMoodAnalysis = async (userId: number, range: MoodTrendRange) => {
     const end = now()
     const endDate = toDateString(end)
@@ -451,6 +493,7 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
     getMoodTrend,
     getWeeklyReport,
     getMoodAnalysis,
+    getPeriodComparison,
   }
 }
 

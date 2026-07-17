@@ -306,6 +306,23 @@ export const createTagHandler = async (req: AuthRequest, res: Response) => {
   }
 }
 
+export const getMoodComparison = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.userId
+    const period = (req.query.period as string) || 'week'
+
+    if (!['week', 'month'].includes(period)) {
+      return res.status(400).json(apiFailure(400, '无效的周期参数，仅支持 week 或 month'))
+    }
+
+    const comparison = await moodService.getPeriodComparison(userId, period as 'week' | 'month')
+    res.json(apiSuccess(comparison, '获取周期对比成功'))
+  } catch (error) {
+    console.error(error)
+    res.status(500).json(apiFailure(500, '服务器错误'))
+  }
+}
+
 export const getMoodAnalysisHandler = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.userId

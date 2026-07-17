@@ -207,6 +207,10 @@
             </div>
           </section>
         </main>
+
+        <aside class="insight-column">
+          <MoodComparison />
+        </aside>
       </div>
     </div>
   </div>
@@ -217,6 +221,7 @@ import { computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { EMOTION_MAP } from '@/constants/emotions'
 import { useMoodRecordStore } from '@/stores/moodRecordStore'
+import MoodComparison from '@/components/mood/MoodComparison.vue'
 
 const store = useMoodRecordStore()
 
@@ -459,6 +464,10 @@ h2 {
 .editor-column {
   display: grid;
   gap: 1.4rem;
+}
+
+.insight-column {
+  min-width: 0;
 }
 
 .panel {

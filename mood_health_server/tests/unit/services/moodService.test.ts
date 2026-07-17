@@ -15,6 +15,7 @@ const createRepository = (): jest.Mocked<MoodRepository> => ({
   listTrendRows: jest.fn(),
   listWeeklyRows: jest.fn(),
   listAnalysisRows: jest.fn(),
+  getPeriodComparison: jest.fn(),
 })
 
 describe('moodService', () => {

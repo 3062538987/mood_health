@@ -90,6 +90,12 @@ export interface MoodWeeklyRow extends MoodTrendRow {
   recordCount: number
 }
 
+export interface MoodComparisonRow {
+  period_label: string
+  record_count: number
+  avg_intensity: number
+}
+
 export interface MoodAnalysisRow {
   moodId: number
   date: string
@@ -160,6 +166,12 @@ type MoodTrendSqlRow = {
 
 type MoodWeeklySqlRow = MoodTrendSqlRow & {
   record_count: number | string
+}
+
+type MoodComparisonSqlRow = {
+  period_label: string
+  record_count: number | string
+  avg_intensity: number | string
 }
 
 type MoodAnalysisSqlRow = {
@@ -684,6 +696,39 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
     }))
   }
 
+  const getPeriodComparison = async (
+    userId: number,
+    period: 'week' | 'month'
+  ): Promise<MoodComparisonRow[]> => {
+    const dayOffset = period === 'week' ? 7 : 30
+    const [rows] = await db.query<MoodComparisonSqlRow[]>(
+      `
+      SELECT
+        CASE
+          WHEN DATE(m.recorded_at) >= DATE_SUB(CURDATE(), INTERVAL ? DAY) THEN 'current'
+          WHEN DATE(m.recorded_at) >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+           AND DATE(m.recorded_at) <  DATE_SUB(CURDATE(), INTERVAL ? DAY) THEN 'previous'
+        END AS period_label,
+        COUNT(DISTINCT m.id) AS record_count,
+        COALESCE(AVG(me.intensity), 0) AS avg_intensity
+      FROM moods m
+      JOIN mood_emotions me ON me.mood_id = m.id
+      WHERE m.user_id = ?
+        AND DATE(m.recorded_at) >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+      GROUP BY period_label
+      `,
+      [dayOffset, dayOffset * 2, dayOffset, userId, dayOffset * 2]
+    )
+
+    return rows
+      .filter((row) => row.period_label)
+      .map((row) => ({
+        period_label: row.period_label,
+        record_count: Number(row.record_count),
+        avg_intensity: Number(Number(row.avg_intensity).toFixed(1)),
+      }))
+  }
+
   return {
     createMood,
     listByUser,
@@ -698,6 +743,7 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
     listTrendRows,
     listWeeklyRows,
     listAnalysisRows,
+    getPeriodComparison,
   }
 }
 
