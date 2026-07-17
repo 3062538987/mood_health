@@ -16,6 +16,7 @@ import managementRoutes from './routes/managementRoutes'
 import caseRoutes from './routes/caseRoutes'
 import promptRoutes from './routes/promptRoutes'
 import aiInterpretationRoutes from './routes/aiInterpretationRoutes'
+import aiHistoryRoutes from './routes/aiHistoryRoutes'
 import activityRoutes from './routes/activityRoutes'
 import postRoutes from './routes/postRoutes'
 import musicRoutes from './routes/musicRoutes'
@@ -182,6 +183,7 @@ export const createApp = (dependencies: AppDependencies = {}) => {
 app.use('/api/cases', caseRoutes)
 app.use('/api/prompts', promptRoutes)
 app.use('/api/ai', aiInterpretationRoutes)
+app.use('/api/ai', aiHistoryRoutes)
 app.use('/api/activities', activityRoutes)
 app.use('/api/posts', postRoutes)
 app.use('/api/music', musicRoutes)
