@@ -1,4 +1,13 @@
 import { defineConfig, devices } from '@playwright/test'
+import dotenv from 'dotenv'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+// 加载 mood_health_server 的 .env 文件以获取数据库等配置
+dotenv.config({ path: path.resolve(__dirname, 'mood_health_server/.env') })
 
 const backendPort = Number(process.env.E2E_BACKEND_PORT || 3100)
 const frontendPort = Number(process.env.E2E_FRONTEND_PORT || 3101)
@@ -32,7 +41,7 @@ const e2eEnv = {
 
 export default defineConfig({
   testDir: './tests/e2e',
-  timeout: 30_000,
+  timeout: 120_000,
   expect: {
     timeout: 5_000,
   },

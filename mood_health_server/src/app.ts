@@ -206,6 +206,11 @@ app.use('/api', managementRoutes)
     )
   )
 
+  // E2E 测试探活端点 — Playwright webServer 用此端点检测后端就绪
+  app.get('/__e2e/ready', (_request, response) => {
+    response.status(200).json({ status: 'ok' })
+  })
+
   app.use(notFoundHandler)
   app.use(errorHandler)
 
