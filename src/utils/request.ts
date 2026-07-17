@@ -142,8 +142,6 @@ service.interceptors.response.use(
       endLoading()
     }
 
-    console.error('API Error:', error)
-
     if (error.response) {
       const status = error.response.status
       const responseData = error.response.data
@@ -154,7 +152,7 @@ service.interceptors.response.use(
 
       switch (status) {
         case 401:
-          message = '登录已过期，请重新登录'
+          // 静默跳转登录页，不弹错误提示（token 过期是正常流程）
           router.push('/login')
           break
         case 403:
@@ -166,6 +164,11 @@ service.interceptors.response.use(
         case 500:
           message = responseMessage || '服务器内部错误'
           break
+        case 503:
+          // AI 服务未配置时静默处理，不弹错误提示
+          break
+        default:
+          console.error('API Error:', error)
       }
 
       const requestError = new ApiRequestError({
@@ -176,9 +179,14 @@ service.interceptors.response.use(
         data: responseData?.data,
         cause: error,
       })
-      ElMessage.error(requestError.message)
+      // 401/503 不弹错误提示
+      if (status !== 401 && status !== 503) {
+        ElMessage.error(requestError.message)
+      }
       return Promise.reject(requestError)
     }
+
+    console.error('API Error:', error)
 
     const requestError = new ApiRequestError({
       kind: error.request ? 'network' : 'config',
