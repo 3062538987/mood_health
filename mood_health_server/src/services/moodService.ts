@@ -95,6 +95,40 @@ const buildTrendSummary = (values: number[]): string => {
 const roundOneDecimal = (value: number): number => Number(value.toFixed(1))
 const roundTwoDecimals = (value: number): number => Number(value.toFixed(2))
 
+const EMOTION_COLORS: Record<string, string> = {
+  positive: '#52c41a',
+  negative: '#f5222d',
+  neutral: '#1890ff',
+}
+
+const EMOTION_COLOR_LIST = [
+  '#52c41a', '#1890ff', '#fa8c16', '#722ed1', '#f5222d',
+  '#13c2c2', '#eb2f96', '#a0d911', '#faad14', '#2f54eb',
+]
+
+const resolvePeriodRange = (period: 'day' | 'week' | 'month' | 'year'): { startDate: string; endDate: string } => {
+  const now = new Date()
+  const endDate = now.toISOString().split('T')[0]
+  const start = new Date(now)
+
+  switch (period) {
+    case 'day':
+      start.setDate(start.getDate())
+      break
+    case 'week':
+      start.setDate(start.getDate() - 7)
+      break
+    case 'month':
+      start.setDate(start.getDate() - 30)
+      break
+    case 'year':
+      start.setMonth(start.getMonth() - 12)
+      break
+  }
+
+  return { startDate: start.toISOString().split('T')[0], endDate }
+}
+
 const buildAnalysisRecommendations = (
   negativeRatio: number,
   trendDirection: 'improving' | 'declining' | 'stable',
@@ -482,6 +516,117 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
     }
   }
 
+  const getMoodInsight = async (
+    userId: number,
+    period: 'day' | 'week' | 'month' | 'year'
+  ) => {
+    const { startDate, endDate } = resolvePeriodRange(period)
+    const rows = await repository.getInsightData(userId, startDate, endDate)
+
+    if (rows.length === 0) {
+      return {
+        summary: { totalDays: 0, totalRecords: 0, mainEmotion: '', mainEmotionCode: '', avgIntensity: 0 },
+        distribution: [],
+        trend: [],
+        polarity: { positive: 0, neutral: 0, negative: 0 },
+        periodComparison: [],
+      }
+    }
+
+    // 计算概览
+    const dateSet = new Set(rows.map((r) => r.date))
+    const totalRecords = rows.reduce((sum, r) => sum + r.recordCount, 0)
+    const totalIntensity = rows.reduce((sum, r) => sum + r.avgIntensity * r.recordCount, 0)
+    const avgIntensity = roundOneDecimal(totalIntensity / totalRecords)
+
+    // 按情绪聚合
+    const emotionMap = new Map<string, { name: string; code: string; icon: string; category: string; count: number; totalIntensity: number }>()
+    for (const row of rows) {
+      const key = row.emotionName
+      const existing = emotionMap.get(key) || { name: row.emotionName, code: row.emotionCode, icon: row.emotionIcon, category: row.emotionCategory, count: 0, totalIntensity: 0 }
+      existing.count += row.recordCount
+      existing.totalIntensity += row.avgIntensity * row.recordCount
+      emotionMap.set(key, existing)
+    }
+
+    const emotionList = Array.from(emotionMap.values()).sort((a, b) => b.count - a.count)
+    const mainEmotion = emotionList[0]
+    const distribution = emotionList.map((e, i) => ({
+      name: e.name,
+      code: e.code,
+      icon: e.icon,
+      count: e.count,
+      percent: roundTwoDecimals(e.count / totalRecords * 100),
+      color: EMOTION_COLORS[e.category] || EMOTION_COLOR_LIST[i % EMOTION_COLOR_LIST.length],
+    }))
+
+    // 趋势数据
+    const dateMap = new Map<string, { intensities: number[]; emotions: string[]; count: number }>()
+    for (const row of rows) {
+      const d = dateMap.get(row.date) || { intensities: [], emotions: [], count: 0 }
+      d.intensities.push(row.avgIntensity)
+      d.emotions.push(row.emotionName)
+      d.count += row.recordCount
+      dateMap.set(row.date, d)
+    }
+
+    const trend = Array.from(dateMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, val]) => {
+        const dayAvg = roundOneDecimal(val.intensities.reduce((s, v) => s + v, 0) / val.intensities.length)
+        const emotionCounts = new Map<string, number>()
+        val.emotions.forEach((e) => emotionCounts.set(e, (emotionCounts.get(e) || 0) + 1))
+        let dominantEmotion = ''
+        let maxCount = 0
+        emotionCounts.forEach((count, name) => {
+          if (count > maxCount) { maxCount = count; dominantEmotion = name }
+        })
+        return { date, avgIntensity: dayAvg, dominantEmotion, recordCount: val.count }
+      })
+
+    // 极性分布
+    let positive = 0, neutral = 0, negative = 0
+    for (const row of rows) {
+      const count = row.recordCount
+      if (row.emotionCategory === 'positive') positive += count
+      else if (row.emotionCategory === 'negative') negative += count
+      else neutral += count
+    }
+    const total = positive + neutral + negative
+    const polarity = {
+      positive: total > 0 ? Math.round((positive / total) * 100) : 0,
+      neutral: total > 0 ? Math.round((neutral / total) * 100) : 0,
+      negative: total > 0 ? Math.round((negative / total) * 100) : 0,
+    }
+
+    // 周期对比
+    const weekMap = new Map<string, { positive: number; neutral: number; negative: number }>()
+    for (const row of rows) {
+      const d = new Date(row.date)
+      const weekLabel = `第${Math.ceil((d.getDate()) / 7)}周`
+      const w = weekMap.get(weekLabel) || { positive: 0, neutral: 0, negative: 0 }
+      if (row.emotionCategory === 'positive') w.positive += row.recordCount
+      else if (row.emotionCategory === 'negative') w.negative += row.recordCount
+      else w.neutral += row.recordCount
+      weekMap.set(weekLabel, w)
+    }
+    const periodComparison = Array.from(weekMap.entries()).map(([label, val]) => ({ label, ...val }))
+
+    return {
+      summary: {
+        totalDays: dateSet.size,
+        totalRecords,
+        mainEmotion: mainEmotion?.name || '',
+        mainEmotionCode: mainEmotion?.code || '',
+        avgIntensity,
+      },
+      distribution,
+      trend,
+      polarity,
+      periodComparison,
+    }
+  }
+
   return {
     recordMood,
     listMoods,
@@ -494,6 +639,7 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
     getWeeklyReport,
     getMoodAnalysis,
     getPeriodComparison,
+    getMoodInsight,
   }
 }
 

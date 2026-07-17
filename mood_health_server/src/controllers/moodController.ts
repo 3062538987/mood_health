@@ -376,3 +376,20 @@ export const getMoodAnalysisHandler = async (req: AuthRequest, res: Response) =>
   }
 }
 
+export const getMoodInsightHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.userId
+    const period = (req.query.period as string) || 'week'
+
+    if (!['day', 'week', 'month', 'year'].includes(period)) {
+      return res.status(400).json(apiFailure(400, '无效的时间范围，支持 day/week/month/year'))
+    }
+
+    const insight = await moodService.getMoodInsight(userId, period as 'day' | 'week' | 'month' | 'year')
+    res.json(apiSuccess(insight))
+  } catch (error) {
+    console.error(error)
+    res.status(500).json(apiFailure(500, '服务器错误'))
+  }
+}
+

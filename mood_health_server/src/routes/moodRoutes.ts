@@ -16,6 +16,7 @@ import {
   getMoodComparison,
   getMoodAlerts,
   markAlertRead,
+  getMoodInsightHandler,
 } from '../controllers/moodController'
 
 const router = Router()
@@ -51,6 +52,7 @@ router.get('/comparison', getMoodComparison)
 router.get('/alerts', getMoodAlerts)
 router.put('/alerts/:id/read', markAlertRead)
 router.get('/analysis', getMoodAnalysisHandler)
+router.get('/insight', getMoodInsightHandler)
 router.get('/types', getMoodTypes)
 router.get('/tags', getTagsHandler)
 router.post(

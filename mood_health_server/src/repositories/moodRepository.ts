@@ -96,6 +96,16 @@ export interface MoodComparisonRow {
   avg_intensity: number
 }
 
+export interface MoodInsightRow {
+  date: string
+  emotionName: string
+  emotionCode: string
+  emotionCategory: string
+  emotionIcon: string
+  avgIntensity: number
+  recordCount: number
+}
+
 export interface MoodAnalysisRow {
   moodId: number
   date: string
@@ -170,8 +180,18 @@ type MoodWeeklySqlRow = MoodTrendSqlRow & {
 
 type MoodComparisonSqlRow = {
   period_label: string
-  record_count: number | string
-  avg_intensity: number | string
+  record_count: number
+  avg_intensity: number
+}
+
+type MoodInsightSqlRow = {
+  date: string
+  emotion_name: string
+  emotion_code: string
+  emotion_category: string
+  emotion_icon: string
+  avg_intensity: number
+  record_count: number
 }
 
 type MoodAnalysisSqlRow = {
@@ -729,6 +749,44 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
       }))
   }
 
+  const getInsightData = async (
+    userId: number,
+    startDate: string,
+    endDate: string
+  ): Promise<MoodInsightRow[]> => {
+    const [rows] = await db.query<MoodInsightSqlRow[]>(
+      `
+      SELECT
+        DATE_FORMAT(m.recorded_at, '%Y-%m-%d') AS date,
+        et.name AS emotion_name,
+        et.code AS emotion_code,
+        et.category AS emotion_category,
+        et.icon AS emotion_icon,
+        AVG(me.intensity) AS avg_intensity,
+        COUNT(*) AS record_count
+      FROM moods m
+      JOIN mood_emotions me ON me.mood_id = m.id
+      JOIN emotion_types et ON et.id = me.emotion_type_id
+      WHERE m.user_id = ?
+        AND DATE(m.recorded_at) >= ?
+        AND DATE(m.recorded_at) <= ?
+      GROUP BY DATE_FORMAT(m.recorded_at, '%Y-%m-%d'), et.name, et.code, et.category, et.icon
+      ORDER BY date ASC
+      `,
+      [userId, startDate, endDate]
+    )
+
+    return rows.map((row) => ({
+      date: row.date,
+      emotionName: row.emotion_name,
+      emotionCode: row.emotion_code,
+      emotionCategory: row.emotion_category,
+      emotionIcon: row.emotion_icon,
+      avgIntensity: Number(row.avg_intensity),
+      recordCount: Number(row.record_count),
+    }))
+  }
+
   return {
     createMood,
     listByUser,
@@ -744,6 +802,7 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
     listWeeklyRows,
     listAnalysisRows,
     getPeriodComparison,
+    getInsightData,
   }
 }
 
