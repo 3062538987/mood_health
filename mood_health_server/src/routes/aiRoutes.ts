@@ -7,6 +7,7 @@ import express, { Request, Response } from 'express'
 import axios from 'axios'
 import rateLimit from 'express-rate-limit'
 import { authenticate } from '../middleware/auth'
+import { analyzeWithContext } from '../controllers/aiContextController'
 
 const router = express.Router()
 
@@ -49,6 +50,14 @@ router.post('/treehole/gentle-reply', (req: Request, res: Response) => {
     },
   })
 })
+
+/**
+ * 上下文聚合分析接口
+ * @route POST /api/ai/context/analyze
+ * @description 聚合用户近 7 天情绪记录和最近测评结果，进行 AI 上下文分析
+ * @access 需要认证
+ */
+router.post('/context/analyze', analyzeWithContext)
 
 const getAiServiceBaseUrl = () => {
   const rawBaseUrl =
