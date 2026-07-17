@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import logger from './logger'
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16;
@@ -46,7 +47,7 @@ export function encrypt(text: string): string {
 
     return JSON.stringify(result);
   } catch (error) {
-    console.error("Encryption error:", error);
+    logger.error("加密失败", { error: error instanceof Error ? error.message : 'unknown_error' });
     throw new Error("Failed to encrypt data");
   }
 }
@@ -74,7 +75,7 @@ export function decrypt(encryptedData: string): string {
 
     return decrypted;
   } catch (error) {
-    console.error("Decryption error:", error);
+    logger.error("解密失败", { error: error instanceof Error ? error.message : 'unknown_error' });
     return encryptedData;
   }
 }
