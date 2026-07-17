@@ -292,17 +292,13 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
   }
 
   const fetchEmotionTypeIdMap = async () => {
-    try {
-      const types = await getMoodTypeEnum()
-      const map: Record<string, number> = {}
-      for (const t of types) {
-        // 后端返回 { id, name, icon, category }，name 是 code
-        map[t.label] = (t as any).id ?? 0
-      }
-      emotionTypeIdMap.value = map
-    } catch {
-      // 非关键功能，失败时使用后端兼容格式
+    const types = await getMoodTypeEnum()
+    const map: Record<string, number> = {}
+    for (const t of types) {
+      // 后端返回 { id, name, icon, category }，name 是 code
+      map[t.label] = (t as any).id ?? 0
     }
+    emotionTypeIdMap.value = map
   }
   const aiFailureCount = ref(0)
   const aiDisabledUntil = ref<number | null>(null)
@@ -862,7 +858,7 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
       hasDraft.value = false
     }
 
-    fetchEmotionTypeIdMap()
+    await fetchEmotionTypeIdMap()
     refreshAutoRecommendations()
     initialized.value = true
   }

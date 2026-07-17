@@ -5,12 +5,19 @@
       <p class="subtitle">开始您的情绪管理之旅</p>
 
       <div class="guide-steps">
-        <div v-for="(step, index) in steps" :key="index" class="step">
+        <div
+          v-for="(step, index) in steps"
+          :key="index"
+          class="step"
+          :class="{ clickable: step.route }"
+          @click="step.route && goToStep(step.route)"
+        >
           <div class="step-icon">
             <i :class="step.icon"></i>
           </div>
           <h3>{{ step.title }}</h3>
           <p>{{ step.description }}</p>
+          <span v-if="step.route" class="step-link">点击体验 →</span>
         </div>
       </div>
 
@@ -18,12 +25,35 @@
         <button class="btn primary" @click="startUsing">开始使用</button>
         <button class="btn secondary" @click="skipGuide">跳过</button>
       </div>
+
+      <!-- 答辩演示模式 -->
+      <div class="demo-section">
+        <el-divider>
+          <span class="demo-divider-text">答辩演示路径</span>
+        </el-divider>
+        <div class="demo-steps">
+          <div
+            v-for="(demo, index) in demoSteps"
+            :key="index"
+            class="demo-step"
+            @click="goToStep(demo.route)"
+          >
+            <div class="demo-num">{{ index + 1 }}</div>
+            <div class="demo-info">
+              <div class="demo-title">{{ demo.title }}</div>
+              <div class="demo-desc">{{ demo.desc }}</div>
+            </div>
+            <el-icon class="demo-arrow"><ArrowRight /></el-icon>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { ArrowRight } from '@element-plus/icons-vue'
 
 const router = useRouter()
 
@@ -32,23 +62,65 @@ const steps = [
     icon: 'fas fa-smile',
     title: '情绪记录',
     description: '记录您的情绪状态，了解情绪变化趋势',
+    route: '/mood/record',
   },
   {
     icon: 'fas fa-chart-pie',
     title: '情绪分析',
     description: '通过图表分析您的情绪模式和触发因素',
+    route: '/mood/analysis',
   },
   {
     icon: 'fas fa-leaf',
     title: '放松减压',
     description: '使用音乐和树洞功能缓解压力，放松心情',
+    route: '/relax',
   },
   {
     icon: 'fas fa-chart-line',
     title: '自我提升',
     description: '参与团体辅导和成长课程，提升情绪管理能力',
+    route: '/improve',
   },
 ]
+
+// 答辩演示6步路径
+const demoSteps = [
+  {
+    title: '登录/注册',
+    desc: '使用演示账号登录系统，体验完整功能',
+    route: '/auth/login',
+  },
+  {
+    title: '情绪记录',
+    desc: '记录当前情绪状态，选择情绪类型和触发因素',
+    route: '/mood/record',
+  },
+  {
+    title: '心理测评',
+    desc: '完成专业心理量表，获取 AI 解读报告',
+    route: '/improve/questionnaire',
+  },
+  {
+    title: 'AI 智能建议',
+    desc: '查看基于情绪和测评数据的个性化 AI 建议',
+    route: '/mood/analysis',
+  },
+  {
+    title: '社区互动',
+    desc: '浏览树洞帖子、音乐放松、团体活动',
+    route: '/relax',
+  },
+  {
+    title: '管理分析',
+    desc: '管理员查看用户数据、活动统计和审计日志',
+    route: '/admin/dashboard',
+  },
+]
+
+const goToStep = (route: string) => {
+  router.push(route)
+}
 
 const startUsing = () => {
   // 标记引导已完成
@@ -110,10 +182,105 @@ const skipGuide = () => {
     transform 0.3s ease,
     box-shadow 0.3s ease;
 
-  &:hover {
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+      background: #eef1ff;
+    }
+  }
+
+  &:not(.clickable):hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
   }
+}
+
+.step-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #667eea;
+  font-weight: 500;
+}
+
+// 答辩演示模式
+.demo-section {
+  margin-top: 40px;
+  text-align: left;
+}
+
+.demo-divider-text {
+  font-size: 14px;
+  color: #909399;
+  font-weight: 500;
+}
+
+.demo-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.demo-step {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  background: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #eef1ff;
+    transform: translateX(4px);
+
+    .demo-arrow {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+}
+
+.demo-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.demo-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.demo-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 2px;
+}
+
+.demo-desc {
+  font-size: 13px;
+  color: #909399;
+}
+
+.demo-arrow {
+  color: #667eea;
+  opacity: 0.5;
+  transform: translateX(-4px);
+  transition: all 0.2s ease;
 }
 
 .step-icon {

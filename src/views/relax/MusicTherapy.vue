@@ -17,8 +17,16 @@
         </div>
       </div>
 
+      <!-- 错误状态 -->
+      <el-empty
+        v-if="error"
+        description="加载失败"
+      >
+        <el-button type="primary" @click="loadCatalog">重试</el-button>
+      </el-empty>
+
       <!-- 音乐列表 -->
-      <div class="music-list">
+      <div v-if="!error" class="music-list">
         <div v-if="isLoadingCatalog" class="loading-skeleton" aria-label="加载中">
           <div v-for="index in 4" :key="index" class="skeleton-row"></div>
         </div>
@@ -197,6 +205,7 @@ const duration = ref(0)
 const volume = ref(0.7)
 const audioRef = ref<HTMLAudioElement | null>(null)
 const isLoadingCatalog = ref(true)
+const error = ref(false)
 
 // 计算属性：过滤当前分类的音乐
 const filteredMusic = computed(() => {
@@ -280,16 +289,26 @@ const formatTime = (time: number) => {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
+const loadCatalog = () => {
+  try {
+    error.value = false
+    isLoadingCatalog.value = true
+    // 模拟加载数据
+    setTimeout(() => {
+      isLoadingCatalog.value = false
+    }, 220)
+  } catch {
+    error.value = true
+  }
+}
+
 // 生命周期
 onMounted(() => {
   // 初始化时设置音量
   if (audioRef.value) {
     audioRef.value.volume = volume.value
   }
-  // 给列表一个轻量加载过渡，避免空状态闪烁。
-  setTimeout(() => {
-    isLoadingCatalog.value = false
-  }, 220)
+  loadCatalog()
 })
 
 onUnmounted(() => {

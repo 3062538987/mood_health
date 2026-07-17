@@ -1,62 +1,74 @@
 <template>
   <div class="questionnaire">
     <div class="container">
-      <h2>{{ questionnaire?.title }}</h2>
+      <!-- 加载骨架 -->
+      <template v-if="loading">
+        <el-skeleton :rows="3" animated />
+        <el-skeleton :rows="5" animated style="margin-top: 20px" />
+      </template>
 
-      <!-- 进度条 -->
-      <div class="progress-container">
-        <div class="progress-bar">
-          <div
-            class="progress-fill"
-            :style="{
-              width: `${((currentQuestionIndex + 1) / questions.length) * 100}%`,
-            }"
-          ></div>
+      <!-- 空状态 -->
+      <el-empty v-else-if="isEmpty" description="暂无可用问卷" />
+
+      <!-- 正常内容 -->
+      <template v-else>
+        <h2>{{ questionnaire?.title }}</h2>
+
+        <!-- 进度条 -->
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              :style="{
+                width: `${((currentQuestionIndex + 1) / questions.length) * 100}%`,
+              }"
+            ></div>
+          </div>
+          <div class="progress-text">{{ currentQuestionIndex + 1 }} / {{ questions.length }}</div>
         </div>
-        <div class="progress-text">{{ currentQuestionIndex + 1 }} / {{ questions.length }}</div>
-      </div>
 
-      <!-- 问题内容 -->
-      <div v-if="currentQuestion" class="question-content">
-        <fieldset class="options">
-          <legend>{{ currentQuestion.question_text }}</legend>
-          <label
-            v-for="(option, index) in currentQuestion.options"
-            :key="index"
-            class="option-item"
-            :class="{ active: selectedAnswer === index }"
-            @click="selectAnswer(index)"
+        <!-- 问题内容 -->
+        <div v-if="currentQuestion" class="question-content">
+          <fieldset class="options">
+            <legend>{{ currentQuestion.question_text }}</legend>
+            <label
+              v-for="(option, index) in currentQuestion.options"
+              :key="index"
+              class="option-item"
+              :class="{ active: selectedAnswer === index }"
+              @click="selectAnswer(index)"
+            >
+              <input
+                class="option-radio"
+                type="radio"
+                :name="`question-${currentQuestion.id}`"
+                :value="index"
+                :checked="selectedAnswer === index"
+                @change="selectAnswer(index)"
+              />
+              {{ option }}
+            </label>
+          </fieldset>
+        </div>
+
+        <div v-if="submitError" class="submit-error" role="alert" aria-live="assertive">
+          {{ submitError }}
+        </div>
+
+        <!-- 导航按钮 -->
+        <div class="navigation-buttons">
+          <button
+            class="btn secondary"
+            :disabled="currentQuestionIndex === 0 || isSubmitting"
+            @click="prevQuestion"
           >
-            <input
-              class="option-radio"
-              type="radio"
-              :name="`question-${currentQuestion.id}`"
-              :value="index"
-              :checked="selectedAnswer === index"
-              @change="selectAnswer(index)"
-            />
-            {{ option }}
-          </label>
-        </fieldset>
-      </div>
-
-      <div v-if="submitError" class="submit-error" role="alert" aria-live="assertive">
-        {{ submitError }}
-      </div>
-
-      <!-- 导航按钮 -->
-      <div class="navigation-buttons">
-        <button
-          class="btn secondary"
-          :disabled="currentQuestionIndex === 0 || isSubmitting"
-          @click="prevQuestion"
-        >
-          上一题
-        </button>
-        <button class="btn primary" :disabled="isSubmitting" @click="nextQuestion">
-          {{ submitButtonText }}
-        </button>
-      </div>
+            上一题
+          </button>
+          <button class="btn primary" :disabled="isSubmitting" @click="nextQuestion">
+            {{ submitButtonText }}
+          </button>
+        </div>
+      </template>
     </div>
   </div>
 </template>
@@ -78,12 +90,16 @@ const router = useRouter()
 const route = useRoute()
 const questionnaireId = computed(() => parseInt(route.params.id as string))
 
+const loading = ref(true)
+const error = ref(false)
 const questionnaire = ref<Questionnaire | null>(null)
 const questions = ref<Question[]>([])
 const currentQuestionIndex = ref(0)
 const selectedAnswers = ref<number[]>([])
 const isSubmitting = ref(false)
 const submitError = ref('')
+
+const isEmpty = computed(() => questions.value.length === 0)
 
 // 当前问题
 const currentQuestion = computed(() => {
@@ -110,6 +126,8 @@ const submitButtonText = computed(() => {
 
 // 获取量表详情和问题
 const fetchQuestionnaireData = async () => {
+  loading.value = true
+  error.value = false
   try {
     // 获取量表详情
     const detailRes = await getQuestionnaireDetail(questionnaireId.value)
@@ -121,8 +139,11 @@ const fetchQuestionnaireData = async () => {
 
     // 初始化答案数组
     selectedAnswers.value = new Array(questions.value.length).fill(-1)
-  } catch (error) {
-    console.error('获取量表数据失败', error)
+  } catch (err) {
+    error.value = true
+    console.error('获取量表数据失败', err)
+  } finally {
+    loading.value = false
   }
 }
 

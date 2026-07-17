@@ -1,5 +1,11 @@
 <template>
-  <div class="mood-record-page">
+  <div v-if="pageLoading" class="loading-wrapper">
+    <el-skeleton :rows="8" animated />
+  </div>
+  <el-empty v-else-if="pageError" description="加载失败，请稍后重试">
+    <el-button type="primary" @click="loadPageData">重新加载</el-button>
+  </el-empty>
+  <div v-else class="mood-record-page">
     <div class="page-shell">
       <section class="hero-panel">
         <div>
@@ -198,10 +204,14 @@
               <button
                 type="button"
                 class="submit-action"
-                :class="{ success: isSubmittingSuccess }"
+                :class="{
+                  success: isSubmittingSuccess,
+                  loading: isSubmitting,
+                }"
                 :disabled="!canSubmit"
                 @click="handleSubmit"
               >
+                <span v-if="isSubmitting" class="submit-spinner"></span>
                 {{ isSubmitting ? '正在提交...' : '保存这次情绪记录' }}
               </button>
             </div>
@@ -218,12 +228,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { EMOTION_MAP } from '@/constants/emotions'
 import { useMoodRecordStore } from '@/stores/moodRecordStore'
 import MoodComparison from '@/components/mood/MoodComparison.vue'
 import MoodAlert from '@/components/mood/MoodAlert.vue'
+
+const pageLoading = ref(true)
+const pageError = ref(false)
 
 const store = useMoodRecordStore()
 
@@ -364,12 +377,33 @@ const handleSubmit = async () => {
   await store.submitRecord()
 }
 
+const loadPageData = async () => {
+  pageLoading.value = true
+  pageError.value = false
+  try {
+    await store.initializePage()
+  } catch {
+    pageError.value = true
+  } finally {
+    pageLoading.value = false
+  }
+}
+
 onMounted(() => {
-  store.initializePage()
+  loadPageData()
 })
 </script>
 
 <style scoped lang="scss">
+.loading-wrapper {
+  min-height: 100%;
+  padding: 36px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 80px;
+}
+
 .mood-record-page {
   min-height: 100%;
   padding: 36px;
@@ -888,6 +922,29 @@ textarea:focus,
 
 .submit-action.success {
   background: var(--success-color);
+}
+
+.submit-action.loading {
+  pointer-events: none;
+  opacity: 0.72;
+}
+
+.submit-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 :deep(.el-message--error) {

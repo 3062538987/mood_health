@@ -34,18 +34,26 @@
       <!-- 成就列表 -->
       <div class="achievements-list">
         <h2>所有成就</h2>
-        <div v-if="isLoading" class="loading-skeleton" aria-label="加载中">
+        <!-- 错误状态 -->
+        <el-empty
+          v-if="error"
+          description="加载失败"
+        >
+          <el-button type="primary" @click="loadAchievements">重试</el-button>
+        </el-empty>
+
+        <div v-if="!error && isLoading" class="loading-skeleton" aria-label="加载中">
           <div v-for="index in 6" :key="index" class="skeleton-card"></div>
         </div>
         <transition name="empty-fade" mode="out-in">
           <RelaxEmptyState
-            v-if="!isLoading && achievements.length === 0"
+            v-if="!error && !isLoading && achievements.length === 0"
             key="achievement-empty"
             type="achievements"
             action-text="去解压中心开始放松"
             action-to="/relax/center"
           />
-          <div v-else key="achievement-grid" class="achievement-grid">
+          <div v-else-if="!error" key="achievement-grid" class="achievement-grid">
             <div
               v-for="achievement in achievements"
               :key="achievement.id"
@@ -134,6 +142,7 @@ import RelaxEmptyState from '@/components/relax/RelaxEmptyState.vue'
 
 const achievementStore = useAchievementStore()
 const selectedAchievement = ref<Achievement | null>(null)
+const error = ref(false)
 
 // 计算属性
 const achievements = computed(() => achievementStore.achievements)
@@ -214,10 +223,17 @@ function closeModal() {
   selectedAchievement.value = null
 }
 
+const loadAchievements = async () => {
+  try {
+    error.value = false
+    await achievementStore.init()
+  } catch {
+    error.value = true
+  }
+}
+
 // 生命周期
-onMounted(async () => {
-  await achievementStore.init()
-})
+onMounted(loadAchievements)
 </script>
 
 <style scoped lang="scss">
