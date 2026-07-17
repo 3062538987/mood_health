@@ -17,6 +17,52 @@ import { AiServiceError } from "../errors";
 import aiConfig from "../../config/aiConfig";
 
 /**
+ * 四段式分析结果
+ */
+export interface FourSectionAnalysis {
+  summary: string
+  possibleCauses: string
+  todayActions: string[]
+  whenToSeekHelp: string
+}
+
+/**
+ * 安全兜底 - 四段式分析
+ */
+export const SAFE_FALLBACK_ANALYSIS: FourSectionAnalysis = {
+  summary: '暂时无法生成分析，请稍后重试。',
+  possibleCauses: 'AI 服务暂时不可用，无法分析可能原因。',
+  todayActions: ['深呼吸，放松身心', '回顾今天的感受，写下来', '做一件让自己开心的小事'],
+  whenToSeekHelp: '如果持续感到不适，建议联系专业心理咨询师。',
+}
+
+/**
+ * 校验并解析四段式 JSON
+ */
+export const parseFourSection = (raw: string): FourSectionAnalysis => {
+  // 尝试提取 JSON
+  let jsonStr = raw.trim()
+  const jsonMatch = jsonStr.match(/\{[\s\S]*\}/)
+  if (jsonMatch) {
+    jsonStr = jsonMatch[0]
+  }
+
+  try {
+    const parsed = JSON.parse(jsonStr)
+    return {
+      summary: typeof parsed.summary === 'string' && parsed.summary.trim() ? parsed.summary.trim() : SAFE_FALLBACK_ANALYSIS.summary,
+      possibleCauses: typeof parsed.possibleCauses === 'string' && parsed.possibleCauses.trim() ? parsed.possibleCauses.trim() : SAFE_FALLBACK_ANALYSIS.possibleCauses,
+      todayActions: Array.isArray(parsed.todayActions) && parsed.todayActions.length > 0
+        ? parsed.todayActions.filter((a: unknown) => typeof a === 'string' && a.trim())
+        : SAFE_FALLBACK_ANALYSIS.todayActions,
+      whenToSeekHelp: typeof parsed.whenToSeekHelp === 'string' && parsed.whenToSeekHelp.trim() ? parsed.whenToSeekHelp.trim() : SAFE_FALLBACK_ANALYSIS.whenToSeekHelp,
+    }
+  } catch {
+    return SAFE_FALLBACK_ANALYSIS
+  }
+}
+
+/**
  * 情绪分析服务类
  */
 export class MoodAnalysisService {
@@ -162,6 +208,59 @@ export class MoodAnalysisService {
     };
 
     return this.analyzeMood(request);
+  }
+
+  /**
+   * 四段式结构化分析
+   * @param contextText 上下文文本（含用户情绪记录和测评结果）
+   * @param userMessage 用户当前输入
+   * @returns 四段式分析结果
+   */
+  async analyzeWithFourSection(
+    contextText: string,
+    userMessage: string,
+  ): Promise<FourSectionAnalysis> {
+    const startTime = Date.now()
+
+    const systemPrompt = `你是一位专业的心理健康助手。请根据用户提供的情绪记录和描述，给出四段式结构化分析。
+
+请严格按以下 JSON 格式返回（不要包含 markdown 代码块标记）：
+{
+  "summary": "现状概括（2-3句话，描述用户当前的情绪状态）",
+  "possibleCauses": "可能原因（2-3句话，分析可能导致当前情绪的原因）",
+  "todayActions": ["今日可以尝试的行动1", "行动2", "行动3"],
+  "whenToSeekHelp": "何时需要寻求专业帮助的提示"
+}
+
+重要规则：
+1. 不要给出诊断结论，你只是心理健康助手而非医生
+2. 如果用户提到自伤、自杀等高风险内容，在 whenToSeekHelp 中明确建议立即联系专业机构
+3. todayActions 必须是具体可执行的行动建议，不要空泛
+4. 保持温和、共情的语气`
+
+    const userPrompt = `${contextText}\n\n用户当前描述：${userMessage || '无'}`
+
+    try {
+      const rawResponse = await aiClient.callByModelType<string>(
+        '/analyze-structured',
+        {
+          systemPrompt,
+          userPrompt,
+        },
+        {
+          model: aiConfig.models.moodAnalysis,
+        },
+      )
+
+      const result = parseFourSection(typeof rawResponse === 'string' ? rawResponse : JSON.stringify(rawResponse))
+
+      const endTime = Date.now()
+      logger.info(`Four-section analysis completed in ${endTime - startTime}ms`)
+      return result
+    } catch (error) {
+      logger.error('Four-section analysis failed:', error)
+      return SAFE_FALLBACK_ANALYSIS
+    }
   }
 
   /**
