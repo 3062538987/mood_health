@@ -38,20 +38,17 @@ export interface AppDependencies {
 
 export const createApp = (dependencies: AppDependencies = {}) => {
   const app = express()
-  const defaultAllowedOrigins = [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://localhost:3002',
-    'http://localhost:3003',
-    'http://127.0.0.1:4173',
-  ]
-  const configuredAllowedOrigins = process.env.FRONTEND_URL
+  const allowedOrigins = process.env.FRONTEND_URL
     ? process.env.FRONTEND_URL.split(',')
         .map((origin) => origin.trim())
         .filter(Boolean)
-    : []
-  const allowedOrigins = [...new Set([...defaultAllowedOrigins, ...configuredAllowedOrigins])]
+    : [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://localhost:3002',
+        'http://localhost:3003',
+      ]
 
   const corsOptions: CorsOptions = {
     origin(origin, callback) {
@@ -66,7 +63,7 @@ export const createApp = (dependencies: AppDependencies = {}) => {
         return
       }
 
-      callback(null, false)
+      callback(new Error('Not allowed by CORS'))
     },
     credentials: true,
   }
@@ -80,7 +77,7 @@ export const createApp = (dependencies: AppDependencies = {}) => {
           scriptSrc: ["'self'", "'unsafe-inline'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
           imgSrc: ["'self'", 'data:', 'https:'],
-          connectSrc: ["'self'", 'http://localhost:*', 'http://127.0.0.1:*', 'ws://localhost:*', 'ws://127.0.0.1:*'],
+          connectSrc: ["'self'", 'http://localhost:*', 'ws://localhost:*'],
           fontSrc: ["'self'", 'https://cdnjs.cloudflare.com'],
           objectSrc: ["'none'"],
           frameAncestors: ["'none'"],

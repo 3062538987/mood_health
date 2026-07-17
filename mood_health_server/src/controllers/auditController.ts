@@ -2,7 +2,6 @@ import { Response } from 'express'
 import type { AuthRequest } from '../middleware/auth'
 import { createAuditService } from '../services/auditService'
 import { apiFailure, apiSuccess } from '../utils/apiResponse'
-import logger from '../utils/logger'
 
 const auditService = createAuditService()
 
@@ -40,7 +39,7 @@ export const getOperationLogsHandler = async (req: AuthRequest, res: Response) =
       )
     )
   } catch (error) {
-    logger.error('查询操作日志失败', { error: error instanceof Error ? error.message : 'unknown_error' })
+    console.error('查询操作日志失败:', error)
     return res.status(500).json(apiFailure(500, '查询操作日志失败'))
   }
 }

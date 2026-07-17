@@ -1,24 +1,24 @@
 import crypto from "crypto";
-import logger from './logger'
+
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+
+if (!ENCRYPTION_KEY) {
+  throw new Error("ENCRYPTION_KEY environment variable is required");
+}
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16;
 const AUTH_TAG_LENGTH = 16;
 const KEY_LENGTH = 32;
 
-let cachedKey: Buffer | null = null
-
 function getKey(): Buffer {
-  if (cachedKey) return cachedKey
-  const keyHex = process.env.ENCRYPTION_KEY
-  if (!keyHex) {
-    throw new Error('ENCRYPTION_KEY environment variable is required')
+  const key = Buffer.from(ENCRYPTION_KEY!, "hex");
+  if (key.length !== KEY_LENGTH) {
+    throw new Error(
+      `Invalid encryption key length. Expected ${KEY_LENGTH} bytes, got ${key.length} bytes`,
+    );
   }
-  cachedKey = Buffer.from(keyHex, 'hex')
-  if (cachedKey.length !== 32) {
-    throw new Error(`Invalid encryption key length. Expected 32 bytes, got ${cachedKey.length} bytes`)
-  }
-  return cachedKey
+  return key;
 }
 
 export interface EncryptedData {
@@ -47,7 +47,7 @@ export function encrypt(text: string): string {
 
     return JSON.stringify(result);
   } catch (error) {
-    logger.error("加密失败", { error: error instanceof Error ? error.message : 'unknown_error' });
+    console.error("Encryption error:", error);
     throw new Error("Failed to encrypt data");
   }
 }
@@ -75,7 +75,7 @@ export function decrypt(encryptedData: string): string {
 
     return decrypted;
   } catch (error) {
-    logger.error("解密失败", { error: error instanceof Error ? error.message : 'unknown_error' });
+    console.error("Decryption error:", error);
     return encryptedData;
   }
 }

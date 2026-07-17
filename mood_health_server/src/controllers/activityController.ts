@@ -1,7 +1,6 @@
 import { Request, Response } from 'express'
 import { AuthRequest } from '../middleware/auth'
 import { setCache, getCache, clearActivityCache } from '../utils/cache'
-import logger from '../utils/logger'
 import {
   createActivityRepository,
   type ActivityFilter,
@@ -70,7 +69,7 @@ export const getActivityList = async (req: Request, res: Response) => {
 
     res.json(response)
   } catch (error) {
-    logger.error('获取活动列表失败', { error: error instanceof Error ? error.message : 'unknown_error' })
+    console.error('获取活动列表失败:', error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
@@ -84,7 +83,7 @@ export const getActivityDetail = async (req: Request, res: Response) => {
     }
     res.json({ code: 0, data: activity })
   } catch (error) {
-    logger.error('获取活动详情失败', { error: error instanceof Error ? error.message : 'unknown_error' })
+    console.error(error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
@@ -109,7 +108,7 @@ export const joinActivityHandler = async (req: AuthRequest, res: Response) => {
 
     res.json({ code: 0, message: '报名成功' })
   } catch (error: any) {
-    logger.error('报名活动失败', { error: error instanceof Error ? error.message : 'unknown_error' })
+    console.error('报名活动失败:', error)
 
     switch (error.message) {
       case 'ACTIVITY_FULL':
@@ -144,7 +143,7 @@ export const cancelJoinActivityHandler = async (req: AuthRequest, res: Response)
 
     res.json({ code: 0, message: '已取消报名' })
   } catch (error: any) {
-    logger.error('取消报名失败', { error: error instanceof Error ? error.message : 'unknown_error' })
+    console.error('取消报名失败:', error)
 
     switch (error.message) {
       case 'NOT_JOINED':
@@ -163,7 +162,7 @@ export const getMyJoinedActivities = async (req: AuthRequest, res: Response) => 
     const activities = await activityRepo.getUserJoinedActivities(userId)
     res.json({ code: 0, data: activities })
   } catch (error) {
-    logger.error('获取我的活动失败', { error: error instanceof Error ? error.message : 'unknown_error' })
+    console.error(error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
@@ -190,7 +189,7 @@ export const createActivityHandler = async (req: AuthRequest, res: Response) => 
 
     res.status(201).json({ code: 0, message: '活动创建成功', data: { id: activityId } })
   } catch (error) {
-    logger.error('创建活动失败', { error: error instanceof Error ? error.message : 'unknown_error' })
+    console.error(error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
@@ -219,7 +218,7 @@ export const updateActivityHandler = async (req: AuthRequest, res: Response) => 
 
     res.json({ code: 0, message: '活动更新成功' })
   } catch (error) {
-    logger.error('更新活动失败', { error: error instanceof Error ? error.message : 'unknown_error' })
+    console.error(error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
@@ -238,7 +237,7 @@ export const deleteActivityHandler = async (req: AuthRequest, res: Response) => 
 
     res.json({ code: 0, message: '活动删除成功' })
   } catch (error) {
-    logger.error('删除活动失败', { error: error instanceof Error ? error.message : 'unknown_error' })
+    console.error(error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
@@ -262,7 +261,7 @@ export const getActivityDetailWithParticipants = async (req: Request, res: Respo
       },
     })
   } catch (error) {
-    logger.error('获取活动详情失败', { error: error instanceof Error ? error.message : 'unknown_error' })
+    console.error('获取活动详情失败:', error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }

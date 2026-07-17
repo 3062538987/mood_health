@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { getOperationLogsHandler } from '../controllers/auditController'
-import { authenticate, requirePermission } from '../middleware/auth'
+import { authenticate, requireRole, requirePermission } from '../middleware/auth'
 
 const router = Router()
 
@@ -8,6 +8,7 @@ const router = Router()
 router.get(
   '/operation-logs',
   authenticate,
+  requireRole(['super_admin']),
   requirePermission('audit.record.view_all'),
   getOperationLogsHandler
 )
@@ -15,6 +16,7 @@ router.get(
 router.get(
   '/all',
   authenticate,
+  requireRole(['super_admin']),
   requirePermission('audit.record.view_all'),
   getOperationLogsHandler
 )

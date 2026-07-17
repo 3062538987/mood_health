@@ -37,6 +37,11 @@ export type PermissionCode =
   | 'auth.profile.read'
   | 'auth.register.role_assign'
 
+interface RolePermissionConfig {
+  granted: readonly PermissionCode[]
+  forbidden: readonly PermissionCode[]
+}
+
 export type UserRole = 'student' | 'counselor' | 'super_admin' | 'user' | 'admin'
 
 const USER_ROLES: readonly UserRole[] = ['student', 'counselor', 'super_admin', 'user', 'admin']
@@ -56,6 +61,136 @@ const getAccessRepository = (): AccessRepository => {
 const getAuditRepository = (): AuditRepository => {
   auditRepository = auditRepository ?? createAuditRepository()
   return auditRepository
+}
+
+/**
+ * 角色-权限映射表
+ * granted: 当前角色允许的权限
+ * forbidden: 当前角色显式禁止的权限（命中直接 403）
+ */
+export const rolePermissions: Record<UserRole, RolePermissionConfig> = {
+  student: {
+    granted: [
+      'auth.profile.read',
+      'mood.record.create',
+      'mood.record.read',
+      'mood.record.update',
+      'mood.record.delete',
+      'mood.advice.history.read',
+      'post.create',
+      'post.comment.create',
+      'post.like',
+      'activity.join',
+      'questionnaire.read',
+      'questionnaire.submit',
+      'relax.record.manage',
+      'achievement.read',
+    ],
+    forbidden: [
+      'post.audit',
+      'post.audit.pending.read',
+      'activity.manage',
+      'course.manage',
+      'music.manage',
+      'user.manage',
+      'role.manage',
+      'system.config',
+      'incident.fix',
+      'audit.record.view_all',
+      'feedback.handle',
+      'report.view',
+      'auth.register.role_assign',
+    ],
+  },
+  counselor: {
+    granted: [
+      'auth.profile.read',
+      'audit.record.view_all',
+      'report.view',
+      'feedback.handle',
+      'mood.record.read',
+      'questionnaire.submit',
+    ],
+    forbidden: [
+      'user.manage',
+      'role.manage',
+      'system.config',
+      'incident.fix',
+      'auth.register.role_assign',
+      'activity.manage',
+      'course.manage',
+      'music.manage',
+    ],
+  },
+  super_admin: {
+    granted: [
+      'user.manage',
+      'role.manage',
+      'system.config',
+      'incident.fix',
+      'audit.record.view_all',
+      'post.audit.pending.read',
+      'post.audit',
+      'activity.manage',
+      'course.manage',
+      'music.manage',
+      'report.view',
+      'feedback.handle',
+      'mood.record.read',
+      'questionnaire.submit',
+      'auth.profile.read',
+    ],
+    forbidden: ['auth.register.role_assign'],
+  },
+  admin: {
+    granted: [
+      'post.audit.pending.read',
+      'post.audit',
+      'audit.record.view_all',
+      'activity.manage',
+      'course.manage',
+      'music.manage',
+      'report.view',
+      'feedback.handle',
+      'mood.record.read',
+      'questionnaire.submit',
+      'auth.profile.read',
+    ],
+    forbidden: ['role.manage', 'system.config', 'incident.fix', 'auth.register.role_assign'],
+  },
+  user: {
+    granted: [
+      'auth.profile.read',
+      'mood.record.create',
+      'mood.record.read',
+      'mood.record.update',
+      'mood.record.delete',
+      'mood.advice.history.read',
+      'post.create',
+      'post.comment.create',
+      'post.like',
+      'activity.join',
+      'questionnaire.read',
+      'questionnaire.submit',
+      'relax.record.manage',
+      'achievement.read',
+    ],
+    forbidden: [
+      'post.audit',
+      'post.audit.pending.read',
+      'activity.manage',
+      'course.manage',
+      'music.manage',
+      'user.manage',
+      'role.manage',
+      'system.config',
+      'incident.fix',
+      'audit.record.view_all',
+      'feedback.handle',
+      'report.view',
+      'auth.register.role_assign',
+    ],
+  },
 }
 
 interface JwtUserPayload {
@@ -183,6 +318,40 @@ export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction
   }
 
   next()
+}
+
+/**
+ * 多角色校验中间件
+ * @param {string[]} roles - 允许访问的角色列表
+ * @returns {Function} Express 中间件
+ */
+export const requireRole = (roles: string[]) => {
+  const allowedRoles = new Set(roles)
+
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return sendAuthError(req, res, 401, '未登录')
+    }
+
+    if (!allowedRoles.has(req.user.role)) {
+      logger.warn('角色校验失败', {
+        path: req.originalUrl,
+        username: req.user.username,
+        role: req.user.role,
+        requiredRoles: roles,
+      })
+      void auditAccessDenied(
+        req.user.userId,
+        req.user.role,
+        'role.check',
+        `角色校验失败: path=${req.originalUrl}, requiredRoles=${roles.join(',')}`,
+        getClientIp(req)
+      )
+      return sendAuthError(req, res, 403, '角色权限不足')
+    }
+
+    next()
+  }
 }
 
 /**

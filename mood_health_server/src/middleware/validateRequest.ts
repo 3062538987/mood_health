@@ -1,14 +1,10 @@
-import { validationResult } from 'express-validator'
-import { Request, Response, NextFunction } from 'express'
-import { API_ERROR_CODES, apiFailure } from '../utils/apiResponse'
+import { validationResult } from 'express-validator';
+import { Request, Response, NextFunction } from 'express';
 
 export const validateRequest = (req: Request, res: Response, next: NextFunction) => {
-  const errors = validationResult(req)
+  const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    const messages = errors.array().map((e) => e.msg).join('; ')
-    return res.status(400).json(
-      apiFailure(API_ERROR_CODES.BAD_REQUEST, `参数验证失败: ${messages}`)
-    )
+    return res.status(400).json({ code: 400, message: '参数验证失败', details: errors.array() });
   }
-  next()
-}
+  next();
+};

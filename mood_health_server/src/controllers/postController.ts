@@ -43,7 +43,7 @@ export const createPostHandler = async (req: AuthRequest, res: Response) => {
       message: shouldMarkForReview(content) ? '内容已提交，等待审核' : '发布成功',
     })
   } catch (error) {
-    logger.error('创建帖子失败', { error: error instanceof Error ? error.message : 'unknown_error' })
+    console.error('创建帖子失败:', error)
     res.status(500).json({ code: 500, message: '服务器内部错误' })
   }
 }
@@ -83,7 +83,7 @@ export const getPostByIdHandler = async (req: Request, res: Response) => {
     const comments = await postRepo.findCommentsByPostId(id)
     res.status(200).json({ code: 0, data: { ...post, comments } })
   } catch (error) {
-    logger.error('获取帖子详情失败', { error: error instanceof Error ? error.message : 'unknown_error' })
+    console.error('获取帖子详情失败:', error)
     res.status(500).json({ code: 500, message: '服务器内部错误' })
   }
 }
@@ -123,7 +123,7 @@ export const likePostHandler = async (req: AuthRequest, res: Response) => {
 
     res.status(200).json({ code: 0, data: post })
   } catch (error) {
-    logger.error('点赞失败', { error: error instanceof Error ? error.message : 'unknown_error' })
+    console.error('点赞失败:', error)
     res.status(500).json({ code: 500, message: '服务器内部错误' })
   }
 }
@@ -158,7 +158,7 @@ export const createCommentHandler = async (req: AuthRequest, res: Response) => {
     })
     res.status(201).json({ code: 0, data: comment })
   } catch (error) {
-    logger.error('发表评论失败', { error: error instanceof Error ? error.message : 'unknown_error' })
+    console.error('发表评论失败:', error)
     res.status(500).json({ code: 500, message: '服务器内部错误' })
   }
 }
@@ -182,7 +182,7 @@ export const likeCommentHandler = async (req: AuthRequest, res: Response) => {
 
     res.status(200).json({ code: 0, data: comment })
   } catch (error) {
-    logger.error('点赞评论失败', { error: error instanceof Error ? error.message : 'unknown_error' })
+    console.error('点赞评论失败:', error)
     res.status(500).json({ code: 500, message: '服务器内部错误' })
   }
 }
@@ -199,7 +199,7 @@ export const getPendingPostsHandler = async (req: AuthRequest, res: Response) =>
     const posts = await postRepo.findPendingPosts(page, pageSize, Number.isNaN(status) ? 0 : status)
     res.status(200).json({ code: 0, data: posts })
   } catch (error) {
-    logger.error('获取待审核帖子列表失败', { error: error instanceof Error ? error.message : 'unknown_error' })
+    console.error('获取待审核帖子列表失败:', error)
     res.status(500).json({ code: 500, message: '服务器内部错误' })
   }
 }
@@ -212,7 +212,7 @@ export const getPostAuditStatsHandler = async (req: AuthRequest, res: Response) 
     const stats = await postRepo.getAuditStats()
     res.status(200).json({ code: 0, data: stats })
   } catch (error) {
-    logger.error('获取帖子审核统计失败', { error: error instanceof Error ? error.message : 'unknown_error' })
+    console.error('获取帖子审核统计失败:', error)
     res.status(500).json({ code: 500, message: '服务器内部错误' })
   }
 }
@@ -240,7 +240,7 @@ export const auditPostHandler = async (req: AuthRequest, res: Response) => {
 
     res.status(200).json({ code: 0, data: post })
   } catch (error) {
-    logger.error('审核帖子失败', { error: error instanceof Error ? error.message : 'unknown_error' })
+    console.error('审核帖子失败:', error)
     res.status(500).json({ code: 500, message: '服务器内部错误' })
   }
 }

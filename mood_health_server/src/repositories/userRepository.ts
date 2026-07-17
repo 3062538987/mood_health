@@ -1,6 +1,5 @@
 import { ResultSetHeader, RowDataPacket } from 'mysql2'
 import { getMysqlPool } from '../config/mysql'
-import { HttpException } from '../utils/errors'
 
 export type UserRoleCode = 'student' | 'counselor' | 'super_admin'
 export type UserStatus = 'active' | 'disabled'
@@ -61,16 +60,16 @@ type RoleIdRow = RowDataPacket & {
   id: number
 }
 
-export class DuplicateUserError extends HttpException {
+export class DuplicateUserError extends Error {
   constructor() {
-    super('用户名或邮箱已存在', 409)
+    super('用户名或邮箱已存在')
     this.name = 'DuplicateUserError'
   }
 }
 
-export class MissingRoleError extends HttpException {
+export class MissingRoleError extends Error {
   constructor(roleCode: UserRoleCode) {
-    super(`缺少系统角色: ${roleCode}`, 500)
+    super(`缺少系统角色: ${roleCode}`)
     this.name = 'MissingRoleError'
   }
 }

@@ -1,5 +1,4 @@
 import bcrypt from "bcryptjs";
-import logger from './logger'
 
 /**
  * 密码工具函数模块
@@ -23,7 +22,7 @@ export const hashPassword = async (
   try {
     return await bcrypt.hash(password, saltRounds);
   } catch (error) {
-    logger.error("密码加密失败", { error: error instanceof Error ? error.message : 'unknown_error' });
+    console.error("密码加密失败:", error);
     throw new Error("密码加密失败");
   }
 };
@@ -44,7 +43,7 @@ export const comparePassword = async (
   try {
     return await bcrypt.compare(password, hashedPassword);
   } catch (error) {
-    logger.error("密码比对失败", { error: error instanceof Error ? error.message : 'unknown_error' });
+    console.error("密码比对失败:", error);
     return false;
   }
 };

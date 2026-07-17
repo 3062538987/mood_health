@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { AuthRequest } from '../middleware/auth'
 import { apiSuccess, apiFailure } from '../utils/apiResponse'
-import { HttpException, BusinessError } from '../utils/errors'
+import { HttpException } from '../utils/errors'
 import logger from '../utils/logger'
 import { createAuthService } from '../services/authService'
 
@@ -27,18 +27,7 @@ export const register = async (req: Request, res: Response) => {
       username: req.body?.username,
       reason: error instanceof Error ? error.message : 'unknown_error',
     })
-    if (error instanceof HttpException) {
-      return res.status(error.statusCode).json(apiFailure(error.statusCode, error.message))
-    }
-    if (error instanceof BusinessError) {
-      return res.status(400).json(apiFailure(400, error.message))
-    }
-    logger.error('用户注册失败', {
-      path: req.originalUrl,
-      username: req.body?.username,
-      error: error instanceof Error ? error.message : 'unknown_error',
-    })
-    return res.status(500).json(apiFailure(500, '服务器内部错误'))
+    throw error
   }
 }
 
@@ -54,18 +43,7 @@ export const login = async (req: Request, res: Response) => {
       username: req.body?.username,
       reason: error instanceof Error ? error.message : 'unknown_error',
     })
-    if (error instanceof HttpException) {
-      return res.status(error.statusCode).json(apiFailure(error.statusCode, error.message))
-    }
-    if (error instanceof BusinessError) {
-      return res.status(400).json(apiFailure(400, error.message))
-    }
-    logger.error('用户登录失败', {
-      path: req.originalUrl,
-      username: req.body?.username,
-      error: error instanceof Error ? error.message : 'unknown_error',
-    })
-    return res.status(500).json(apiFailure(500, '服务器内部错误'))
+    throw error
   }
 }
 

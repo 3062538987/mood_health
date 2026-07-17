@@ -1,5 +1,4 @@
 import redisClient from "./redis.client";
-import logger from './logger'
 
 const activityCacheKeys = new Set<string>();
 
@@ -12,7 +11,7 @@ export const setCache = async (
     await redisClient.set(key, JSON.stringify(value), ttl);
     activityCacheKeys.add(key);
   } catch (error) {
-    logger.warn("Redis缓存设置失败:", error);
+    console.warn("Redis缓存设置失败:", error);
   }
 };
 
@@ -24,7 +23,7 @@ export const getCache = async <T = unknown>(key: string): Promise<T | null> => {
     }
     return null;
   } catch (error) {
-    logger.warn("Redis缓存获取失败:", error);
+    console.warn("Redis缓存获取失败:", error);
     return null;
   }
 };
@@ -39,10 +38,10 @@ export const clearActivityCache = async (): Promise<void> => {
   try {
     if (keys.length > 0) {
       await redisClient.del(...keys);
-      logger.info(`已清除 ${keys.length} 个活动缓存键`);
+      console.log(`已清除 ${keys.length} 个活动缓存键`);
     }
   } catch (error) {
-    logger.warn("Redis缓存清除失败:", error);
+    console.warn("Redis缓存清除失败:", error);
   } finally {
     activityCacheKeys.clear();
   }
@@ -53,7 +52,7 @@ export const deleteCache = async (key: string): Promise<void> => {
     await redisClient.del(key);
     activityCacheKeys.delete(key);
   } catch (error) {
-    logger.warn("Redis缓存删除失败:", error);
+    console.warn("Redis缓存删除失败:", error);
   }
 };
 
@@ -95,11 +94,11 @@ export const clearMoodCache = async (userId: number): Promise<void> => {
       const keys = await redisClient.keys(pattern);
       if (keys && keys.length > 0) {
         await redisClient.del(...keys);
-        logger.info(`已清除用户 ${userId} 的情绪缓存: ${keys.length} 个键`);
+        console.log(`已清除用户 ${userId} 的情绪缓存: ${keys.length} 个键`);
       }
     }
   } catch (error) {
-    logger.warn("清除情绪缓存失败:", error);
+    console.warn("清除情绪缓存失败:", error);
   }
 };
 

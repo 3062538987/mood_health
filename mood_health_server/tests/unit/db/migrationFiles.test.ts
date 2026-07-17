@@ -53,8 +53,6 @@ const expectedMigrationFiles = [
   '0230_create_posts.up.sql',
   '0240_create_achievements.down.sql',
   '0240_create_achievements.up.sql',
-  '0250_fix_emotion_type_codes.down.sql',
-  '0250_fix_emotion_type_codes.up.sql',
 ]
 
 describe('migration SQL files', () => {

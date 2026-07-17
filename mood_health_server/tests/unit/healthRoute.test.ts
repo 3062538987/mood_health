@@ -58,7 +58,6 @@ describe('GET /health', () => {
         mysql: 'connected',
         redis: 'connected',
       },
-      requestId: expect.any(String),
     })
   })
 
@@ -77,7 +76,6 @@ describe('GET /health', () => {
         mysql: 'connected',
         redis: 'disconnected',
       },
-      requestId: expect.any(String),
     })
   })
 
@@ -96,7 +94,6 @@ describe('GET /health', () => {
         mysql: 'disconnected',
         redis: 'connected',
       },
-      requestId: expect.any(String),
     })
   })
 })

@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { createMusicRepository } from "../repositories/musicRepository";
-import logger from '../utils/logger'
 
 const musicRepo = createMusicRepository();
 
@@ -19,7 +18,7 @@ export const getMusicList = async (
       message: "获取音乐列表成功",
     });
   } catch (error) {
-    logger.error('获取音乐列表失败', { error: error instanceof Error ? error.message : 'unknown_error' });
+    console.error("获取音乐列表失败:", error);
     res.status(500).json({
       success: false,
       message: "服务器错误",
@@ -50,7 +49,7 @@ export const getMusicById = async (
       message: "获取音乐详情成功",
     });
   } catch (error) {
-    logger.error('获取音乐详情失败', { error: error instanceof Error ? error.message : 'unknown_error' });
+    console.error("获取音乐详情失败:", error);
     res.status(500).json({
       success: false,
       message: "服务器错误",
@@ -80,7 +79,7 @@ export const createMusic = async (
       message: "创建音乐成功",
     });
   } catch (error) {
-    logger.error('创建音乐失败', { error: error instanceof Error ? error.message : 'unknown_error' });
+    console.error("创建音乐失败:", error);
     res.status(500).json({
       success: false,
       message: "服务器错误",
@@ -119,7 +118,7 @@ export const updateMusic = async (
       message: "更新音乐成功",
     });
   } catch (error) {
-    logger.error('更新音乐失败', { error: error instanceof Error ? error.message : 'unknown_error' });
+    console.error("更新音乐失败:", error);
     res.status(500).json({
       success: false,
       message: "服务器错误",
@@ -149,7 +148,7 @@ export const deleteMusic = async (
       message: "删除音乐成功",
     });
   } catch (error) {
-    logger.error('删除音乐失败', { error: error instanceof Error ? error.message : 'unknown_error' });
+    console.error("删除音乐失败:", error);
     res.status(500).json({
       success: false,
       message: "服务器错误",

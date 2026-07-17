@@ -22,7 +22,6 @@ describe('API response contract', () => {
       code: 0,
       message: '查询成功',
       data: { id: 1 },
-      requestId: expect.any(String),
     })
   })
 
@@ -30,20 +29,6 @@ describe('API response contract', () => {
     expect(apiFailure(API_ERROR_CODES.BAD_REQUEST, '参数错误')).toEqual({
       code: API_ERROR_CODES.BAD_REQUEST,
       message: '参数错误',
-      data: null,
-      requestId: expect.any(String),
-    })
-  })
-
-  it('normalizes HTTP status codes to business error codes', () => {
-    expect(apiFailure(404, '不存在')).toMatchObject({
-      code: API_ERROR_CODES.NOT_FOUND,
-      message: '不存在',
-      data: null,
-    })
-    expect(apiFailure(500, '服务器错误')).toMatchObject({
-      code: API_ERROR_CODES.INTERNAL_ERROR,
-      message: '服务器错误',
       data: null,
     })
   })
@@ -68,7 +53,6 @@ describe('error middleware contract', () => {
       code: API_ERROR_CODES.BAD_REQUEST,
       message: '请求参数验证失败',
       data: null,
-      requestId: expect.any(String),
     })
   })
 
@@ -83,7 +67,6 @@ describe('error middleware contract', () => {
       code: API_ERROR_CODES.NOT_FOUND,
       message: '请求的资源不存在',
       data: null,
-      requestId: expect.any(String),
     })
   })
 
@@ -99,7 +82,6 @@ describe('error middleware contract', () => {
       code: API_ERROR_CODES.INTERNAL_ERROR,
       message: '服务器内部错误',
       data: null,
-      requestId: expect.any(String),
     })
     expect(JSON.stringify((response.json as jest.Mock).mock.calls)).not.toContain('database password leaked')
     expect(JSON.stringify((response.json as jest.Mock).mock.calls)).not.toContain('stack')

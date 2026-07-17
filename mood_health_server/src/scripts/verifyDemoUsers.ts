@@ -1,4 +1,6 @@
 const fetch = require('node-fetch')
+import { rolePermissions } from '../middleware/auth'
+import type { PermissionCode } from '../middleware/auth'
 
 interface DemoAccount {
   username: string
@@ -30,6 +32,59 @@ const demoAccounts: DemoAccount[] = [
   { username: 'student_test3', expectedRole: 'user' },
   { username: 'student_test4', expectedRole: 'user' },
 ]
+
+const hasPermission = (role: 'super_admin' | 'admin' | 'user', permission: PermissionCode) => {
+  const conf = rolePermissions[role]
+  if (conf.forbidden.includes(permission)) {
+    return false
+  }
+  return conf.granted.includes(permission)
+}
+
+const runPermissionChecks = () => {
+  const failures: string[] = []
+
+  const superAdminRequired: PermissionCode[] = [
+    'user.manage',
+    'role.manage',
+    'system.config',
+    'incident.fix',
+    'audit.record.view_all',
+  ]
+
+  superAdminRequired.forEach((permission) => {
+    if (!hasPermission('super_admin', permission)) {
+      failures.push(`super_admin 缺少权限: ${permission}`)
+    }
+  })
+
+  const adminDenied: PermissionCode[] = [
+    'user.manage',
+    'role.manage',
+    'system.config',
+    'incident.fix',
+  ]
+  adminDenied.forEach((permission) => {
+    if (hasPermission('admin', permission)) {
+      failures.push(`admin 不应拥有权限: ${permission}`)
+    }
+  })
+
+  if (failures.length > 0) {
+    return {
+      ok: false,
+      logs: failures,
+    }
+  }
+
+  return {
+    ok: true,
+    logs: [
+      'super_admin 权限校验通过（user.manage/role.manage/system.config/incident.fix/audit.record.view_all）',
+      'admin 权限边界校验通过（无法访问 user.manage/role.manage/system.config/incident.fix）',
+    ],
+  }
+}
 
 const login = async (username: string, password: string) => {
   const response = await fetch(`${BASE_URL}/api/auth/login`, {
@@ -83,6 +138,18 @@ const main = async () => {
       console.log(`❌ ${account.username} 登录失败: ${error?.message || '未知错误'}`)
     }
   }
+
+  console.log('')
+  console.log('权限边界校验：')
+  const permissionCheck = runPermissionChecks()
+  permissionCheck.logs.forEach((log) => {
+    if (permissionCheck.ok) {
+      console.log(`✅ ${log}`)
+    } else {
+      console.log(`❌ ${log}`)
+      failures.push(log)
+    }
+  })
 
   console.log('')
   console.log(

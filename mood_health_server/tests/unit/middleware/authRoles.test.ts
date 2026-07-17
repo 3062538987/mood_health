@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { isValidUserRole } from '../../../src/middleware/auth'
+import { isValidUserRole, rolePermissions } from '../../../src/middleware/auth'
 
 describe('auth middleware role boundary', () => {
   it('does not import the legacy user model database path', () => {
@@ -20,5 +20,11 @@ describe('auth middleware role boundary', () => {
     expect(isValidUserRole('user')).toBe(true)
     expect(isValidUserRole('admin')).toBe(true)
     expect(isValidUserRole('owner')).toBe(false)
+  })
+
+  it('has permission maps for MySQL JWT role codes used by auth service', () => {
+    expect(rolePermissions.student.granted).toContain('auth.profile.read')
+    expect(rolePermissions.counselor.granted).toContain('auth.profile.read')
+    expect(rolePermissions.super_admin.granted).toContain('user.manage')
   })
 })

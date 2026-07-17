@@ -1,4 +1,4 @@
-﻿# 链路打通设计文档
+# 链路打通设计文档
 
 > 状态：设计中
 > 日期：2026-07-16
@@ -62,7 +62,7 @@
 + AI_ENABLED=true
 
 - DEEPSEEK_API_KEY=
-+ DEEPSEEK_API_KEY=<your-deepseek-api-key>   # 用户需填入真实 Key
++ DEEPSEEK_API_KEY=sk-xxxxxxxxxxxxxxxx   # 用户需填入真实 Key
 ```
 
 ### 3.3 链路验证

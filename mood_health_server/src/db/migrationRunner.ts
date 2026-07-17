@@ -28,7 +28,6 @@ export interface RunMigrationsOptions {
   lockName?: string
   lockTimeoutSeconds?: number
   now?: () => Date
-  steps?: number
 }
 
 export interface RunMigrationsResult {
@@ -207,7 +206,6 @@ export const rollbackMigrations = async (
 ): Promise<RollbackMigrationsResult> => {
   const lockName = options.lockName ?? DEFAULT_LOCK_NAME
   const lockTimeoutSeconds = options.lockTimeoutSeconds ?? 10
-  const steps = Math.max(Math.floor(options.steps ?? 1), 0)
   const migrations = loadMigrationFiles(options.migrationsDir)
 
   await acquireLock(options.db, lockName, lockTimeoutSeconds)
@@ -217,7 +215,6 @@ export const rollbackMigrations = async (
 
     const rolledBack: AppliedMigration[] = []
     for (const migration of [...migrations].reverse()) {
-      if (rolledBack.length >= steps) break
       const applied = appliedByVersion.get(migration.version)
       if (!applied) continue
 
