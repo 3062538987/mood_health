@@ -133,6 +133,21 @@
         </article>
       </div>
 
+      <div v-if="analysisHistoryId" class="feedback-row">
+        <template v-if="feedbackSubmitted">
+          <span class="feedback-thanks">感谢反馈</span>
+        </template>
+        <template v-else>
+          <span class="feedback-label">这个建议对你有帮助吗？</span>
+          <button class="feedback-btn helpful" :disabled="feedbackLoading" @click="submitFeedback('helpful')">
+            👍 有帮助
+          </button>
+          <button class="feedback-btn not-helpful" :disabled="feedbackLoading" @click="submitFeedback('not_helpful')">
+            👎 没帮助
+          </button>
+        </template>
+      </div>
+
       <AiDisclaimer />
     </div>
 
@@ -183,8 +198,10 @@ import SoftEmptyState from '@/components/shared/SoftEmptyState.vue'
 import SoftLoadingState from '@/components/shared/SoftLoadingState.vue'
 import AiDisclaimer from '@/components/mood/AiDisclaimer.vue'
 import type { AnalyzeMoodResponse, MoodAdviceHistoryItem } from '@/api/mood'
+import { ref } from 'vue'
+import request from '@/utils/request'
 
-defineProps<{
+const props = defineProps<{
   loading: boolean
   historyLoading: boolean
   canGenerate: boolean
@@ -206,6 +223,7 @@ defineProps<{
   autoRecommendations: string[]
   history: MoodAdviceHistoryItem[]
   moodMeta: { label: string; emoji: string; color: string } | null
+  analysisHistoryId: number | null
 }>()
 
 const emit = defineEmits<{
@@ -215,6 +233,29 @@ const emit = defineEmits<{
   applyOne: [index: number]
   useHistory: [item: MoodAdviceHistoryItem]
 }>()
+
+const feedbackSubmitted = ref(false)
+const feedbackLoading = ref(false)
+
+const submitFeedback = async (type: 'helpful' | 'not_helpful') => {
+  if (!props.analysisHistoryId || feedbackLoading.value) return
+  feedbackLoading.value = true
+  try {
+    await request({
+      url: '/api/ai/feedback',
+      method: 'post',
+      data: {
+        analysisHistoryId: props.analysisHistoryId,
+        feedbackType: type,
+      },
+    })
+    feedbackSubmitted.value = true
+  } catch {
+    // 静默处理
+  } finally {
+    feedbackLoading.value = false
+  }
+}
 
 const formatTime = (value: string) => {
   return new Date(value).toLocaleString('zh-CN', {
@@ -542,5 +583,44 @@ h4 {
 .result-panel.high-risk .section-block {
   background: #fff;
   border-color: #fecaca;
+}
+
+.feedback-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid #f0f0f0;
+  margin-top: 4px;
+}
+
+.feedback-label {
+  font-size: 13px;
+  color: #909399;
+}
+
+.feedback-btn {
+  font-size: 12px;
+  padding: 4px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 16px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.feedback-btn:hover:not(:disabled) {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.feedback-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.feedback-thanks {
+  font-size: 13px;
+  color: #67c23a;
 }
 </style>
