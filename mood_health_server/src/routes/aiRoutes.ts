@@ -8,6 +8,7 @@ import axios from 'axios'
 import rateLimit from 'express-rate-limit'
 import { authenticate } from '../middleware/auth'
 import { analyzeWithContext } from '../controllers/aiContextController'
+import { counselingHandler } from '../controllers/counselingController'
 
 const router = express.Router()
 
@@ -58,6 +59,12 @@ router.post('/treehole/gentle-reply', (req: Request, res: Response) => {
  * @access 需要认证
  */
 router.post('/context/analyze', analyzeWithContext)
+
+/**
+ * 心理咨询对话接口
+ * @route POST /api/ai/counseling
+ */
+router.post('/counseling', counselingHandler)
 
 const getAiServiceBaseUrl = () => {
   const rawBaseUrl =
