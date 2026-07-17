@@ -39,6 +39,72 @@
       description="它会结合文字、情绪类型和触发因素，生成更贴近当下的建议。"
     />
 
+    <!-- 四段式结构化分析 -->
+    <div
+      v-else-if="fourSection"
+      class="result-panel"
+      :class="{ 'high-risk': fourSection.whenToSeekHelp && fourSection.whenToSeekHelp.includes('立刻') }"
+    >
+      <div class="result-head">
+        <div class="mood-pill" :style="{ '--pill-color': moodMeta?.color || '#6366f1' }">
+          <span>{{ moodMeta?.emoji }}</span>
+          <strong>{{ moodMeta?.label || '当前情绪' }}</strong>
+        </div>
+        <div class="head-actions">
+          <button type="button" class="ghost-btn" @click="emit('copy')">复制建议</button>
+        </div>
+      </div>
+
+      <!-- 数据范围提示 -->
+      <p v-if="dataScope" class="data-scope">
+        <span class="scope-icon">📊</span>
+        基于近 {{ dataScope.dateRange }} 的 {{ dataScope.moodRecordCount }} 条情绪记录
+        <template v-if="dataScope.hasAssessment">和最近一次测评结果</template>
+        生成
+      </p>
+
+      <section class="four-section">
+        <!-- 现状概括 -->
+        <div class="section-block summary">
+          <h4 class="section-title">
+            <span class="section-icon">📝</span>现状概括
+          </h4>
+          <p>{{ fourSection.summary }}</p>
+        </div>
+
+        <!-- 可能原因 -->
+        <div class="section-block causes">
+          <h4 class="section-title">
+            <span class="section-icon">🔍</span>可能原因
+          </h4>
+          <p>{{ fourSection.possibleCauses }}</p>
+        </div>
+
+        <!-- 今日行动 -->
+        <div class="section-block actions">
+          <h4 class="section-title">
+            <span class="section-icon">✨</span>今日行动
+          </h4>
+          <ul>
+            <li v-for="(action, idx) in fourSection.todayActions" :key="idx">
+              <span class="action-index">{{ idx + 1 }}</span>
+              {{ action }}
+            </li>
+          </ul>
+        </div>
+
+        <!-- 何时求助 -->
+        <div class="section-block seek-help">
+          <h4 class="section-title">
+            <span class="section-icon">💡</span>何时求助
+          </h4>
+          <p>{{ fourSection.whenToSeekHelp }}</p>
+        </div>
+      </section>
+
+      <AiDisclaimer />
+    </div>
+
     <div v-else-if="result" class="result-panel">
       <div class="result-head">
         <div class="mood-pill" :style="{ '--pill-color': moodMeta?.color || '#6366f1' }">
@@ -66,6 +132,8 @@
           </button>
         </article>
       </div>
+
+      <AiDisclaimer />
     </div>
 
     <SoftEmptyState
@@ -113,6 +181,7 @@
 <script setup lang="ts">
 import SoftEmptyState from '@/components/shared/SoftEmptyState.vue'
 import SoftLoadingState from '@/components/shared/SoftLoadingState.vue'
+import AiDisclaimer from '@/components/mood/AiDisclaimer.vue'
 import type { AnalyzeMoodResponse, MoodAdviceHistoryItem } from '@/api/mood'
 
 defineProps<{
@@ -123,6 +192,17 @@ defineProps<{
   disabledSeconds: number
   serviceMessage: string
   result: AnalyzeMoodResponse | null
+  fourSection: {
+    summary: string
+    possibleCauses: string
+    todayActions: string[]
+    whenToSeekHelp: string
+  } | null
+  dataScope: {
+    dateRange: string
+    moodRecordCount: number
+    hasAssessment: boolean
+  } | null
   autoRecommendations: string[]
   history: MoodAdviceHistoryItem[]
   moodMeta: { label: string; emoji: string; color: string } | null
@@ -373,5 +453,94 @@ h4 {
   .head-actions {
     justify-content: start;
   }
+}
+
+/* 四段式结构化分析 */
+.data-scope {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 12px;
+  background: #f0f4ff;
+  color: #6b7280;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.scope-icon {
+  margin-right: 0.3rem;
+}
+
+.four-section {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.section-block {
+  padding: 1rem;
+  border-radius: 16px;
+  background: #fcf7f1;
+  border: 1px solid #f0e8d8;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  color: #5c5c5c;
+}
+
+.section-icon {
+  font-size: 1rem;
+}
+
+.section-block p {
+  margin: 0;
+  color: #5c5c5c;
+  line-height: 1.7;
+}
+
+.section-block ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.section-block li {
+  display: flex;
+  align-items: start;
+  gap: 0.5rem;
+  color: #5c5c5c;
+  line-height: 1.6;
+}
+
+.action-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: #e8e0d0;
+  color: #8a6a47;
+  font-size: 0.78rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* 高风险视觉区分 */
+.result-panel.high-risk {
+  border: 2px solid #ef4444;
+  border-radius: 20px;
+  padding: 1rem;
+  background: #fef2f2;
+}
+
+.result-panel.high-risk .section-block {
+  background: #fff;
+  border-color: #fecaca;
 }
 </style>
