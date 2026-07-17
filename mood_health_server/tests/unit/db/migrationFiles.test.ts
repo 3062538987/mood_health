@@ -57,6 +57,8 @@ const expectedMigrationFiles = [
   '0250_fix_emotion_type_codes.up.sql',
   '0260_create_ai_analysis_history.down.sql',
   '0260_create_ai_analysis_history.up.sql',
+  '0270_create_mood_alerts.down.sql',
+  '0270_create_mood_alerts.up.sql',
 ]
 
 describe('migration SQL files', () => {

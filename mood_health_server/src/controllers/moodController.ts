@@ -3,8 +3,10 @@ import { AuthRequest } from '../middleware/auth'
 import { clearMoodCache } from '../utils/cache'
 import { apiFailure, apiSuccess } from '../utils/apiResponse'
 import { createMoodService } from '../services/moodService'
+import { createMoodAlertService } from '../services/moodAlertService'
 
 const moodService = createMoodService()
+const moodAlertService = createMoodAlertService()
 
 export const recordMood = async (req: AuthRequest, res: Response) => {
   try {
@@ -317,6 +319,40 @@ export const getMoodComparison = async (req: AuthRequest, res: Response) => {
 
     const comparison = await moodService.getPeriodComparison(userId, period as 'week' | 'month')
     res.json(apiSuccess(comparison, '获取周期对比成功'))
+  } catch (error) {
+    console.error(error)
+    res.status(500).json(apiFailure(500, '服务器错误'))
+  }
+}
+
+export const getMoodAlerts = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.userId
+    // 先检测新提醒，再获取所有提醒
+    await moodAlertService.detectAlerts(userId)
+    const alerts = await moodAlertService.getAlerts(userId)
+    res.json(apiSuccess(alerts, '获取提醒成功'))
+  } catch (error) {
+    console.error(error)
+    res.status(500).json(apiFailure(500, '服务器错误'))
+  }
+}
+
+export const markAlertRead = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.userId
+    const alertId = parseInt(String(req.params.id))
+
+    if (!Number.isInteger(alertId) || alertId <= 0) {
+      return res.status(400).json(apiFailure(400, '无效的提醒 ID'))
+    }
+
+    const updated = await moodAlertService.markAsRead(userId, alertId)
+    if (!updated) {
+      return res.status(404).json(apiFailure(404, '提醒不存在'))
+    }
+
+    res.json(apiSuccess(null, '已标记为已读'))
   } catch (error) {
     console.error(error)
     res.status(500).json(apiFailure(500, '服务器错误'))

@@ -209,6 +209,7 @@
         </main>
 
         <aside class="insight-column">
+          <MoodAlert />
           <MoodComparison />
         </aside>
       </div>
@@ -222,6 +223,7 @@ import { storeToRefs } from 'pinia'
 import { EMOTION_MAP } from '@/constants/emotions'
 import { useMoodRecordStore } from '@/stores/moodRecordStore'
 import MoodComparison from '@/components/mood/MoodComparison.vue'
+import MoodAlert from '@/components/mood/MoodAlert.vue'
 
 const store = useMoodRecordStore()
 
