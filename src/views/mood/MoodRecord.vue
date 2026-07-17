@@ -445,6 +445,7 @@ h1,
 h2 {
   margin: 0;
   color: var(--text-color);
+  font-family: var(--font-display);
 }
 
 h1 {

@@ -198,17 +198,18 @@ watch(
 </script>
 
 <style scoped lang="scss">
+/* ── 顶部导航栏 ── */
 .main-nav {
-  background: var(--white);
-  box-shadow: var(--shadow-sm);
+  background: rgba(255, 253, 249, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 1px 0 var(--border-color), var(--shadow-sm);
   position: sticky;
   top: 0;
   z-index: 100;
-  backdrop-filter: blur(10px); /* 毛玻璃效果（可选） */
-  background-color: rgba(255, 255, 255, 0.9);
 
   @media (prefers-color-scheme: dark) {
-    background-color: rgba(30, 34, 40, 0.95);
+    background: rgba(42, 37, 32, 0.9);
   }
 }
 
@@ -220,7 +221,7 @@ watch(
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 2rem;
-  height: 70px;
+  height: 64px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -228,198 +229,163 @@ watch(
 
 .nav-links {
   display: flex;
-  gap: 2.5rem;
+  gap: 2rem;
   align-items: center;
 
   a {
-    color: var(--text-color);
+    color: var(--text-light-color);
     text-decoration: none;
     font-weight: 500;
-    font-size: 1.1rem;
-    padding: 0.5rem 0;
+    font-size: 0.95rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: var(--radius-md);
     position: relative;
-    transition: color 0.3s ease;
+    transition: all 0.25s ease;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
 
     i {
-      font-size: 1.2rem;
-      opacity: 0.8;
-      color: var(--theme-color, var(--primary-color));
+      font-size: 1rem;
+      opacity: 0.7;
+      transition: opacity 0.25s ease;
     }
 
     &:hover {
-      color: var(--theme-color, var(--primary-color));
+      color: var(--primary-color);
+      background: var(--primary-soft);
+      i { opacity: 1; }
     }
 
     &.active {
-      color: var(--theme-color, var(--primary-color));
+      color: var(--primary-color);
       font-weight: 600;
-
-      &::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 3px;
-        background: var(--theme-color, var(--primary-color));
-        border-radius: 3px 3px 0 0;
-        animation: slideIn 0.2s ease;
-      }
+      background: var(--primary-soft);
+      i { opacity: 1; }
     }
-  }
-}
-
-@keyframes slideIn {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
   }
 }
 
 .nav-user {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 
   .username {
-    color: var(--theme-color, var(--primary-color));
-    font-weight: 500;
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 0.9rem;
   }
 
   .login-btn,
   .register-btn,
   .btn-logout {
-    padding: 0.5rem 1.2rem;
-    border-radius: 30px;
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
     text-decoration: none;
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 0.85rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    transition: background 0.3s ease;
+    gap: 0.4rem;
+    transition: all 0.25s ease;
     border: none;
     cursor: pointer;
   }
 
   .login-btn {
-    background: var(--theme-color, var(--primary-color));
-    color: white;
-
-    &:hover {
-      background: var(--theme-color, var(--primary-color));
-      opacity: 0.9;
-    }
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(232, 131, 74, 0.2);
+    &:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(232, 131, 74, 0.3); }
   }
 
   .register-btn {
-    background: var(--bg-light);
-    color: var(--theme-color, var(--primary-color));
-    border: 1px solid var(--theme-color, var(--primary-color));
-
-    &:hover {
-      background: var(--theme-color, var(--primary-color));
-      color: white;
-    }
+    background: var(--surface);
+    color: var(--primary-color);
+    border: 1.5px solid var(--primary-color);
+    &:hover { background: var(--primary-soft); }
   }
 
   .btn-logout {
     background: transparent;
-    color: var(--danger);
-    border: 1px solid var(--danger);
-
-    &:hover {
-      background: var(--danger);
-      color: white;
-    }
+    color: var(--text-light-color);
+    border: 1.5px solid var(--border-color);
+    &:hover { color: var(--danger-color); border-color: var(--danger-color); }
   }
 }
 
 footer {
   text-align: center;
   padding: 20px 0;
-  color: var(--text-light-color);
-  font-size: 14px;
+  color: var(--text-muted);
+  font-size: 13px;
   margin-top: 20px;
 }
 
-.mobile-tab-bar {
-  display: none;
-}
+.mobile-tab-bar { display: none; }
 
-// 路由切换动画
+/* ── 路由切换动画 ── */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.25s ease;
 }
-
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
 }
 
-// 响应式示例
+/* ── 响应式 ── */
 @media (max-width: 768px) {
   .has-mobile-tabs .app-content {
-    padding-bottom: calc(90px + env(safe-area-inset-bottom));
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
   }
-
-  .nav-container {
-    padding: 0 1rem;
-  }
-
-  .main-nav {
-    display: none;
-  }
+  .nav-container { padding: 0 1rem; }
+  .main-nav { display: none; }
 
   .mobile-tab-bar {
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: minmax(0, 1fr);
-    gap: 6px;
+    gap: 4px;
     position: fixed;
-    left: 12px;
-    right: 12px;
-    bottom: calc(12px + env(safe-area-inset-bottom));
+    left: 10px;
+    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
     z-index: 120;
-    padding: 10px 12px;
+    padding: 8px 10px;
     border-radius: 20px;
-    background: rgba(255, 255, 255, 0.92);
+    background: rgba(255, 253, 249, 0.92);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
-    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 8px 32px rgba(180, 140, 100, 0.16);
+    border: 1px solid rgba(232, 221, 208, 0.6);
+
+    @media (prefers-color-scheme: dark) {
+      background: rgba(42, 37, 32, 0.92);
+      border-color: rgba(61, 54, 48, 0.6);
+    }
 
     .tab-item {
       min-height: 44px;
       display: grid;
       justify-items: center;
       align-content: center;
-      gap: 4px;
+      gap: 3px;
       color: var(--text-light-color);
       text-decoration: none;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
       border: 0;
       background: transparent;
       cursor: pointer;
       font-family: inherit;
 
-      i {
-        font-size: 18px;
-        color: var(--theme-color, var(--primary-color));
-      }
-
-      &.active {
-        color: var(--theme-color, var(--primary-color));
-      }
+      i { font-size: 18px; color: var(--text-muted); transition: color 0.25s; }
+      &.active { color: var(--primary-color); i { color: var(--primary-color); } }
 
       &:focus-visible {
-        outline: 3px solid var(--theme-color, var(--primary-color));
+        outline: 3px solid var(--focus);
         outline-offset: 3px;
         border-radius: 14px;
       }
@@ -434,13 +400,13 @@ footer {
     .mobile-more-menu {
       position: absolute;
       right: 0;
-      bottom: calc(100% + 12px);
+      bottom: calc(100% + 10px);
       min-width: 148px;
       padding: 8px;
       border-radius: 16px;
-      background: var(--white);
-      border: 1px solid rgba(15, 23, 42, 0.1);
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-lg);
       display: grid;
       gap: 4px;
     }
@@ -457,40 +423,14 @@ footer {
       font-size: 13px;
       font-weight: 600;
 
-      i {
-        width: 18px;
-        color: var(--theme-color, var(--primary-color));
-      }
-
+      i { width: 18px; color: var(--primary-color); }
       &:hover,
-      &:focus-visible {
-        background: var(--primary-soft-bg);
-        outline: none;
-      }
+      &:focus-visible { background: var(--primary-soft); outline: none; }
     }
   }
 
-  .nav-links {
-    gap: 1.2rem;
-    a {
-      font-size: 1rem;
-      i {
-        font-size: 1rem;
-      }
-    }
-  }
-  .nav-user {
-    gap: 0.5rem;
-    .login-btn,
-    .register-btn,
-    .btn-logout {
-      padding: 0.4rem 0.8rem;
-      font-size: 0.9rem;
-    }
-  }
-
-  footer {
-    padding-bottom: calc(24px + env(safe-area-inset-bottom));
-  }
+  .nav-links { gap: 1rem; a { font-size: 0.9rem; i { font-size: 0.9rem; } } }
+  .nav-user { gap: 0.5rem; .login-btn, .register-btn, .btn-logout { padding: 0.35rem 0.7rem; font-size: 0.8rem; } }
+  footer { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
 }
 </style>

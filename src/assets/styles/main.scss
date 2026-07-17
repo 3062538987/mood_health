@@ -1,85 +1,110 @@
-/* 导入主题变量 */
+/* ========================================
+   日落花园 · 暖光治愈 — 全局样式
+   ======================================== */
 @use './theme.scss' as *;
 
-/* 全局样式重置 */
+/* ── 重置 ── */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* 导入Google Fonts衬线字体 */
+/* ── 字体 ── */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
 
 body {
-  font-family: 'Microsoft YaHei', sans-serif;
+  font-family: var(--font-body);
   font-size: $font-size-md;
   color: var(--text-color);
   background-color: var(--bg-color);
   min-height: 100vh;
-  line-height: 1.6;
-  /* 纸张纹理背景 */
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.8) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.8) 1px, transparent 1px);
-  background-size: 20px 20px;
-  background-position: -1px -1px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* 暖色渐变光晕背景 */
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(240, 184, 96, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 80%, rgba(232, 131, 74, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 20% 30%, rgba(138, 171, 124, 0.05) 0%, transparent 50%),
+    var(--bg-color);
+  background-attachment: fixed;
 }
 
-/* 通用组件样式 */
+/* ── 容器 ── */
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
 }
 
-/* 按钮样式 */
+/* ── 按钮系统 ── */
 .btn {
-  display: inline-block;
-  padding: 10px 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 22px;
   border: none;
-  border-radius: $border-radius-md;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: $font-size-md;
-  font-weight: 500;
+  font-weight: 600;
   min-width: 80px;
   text-align: center;
+  font-family: var(--font-body);
+  letter-spacing: 0.01em;
+
   &.primary {
-    background-color: var(--theme-color, var(--primary-color));
-    color: var(--white);
+    background: linear-gradient(135deg, $primary-color, $accent-color);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(232, 131, 74, 0.25);
     &:hover {
-      background-color: var(--theme-color, var(--primary-color));
-      opacity: 0.9;
-      box-shadow: var(--shadow-md);
       transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(232, 131, 74, 0.35);
+    }
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(232, 131, 74, 0.2);
     }
   }
+
   &.secondary {
-    background-color: var(--white);
-    color: var(--theme-color, var(--primary-color));
-    border: 1px solid var(--theme-color, var(--primary-color));
+    background: var(--surface);
+    color: var(--primary-color);
+    border: 1.5px solid var(--primary-color);
     &:hover {
-      background-color: var(--bg-light);
+      background: var(--primary-soft);
       box-shadow: var(--shadow-sm);
     }
   }
+
   &.accent {
-    background-color: var(--secondary-color);
-    color: var(--white);
+    background: linear-gradient(135deg, $accent-color, $accent-light);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(240, 184, 96, 0.25);
     &:hover {
-      background-color: var(--secondary-color);
-      opacity: 0.9;
-      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(240, 184, 96, 0.35);
     }
   }
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+
+  &.danger {
+    background: $danger-color;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(224, 85, 106, 0.2);
     &:hover {
-      transform: none;
-      box-shadow: none;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(224, 85, 106, 0.3);
     }
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
   }
 }
 
@@ -91,342 +116,276 @@ textarea,
   min-height: 44px;
 }
 
-/* 液态玻璃效果类 */
+/* ── 玻璃卡片 ── */
 .glass-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: $border-radius-lg;
-  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
-  transition: all 0.3s ease;
+  background: rgba(255, 253, 249, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(232, 221, 208, 0.5);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.35s ease;
   position: relative;
   overflow: hidden;
 
-  &::before {
+  &::after {
     content: '';
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transform: rotate(45deg);
-    animation: shimmer 3s infinite;
-    opacity: 0;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(255, 253, 249, 0.4) 0%, transparent 50%);
+    pointer-events: none;
   }
 
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 40px rgba(31, 38, 135, 0.15);
-    border-color: rgba(255, 255, 255, 0.5);
-
-    &::before {
-      opacity: 1;
-    }
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(232, 131, 74, 0.2);
   }
 }
 
-/* 卡片样式 */
+/* ── 基础卡片 ── */
 .card {
-  background-color: var(--white);
-  border-radius: $border-radius-md;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  padding: 20px;
+  padding: 24px;
   margin-bottom: 20px;
   transition: all 0.3s ease;
   border: 1px solid var(--border-color);
+
   &:hover {
     box-shadow: var(--shadow-md);
     transform: translateY(-2px);
   }
 }
 
-/* 表单样式 */
+/* ── 表单 ── */
 .form-group {
   margin-bottom: 20px;
+
   label {
     display: block;
     margin-bottom: 8px;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text-color);
     font-size: $font-size-md;
+    font-family: var(--font-body);
   }
+
   input,
   textarea,
   select {
     width: 100%;
-    padding: 12px;
-    border: 1px solid var(--border-color);
-    border-radius: $border-radius-md;
+    padding: 12px 16px;
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-md);
     font-size: $font-size-md;
-    transition: all 0.3s ease;
-    background-color: var(--white);
+    font-family: var(--font-body);
+    transition: all 0.25s ease;
+    background: var(--surface);
     color: var(--text-color);
+
     &:focus {
       outline: none;
-      border-color: var(--theme-color, var(--primary-color));
-      box-shadow: 0 0 0 3px rgba(106, 176, 165, 0.1);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 4px var(--focus-ring);
     }
+
     &::placeholder {
-      color: var(--text-light-color);
+      color: var(--text-muted);
     }
   }
+
   textarea {
     resize: vertical;
     min-height: 120px;
   }
+
   select {
     cursor: pointer;
   }
 }
 
-/* 微动画反馈系统 */
-/* 提交成功后的微动画 */
+/* ── 微动效 ── */
 .submit-success {
   animation: gentle-splash 0.6s ease-out;
 }
 
 @keyframes gentle-splash {
-  0% {
-    transform: scale(1);
-  }
-  30% {
-    transform: scale(1.02);
-    filter: brightness(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
+  0% { transform: scale(1); }
+  30% { transform: scale(1.02); filter: brightness(1.08); }
+  100% { transform: scale(1); }
 }
 
-/* 删除时的确认动画 */
 .delete-item {
   animation: dissolve 0.3s forwards;
 }
 
 @keyframes dissolve {
-  to {
-    opacity: 0;
-    transform: translateX(20px);
-    filter: blur(4px);
-  }
+  to { opacity: 0; transform: translateX(16px); filter: blur(4px); }
 }
 
-/* 动画效果 */
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%) rotate(45deg);
-  }
-  100% {
-    transform: translateX(100%) rotate(45deg);
-  }
+/* ── 呼吸光晕动效 ── */
+@keyframes breathe {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.04); }
 }
 
-/* 标题样式 */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+/* ── 标题 ── */
+h1, h2, h3, h4, h5, h6 {
   color: var(--text-color);
   margin-bottom: 16px;
   font-weight: 600;
-  line-height: 1.3;
-  font-family: 'Noto Serif SC', serif;
+  line-height: 1.35;
+  font-family: var(--font-display);
 }
 
 h1 {
-  font-size: $font-size-xxl;
-  color: var(--theme-color, var(--primary-color));
+  font-size: $font-size-huge;
+  color: var(--text-color);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
 h2 {
-  font-size: $font-size-xl;
+  font-size: $font-size-xxl;
   color: var(--text-color);
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
 h3 {
-  font-size: $font-size-lg;
-  color: var(--text-color);
-  font-weight: 500;
+  font-size: $font-size-xl;
+  font-weight: 600;
 }
 
-/* Element Plus 消息提示：全局柔和主题 */
+/* ── Element Plus 消息提示：暖色主题 ── */
 .el-message {
-  border-radius: 18px;
-  border: 1px solid #f0d3ad;
-  background: #fff6ec;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(232, 131, 74, 0.2);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
 }
 
 .el-message .el-message__content {
-  color: #8a6a47;
+  color: var(--text-color);
 }
 
 .el-message .el-message__icon,
 .el-message .el-message__closeBtn {
-  color: #c49a6c;
+  color: var(--primary-color);
 }
 
-.el-message--info,
-.el-message--warning,
+.el-message--success {
+  border-color: rgba(138, 171, 124, 0.3);
+  background: #f6faf3;
+}
+
+.el-message--warning {
+  border-color: rgba(240, 184, 96, 0.3);
+  background: #fefaf3;
+}
+
 .el-message--error {
-  border-color: #f0d3ad;
-  background: #fff6ec;
+  border-color: rgba(224, 85, 106, 0.3);
+  background: #fef5f6;
 }
 
-.el-message--info .el-message__content,
-.el-message--warning .el-message__content,
-.el-message--error .el-message__content {
-  color: #8a6a47;
-}
-
-/* 动态数字样式 */
+/* ── 动态数字 ── */
 .dynamic-number {
   font-size: 2.5rem;
   font-weight: 700;
-  font-family: 'Noto Serif SC', serif;
+  font-family: var(--font-display);
   transition: all 0.5s ease;
-  &.happy {
-    color: var(--mood-happy);
-  }
-  &.sad {
-    color: var(--mood-sad);
-  }
-  &.angry {
-    color: var(--mood-angry);
-  }
-  &.anxious {
-    color: var(--mood-anxious);
-  }
-  &.calm {
-    color: var(--mood-calm);
-  }
-  &.neutral {
-    color: var(--mood-neutral);
-  }
+
+  &.happy { color: var(--mood-happy); }
+  &.sad { color: var(--mood-sad); }
+  &.angry { color: var(--mood-angry); }
+  &.anxious { color: var(--mood-anxious); }
+  &.calm { color: var(--mood-calm); }
+  &.neutral { color: var(--mood-neutral); }
 }
 
-/* 链接样式 */
+/* ── 链接 ── */
 a {
-  color: var(--theme-color, var(--primary-color));
+  color: var(--primary-color);
   text-decoration: none;
-  transition: color 0.3s ease;
+  transition: color 0.25s ease;
+
   &:hover {
-    color: var(--theme-color, var(--primary-color));
-    opacity: 0.8;
+    color: var(--primary-hover);
     text-decoration: underline;
   }
 }
 
-/* 标签样式 */
+/* ── 标签 ── */
 .tag {
   display: inline-block;
   padding: 4px 12px;
-  border-radius: $border-radius-full;
+  border-radius: var(--radius-md);
   font-size: $font-size-sm;
-  font-weight: 500;
+  font-weight: 600;
   margin-right: 8px;
   margin-bottom: 8px;
+  letter-spacing: 0.02em;
+
   &.primary {
-    background-color: rgba(106, 176, 165, 0.1);
-    color: var(--theme-color, var(--primary-color));
+    background: var(--primary-soft);
+    color: var(--primary-hover);
   }
+
   &.secondary {
-    background-color: rgba(243, 166, 131, 0.1);
-    color: var(--secondary-color);
+    background: rgba(138, 171, 124, 0.12);
+    color: var(--secondary-hover);
   }
+
   &.accent {
-    background-color: rgba(231, 111, 81, 0.1);
-    color: var(--accent-color);
+    background: rgba(240, 184, 96, 0.12);
+    color: $accent-hover;
   }
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .container {
-    padding: 0 15px;
-  }
-
-  h1 {
-    font-size: 24px;
-  }
-
-  h2 {
-    font-size: 20px;
-  }
-
-  h3 {
-    font-size: 16px;
-  }
-
-  .btn {
-    padding: 8px 16px;
-    font-size: $font-size-sm;
-  }
-
-  .card {
-    padding: 16px;
-    margin-bottom: 16px;
-  }
-
-  .form-group {
-    margin-bottom: 16px;
-    input,
-    textarea,
-    select {
-      padding: 10px;
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .container {
-    padding: 0 10px;
-  }
-
-  h1 {
-    font-size: 22px;
-  }
-
-  h2 {
-    font-size: 18px;
-  }
-
-  .btn {
-    padding: 10px;
-    font-size: $font-size-md;
-    width: 100%;
-  }
-
-  .card {
-    padding: 14px;
-    margin-bottom: 14px;
-  }
-}
-
-/* 滚动条样式 */
+/* ── 滚动条 ── */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-light);
-  border-radius: $border-radius-sm;
+  background: var(--bg-warm);
+  border-radius: var(--radius-sm);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--theme-color, var(--primary-color));
-  border-radius: $border-radius-sm;
+  background: var(--primary-light);
+  border-radius: var(--radius-sm);
+
   &:hover {
-    background: var(--theme-color, var(--primary-color));
-    opacity: 0.8;
+    background: var(--primary-color);
   }
+}
+
+/* ── 选中文字 ── */
+::selection {
+  background: var(--primary-soft);
+  color: var(--text-color);
+}
+
+/* ── 响应式 ── */
+@media (max-width: 768px) {
+  .container { padding: 0 16px; }
+  h1 { font-size: 26px; }
+  h2 { font-size: 22px; }
+  h3 { font-size: 18px; }
+  .btn { padding: 10px 18px; font-size: $font-size-sm; }
+  .card { padding: 18px; margin-bottom: 16px; }
+}
+
+@media (max-width: 480px) {
+  .container { padding: 0 12px; }
+  h1 { font-size: 22px; }
+  h2 { font-size: 18px; }
+  .btn { padding: 10px; font-size: $font-size-md; width: 100%; }
+  .card { padding: 14px; margin-bottom: 14px; }
 }
