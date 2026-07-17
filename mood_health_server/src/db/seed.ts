@@ -4,6 +4,7 @@ import { createPool, Pool } from 'mysql2/promise'
 import { readMysqlMigratorConfig } from '../config/mysql'
 import { SeedDatabase, seedReferenceData } from './seeds/coreSeed'
 import { seedDemoData, seedTestData } from './seeds/profileSeed'
+import { seedPromptTemplates } from './seeds/promptSeed'
 
 dotenv.config()
 
@@ -64,7 +65,15 @@ export const runSeedCommand = async (profile = process.argv[2] ?? 'reference'): 
       await seedReferenceData(db)
       const demoResult = await seedDemoData(db)
       const testResult = await seedTestData(db)
-      console.log(`All seed profiles applied: demoAccounts=${demoResult.accounts.length}, demoMoods=${demoResult.moods}, testAssessment=${testResult.assessmentCode}.`)
+      const promptResult = await seedPromptTemplates(db)
+      console.log(`All seed profiles applied: demoAccounts=${demoResult.accounts.length}, demoMoods=${demoResult.moods}, testAssessment=${testResult.assessmentCode}, prompts=${promptResult.count}.`)
+      return
+    }
+
+    if (profile === 'prompts') {
+      await seedReferenceData(db)
+      const result = await seedPromptTemplates(db)
+      console.log(`Prompt seed applied: ${result.count} templates.`)
       return
     }
 
