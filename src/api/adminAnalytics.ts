@@ -2,7 +2,7 @@
  * 管理端数据分析 API
  */
 
-import { request } from '@/utils/request'
+import request from '@/utils/request'
 
 export interface KpiStats {
   totalUsers: number

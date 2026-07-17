@@ -2,7 +2,7 @@
  * AI 分析历史 API
  */
 
-import { request } from '@/utils/request'
+import request from '@/utils/request'
 
 export interface AiHistoryItem {
   id: number
