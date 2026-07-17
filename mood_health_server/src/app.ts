@@ -30,6 +30,22 @@ import { createHealthHandler, HealthDependencies } from './controllers/healthCon
 
 dotenv.config()
 
+const validateEnv = () => {
+  const requiredVars = [
+    'JWT_SECRET',
+    'MYSQL_HOST',
+    'MYSQL_DATABASE',
+    'MYSQL_APP_USER',
+    'MYSQL_APP_PASSWORD',
+  ]
+  const missing = requiredVars.filter((key) => !process.env[key]?.trim())
+  if (missing.length > 0) {
+    const message = `服务启动失败：缺少必要的环境变量: ${missing.join(', ')}`
+    console.error(message)
+    throw new Error(message)
+  }
+}
+
 const NON_CORE_ROUTES = [] as const
 
 export interface AppDependencies {
@@ -37,6 +53,7 @@ export interface AppDependencies {
 }
 
 export const createApp = (dependencies: AppDependencies = {}) => {
+  validateEnv()
   const app = express()
   const allowedOrigins = process.env.FRONTEND_URL
     ? process.env.FRONTEND_URL.split(',')
