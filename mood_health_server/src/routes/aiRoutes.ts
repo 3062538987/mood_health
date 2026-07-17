@@ -67,7 +67,7 @@ const filterForwardHeaders = (headers: Request['headers']) => {
     }
 
     const lowerKey = key.toLowerCase()
-    if (['host', 'content-length', 'connection'].includes(lowerKey)) {
+    if (['host', 'content-length', 'connection', 'cookie', 'authorization'].includes(lowerKey)) {
       return
     }
 

@@ -31,7 +31,7 @@
 
         <!-- 文章内容 -->
         <div v-else class="article-container">
-          <div class="article-content" v-html="course.content"></div>
+          <div class="article-content" v-html="sanitizedContent"></div>
         </div>
       </div>
     </div>
@@ -51,15 +51,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { buildApiUrl } from '@/utils/apiBase'
+import DOMPurify from 'dompurify'
 
 const route = useRoute()
 const router = useRouter()
 
 const course = ref<any>(null)
 const loading = ref(true)
+
+const sanitizedContent = computed(() => {
+  if (course.value?.content) {
+    return DOMPurify.sanitize(course.value.content)
+  }
+  return ''
+})
 
 const fetchCourseDetail = async () => {
   loading.value = true

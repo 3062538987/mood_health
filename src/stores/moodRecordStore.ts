@@ -795,7 +795,9 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
         intensity: safeIntensity,
       }
 
-      console.log('提交情绪记录 payload:', payload)
+      if (import.meta.env.DEV) {
+        console.log('提交情绪记录 payload:', payload)
+      }
 
       await submitMoodRecord(payload)
 
