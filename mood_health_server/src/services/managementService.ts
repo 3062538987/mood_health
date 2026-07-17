@@ -27,6 +27,21 @@ export const createManagementService = (dependencies: ManagementServiceDependenc
     options: Parameters<ManagementRepository['listAdminMoods']>[0]
   ) => repository.listAdminMoods(options)
 
+  const getKpiStats = async (startDate?: string, endDate?: string) =>
+    repository.getKpiStats(startDate, endDate)
+
+  const getMoodTrend = async (startDate: string, endDate: string, granularity: 'day' | 'week' = 'day') =>
+    repository.getMoodTrend(startDate, endDate, granularity)
+
+  const getMoodDistribution = async (startDate: string, endDate: string) =>
+    repository.getMoodDistribution(startDate, endDate)
+
+  const getAssessmentDistribution = async (startDate: string, endDate: string, instrumentId?: number) =>
+    repository.getAssessmentDistribution(startDate, endDate, instrumentId)
+
+  const getModuleUsage = async (startDate: string, endDate: string) =>
+    repository.getModuleUsage(startDate, endDate)
+
   return {
     listAdminUsers,
     findAdminUserById,
@@ -34,6 +49,11 @@ export const createManagementService = (dependencies: ManagementServiceDependenc
     deleteUserById,
     disableUser,
     listAdminMoods,
+    getKpiStats,
+    getMoodTrend,
+    getMoodDistribution,
+    getAssessmentDistribution,
+    getModuleUsage,
   }
 }
 

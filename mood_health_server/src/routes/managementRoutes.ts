@@ -11,6 +11,11 @@ import {
   userManageHandler,
   adminAssessmentsListHandler,
   adminAssessmentDetailHandler,
+  getKpiStatsHandler,
+  getMoodTrendHandler,
+  getMoodDistributionHandler,
+  getAssessmentDistributionHandler,
+  getModuleUsageHandler,
 } from '../controllers/managementController'
 import { authenticate, requirePermission } from '../middleware/auth'
 import { validateRequest } from '../middleware/validateRequest'
@@ -78,5 +83,12 @@ router.post(
 
 router.get('/admin/assessments', authenticate, requirePermission('user.manage'), adminAssessmentsListHandler)
 router.get('/admin/assessments/:id', authenticate, requirePermission('user.manage'), adminAssessmentDetailHandler)
+
+// 数据分析接口
+router.get('/admin/kpi', authenticate, requirePermission('admin.access'), getKpiStatsHandler)
+router.get('/admin/analytics/mood-trend', authenticate, requirePermission('admin.access'), getMoodTrendHandler)
+router.get('/admin/analytics/mood-distribution', authenticate, requirePermission('admin.access'), getMoodDistributionHandler)
+router.get('/admin/analytics/assessment-distribution', authenticate, requirePermission('admin.access'), getAssessmentDistributionHandler)
+router.get('/admin/analytics/module-usage', authenticate, requirePermission('admin.access'), getModuleUsageHandler)
 
 export default router

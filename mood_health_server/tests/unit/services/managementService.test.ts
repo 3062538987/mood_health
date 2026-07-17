@@ -15,6 +15,11 @@ const createRepository = (): jest.Mocked<ManagementRepository> => ({
   deleteUserById: jest.fn(),
   disableUser: jest.fn(),
   listAdminMoods: jest.fn(),
+  getKpiStats: jest.fn(),
+  getMoodTrend: jest.fn(),
+  getMoodDistribution: jest.fn(),
+  getAssessmentDistribution: jest.fn(),
+  getModuleUsage: jest.fn(),
 })
 
 describe('managementService', () => {

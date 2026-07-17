@@ -391,3 +391,73 @@ export const adminAssessmentDetailHandler = async (req: AuthRequest, res: Respon
     return res.status(500).json(apiFailure(500, '获取测评详情失败'))
   }
 }
+
+// ==================== 数据分析接口 ====================
+
+export const getKpiStatsHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const { startDate, endDate } = req.query as { startDate?: string; endDate?: string }
+    const stats = await managementService.getKpiStats(startDate, endDate)
+    return res.status(200).json(apiSuccess(stats, '获取 KPI 统计成功'))
+  } catch (error) {
+    return res.status(500).json(apiFailure(500, '获取 KPI 统计失败'))
+  }
+}
+
+export const getMoodTrendHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const { startDate, endDate, granularity } = req.query as {
+      startDate?: string; endDate?: string; granularity?: 'day' | 'week'
+    }
+    if (!startDate || !endDate) {
+      return res.status(400).json(apiFailure(1001, '缺少 startDate 或 endDate 参数'))
+    }
+    const trend = await managementService.getMoodTrend(startDate, endDate, granularity || 'day')
+    return res.status(200).json(apiSuccess(trend, '获取情绪趋势成功'))
+  } catch (error) {
+    return res.status(500).json(apiFailure(500, '获取情绪趋势失败'))
+  }
+}
+
+export const getMoodDistributionHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const { startDate, endDate } = req.query as { startDate?: string; endDate?: string }
+    if (!startDate || !endDate) {
+      return res.status(400).json(apiFailure(1001, '缺少 startDate 或 endDate 参数'))
+    }
+    const distribution = await managementService.getMoodDistribution(startDate, endDate)
+    return res.status(200).json(apiSuccess(distribution, '获取情绪分布成功'))
+  } catch (error) {
+    return res.status(500).json(apiFailure(500, '获取情绪分布失败'))
+  }
+}
+
+export const getAssessmentDistributionHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const { startDate, endDate, instrumentId } = req.query as {
+      startDate?: string; endDate?: string; instrumentId?: string
+    }
+    if (!startDate || !endDate) {
+      return res.status(400).json(apiFailure(1001, '缺少 startDate 或 endDate 参数'))
+    }
+    const distribution = await managementService.getAssessmentDistribution(
+      startDate, endDate, instrumentId ? parseInt(instrumentId) : undefined,
+    )
+    return res.status(200).json(apiSuccess(distribution, '获取测评分布成功'))
+  } catch (error) {
+    return res.status(500).json(apiFailure(500, '获取测评分布失败'))
+  }
+}
+
+export const getModuleUsageHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const { startDate, endDate } = req.query as { startDate?: string; endDate?: string }
+    if (!startDate || !endDate) {
+      return res.status(400).json(apiFailure(1001, '缺少 startDate 或 endDate 参数'))
+    }
+    const usage = await managementService.getModuleUsage(startDate, endDate)
+    return res.status(200).json(apiSuccess(usage, '获取模块使用统计成功'))
+  } catch (error) {
+    return res.status(500).json(apiFailure(500, '获取模块使用统计失败'))
+  }
+}
