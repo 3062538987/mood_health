@@ -97,6 +97,10 @@
             @keydown.ctrl.enter.exact.prevent="handleCtrlEnterSend"
           />
 
+          <div v-if="sendError" class="send-error" role="alert" aria-live="assertive">
+            {{ sendError }}
+          </div>
+
           <el-button
             class="send-button"
             type="primary"
@@ -119,7 +123,6 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { sendCounselingMessage } from '@/api/counseling'
 import { useUserStore } from '@/stores/userStore'
-import { ApiRequestError } from '@/utils/request'
 
 type RiskLevel = 'low' | 'medium' | 'high'
 type MessageStatus = 'sending' | 'sent' | 'failed'
@@ -136,6 +139,7 @@ interface MessageItem {
 const userStore = useUserStore()
 const inputMessage = ref('')
 const isSending = ref(false)
+const sendError = ref('')
 const messageContainerRef = ref<HTMLElement | null>(null)
 const messages = ref<MessageItem[]>([
   {
@@ -204,6 +208,17 @@ const buildContext = (retryMessageId?: string) => {
     }))
 }
 
+const updateUserMessageStatus = (messageId: string, status: MessageStatus) => {
+  const index = messages.value.findIndex((msg) => msg.id === messageId && msg.role === 'user')
+  if (index < 0) {
+    return
+  }
+  messages.value[index] = {
+    ...messages.value[index],
+    status,
+  }
+}
+
 const sendToService = async (targetUserMessage: MessageItem, inputSnapshot: string) => {
   const context = buildContext(targetUserMessage.id)
 
@@ -213,7 +228,7 @@ const sendToService = async (targetUserMessage: MessageItem, inputSnapshot: stri
     userId: userStore.user?.id,
   })
 
-  targetUserMessage.status = 'sent'
+  updateUserMessageStatus(targetUserMessage.id, 'sent')
 
   messages.value.push({
     id: crypto.randomUUID(),
@@ -230,6 +245,7 @@ const sendToService = async (targetUserMessage: MessageItem, inputSnapshot: stri
   if (inputMessage.value.trim() === inputSnapshot.trim()) {
     inputMessage.value = ''
   }
+  sendError.value = ''
 }
 
 const sendMessage = async () => {
@@ -239,6 +255,7 @@ const sendMessage = async () => {
 
   const inputSnapshot = inputMessage.value
   const content = inputSnapshot.trim()
+  sendError.value = ''
 
   const newUserMessage: MessageItem = {
     id: crypto.randomUUID(),
@@ -255,13 +272,10 @@ const sendMessage = async () => {
   try {
     await sendToService(newUserMessage, inputSnapshot)
   } catch (error: unknown) {
-    newUserMessage.status = 'failed'
-    if (error instanceof ApiRequestError && error.status === 503) {
-      ElMessage.warning('AI 心理陪伴服务暂不可用，请稍后再试')
-    } else {
-      const message = error instanceof Error ? error.message : '发送失败，请稍后再试'
-      ElMessage.error(message)
-    }
+    updateUserMessageStatus(newUserMessage.id, 'failed')
+    const message = error instanceof Error ? error.message : '发送失败，请稍后再试'
+    sendError.value = `发送失败：${message}。原文字已保留，可修改后重试。`
+    ElMessage.error(message)
   } finally {
     isSending.value = false
   }
@@ -278,18 +292,16 @@ const retryMessage = async (messageId: string) => {
   }
 
   isSending.value = true
-  target.status = 'sending'
+  updateUserMessageStatus(target.id, 'sending')
+  sendError.value = ''
 
   try {
     await sendToService(target, inputMessage.value)
   } catch (error: unknown) {
-    target.status = 'failed'
-    if (error instanceof ApiRequestError && error.status === 503) {
-      ElMessage.warning('AI 心理陪伴服务暂不可用，请稍后再试')
-    } else {
-      const message = error instanceof Error ? error.message : '重试失败，请稍后再试'
-      ElMessage.error(message)
-    }
+    updateUserMessageStatus(target.id, 'failed')
+    const message = error instanceof Error ? error.message : '重试失败，请稍后再试'
+    sendError.value = `发送失败：${message}。原文字已保留，可修改后重试。`
+    ElMessage.error(message)
   } finally {
     isSending.value = false
   }
@@ -298,23 +310,16 @@ const retryMessage = async (messageId: string) => {
 
 <style scoped lang="scss">
 .counseling-page {
-  --bg-soft: #fff8fc;
-  --bg-soft-2: #f6f1ff;
-  --panel: rgba(255, 255, 255, 0.88);
-  --line: #e9ddf6;
-  --text-main: #4f4a5a;
-  --text-sub: #7d748f;
-  --primary: #b996d8;
-  --primary-strong: #a57dca;
-  --assistant-bubble: #ffffff;
-  --user-bubble: #f0ddff;
+  --chat-panel: var(--surface);
+  --chat-line: var(--border-color);
+  --chat-text-main: var(--text-color);
+  --chat-text-sub: var(--muted);
+  --chat-assistant-bubble: var(--surface);
+  --chat-user-bubble: var(--primary-soft-bg);
 
   min-height: 100vh;
   padding: 20px;
-  background:
-    radial-gradient(circle at 10% 10%, rgba(255, 226, 239, 0.6), transparent 40%),
-    radial-gradient(circle at 90% 20%, rgba(221, 223, 255, 0.55), transparent 40%),
-    linear-gradient(145deg, var(--bg-soft), var(--bg-soft-2));
+  background: var(--bg-color);
 }
 
 .page-header {
@@ -324,13 +329,13 @@ const retryMessage = async (messageId: string) => {
   h1 {
     margin: 0;
     font-size: 30px;
-    color: var(--text-main);
+    color: var(--chat-text-main);
     letter-spacing: 1px;
   }
 
   .description {
     margin-top: 8px;
-    color: var(--text-sub);
+    color: var(--chat-text-sub);
   }
 }
 
@@ -354,22 +359,21 @@ const retryMessage = async (messageId: string) => {
 
 .info-card,
 .contact-info {
-  background: var(--panel);
-  border: 1px solid var(--line);
+  background: var(--surface);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 16px;
-  backdrop-filter: blur(4px);
-  box-shadow: 0 10px 26px rgba(164, 132, 197, 0.12);
+  box-shadow: var(--shadow-sm);
 
   h3 {
     margin: 0 0 10px;
-    color: var(--text-main);
+    color: var(--chat-text-main);
     font-size: 16px;
   }
 
   p,
   li {
-    color: var(--text-sub);
+    color: var(--chat-text-sub);
     line-height: 1.7;
     font-size: 14px;
   }
@@ -381,36 +385,36 @@ const retryMessage = async (messageId: string) => {
 }
 
 .contact-info .emergency-number {
-  color: #9d5f87;
+  color: var(--danger);
   font-weight: 600;
 }
 
 .chat-panel {
   min-width: 0;
   flex: 1;
-  background: var(--panel);
-  border: 1px solid var(--line);
+  background: var(--surface);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 16px 38px rgba(146, 110, 182, 0.15);
+  box-shadow: var(--shadow-md);
 }
 
 .chat-header {
   padding: 16px 20px;
-  border-bottom: 1px solid var(--line);
-  background: linear-gradient(90deg, rgba(248, 228, 255, 0.95), rgba(237, 240, 255, 0.95));
+  border-bottom: 1px solid var(--border-color);
+  background: var(--surface-muted);
 
   h2 {
     margin: 0;
-    color: var(--text-main);
+    color: var(--chat-text-main);
     font-size: 18px;
   }
 
   p {
     margin: 6px 0 0;
-    color: var(--text-sub);
+    color: var(--chat-text-sub);
     font-size: 13px;
   }
 }
@@ -452,19 +456,19 @@ const retryMessage = async (messageId: string) => {
     margin: 0;
     white-space: pre-wrap;
     word-break: break-word;
-    color: var(--text-main);
+    color: var(--chat-text-main);
     font-size: 14px;
   }
 
   &.assistant {
-    background: var(--assistant-bubble);
-    border: 1px solid #ece3f5;
+    background: var(--chat-assistant-bubble);
+    border: 1px solid var(--border-color);
     border-top-left-radius: 6px;
   }
 
   &.user {
-    background: var(--user-bubble);
-    border: 1px solid #dcc2f1;
+    background: var(--chat-user-bubble);
+    border: 1px solid var(--primary-color);
     border-top-right-radius: 6px;
   }
 }
@@ -476,12 +480,12 @@ const retryMessage = async (messageId: string) => {
   gap: 8px;
 
   .time {
-    color: #9a91aa;
+    color: var(--muted);
     font-size: 11px;
   }
 
   .status-text {
-    color: #a283c1;
+    color: var(--primary-color);
     font-size: 11px;
   }
 }
@@ -489,18 +493,18 @@ const retryMessage = async (messageId: string) => {
 .retry-button {
   border: none;
   background: transparent;
-  color: #a56ecf;
+  color: var(--primary-color);
   font-size: 11px;
   cursor: pointer;
   padding: 0;
 
   &:hover {
-    color: #8b54b6;
+    color: var(--primary-hover);
     text-decoration: underline;
   }
 
   &:disabled {
-    color: #c8b7d9;
+    color: var(--muted);
     cursor: not-allowed;
     text-decoration: none;
   }
@@ -537,7 +541,7 @@ const retryMessage = async (messageId: string) => {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--primary-strong);
+    background: var(--primary-color);
     animation: pulse 1.1s infinite ease-in-out;
   }
 
@@ -551,55 +555,66 @@ const retryMessage = async (messageId: string) => {
 }
 
 .input-panel {
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--border-color);
   padding: 14px;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   align-items: flex-end;
-  background: #fff;
+  background: var(--surface);
+}
+
+.send-error {
+  grid-column: 1 / -1;
+  padding: 10px 12px;
+  color: var(--danger);
+  background: var(--surface);
+  border: 1px solid var(--danger);
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 .send-tip {
   padding: 0 16px 12px;
-  color: #9a90a9;
+  color: var(--muted);
   font-size: 12px;
-  background: #fff;
+  background: var(--surface);
 }
 
 .send-button {
   min-width: 110px;
   height: 42px;
   border: none;
-  background: linear-gradient(120deg, var(--primary), var(--primary-strong));
+  background: var(--primary-color);
   color: #fff;
   transition:
     transform 0.2s ease,
-    filter 0.2s ease,
+    background-color 0.2s ease,
     opacity 0.2s ease;
 
   &:hover {
     transform: translateY(-1px);
-    filter: brightness(1.03);
+    background: var(--primary-hover);
   }
 
   &:disabled {
     opacity: 0.55;
     transform: none;
-    filter: grayscale(0.08);
   }
 }
 
 :deep(.el-textarea__inner) {
   border-radius: 14px;
-  border-color: #e1d0ef;
+  border-color: var(--border-color);
   box-shadow: none;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
 
   &:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(185, 150, 216, 0.16);
+    border-color: var(--focus);
+    box-shadow: 0 0 0 3px var(--primary-soft-bg);
   }
 }
 

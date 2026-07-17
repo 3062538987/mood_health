@@ -17,13 +17,13 @@ const findRoute = (routes: readonly RouteRecordRaw[], path: string): RouteRecord
 }
 
 describe('frontend feature flags', () => {
-  it('keeps non-core modules enabled by default', () => {
-    expect(getFeatureFlags({})).toEqual({ nonCoreModules: true })
+  it('keeps non-core modules disabled by default', () => {
+    expect(getFeatureFlags({})).toEqual({ nonCoreModules: false })
   })
 
   it.each(['true', '1', 'yes', 'on', ' TRUE '])('ignores the retired enable value %s', (value) => {
     expect(getFeatureFlags({ VITE_FEATURE_NON_CORE_MODULES_ENABLED: value })).toEqual({
-      nonCoreModules: true,
+      nonCoreModules: false,
     })
   })
 })
@@ -52,19 +52,18 @@ describe('feature-aware routes', () => {
       '/admin/user-moods',
       '/admin/moods',
       '/admin/audit-logs',
-      '/admin/cases',
     ])
   })
 
-  it('keeps non-core routes when enabled', () => {
+  it('keeps non-core routes removed even when a legacy caller requests them', () => {
     const routes = createRoutes({ nonCoreModules: true })
 
-    expect(findRoute(routes, '/relax')).toBeDefined()
-    expect(findRoute(routes, 'group')).toBeDefined()
-    expect(findRoute(routes, 'knowledge')).toBeDefined()
-    expect(findRoute(routes, 'courses')).toBeDefined()
-    expect(findRoute(routes, 'posts')).toBeDefined()
-    expect(findRoute(routes, 'music')).toBeDefined()
+    expect(findRoute(routes, '/relax')).toBeUndefined()
+    expect(findRoute(routes, 'group')).toBeUndefined()
+    expect(findRoute(routes, 'knowledge')).toBeUndefined()
+    expect(findRoute(routes, 'courses')).toBeUndefined()
+    expect(findRoute(routes, 'posts')).toBeUndefined()
+    expect(findRoute(routes, 'music')).toBeUndefined()
   })
 
   it.each([
@@ -74,15 +73,18 @@ describe('feature-aware routes', () => {
     '/improve/courses',
     '/admin/posts',
     '/admin/music',
-  ])('resolves disabled URL %s to the catch-all route without loading its page', (path) => {
-    const router = createRouter({
-      history: createMemoryHistory(),
-      routes: createRoutes({ nonCoreModules: false }),
-    })
+  ])(
+    'resolves disabled URL %s to the catch-all route without loading its page',
+    (path) => {
+      const router = createRouter({
+        history: createMemoryHistory(),
+        routes: createRoutes({ nonCoreModules: false }),
+      })
 
-    const matched = router.resolve(path).matched
-    expect(matched[matched.length - 1]?.name).toBe('NotFound')
-  })
+      const matched = router.resolve(path).matched
+      expect(matched[matched.length - 1]?.name).toBe('NotFound')
+    }
+  )
 
   it.each(['/mood/record', '/improve/survey', '/user/profile', '/admin/users'])(
     'keeps core URL %s available',

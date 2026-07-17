@@ -216,7 +216,6 @@ const baseRoutes: RouteRecordRaw[] = [
           icon: 'fas fa-music',
         },
         { path: '/admin/audit-logs', name: '审计日志', icon: 'fas fa-file-shield' },
-        { path: '/admin/cases', name: '风险个案', icon: 'fas fa-shield-haltered' },
       ],
     },
     children: [
@@ -295,24 +294,6 @@ const baseRoutes: RouteRecordRaw[] = [
           permission: 'audit.record.view_all',
         },
       },
-      {
-        path: 'cases',
-        component: () => import('@/views/admin/Cases.vue'),
-        meta: {
-          adminOnly: true,
-          roles: ['admin', 'super_admin', 'counselor'],
-          permission: 'case.read_assigned',
-        },
-      },
-      {
-        path: 'cases/:id',
-        component: () => import('@/views/admin/CaseDetail.vue'),
-        meta: {
-          adminOnly: true,
-          roles: ['admin', 'super_admin', 'counselor'],
-          permission: 'case.read_assigned',
-        },
-      },
     ],
   },
   {
@@ -367,8 +348,8 @@ const filterRoutes = (
     return [filteredRoute]
   })
 
-export const createRoutes = (flags: FrontendFeatureFlags = featureFlags): RouteRecordRaw[] =>
-  filterRoutes(baseRoutes, flags)
+export const createRoutes = (_flags: FrontendFeatureFlags = featureFlags): RouteRecordRaw[] =>
+  filterRoutes(baseRoutes, featureFlags)
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

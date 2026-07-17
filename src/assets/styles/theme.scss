@@ -13,6 +13,12 @@ $bg-color: #f8f5f2; // 背景色：暖白
 $bg-light: #f1ede9; // 浅背景色
 $white: #ffffff; // 白色
 $border-color: #e9e6e3; // 边框色
+$primary-hover: #579b91; // 主色悬停
+$surface-color: #ffffff; // 表层背景
+$surface-muted: #f6f3ef; // 弱化表层
+$focus-color: #2f8f83; // 焦点环
+$muted-color: #6b7280; // 弱化文本
+$primary-soft-bg: rgba(106, 176, 165, 0.12); // 主色弱背景
 
 /* 情绪色彩系统 */
 $mood-happy: #ffd166; // 快乐：暖黄
@@ -21,6 +27,9 @@ $mood-angry: #ef476f; // 愤怒：红色
 $mood-anxious: #118ab2; // 焦虑：蓝色
 $mood-calm: #073b4c; // 平静：深蓝
 $mood-neutral: #8d99ae; // 中性：灰色
+$mood-theme-low: #b7a9a1; // 全局动态主题：低落
+$mood-theme-calm: #a7c7e7; // 全局动态主题：平静
+$mood-theme-high: #f9d56e; // 全局动态主题：积极
 
 /* 深色模式颜色变量 */
 $dark-bg-color: #1a1e24; // 深色背景
@@ -31,6 +40,12 @@ $dark-secondary-color: #f5b69b; // 深色辅助色
 $dark-accent-color: #f08a72; // 深色强调色
 $dark-bg-light: #252a30; // 深色浅背景
 $dark-border-color: #3a4048; // 深色边框
+$dark-primary-hover: #9cc4b3; // 深色主色悬停
+$dark-surface-color: #252a30; // 深色表层
+$dark-surface-muted: #2f353d; // 深色弱化表层
+$dark-focus-color: #a6d8cc; // 深色焦点环
+$dark-muted-color: #b8c0cc; // 深色弱化文本
+$dark-primary-soft-bg: rgba(138, 179, 160, 0.18); // 深色主色弱背景
 
 /* 文本样式变量 */
 $font-size-xs: 10px;
@@ -58,18 +73,26 @@ $border-radius-full: 50%;
 :root {
   --primary-color: #{$primary-color};
   --primary-light: #{$primary-light};
+  --primary: #{$primary-color};
+  --primary-hover: #{$primary-hover};
   --secondary-color: #{$secondary-color};
   --accent-color: #{$accent-color};
   --success-color: #{$success-color};
   --success-light: #{$success-light};
   --warning-color: #{$warning-color};
   --danger-color: #{$danger-color};
+  --danger: #{$danger-color};
   --text-color: #{$text-color};
   --text-light-color: #{$text-light-color};
+  --muted: #{$muted-color};
   --bg-color: #{$bg-color};
   --bg-light: #{$bg-light};
   --white: #{$white};
+  --surface: #{$surface-color};
+  --surface-muted: #{$surface-muted};
   --border-color: #{$border-color};
+  --focus: #{$focus-color};
+  --primary-soft-bg: #{$primary-soft-bg};
   --shadow-sm: #{$shadow-sm};
   --shadow-md: #{$shadow-md};
   --shadow-lg: #{$shadow-lg};
@@ -81,19 +104,29 @@ $border-radius-full: 50%;
   --mood-anxious: #{$mood-anxious};
   --mood-calm: #{$mood-calm};
   --mood-neutral: #{$mood-neutral};
+  --mood-theme-low: #{$mood-theme-low};
+  --mood-theme-calm: #{$mood-theme-calm};
+  --mood-theme-high: #{$mood-theme-high};
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --primary-color: #{$dark-primary-color};
+    --primary: #{$dark-primary-color};
+    --primary-hover: #{$dark-primary-hover};
     --secondary-color: #{$dark-secondary-color};
     --accent-color: #{$dark-accent-color};
     --text-color: #{$dark-text-color};
     --text-light-color: #{$dark-text-light-color};
+    --muted: #{$dark-muted-color};
     --bg-color: #{$dark-bg-color};
     --bg-light: #{$dark-bg-light};
     --white: #{$dark-bg-light};
+    --surface: #{$dark-surface-color};
+    --surface-muted: #{$dark-surface-muted};
     --border-color: #{$dark-border-color};
+    --focus: #{$dark-focus-color};
+    --primary-soft-bg: #{$dark-primary-soft-bg};
     --shadow-sm: #{$dark-shadow-sm};
     --shadow-md: #{$dark-shadow-md};
     --shadow-lg: #{$dark-shadow-lg};

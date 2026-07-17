@@ -30,9 +30,11 @@ describe('userStore authentication contract', () => {
 
     expect(store.token).toBe('jwt-token')
     expect(store.user).toEqual(user)
+    expect(localStorage.getItem('token')).toBe('jwt-token')
   })
 
   it('restores the current user directly from the unwrapped /me DTO', async () => {
+    localStorage.setItem('token', 'persisted-token')
     requestMock.mockResolvedValueOnce({ user })
     const store = useUserStore()
 
@@ -43,6 +45,7 @@ describe('userStore authentication contract', () => {
   })
 
   it('clears an invalid persisted login when /me fails', async () => {
+    localStorage.setItem('token', 'expired-token')
     requestMock.mockRejectedValueOnce(new Error('登录已过期，请重新登录'))
     const store = useUserStore()
 
@@ -50,6 +53,7 @@ describe('userStore authentication contract', () => {
 
     expect(store.token).toBe('')
     expect(store.user).toBeNull()
+    expect(localStorage.getItem('token')).toBeNull()
   })
 
   it('shows the normalized request error message on login failure', async () => {
@@ -59,5 +63,19 @@ describe('userStore authentication contract', () => {
     await expect(store.login('student_demo', 'wrong-password')).resolves.toBe(false)
 
     expect(store.error).toBe('用户名或密码错误')
+  })
+
+  it('clears stale auth errors on demand', async () => {
+    requestMock.mockRejectedValueOnce(new Error('用户名已存在'))
+    const store = useUserStore()
+
+    await expect(store.register('student_demo', 'password123', 'student@qq.com')).resolves.toBe(
+      false
+    )
+    expect(store.error).toBe('用户名已存在')
+
+    store.clearError()
+
+    expect(store.error).toBe('')
   })
 })

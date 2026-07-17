@@ -240,7 +240,7 @@ import { useRouter } from 'vue-router'
 import SoftEmptyState from '@/components/shared/SoftEmptyState.vue'
 import SoftLoadingState from '@/components/shared/SoftLoadingState.vue'
 
-import { getMoodRecordList } from '@/api/mood'
+import { deleteMoodRecord, getMoodRecordList } from '@/api/mood'
 import { EMOTION_MAP, EMOTION_OPTIONS } from '@/constants/emotions'
 import { MoodRecord } from '@/types/mood'
 
@@ -698,9 +698,20 @@ const confirmDeleteRecord = (record: MoodRecord) => {
   })
     .then(async () => {
       try {
+        const moodId = Number(record.id)
+        if (!Number.isInteger(moodId) || moodId <= 0) {
+          throw new Error('Invalid mood record id')
+        }
+
+        await deleteMoodRecord(moodId)
         const index = moodRecords.value.findIndex((r) => r.id === record.id)
         if (index > -1) {
           moodRecords.value.splice(index, 1)
+          totalRecords.value = Math.max(0, totalRecords.value - 1)
+        }
+        if (selectedRecord.value?.id === record.id) {
+          selectedRecord.value = null
+          showDetailDialog.value = false
         }
         ElMessage.success('记录删除成功！')
       } catch (error) {
@@ -1023,7 +1034,7 @@ onMounted(() => {
   }
 
   .action-btn {
-    border: none;
+    border: 1px solid transparent;
     border-radius: 999px;
     padding: 8px 12px;
     font-size: 12px;
@@ -1032,11 +1043,20 @@ onMounted(() => {
     transition:
       transform 0.25s ease,
       opacity 0.25s ease,
+      border-color 0.25s ease,
+      background 0.25s ease,
+      color 0.25s ease,
       box-shadow 0.25s ease;
 
     &:hover {
       transform: translateY(-1px);
       opacity: 0.96;
+    }
+
+    &:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+      box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9);
     }
   }
 
@@ -1046,8 +1066,15 @@ onMounted(() => {
   }
 
   .delete-btn {
-    background: rgba(239, 71, 111, 0.12);
-    color: var(--mood-angry);
+    background: var(--surface);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+
+    &:hover {
+      background: var(--danger);
+      color: var(--white);
+      box-shadow: 0 10px 20px rgba(239, 71, 111, 0.22);
+    }
   }
 
   .mood-tags {
@@ -1151,7 +1178,7 @@ onMounted(() => {
         font-weight: 700;
         color: var(--text-color);
         margin-bottom: 12px;
-        font-family: Georgia, 'Times New Roman', 'Microsoft YaHei', serif;
+        font-family: 'Noto Serif SC', serif;
       }
 
       .detail-emotions {

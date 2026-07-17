@@ -5,7 +5,6 @@ import { useDebounceFn } from '@vueuse/core'
 import {
   analyzeMoodWithRetry,
   getMoodAdviceHistory,
-  getMoodTypeEnum,
   saveMoodAdvice,
   submitMoodRecord,
   type AnalyzeMoodResponse,
@@ -286,7 +285,6 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
   const aiFailureCount = ref(0)
   const aiDisabledUntil = ref<number | null>(null)
   const aiServiceMessage = ref('')
-  const emotionTypeIdByCode = ref<Record<string, number>>({})
 
   const selectedMoodMeta = computed(() =>
     moodOptions.filter((item) => selectedMoodTypes.value.includes(item.id))
@@ -325,6 +323,14 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
   })
 
   const canAskAi = computed(() => characterCount.value >= 6 && !isAiTemporarilyDisabled.value)
+
+  const hasValidIntensity = computed(
+    () => Number.isFinite(intensity.value) && intensity.value >= 1 && intensity.value <= 10
+  )
+
+  const canSubmit = computed(
+    () => !isSubmitting.value && selectedMoodTypes.value.length > 0 && hasValidIntensity.value
+  )
 
   const currentAiMoodMeta = computed(() => {
     const moodLabel = aiResult.value?.mood || '未知'
@@ -759,34 +765,34 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
   }
 
   const submitRecord = async () => {
+    if (isSubmitting.value) {
+      return false
+    }
+
+    if (selectedMoodTypes.value.length === 0) {
+      ElMessage.error('请选择至少一种情绪类型')
+      return false
+    }
+
+    if (!hasValidIntensity.value) {
+      ElMessage.error('请选择 1-10 之间的情绪强度')
+      return false
+    }
+
     isSubmitting.value = true
     try {
-      const safeMoodTypes =
-        selectedMoodTypes.value.length > 0 ? [...selectedMoodTypes.value] : ['neutral']
-      const safeIntensity = Math.min(10, Math.max(1, Math.round(intensity.value || 5)))
-      const mappedEmotionTypes = safeMoodTypes.map((code) => ({
-        code,
-        id: emotionTypeIdByCode.value[code],
-      }))
-
-      if (mappedEmotionTypes.some((item) => !Number.isInteger(item.id))) {
-        ElMessage.error('情绪类型数据未加载，请刷新后重试')
-        return false
-      }
-
-      // 使用新版 emotions 数组路径
-      const emotions = mappedEmotionTypes.map((item, index) => ({
-        emotionTypeId: item.id,
-        intensity: safeIntensity,
-        isPrimary: index === 0,
-      }))
-
+      const safeMoodTypes = [...selectedMoodTypes.value]
+      const safeIntensity = Math.round(intensity.value)
+      // Backend currently reads moodRatio[0] as intensity and validates 1-10.
+      // Keep combined mood types, but always submit a 1-10 ratio payload to avoid 400.
+      const safeMoodRatio = [safeIntensity]
       const payload = {
-        emotions,
+        moodType: safeMoodTypes,
+        moodRatio: safeMoodRatio,
         event: moodContent.value.trim() || '',
-        trigger: selectedTriggers.value.join(','),
         tags: Array.from(new Set([...selectedTags.value, ...selectedTriggers.value])),
-        tagIds: [],
+        trigger: selectedTriggers.value.join(','),
+        intensity: safeIntensity,
       }
 
       console.log('提交情绪记录 payload:', payload)
@@ -824,9 +830,6 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
   )
 
   const initializePage = async () => {
-    const emotionTypes = await getMoodTypeEnum()
-    emotionTypeIdByCode.value = Object.fromEntries(emotionTypes.map((type) => [type.code, type.id]))
-
     const draft = loadDraft()
     if (draft) {
       lastDraftSavedAt.value = draft.savedAt
@@ -863,6 +866,7 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
     characterCount,
     formProgress,
     canAskAi,
+    canSubmit,
     isAiTemporarilyDisabled,
     aiCooldownSeconds,
     aiServiceMessage,

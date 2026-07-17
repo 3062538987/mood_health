@@ -29,15 +29,6 @@
             <i class="fas fa-user-shield"></i> 管理后台
           </router-link>
         </div>
-        <form class="global-search" role="search" @submit.prevent="handleGlobalSearch">
-          <input
-            v-model="searchKeyword"
-            type="search"
-            aria-label="全站搜索"
-            placeholder="搜索情绪、课程、活动"
-          />
-          <button type="submit">搜索</button>
-        </form>
         <div class="nav-user">
           <template v-if="userStore.isLoggedIn">
             <span class="username">{{ userStore.username }}</span>
@@ -75,14 +66,54 @@
         <i class="fas fa-smile"></i>
         <span>情绪</span>
       </router-link>
-      <router-link to="/user/profile" class="tab-item" active-class="active">
-        <i class="fas fa-user"></i>
-        <span>我的</span>
+      <router-link to="/improve" class="tab-item" active-class="active">
+        <i class="fas fa-chart-line"></i>
+        <span>提升</span>
       </router-link>
-      <router-link v-if="userStore.isAdmin" to="/admin" class="tab-item" active-class="active">
-        <i class="fas fa-user-shield"></i>
-        <span>后台</span>
+      <router-link to="/counseling" class="tab-item" active-class="active">
+        <i class="fas fa-heart"></i>
+        <span>咨询</span>
       </router-link>
+      <div class="mobile-more-wrapper">
+        <button
+          ref="moreButtonRef"
+          type="button"
+          class="tab-item mobile-more-button"
+          :class="{ active: isMoreSectionActive || isMoreMenuOpen }"
+          aria-haspopup="menu"
+          aria-controls="mobile-more-menu"
+          :aria-expanded="isMoreMenuOpen"
+          @click.stop="toggleMoreMenu"
+          @keydown.esc.prevent.stop="closeMoreMenu(true)"
+        >
+          <i class="fas fa-ellipsis-h"></i>
+          <span>更多</span>
+        </button>
+        <div
+          v-if="isMoreMenuOpen"
+          id="mobile-more-menu"
+          class="mobile-more-menu"
+          role="menu"
+          aria-label="更多导航"
+          @click.stop
+          @keydown.esc.prevent.stop="closeMoreMenu(true)"
+        >
+          <router-link to="/user/profile" class="mobile-more-menu-item" role="menuitem" @click="closeMoreMenu()">
+            <i class="fas fa-user"></i>
+            <span>我的</span>
+          </router-link>
+          <router-link
+            v-if="userStore.isAdmin"
+            to="/admin"
+            class="mobile-more-menu-item"
+            role="menuitem"
+            @click="closeMoreMenu()"
+          >
+            <i class="fas fa-user-shield"></i>
+            <span>管理后台</span>
+          </router-link>
+        </div>
+      </div>
     </nav>
     <!-- 成就通知 -->
     <AchievementNotification v-if="featureFlags.nonCoreModules" />
@@ -90,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
 import { useMoodStore } from '@/stores/moodStore'
@@ -101,7 +132,8 @@ const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const moodStore = useMoodStore()
-const searchKeyword = ref('')
+const isMoreMenuOpen = ref(false)
+const moreButtonRef = ref<HTMLButtonElement | null>(null)
 
 // 判断当前是否是登录/注册页面
 const isAuthPage = computed(() => {
@@ -111,37 +143,58 @@ const isAuthPage = computed(() => {
 // 计算主题颜色
 const themeColor = computed(() => {
   const avg = moodStore.recentAvgIntensity
-  if (avg < 3) return '#B7A9A1' // 低落时的柔和灰
-  if (avg < 6) return '#A7C7E7' // 平静时的淡蓝
-  return '#F9D56E' // 愉悦时的暖黄
+  if (avg < 3) return 'var(--mood-theme-low)'
+  if (avg < 6) return 'var(--mood-theme-calm)'
+  return 'var(--mood-theme-high)'
 })
 
-// 退出登录
-const handleLogout = async () => {
-  await userStore.logout()
-  router.replace('/login')
+const isMoreSectionActive = computed(() => route.path.startsWith('/user') || route.path.startsWith('/admin'))
+
+const closeMoreMenu = async (restoreFocus = false) => {
+  isMoreMenuOpen.value = false
+
+  if (restoreFocus) {
+    await nextTick()
+    moreButtonRef.value?.focus()
+  }
 }
 
-const handleGlobalSearch = () => {
-  const keyword = searchKeyword.value.trim()
-  if (!keyword) {
-    return
+const toggleMoreMenu = () => {
+  isMoreMenuOpen.value = !isMoreMenuOpen.value
+}
+
+const handleDocumentClick = () => {
+  if (isMoreMenuOpen.value) {
+    closeMoreMenu()
   }
-  router.push({ path: '/mood/archive', query: { keyword } })
-  searchKeyword.value = ''
+}
+
+// 退出登录
+const handleLogout = () => {
+  userStore.logout()
+  router.push('/login')
 }
 
 // 组件挂载时获取情绪数据
-onMounted(async () => {
-  // 确保用户信息已加载（token 通过 HttpOnly Cookie 传递，可能尚未完成身份恢复）
-  if (userStore.token && !userStore.user) {
-    await userStore.fetchUserInfo()
-  }
+onMounted(() => {
+  document.addEventListener('click', handleDocumentClick)
+
   if (userStore.isLoggedIn) {
     // 当用户登录时，获取最近的情绪记录
     moodStore.fetchMoodList({ page: 1, size: 10 })
   }
 })
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleDocumentClick)
+})
+
+watch(
+  () => route.path,
+  () => {
+    closeMoreMenu()
+  }
+)
 </script>
 
 <style scoped lang="scss">
@@ -276,37 +329,13 @@ onMounted(async () => {
 
   .btn-logout {
     background: transparent;
-    color: #e74c3c;
-    border: 1px solid #e74c3c;
+    color: var(--danger);
+    border: 1px solid var(--danger);
 
     &:hover {
-      background: #e74c3c;
+      background: var(--danger);
       color: white;
     }
-  }
-}
-
-.global-search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  input {
-    width: 180px;
-    padding: 8px 12px;
-    border: 1px solid #d8e2ef;
-    border-radius: 999px;
-    background: #f8fafc;
-    color: var(--text-color);
-  }
-
-  button {
-    padding: 8px 14px;
-    border: none;
-    border-radius: 999px;
-    background: var(--theme-color, var(--primary-color));
-    color: #fff;
-    cursor: pointer;
   }
 }
 
@@ -375,6 +404,10 @@ footer {
       text-decoration: none;
       font-size: 11px;
       font-weight: 600;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      font-family: inherit;
 
       i {
         font-size: 18px;
@@ -383,6 +416,56 @@ footer {
 
       &.active {
         color: var(--theme-color, var(--primary-color));
+      }
+
+      &:focus-visible {
+        outline: 3px solid var(--theme-color, var(--primary-color));
+        outline-offset: 3px;
+        border-radius: 14px;
+      }
+    }
+
+    .mobile-more-wrapper {
+      position: relative;
+      display: grid;
+      min-width: 0;
+    }
+
+    .mobile-more-menu {
+      position: absolute;
+      right: 0;
+      bottom: calc(100% + 12px);
+      min-width: 148px;
+      padding: 8px;
+      border-radius: 16px;
+      background: var(--white);
+      border: 1px solid rgba(15, 23, 42, 0.1);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+      display: grid;
+      gap: 4px;
+    }
+
+    .mobile-more-menu-item {
+      min-height: 44px;
+      padding: 0 12px;
+      border-radius: 12px;
+      color: var(--text-color);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 600;
+
+      i {
+        width: 18px;
+        color: var(--theme-color, var(--primary-color));
+      }
+
+      &:hover,
+      &:focus-visible {
+        background: var(--primary-soft-bg);
+        outline: none;
       }
     }
   }

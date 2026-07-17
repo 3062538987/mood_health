@@ -14,28 +14,29 @@ export interface User {
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error && error.message ? error.message : fallback
 
-// 安全: Token 通过 HttpOnly Cookie 存储，Pinia 中仅保留内存副本用于 UI 状态判断 (VUE-AUTH-001)
 export const useUserStore = defineStore('user', () => {
   const user = ref<User | null>(null)
-  const token = ref<string>('')
+  const token = ref<string>(localStorage.getItem('token') || '')
   const loading = ref(false)
   const error = ref<string>('')
-  const authInitialized = ref(false)
 
   const isLoggedIn = computed(() => !!token.value && !!user.value)
   const username = computed(() => user.value?.username || '')
-  const isAdmin = computed(() => {
-    const role = user.value?.role
-    return role === 'admin' || role === 'super_admin' || role === 'counselor'
-  })
+  const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'super_admin')
 
   const setToken = (newToken: string) => {
     token.value = newToken
+    localStorage.setItem('token', newToken)
   }
 
   const clearToken = () => {
     token.value = ''
     user.value = null
+    localStorage.removeItem('token')
+  }
+
+  const clearError = () => {
+    error.value = ''
   }
 
   const register = async (username: string, password: string, email: string): Promise<boolean> => {
@@ -71,7 +72,6 @@ export const useUserStore = defineStore('user', () => {
       const { token: newToken, user: userData } = response
       setToken(newToken)
       user.value = userData
-      authInitialized.value = true
       return true
     } catch (err: unknown) {
       error.value = getErrorMessage(err, '登录失败')
@@ -82,36 +82,26 @@ export const useUserStore = defineStore('user', () => {
   }
 
   const fetchUserInfo = async (): Promise<boolean> => {
+    if (!token.value) return false
     try {
       const response = await request<{ user: User }>({
         url: '/api/auth/me',
         method: 'get',
       })
       user.value = response.user
-      // 安全: Cookie 中的 Token 对前端不可见，用占位值标记已登录状态
-      token.value = 'httpOnly'
       return true
     } catch (err) {
       clearToken()
       return false
-    } finally {
-      authInitialized.value = true
     }
   }
 
-  const logout = async () => {
-    try {
-      await request({ url: '/api/auth/logout', method: 'post' })
-    } catch {
-      // 即使清除 Cookie 失败也清除本地状态
-    }
+  const logout = () => {
     clearToken()
-    authInitialized.value = true
   }
 
-  // 安全: 页面刷新后通过 /api/auth/me 恢复登录状态（Cookie 自动发送）(VUE-AUTH-001)
   const init = async () => {
-    if (!authInitialized.value) {
+    if (token.value) {
       await fetchUserInfo()
     }
   }
@@ -121,10 +111,10 @@ export const useUserStore = defineStore('user', () => {
     token,
     loading,
     error,
-    authInitialized,
     isLoggedIn,
     username,
     isAdmin,
+    clearError,
     register,
     login,
     logout,

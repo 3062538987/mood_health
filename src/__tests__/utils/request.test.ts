@@ -11,6 +11,12 @@ const mocks = vi.hoisted(() => {
     request: vi.fn(),
     messageError: vi.fn(),
     routerPush: vi.fn(),
+    currentRoute: {
+      value: {
+        path: '/mood/record',
+        fullPath: '/mood/record?source=expired',
+      },
+    },
     loadingClose: vi.fn(),
   }
 })
@@ -38,7 +44,10 @@ vi.mock('element-plus', () => ({
 }))
 
 vi.mock('@/router', () => ({
-  default: { push: mocks.routerPush },
+  default: {
+    push: mocks.routerPush,
+    currentRoute: mocks.currentRoute,
+  },
 }))
 
 const response = (data: unknown) => ({ data, config: {} })
@@ -47,6 +56,10 @@ describe('request response contract', () => {
   beforeEach(() => {
     localStorage.clear()
     vi.clearAllMocks()
+    mocks.currentRoute.value = {
+      path: '/mood/record',
+      fullPath: '/mood/record?source=expired',
+    }
   })
 
   it('unwraps a standard success response exactly once', async () => {
@@ -84,8 +97,9 @@ describe('request response contract', () => {
     expect(mocks.messageError).toHaveBeenCalledWith('参数错误')
   })
 
-  it('normalizes a 401 HTTP error and clears the expired login', async () => {
+  it('normalizes a 401 HTTP error, clears the expired login, and preserves current route', async () => {
     const { ApiRequestError } = await import('@/utils/request')
+    localStorage.setItem('token', 'expired-token')
 
     const promise = mocks.responseHandlers.rejected?.({
       config: {},
@@ -97,11 +111,36 @@ describe('request response contract', () => {
       kind: 'http',
       status: 401,
       code: 1002,
-      message: '令牌已过期',
+      message: '登录已过期，请重新登录',
     })
-    expect(mocks.routerPush).toHaveBeenCalledWith('/login')
-    // 401 应静默跳转，不弹错误提示
-    expect(mocks.messageError).not.toHaveBeenCalled()
+    expect(localStorage.getItem('token')).toBeNull()
+    expect(mocks.routerPush).toHaveBeenCalledWith({
+      path: '/login',
+      query: { redirect: '/mood/record?source=expired' },
+    })
+
+    mocks.responseHandlers.fulfilled?.(response({ code: 0, message: 'ok', data: null }))
+  })
+
+  it('suppresses duplicate redirect and message for concurrent 401 responses', async () => {
+    const { ApiRequestError } = await import('@/utils/request')
+    localStorage.setItem('token', 'expired-token')
+
+    const first = mocks.responseHandlers.rejected?.({
+      config: {},
+      response: { status: 401, data: { code: 1002, message: '令牌已过期', data: null } },
+    })
+    const second = mocks.responseHandlers.rejected?.({
+      config: {},
+      response: { status: 401, data: { code: 1002, message: '令牌已过期', data: null } },
+    })
+
+    await expect(first).rejects.toBeInstanceOf(ApiRequestError)
+    await expect(second).rejects.toBeInstanceOf(ApiRequestError)
+    expect(mocks.routerPush).toHaveBeenCalledTimes(1)
+    expect(mocks.messageError).toHaveBeenCalledTimes(1)
+
+    mocks.responseHandlers.fulfilled?.(response({ code: 0, message: 'ok', data: null }))
   })
 
   it('normalizes a 500 HTTP error without exposing a different error shape', async () => {
@@ -135,9 +174,9 @@ describe('request response contract', () => {
   it('rejects a response without a business code', async () => {
     const { ApiRequestError } = await import('@/utils/request')
 
-    expect(() => mocks.responseHandlers.fulfilled?.(response({ source: 'no-code' }))).toThrowError(
-      ApiRequestError
-    )
+    expect(() =>
+      mocks.responseHandlers.fulfilled?.(response({ source: 'no-code' }))
+    ).toThrowError(ApiRequestError)
     expect(mocks.messageError).toHaveBeenCalledWith('响应缺少业务状态码')
   })
 })

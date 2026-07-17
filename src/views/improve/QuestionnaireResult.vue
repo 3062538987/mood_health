@@ -35,18 +35,6 @@
         <div class="action-buttons">
           <button class="btn secondary" @click="backToList">返回量表列表</button>
           <button class="btn primary" @click="retryAssessment">重新测试</button>
-          <button class="btn ai-btn" :disabled="aiLoading" @click="loadAiInterpretation">
-            {{ aiLoading ? 'AI 分析中...' : aiContent ? '刷新 AI 解读' : 'AI 智能解读' }}
-          </button>
-        </div>
-
-        <div v-if="aiContent" class="ai-section">
-          <h4>AI 智能解读</h4>
-          <div class="ai-content" v-html="aiContentHtml"></div>
-          <p class="ai-disclaimer">以上内容由 AI 生成，仅供参考，不构成医疗建议。</p>
-        </div>
-        <div v-else-if="aiError" class="ai-error">
-          <p>{{ aiError }}</p>
         </div>
       </div>
     </div>
@@ -54,11 +42,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import DOMPurify from 'dompurify'
-import { getInterpretation } from '@/api/ai'
-import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const route = useRoute()
@@ -79,20 +64,6 @@ const title = ref(route.query.title ? decodeURIComponent(route.query.title as st
 const score = ref(route.query.score ? (route.query.score as string) : '0')
 const result = ref(route.query.result ? decodeURIComponent(route.query.result as string) : '')
 const testDate = ref(route.query.date ? formatDate(route.query.date as string) : '')
-const scaleType = ref(route.query.type ? (route.query.type as string) : 'phq-9')
-const aiContent = ref('')
-const aiError = ref('')
-const aiLoading = ref(false)
-
-// 安全: 对 AI 生成内容进行 HTML 消毒防止 XSS 攻击 (VUE-XSS-001)
-const aiContentHtml = computed(() => {
-  const rawHtml = aiContent.value
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br>')
-    .replace(/^(.+)$/gm, (_, p1) => (p1 ? `<p>${p1}</p>` : ''))
-    .replace(/<\/p><p>/g, '</p><p>')
-  return DOMPurify.sanitize(rawHtml)
-})
 
 // 返回量表列表
 const backToList = () => {
@@ -104,37 +75,6 @@ const retryAssessment = () => {
   // 这里应该根据实际情况跳转到对应的量表页面
   // 暂时返回列表页
   router.push('/improve/questionnaire')
-}
-
-const loadAiInterpretation = async () => {
-  aiLoading.value = true
-  aiError.value = ''
-  try {
-    const numScore = Number(score.value)
-    const maxScore = scaleType.value === 'gad-7' ? 21 : 27
-    const res = await getInterpretation({
-      scaleName: title.value,
-      scaleType: scaleType.value,
-      totalScore: numScore,
-      maxScore,
-      itemScores: [],
-      riskLevel:
-        numScore >= (scaleType.value === 'gad-7' ? 15 : 20)
-          ? 'high'
-          : numScore >= (scaleType.value === 'gad-7' ? 10 : 15)
-            ? 'moderate'
-            : numScore >= (scaleType.value === 'gad-7' ? 5 : 5)
-              ? 'mild'
-              : 'low',
-    })
-    aiContent.value = res.content
-    ElMessage.success('AI 解读生成成功')
-  } catch (error: any) {
-    aiError.value = error?.response?.data?.message || 'AI 解读暂不可用，请稍后重试'
-    ElMessage.warning(aiError.value)
-  } finally {
-    aiLoading.value = false
-  }
 }
 
 onMounted(() => {
@@ -256,57 +196,8 @@ onMounted(() => {
       .btn {
         min-width: 120px;
       }
-      .ai-btn {
-        background-color: #7c4dff;
-        border-color: #7c4dff;
-        color: $white;
-        &:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-      }
     }
   }
-}
-
-.ai-section {
-  margin-top: 24px;
-  padding: 20px;
-  background: linear-gradient(135deg, #f5f0ff 0%, #ede7f6 100%);
-  border-radius: $border-radius-md;
-  border: 1px solid #d1c4e9;
-  text-align: left;
-
-  h4 {
-    margin-bottom: 12px;
-    color: #5e35b1;
-  }
-
-  .ai-content {
-    line-height: 1.8;
-    color: $text-color;
-    font-size: $font-size-md;
-
-    :deep(p) {
-      margin-bottom: 8px;
-    }
-  }
-
-  .ai-disclaimer {
-    margin-top: 12px;
-    font-size: $font-size-sm;
-    color: $text-light-color;
-    font-style: italic;
-  }
-}
-
-.ai-error {
-  margin-top: 16px;
-  padding: 12px;
-  background-color: #fff3e0;
-  border-radius: $border-radius-md;
-  color: #e65100;
-  font-size: $font-size-sm;
 }
 
 @media (max-width: 768px) {

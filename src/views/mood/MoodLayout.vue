@@ -6,18 +6,16 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import type { RouteMeta } from 'vue-router'
 import SubNav from '@/components/shared/SubNav.vue'
 
-const route = useRoute()
-const subNavItems = computed(() => {
-  const items = route.meta.subNav
-  if (!Array.isArray(items)) {
-    return []
-  }
+type SubNavItem = NonNullable<RouteMeta['subNav']>[number]
 
-  return items.filter((item) => item.path !== '/mood/analysis')
-})
+const route = useRoute()
+const subNavItems = computed<SubNavItem[]>(() =>
+  (route.meta.subNav ?? []).filter((item) => item.path !== '/mood/analysis')
+)
 </script>

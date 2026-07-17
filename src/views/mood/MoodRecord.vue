@@ -137,7 +137,7 @@
             <textarea
               v-model="moodContent"
               rows="6"
-              placeholder="可以从一件小事开始：今天什么时候开始觉得不舒服，或哪一刻突然轻松了？"
+              placeholder="从一件小事开始：今天什么时候开始觉得不舒服？"
             ></textarea>
           </section>
 
@@ -229,6 +229,7 @@ const {
   hasDraft,
   isSubmitting,
   isSubmittingSuccess,
+  canSubmit,
   filteredTriggerSuggestions,
   characterCount,
   formProgress,
@@ -311,21 +312,13 @@ const selectedMoodLabelText = computed(() => {
   return selectedMoodTypeIds.value.map((id) => getMoodLabel(id)).join('、')
 })
 
-const canSubmit = computed(() => !isSubmitting.value)
-
 const getMoodLabel = (moodId: string) => {
   return EMOTION_MAP[moodId] || moodId
 }
 
 const toRgb = (hexColor: string) => {
   const hex = hexColor.replace('#', '')
-  const normalized =
-    hex.length === 3
-      ? hex
-          .split('')
-          .map((c) => c + c)
-          .join('')
-      : hex
+  const normalized = hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex
   const value = Number.parseInt(normalized, 16)
   const r = (value >> 16) & 255
   const g = (value >> 8) & 255
@@ -373,7 +366,7 @@ onMounted(() => {
 .mood-record-page {
   min-height: 100%;
   padding: 36px;
-  background: #fdf8f2;
+  background: var(--bg-color);
 }
 
 .page-shell {
@@ -386,9 +379,9 @@ onMounted(() => {
 .hero-panel,
 .panel {
   border-radius: 22px;
-  border: 1px solid #eee5d8;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border-color);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .hero-panel {
@@ -400,7 +393,7 @@ onMounted(() => {
 
 .eyebrow {
   margin: 0 0 0.45rem;
-  color: #9c8f7d;
+  color: var(--muted);
   font-size: 0.84rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -410,7 +403,7 @@ onMounted(() => {
 h1,
 h2 {
   margin: 0;
-  color: #5c5c5c;
+  color: var(--text-color);
 }
 
 h1 {
@@ -421,13 +414,13 @@ h1 {
 h2 {
   font-size: 18px;
   font-weight: 700;
-  color: #333;
+  color: var(--text-color);
 }
 
 .hero-copy {
   margin: 0.8rem 0 0;
   max-width: 46rem;
-  color: #5c5c5c;
+  color: var(--text-color);
   line-height: 1.8;
 }
 
@@ -443,16 +436,16 @@ h2 {
   gap: 0.28rem;
   padding: 1rem;
   border-radius: 20px;
-  background: linear-gradient(180deg, rgba(196, 154, 108, 0.1), rgba(255, 255, 255, 0.92));
+  background: var(--surface-muted);
 }
 
 .hero-metrics strong {
   font-size: 1.5rem;
-  color: #8b9dc3;
+  color: var(--primary-color);
 }
 
 .hero-metrics span {
-  color: #7a746b;
+  color: var(--muted);
   font-size: 0.9rem;
 }
 
@@ -494,7 +487,7 @@ h2 {
   margin: 0 0 0.42rem;
   font-size: 13px;
   font-weight: 700;
-  color: #6f6a62;
+  color: var(--text-color);
 }
 
 .mood-grid {
@@ -506,10 +499,10 @@ h2 {
 
 .mood-type-item {
   min-height: 92px;
-  border: 1px solid #e8e2d8;
+  border: 1px solid var(--border-color);
   border-radius: 16px;
-  background: #f8f4ee;
-  color: #5c5c5c;
+  background: var(--surface-muted);
+  color: var(--text-color);
   padding: 0.55rem 0.4rem;
   display: grid;
   justify-items: center;
@@ -525,13 +518,13 @@ h2 {
 
 .mood-type-item:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 18px var(--mood-glow, rgba(196, 154, 108, 0.2));
+  box-shadow: 0 8px 18px var(--mood-glow, var(--primary-soft-bg));
 }
 
 .mood-type-item.active {
-  border-color: #8b9dc3;
+  border-color: var(--primary-color);
   box-shadow:
-    0 10px 20px var(--mood-glow, rgba(139, 157, 195, 0.22)),
+    0 10px 20px var(--mood-glow, var(--primary-soft-bg)),
     inset 0 0 0 1px rgba(255, 255, 255, 0.7);
 }
 
@@ -583,20 +576,20 @@ h2 {
   border-radius: 20px;
   display: grid;
   justify-items: center;
-  background: rgba(139, 157, 195, 0.12);
-  color: #5c5c5c;
+  background: var(--primary-soft-bg);
+  color: var(--text-color);
 }
 
 .intensity-badge.low {
-  background: rgba(148, 163, 184, 0.16);
+  background: var(--surface-muted);
 }
 
 .intensity-badge.mid {
-  background: rgba(139, 157, 195, 0.12);
+  background: var(--primary-soft-bg);
 }
 
 .intensity-badge.high {
-  background: rgba(196, 154, 108, 0.16);
+  background: var(--primary-soft-bg);
 }
 
 .intensity-badge strong {
@@ -607,7 +600,7 @@ h2 {
 .scale-labels,
 .ai-entry-row p,
 .draft-banner small {
-  color: #888;
+  color: var(--muted);
   font-size: 13px;
 }
 
@@ -621,8 +614,8 @@ h2 {
   min-height: 44px;
   border: none;
   border-radius: 16px;
-  background: rgba(196, 154, 108, 0.12);
-  color: #6f6a62;
+  background: var(--primary-soft-bg);
+  color: var(--text-color);
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
@@ -634,20 +627,20 @@ h2 {
 }
 
 .scale-dot.active {
-  background: rgba(139, 157, 195, 0.24);
-  color: #5c5c5c;
+  background: var(--primary-soft-bg);
+  color: var(--text-color);
 }
 
 .scale-dot.current {
-  background: linear-gradient(135deg, #8b9dc3, #c49a6c);
+  background: var(--primary-color);
   color: #fff;
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
 }
 
 .intensity-slider {
   width: 100%;
-  accent-color: #c49a6c;
+  accent-color: var(--primary-color);
 }
 
 .scale-labels {
@@ -660,9 +653,9 @@ textarea,
 .trigger-input {
   width: 100%;
   border-radius: 20px;
-  border: 1px solid #e8e2d8;
-  background: #fff;
-  color: #5c5c5c;
+  border: 1px solid var(--border-color);
+  background: var(--surface);
+  color: var(--text-color);
   padding: 1.15rem 1.2rem;
   outline: none;
   transition:
@@ -680,21 +673,21 @@ textarea {
 
 textarea::placeholder {
   font-size: 15px;
-  color: #888;
+  color: var(--muted);
 }
 
 textarea:focus,
 .trigger-input:focus {
-  border-color: #c49a6c;
-  box-shadow: 0 0 0 4px rgba(196, 154, 108, 0.12);
-  background: #fff;
+  border-color: var(--focus);
+  box-shadow: 0 0 0 4px var(--primary-soft-bg);
+  background: var(--surface);
 }
 
 .count-chip {
   padding: 0.42rem 0.7rem;
   border-radius: 999px;
-  background: rgba(196, 154, 108, 0.14);
-  color: #888;
+  background: var(--primary-soft-bg);
+  color: var(--muted);
   font-size: 12px;
 }
 
@@ -702,8 +695,8 @@ textarea:focus,
   margin-bottom: 0.9rem;
   padding: 1rem 1.1rem;
   border-radius: 20px;
-  border: 1px solid #e5e7eb;
-  background: #f6f7f9;
+  border: 1px solid var(--border-color);
+  background: var(--surface-muted);
   display: flex;
   justify-content: space-between;
   gap: 0.8rem;
@@ -716,12 +709,12 @@ textarea:focus,
 }
 
 .tip-text strong {
-  color: #555;
+  color: var(--text-color);
   font-size: 12px;
 }
 
 .tip-text small {
-  color: #888;
+  color: var(--muted);
   font-size: 12px;
 }
 
@@ -738,13 +731,13 @@ textarea:focus,
   font-size: 15px;
   font-weight: 700;
   color: #fff;
-  background: linear-gradient(135deg, #8b9dc3, #c49a6c);
+  background: var(--primary-color);
 }
 
 .tip-btn.ghost {
   font-weight: 400;
-  color: #6f6a62;
-  background: rgba(196, 154, 108, 0.16);
+  color: var(--text-color);
+  background: var(--primary-soft-bg);
 }
 
 .ai-entry-row {
@@ -778,10 +771,10 @@ textarea:focus,
 .submit-action {
   padding: 0.95rem 1.3rem;
   border-radius: 40px;
-  background: linear-gradient(135deg, #8b9dc3, #c49a6c);
+  background: var(--primary-color);
   font-weight: 700;
   color: #fff;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
 }
 
 .add-trigger-btn {
@@ -790,7 +783,14 @@ textarea:focus,
 
 .inline-ai-btn.loading,
 .submit-action:disabled {
-  opacity: 0.75;
+  cursor: not-allowed;
+  opacity: 0.62;
+  filter: grayscale(0.35);
+  box-shadow: none;
+}
+
+.submit-action:disabled:hover {
+  transform: none;
 }
 
 .auto-recommend-list {
@@ -802,7 +802,7 @@ textarea:focus,
 }
 
 .tip-label {
-  color: #888;
+  color: var(--muted);
   font-weight: 400;
   font-size: 13px;
 }
@@ -814,8 +814,8 @@ textarea:focus,
 .add-trigger-btn {
   padding: 0.74rem 0.95rem;
   border-radius: 999px;
-  background: rgba(196, 154, 108, 0.14);
-  color: #5c5c5c;
+  background: var(--primary-soft-bg);
+  color: var(--text-color);
 }
 
 .auto-pill:hover,
@@ -843,8 +843,8 @@ textarea:focus,
 }
 
 .selected-trigger {
-  background: rgba(139, 157, 195, 0.2);
-  color: #5c5c5c;
+  background: var(--primary-soft-bg);
+  color: var(--text-color);
   font-weight: 400;
 }
 
@@ -856,13 +856,13 @@ textarea:focus,
   display: none;
   padding: 0.95rem 1rem;
   border-radius: 20px;
-  border: 1px solid #e5e7eb;
-  background: #f6f7f9;
+  border: 1px solid var(--border-color);
+  background: var(--surface-muted);
   font-size: 12px;
 }
 
 .eyebrow {
-  color: #888;
+  color: var(--muted);
   font-size: 13px;
 }
 
@@ -872,11 +872,11 @@ textarea:focus,
 }
 
 .ghost-action {
-  background: rgba(196, 154, 108, 0.16);
+  background: var(--primary-soft-bg);
 }
 
 .submit-action.success {
-  background: linear-gradient(135deg, #8b9dc3, #c49a6c);
+  background: var(--success-color);
 }
 
 :deep(.el-message--error) {
@@ -920,7 +920,7 @@ textarea:focus,
 .trigger-panel .eyebrow {
   font-size: 20px !important;
   font-weight: 700 !important;
-  color: #2c3e50 !important;
+  color: var(--text-color) !important;
   margin-bottom: 12px !important;
   text-transform: none !important;
   letter-spacing: 0 !important;
@@ -933,13 +933,13 @@ textarea:focus,
 .trigger-panel h2 {
   font-size: 13px !important;
   font-weight: 400 !important;
-  color: #95a5a6 !important;
+  color: var(--muted) !important;
   line-height: 1.4 !important;
   margin-bottom: 0 !important;
 }
 
 .panel-head {
-  border-bottom: 1px solid #eceff1 !important;
+  border-bottom: 1px solid var(--border-color) !important;
   padding-bottom: 12px !important;
   margin-bottom: 12px !important;
 }
@@ -952,7 +952,7 @@ textarea:focus,
 .draft-banner small,
 .tip-label {
   font-size: 13px !important;
-  color: #95a5a6 !important;
+  color: var(--muted) !important;
   line-height: 1.4 !important;
 }
 
@@ -970,7 +970,7 @@ textarea:focus,
 .intensity-badge strong {
   font-size: 20px !important;
   font-weight: 700 !important;
-  color: #8b9dc3 !important;
+  color: var(--primary-color) !important;
 }
 
 textarea {
@@ -980,15 +980,15 @@ textarea {
 
 textarea::placeholder {
   font-size: 14px !important;
-  color: #bbb !important;
+  color: var(--muted) !important;
 }
 
 .inline-draft-tip,
 .draft-banner {
-  background: #f8f9fa !important;
+  background: var(--surface-muted) !important;
   border-radius: 16px !important;
   padding: 12px !important;
-  border: none !important;
+  border: 1px solid var(--border-color) !important;
 }
 
 .tip-text strong,
@@ -999,7 +999,7 @@ textarea::placeholder {
 }
 
 .submit-action {
-  background: linear-gradient(135deg, #8b9dc3, #c49a6c) !important;
+  background: var(--primary-color) !important;
   color: #fff !important;
   font-size: 16px !important;
   font-weight: 700 !important;
@@ -1009,8 +1009,8 @@ textarea::placeholder {
 .tip-actions .tip-btn,
 .tip-actions .tip-btn.ghost {
   background: transparent !important;
-  border: 1px solid #d0d7de !important;
-  color: #4b5563 !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-color) !important;
   font-size: 14px !important;
   font-weight: 400 !important;
 }

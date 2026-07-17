@@ -23,33 +23,6 @@ export interface MoodRecord {
   createTime: string // 记录时间
 }
 
-export interface CreateMoodEmotionInput {
-  emotionTypeId: number
-  intensity: number
-  isPrimary: boolean
-}
-
-export interface CreateMoodRecordInput {
-  emotions: CreateMoodEmotionInput[]
-  event: string
-  trigger: string
-  tags: string[]
-  tagIds: number[]
-  recordDate?: string
-}
-
-export interface LegacyCreateMoodRecordInput {
-  intensity: number
-  moodType: string[]
-  moodRatio: number[]
-  event: string
-  tags: string[]
-  trigger: string
-  recordDate?: string
-}
-
-export type SubmitMoodRecordInput = CreateMoodRecordInput | LegacyCreateMoodRecordInput
-
 /**
  * 情绪记录列表响应接口
  * @interface MoodListResponse
@@ -118,9 +91,6 @@ export interface MoodTrendResponse {
  * @property {string} label - 情绪类型标签
  */
 export interface MoodTypeEnum {
-  id: number
-  code: string
-  name: string
-  icon?: string | null
-  category?: string | null
+  value: string
+  label: string
 }

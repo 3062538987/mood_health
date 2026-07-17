@@ -38,14 +38,18 @@
             <button
               type="button"
               class="emotion-trigger"
-              :aria-expanded="isEmotionDropdownOpen"
               @click="toggleEmotionDropdown"
+              :aria-expanded="isEmotionDropdownOpen"
             >
               <div v-if="filters.emotions.length === 0" class="placeholder">请选择情绪类型</div>
               <div v-else class="selected-tags in-trigger">
                 <span v-for="value in filters.emotions" :key="value" class="selected-tag">
                   {{ emotionLabel(value) }}
-                  <button type="button" class="remove-tag-btn" @click.stop="removeEmotion(value)">
+                  <button
+                    type="button"
+                    class="remove-tag-btn"
+                    @click.stop="removeEmotion(value)"
+                  >
                     ×
                   </button>
                 </span>
@@ -105,11 +109,7 @@
             <td>{{ item.username || '-' }}</td>
             <td>
               <div class="emotion-cell-list">
-                <span
-                  v-for="emotion in normalizedMoodTypes(item.moodType)"
-                  :key="emotion"
-                  class="emotion-chip"
-                >
+                <span v-for="emotion in normalizedMoodTypes(item.moodType)" :key="emotion" class="emotion-chip">
                   <i class="emotion-dot" :style="getEmotionDotStyle(emotion)"></i>
                   {{ emotionLabel(emotion) }}
                 </span>
@@ -130,19 +130,13 @@
           <div class="row">
             <label>情绪类型</label>
             <div class="emotion-cell-list">
-              <span
-                v-for="emotion in normalizedMoodTypes(item.moodType)"
-                :key="emotion"
-                class="emotion-chip"
-              >
+              <span v-for="emotion in normalizedMoodTypes(item.moodType)" :key="emotion" class="emotion-chip">
                 <i class="emotion-dot" :style="getEmotionDotStyle(emotion)"></i>
                 {{ emotionLabel(emotion) }}
               </span>
             </div>
           </div>
-          <div class="row">
-            <label>强度</label><span>{{ item.intensity || '-' }}</span>
-          </div>
+          <div class="row"><label>强度</label><span>{{ item.intensity || '-' }}</span></div>
         </article>
       </div>
     </div>

@@ -137,9 +137,7 @@ const getNearestMoodId = (angle: number) => {
   return nearest.id
 }
 
-const hasSelection = computed(() =>
-  Boolean(props.selectedMoodId && moodMap.value.has(props.selectedMoodId))
-)
+const hasSelection = computed(() => Boolean(props.selectedMoodId && moodMap.value.has(props.selectedMoodId)))
 
 const activeMood = computed(
   () => (hasSelection.value ? moodMap.value.get(props.selectedMoodId) : null) ?? fallbackMood
@@ -166,9 +164,7 @@ const intensityTone = computed(() => {
 })
 
 const selectedRadius = computed(
-  () =>
-    innerRadius +
-    ((clamp(Math.round(props.intensity || 6), 1, 10) - 1) / 9) * (outerRadius - innerRadius)
+  () => innerRadius + ((clamp(Math.round(props.intensity || 6), 1, 10) - 1) / 9) * (outerRadius - innerRadius)
 )
 
 const handleStyle = computed(() => {
@@ -309,12 +305,7 @@ h3 {
     #a855f7,
     #ef4444
   );
-  -webkit-mask: radial-gradient(
-    circle at center,
-    transparent 0 43px,
-    #000 44px 120px,
-    transparent 121px
-  );
+  -webkit-mask: radial-gradient(circle at center, transparent 0 43px, #000 44px 120px, transparent 121px);
   mask: radial-gradient(circle at center, transparent 0 43px, #000 44px 120px, transparent 121px);
 }
 
@@ -343,11 +334,7 @@ h3 {
   width: 100%;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--indicator-color) 20%, white),
-    var(--indicator-color)
-  );
+  background: linear-gradient(90deg, color-mix(in srgb, var(--indicator-color) 20%, white), var(--indicator-color));
   box-shadow: 0 0 12px color-mix(in srgb, var(--indicator-color) 45%, transparent);
 }
 
@@ -355,9 +342,7 @@ h3 {
   inset: 52px;
   background: rgba(255, 250, 244, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    0 10px 20px rgba(115, 92, 68, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 10px 20px rgba(115, 92, 68, 0.08);
 }
 
 .wheel-handle {
@@ -370,9 +355,7 @@ h3 {
   border: 0;
   border-radius: 50%;
   background: var(--handle-color);
-  box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 0.9),
-    0 6px 16px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.9), 0 6px 16px rgba(0, 0, 0, 0.16);
   transform: translate3d(calc(-50% + var(--handle-x)), calc(-50% + var(--handle-y)), 0);
   opacity: var(--handle-opacity);
   pointer-events: none;

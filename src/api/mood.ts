@@ -1,13 +1,11 @@
 import request from '@/utils/request'
-import type {
-  CreateMoodRecordInput,
-  LegacyCreateMoodRecordInput,
+import {
+  MoodRecord,
   MoodListResponse,
   MoodListParams,
   MoodWeeklyReport,
   MoodTrendResponse,
   MoodTypeEnum,
-  SubmitMoodRecordInput,
 } from '@/types/mood'
 import {
   getAdviceHistory,
@@ -27,9 +25,6 @@ export type {
   AdviceHistoryItem as MoodAdviceHistoryItem,
   MoodAnalysisRequest,
   MoodAnalysisResponse,
-  CreateMoodRecordInput,
-  LegacyCreateMoodRecordInput,
-  SubmitMoodRecordInput,
   SaveAdviceRequest as SaveMoodAdviceRequest,
 }
 export { analyzeMood, debouncedAnalyzeMood, analyzeMoodWithRetry }
@@ -79,7 +74,7 @@ const shouldRetry = (error: any): boolean => {
   return false
 }
 
-export const submitMoodRecord = (data: SubmitMoodRecordInput) => {
+export const submitMoodRecord = (data: Omit<MoodRecord, 'id' | 'userId' | 'createTime'>) => {
   return request<null>({
     url: '/api/moods/record',
     method: 'post',
@@ -92,6 +87,13 @@ export const getMoodRecordList = (params: MoodListParams) => {
     url: '/api/moods/list',
     method: 'get',
     params,
+  })
+}
+
+export const deleteMoodRecord = (id: number): Promise<null> => {
+  return request<null>({
+    url: `/api/moods/${id}`,
+    method: 'delete',
   })
 }
 

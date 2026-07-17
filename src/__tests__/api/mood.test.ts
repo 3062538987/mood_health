@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import request from '@/utils/request'
 import {
+  deleteMoodRecord,
   getMoodRecordList,
   getMoodTrend,
   getMoodWeeklyReport,
   submitMoodRecord,
-  type CreateMoodRecordInput,
 } from '@/api/mood'
 
 vi.mock('@/utils/request', () => ({
@@ -21,12 +21,13 @@ describe('mood API contract', () => {
 
   it('returns the unwrapped write result after recording a mood', async () => {
     requestMock.mockResolvedValueOnce(null)
-    const payload: CreateMoodRecordInput = {
-      emotions: [{ emotionTypeId: 1, intensity: 7, isPrimary: true }],
+    const payload = {
+      intensity: 7,
+      moodType: ['快乐'],
+      moodRatio: [70],
       event: '完成课程作业',
       tags: ['学习'],
       trigger: '任务完成',
-      tagIds: [],
     }
 
     await expect(submitMoodRecord(payload)).resolves.toBeNull()
@@ -46,6 +47,16 @@ describe('mood API contract', () => {
       url: '/api/moods/list',
       method: 'get',
       params: { page: 2, size: 10 },
+    })
+  })
+
+  it('deletes a mood record through the authenticated mood endpoint', async () => {
+    requestMock.mockResolvedValueOnce(null)
+
+    await expect(deleteMoodRecord(42)).resolves.toBeNull()
+    expect(requestMock).toHaveBeenCalledWith({
+      url: '/api/moods/42',
+      method: 'delete',
     })
   })
 

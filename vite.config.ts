@@ -74,7 +74,31 @@ export default defineConfig(({ mode }) => {
       open: true,
       allowedHosts: devAllowedHosts,
       proxy: {
-        '/api': {
+        '/api/auth': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+        },
+        '/api/moods': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+        },
+        '/api/activities': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+        },
+        '/api/posts': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+        },
+        '/api/questionnaires': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+        },
+        '/api/music': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+        },
+        '/api/courses': {
           target: 'http://localhost:3000',
           changeOrigin: true,
         },

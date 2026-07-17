@@ -45,6 +45,19 @@
         </router-link>
       </div>
 
+      <section
+        v-if="showFirstRecordOnboarding"
+        class="first-record-onboarding"
+        aria-labelledby="first-record-title"
+      >
+        <div class="onboarding-copy">
+          <p class="onboarding-eyebrow">开始记录</p>
+          <h2 id="first-record-title">从第一条情绪开始了解自己</h2>
+          <p>你还没有情绪记录。先写下一件今天真实发生的小事，后续趋势才会更准确。</p>
+        </div>
+        <router-link to="/mood/record" class="onboarding-action">记录第一条情绪</router-link>
+      </section>
+
       <!-- 特色服务介绍 -->
       <div class="feature-section">
         <h2 class="section-title">特色服务</h2>
@@ -77,11 +90,21 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useMoodStore } from '@/stores/moodStore'
 import { useUserStore } from '@/stores/userStore'
 
 const isLoaded = ref(false)
 const userStore = useUserStore()
+const moodStore = useMoodStore()
 const isAdmin = computed(() => userStore.isAdmin)
+const showFirstRecordOnboarding = computed(
+  () =>
+    userStore.isLoggedIn &&
+    moodStore.hasFetchedMoodList &&
+    !moodStore.loading &&
+    !moodStore.error &&
+    moodStore.moodRecords.length === 0
+)
 
 onMounted(() => {
   // 添加页面加载动画
@@ -362,6 +385,88 @@ $text-light: #7f8c8d;
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+// 新用户引导
+.first-record-onboarding {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin: -40px auto 60px;
+  padding: 28px 32px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  box-shadow: var(--shadow-md);
+
+  @media (prefers-color-scheme: dark) {
+    background: rgba(30, 34, 40, 0.96);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    margin: -24px 0 40px;
+    padding: 24px;
+  }
+}
+
+.onboarding-copy {
+  display: grid;
+  gap: 8px;
+
+  .onboarding-eyebrow {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+  }
+
+  h2 {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 24px;
+    line-height: 1.35;
+  }
+
+  p {
+    margin: 0;
+    color: var(--text-light-color);
+    line-height: 1.7;
+  }
+}
+
+.onboarding-action {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: var(--primary-color);
+  color: var(--white);
+  text-decoration: none;
+  font-weight: 800;
+  box-shadow: 0 10px 22px rgba(106, 176, 165, 0.24);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    background: var(--primary-hover);
+    box-shadow: 0 14px 28px rgba(106, 176, 165, 0.3);
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 4px;
   }
 }
 

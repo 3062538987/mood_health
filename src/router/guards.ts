@@ -7,52 +7,38 @@ const GUIDE_PATH = '/guide'
 const LOGIN_PATH = '/login'
 
 type UserStore = ReturnType<typeof useUserStore>
-type UserRole = 'student' | 'super_admin' | 'counselor'
+type UserRole = 'user' | 'admin' | 'super_admin'
 
 const rolePermissions: Record<UserRole, readonly string[]> = {
   super_admin: [
-    'auth.profile.read',
-    'report.aggregate.read',
     'user.manage',
-    'user.role.assign',
-    'audit.log.read',
-    'case.read_assigned',
-    'case.read_own',
-    'case.create',
-    'case.assign',
-    'case.refer',
-    'case.close',
-    'user.delete',
-    'prompt.manage',
+    'role.manage',
+    'system.config',
+    'incident.fix',
+    'audit.record.view_all',
+    'post.audit',
+    'post.audit.pending.read',
+    'course.manage',
+    'music.manage',
+    'mood.record.read',
   ],
-  counselor: [
-    'auth.profile.read',
-    'report.aggregate.read',
-    'case.read_assigned',
-    'case.read_own',
-    'case.create',
-    'case.intervene',
-    'case.refer',
-    'case.close',
+  admin: [
+    'user.manage',
+    'post.audit',
+    'post.audit.pending.read',
+    'course.manage',
+    'music.manage',
+    'audit.record.view_all',
+    'mood.record.read',
   ],
-  student: [
-    'auth.profile.read',
-    'mood.record.create',
-    'mood.record.read_own',
-    'mood.record.update_own',
-    'mood.record.delete_own',
-    'assessment.instrument.read',
-    'assessment.submit',
-    'assessment.history.read_own',
-    'case.read_own',
-  ],
+  user: [],
 }
 
 const normalizeRole = (role: string | undefined): UserRole => {
-  if (role === 'counselor' || role === 'super_admin') {
+  if (role === 'admin' || role === 'super_admin') {
     return role
   }
-  return 'student'
+  return 'user'
 }
 
 export const requirePermission = (userStore: UserStore, permission?: string): boolean => {
@@ -69,7 +55,7 @@ export const requirePermission = (userStore: UserStore, permission?: string): bo
 }
 
 export const initializeUserState = async (userStore: UserStore) => {
-  if (!userStore.authInitialized) {
+  if (userStore.token && !userStore.user) {
     await userStore.fetchUserInfo()
   }
 }
@@ -90,7 +76,7 @@ export const getRouteRedirect = (to: RouteLocationNormalized, userStore: UserSto
   }
 
   if (to.meta.roles && to.meta.roles.length > 0) {
-    const currentRole = userStore.user?.role || 'student'
+    const currentRole = userStore.user?.role || 'user'
     if (!userStore.isLoggedIn || !to.meta.roles.includes(currentRole)) {
       return HOME_PATH
     }

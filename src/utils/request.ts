@@ -38,6 +38,7 @@ let loadingCount = 0
 let loadingInstance: ReturnType<typeof ElLoading.service> | null = null
 const apiBaseUrl = getApiBaseUrl()
 const apiBaseUsesApiPrefix = apiBaseUrl.endsWith('/api')
+let unauthorizedRedirectPending = false
 
 const startLoading = () => {
   if (loadingCount === 0) {
@@ -84,10 +85,37 @@ const unwrapResponse = <T>(payload: unknown): T => {
   })
 }
 
+const getSafeCurrentFullPath = () => {
+  const fullPath = router.currentRoute.value.fullPath
+  if (fullPath.startsWith('/') && !fullPath.startsWith('//')) {
+    return fullPath
+  }
+  return '/'
+}
+
+const handleUnauthorized = () => {
+  localStorage.removeItem('token')
+
+  if (router.currentRoute.value.path === '/login') {
+    unauthorizedRedirectPending = false
+    return true
+  }
+
+  if (unauthorizedRedirectPending) {
+    return false
+  }
+
+  unauthorizedRedirectPending = true
+  void router.push({
+    path: '/login',
+    query: { redirect: getSafeCurrentFullPath() },
+  })
+  return true
+}
+
 const service = axios.create({
   baseURL: apiBaseUrl,
   timeout: 10000,
-  withCredentials: true, // 安全: 发送 HttpOnly Cookie 认证令牌 (VUE-AUTH-001)
   headers: {
     'Content-Type': 'application/json',
   },
@@ -105,7 +133,10 @@ service.interceptors.request.use(
       config.url = config.url.slice(4)
     }
 
-    // 安全: Token 通过 HttpOnly Cookie 自动发送，无需手动添加 Authorization 头 (VUE-AUTH-001)
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
     return config
   },
   (error: unknown) => {
@@ -126,6 +157,7 @@ service.interceptors.response.use(
     if (responseConfig._withLoading) {
       endLoading()
     }
+    unauthorizedRedirectPending = false
 
     try {
       return unwrapResponse(response.data)
@@ -142,6 +174,8 @@ service.interceptors.response.use(
       endLoading()
     }
 
+    console.error('API Error:', error)
+
     if (error.response) {
       const status = error.response.status
       const responseData = error.response.data
@@ -149,11 +183,12 @@ service.interceptors.response.use(
         typeof responseData?.message === 'string' ? responseData.message : undefined
       const code = typeof responseData?.code === 'number' ? responseData.code : undefined
       let message = responseMessage || `请求失败 (${status})`
+      let shouldShowMessage = true
 
       switch (status) {
         case 401:
-          // 静默跳转登录页，不弹错误提示（token 过期是正常流程）
-          router.push('/login')
+          message = '登录已过期，请重新登录'
+          shouldShowMessage = handleUnauthorized()
           break
         case 403:
           message = responseMessage || '没有权限访问该资源'
@@ -164,11 +199,6 @@ service.interceptors.response.use(
         case 500:
           message = responseMessage || '服务器内部错误'
           break
-        case 503:
-          // AI 服务未配置时静默处理，不弹错误提示
-          break
-        default:
-          console.error('API Error:', error)
       }
 
       const requestError = new ApiRequestError({
@@ -179,14 +209,11 @@ service.interceptors.response.use(
         data: responseData?.data,
         cause: error,
       })
-      // 401/503 不弹错误提示
-      if (status !== 401 && status !== 503) {
+      if (shouldShowMessage) {
         ElMessage.error(requestError.message)
       }
       return Promise.reject(requestError)
     }
-
-    console.error('API Error:', error)
 
     const requestError = new ApiRequestError({
       kind: error.request ? 'network' : 'config',
