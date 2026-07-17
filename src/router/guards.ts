@@ -55,8 +55,8 @@ export const requirePermission = (userStore: UserStore, permission?: string): bo
 }
 
 export const initializeUserState = async (userStore: UserStore) => {
-  if (userStore.token && !userStore.user) {
-    await userStore.fetchUserInfo()
+  if (!userStore.authInitialized) {
+    await userStore.trySessionRestore()
   }
 }
 

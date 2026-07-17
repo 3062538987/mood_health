@@ -19,6 +19,7 @@ export const useUserStore = defineStore('user', () => {
   const token = ref<string>(localStorage.getItem('token') || '')
   const loading = ref(false)
   const error = ref<string>('')
+  const authInitialized = ref(false)
 
   const isLoggedIn = computed(() => !!token.value && !!user.value)
   const username = computed(() => user.value?.username || '')
@@ -96,6 +97,31 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  const trySessionRestore = async (): Promise<boolean> => {
+    // 如果已有 token 且用户信息已加载，无需恢复
+    if (token.value && user.value) {
+      authInitialized.value = true
+      return true
+    }
+    try {
+      const response = await request<{ user: User }>({
+        url: '/api/auth/me',
+        method: 'get',
+      })
+      user.value = response.user
+      // 从 cookie 恢复会话时，token 可能为空，但后端已认证
+      // 使用一个占位 token 让 isLoggedIn 生效
+      if (!token.value) {
+        token.value = 'session'
+      }
+      authInitialized.value = true
+      return true
+    } catch (err) {
+      authInitialized.value = true
+      return false
+    }
+  }
+
   const logout = () => {
     clearToken()
   }
@@ -111,6 +137,7 @@ export const useUserStore = defineStore('user', () => {
     token,
     loading,
     error,
+    authInitialized,
     isLoggedIn,
     username,
     isAdmin,
@@ -119,6 +146,7 @@ export const useUserStore = defineStore('user', () => {
     login,
     logout,
     fetchUserInfo,
+    trySessionRestore,
     init,
   }
 })
