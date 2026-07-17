@@ -301,6 +301,10 @@ const baseRoutes: RouteRecordRaw[] = [
     component: () => import('@/views/counseling/Counseling.vue'),
   },
   {
+    path: '/ai-history',
+    component: () => import('@/views/counseling/AiHistory.vue'),
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/views/NotFound.vue'),
