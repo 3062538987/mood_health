@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS activity_reminders (
+CREATE TABLE activity_reminders (
   id INT AUTO_INCREMENT PRIMARY KEY,
   activity_id INT UNSIGNED NOT NULL,
   user_id INT UNSIGNED NOT NULL,

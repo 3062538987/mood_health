@@ -51,7 +51,7 @@ describe('application API contract', () => {
   })
 
   it('returns the unified failure contract for an unknown route', async () => {
-    const response = await fetch(`${baseUrl}/api/not-found`)
+    const response = await fetch(`${baseUrl}/not-found`)
     const body = await response.json()
 
     expect(response.status).toBe(404)
