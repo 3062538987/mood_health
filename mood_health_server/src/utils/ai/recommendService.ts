@@ -3,7 +3,7 @@
  * 基于用户情绪数据推荐放松音乐/课程/活动
  */
 
-import aiClient from "./aiClient";
+import { callChatCompletion } from "./aiClient";
 import logger from "../logger";
 import { setCache, getCache } from "../cache";
 import { getMysqlPool } from "../../config/mysql";
@@ -14,17 +14,36 @@ import {
   RecommendationItem,
   getAICacheKey,
 } from "../../models/aiModel";
-import { AiServiceError } from "../errors";
 import aiConfig from "../../config/aiConfig";
 
 /**
  * 推荐系统服务类
  */
 export class RecommendService {
+  private readonly RECOMMEND_SYSTEM_PROMPT = `你是一位专业的心理健康助手，请根据用户的情绪状态推荐合适的放松内容。
+
+请严格按以下 JSON 格式返回（不要包含 markdown 代码块标记）：
+{
+  "items": [
+    {
+      "type": "music/course/activity",
+      "title": "内容标题",
+      "description": "内容描述",
+      "relevance": 0.9
+    }
+  ],
+  "strategy": "推荐策略说明",
+  "explanation": "推荐理由"
+}
+
+重要规则：
+1. items 中 type 只能是 music、course 或 activity
+2. relevance 为 0-1 的浮点数，表示推荐相关度
+3. 推荐内容应针对用户当前情绪状态
+4. 保持温和、共情的语气`
+
   /**
    * 获取推荐
-   * @param request 推荐请求
-   * @returns 推荐结果
    */
   async getRecommendations(
     request: ContentRecommendationRequest,
@@ -34,7 +53,6 @@ export class RecommendService {
       ? getAICacheKey("recommend", request.userId, request.mood)
       : null;
 
-    // 尝试从缓存获取
     if (aiConfig.enableCache && cacheKey) {
       const cached = await getCache<RecommendationResult>(cacheKey);
       if (cached) {
@@ -43,213 +61,61 @@ export class RecommendService {
       }
     }
 
+    const mood = typeof request.mood === 'string' ? request.mood : request.mood?.[0] || '平静';
+    const preferenceText = request.userPreferences?.length
+      ? `用户偏好：${request.userPreferences.join('、')}`
+      : '';
+
+    const messages: Array<{ role: 'system' | 'user'; content: string }> = [
+      { role: 'system', content: this.RECOMMEND_SYSTEM_PROMPT },
+      { role: 'user', content: `用户当前情绪：${mood}\n${preferenceText}\n请推荐 ${request.limit || 5} 个合适的放松内容。` },
+    ];
+
+    const rawResponse = await callChatCompletion(messages, {
+      temperature: 0.7,
+      maxTokens: 800,
+    });
+
+    let parsed: any;
     try {
-      // 调用AI接口
-      const result = await aiClient.callByModelType<RecommendationResult>(
-        "/recommend",
-        {
-          mood: request.mood,
-          limit: request.limit,
-          userPreferences: request.userPreferences,
-          recentActivities: request.recentActivities,
-        },
-        {
-          model: aiConfig.models.recommendation,
-        },
-      );
-
-      // 添加时间戳
-      const recommendationResult: RecommendationResult = {
-        ...result,
-        timestamp: new Date().toISOString(),
+      const jsonStr = (rawResponse.match(/\{[\s\S]*\}/) || ['{}'])[0];
+      parsed = JSON.parse(jsonStr);
+    } catch {
+      parsed = {
+        items: [],
+        strategy: 'AI 响应解析失败',
+        explanation: '基于您的情绪状态推荐',
       };
-
-      // 缓存结果
-      if (aiConfig.enableCache && cacheKey) {
-        await setCache(cacheKey, recommendationResult, aiConfig.cacheTTL);
-      }
-
-      const endTime = Date.now();
-      logger.info(`Recommendations generated in ${endTime - startTime}ms`);
-      return recommendationResult;
-    } catch (error) {
-      logger.error("Recommendation failed:", error);
-
-      // 本地fallback方案
-      const mood =
-        typeof request.mood === "string"
-          ? request.mood
-          : request.mood?.[0] || "平静";
-      return this.getLocalRecommendations(mood, request.limit || 5);
     }
-  }
 
-  /**
-   * 本地推荐fallback方案
-   * @param mood 情绪类型
-   * @param limit 推荐数量
-   * @returns 推荐结果
-   */
-  private getLocalRecommendations(
-    mood: string,
-    limit: number,
-  ): RecommendationResult {
-    // 基于情绪类型的本地推荐逻辑
-    const recommendationsMap: Record<string, RecommendationItem[]> = {
-      开心: [
-        {
-          id: "1",
-          type: "music",
-          title: "快乐时光",
-          description: "轻快的音乐，适合保持愉悦的心情",
-          url: "/api/music/1",
-          cover:
-            "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=happy%20music%20album%20cover%20with%20bright%20colors&image_size=square",
-          relevance: 0.9,
-        },
-        {
-          id: "2",
-          type: "activity",
-          title: "户外散步",
-          description: "在阳光下散步，享受美好时光",
-          url: "/api/activities/2",
-          cover:
-            "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=outdoor%20walking%20in%20sunshine&image_size=square",
-          relevance: 0.85,
-        },
-        {
-          id: "3",
-          type: "course",
-          title: "积极心理学",
-          description: "学习如何保持积极的心态",
-          url: "/api/courses/3",
-          cover:
-            "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=positive%20psychology%20course%20cover&image_size=square",
-          relevance: 0.8,
-        },
-      ],
-      焦虑: [
-        {
-          id: "4",
-          type: "music",
-          title: "静心冥想",
-          description: "舒缓的音乐，帮助缓解焦虑",
-          url: "/api/music/4",
-          cover:
-            "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=calm%20meditation%20music%20album%20cover&image_size=square",
-          relevance: 0.9,
-        },
-        {
-          id: "5",
-          type: "activity",
-          title: "深呼吸练习",
-          description: "通过深呼吸缓解焦虑情绪",
-          url: "/api/activities/5",
-          cover:
-            "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=deep%20breathing%20exercise&image_size=square",
-          relevance: 0.85,
-        },
-        {
-          id: "6",
-          type: "course",
-          title: "压力管理",
-          description: "学习有效的压力管理技巧",
-          url: "/api/courses/6",
-          cover:
-            "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=stress%20management%20course%20cover&image_size=square",
-          relevance: 0.8,
-        },
-      ],
-      抑郁: [
-        {
-          id: "7",
-          type: "music",
-          title: "希望之光",
-          description: "温暖的音乐，给予希望和力量",
-          url: "/api/music/7",
-          cover:
-            "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=hopeful%20music%20album%20cover%20with%20warm%20light&image_size=square",
-          relevance: 0.9,
-        },
-        {
-          id: "8",
-          type: "activity",
-          title: "社交互动",
-          description: "与朋友交流，缓解孤独感",
-          url: "/api/activities/8",
-          cover:
-            "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=social%20interaction%20with%20friends&image_size=square",
-          relevance: 0.85,
-        },
-        {
-          id: "9",
-          type: "course",
-          title: "情绪管理",
-          description: "学习如何管理和改善情绪",
-          url: "/api/courses/9",
-          cover:
-            "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=emotion%20management%20course%20cover&image_size=square",
-          relevance: 0.8,
-        },
-      ],
-      平静: [
-        {
-          id: "10",
-          type: "music",
-          title: "宁静致远",
-          description: "平和的音乐，保持内心的平静",
-          url: "/api/music/10",
-          cover:
-            "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=peaceful%20music%20album%20cover%20with%20calm%20landscape&image_size=square",
-          relevance: 0.9,
-        },
-        {
-          id: "11",
-          type: "activity",
-          title: "瑜伽练习",
-          description: "通过瑜伽保持身心平衡",
-          url: "/api/activities/11",
-          cover:
-            "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=yoga%20practice%20in%20peaceful%20setting&image_size=square",
-          relevance: 0.85,
-        },
-        {
-          id: "12",
-          type: "course",
-          title: "Mindfulness",
-          description: "学习正念技巧，保持当下",
-          url: "/api/courses/12",
-          cover:
-            "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=mindfulness%20meditation%20course%20cover&image_size=square",
-          relevance: 0.8,
-        },
-      ],
-    };
+    const items: RecommendationItem[] = (parsed.items || []).map((item: any, index: number) => ({
+      id: String(index + 1),
+      type: item.type || 'music',
+      title: item.title || '放松内容',
+      description: item.description || '',
+      relevance: item.relevance || 0.8,
+    }));
 
-    const recommendations =
-      recommendationsMap[mood] || recommendationsMap["平静"];
-    const limitedRecommendations = recommendations.slice(0, limit);
+    const enrichedItems = await this.enrichWithRealContent(items);
 
-    const reasonMap: Record<string, string> = {
-      '开心': '您当前情绪状态较好，推荐保持愉悦的内容',
-      '焦虑': '您当前感到焦虑，推荐舒缓放松的内容',
-      '抑郁': '您当前情绪低落，推荐温暖治愈的内容',
-      '平静': '您当前情绪平稳，推荐保持平衡的内容',
-    };
-
-    return {
-      items: limitedRecommendations,
-      strategy: "基于情绪状态的本地推荐",
-      explanation: reasonMap[mood] || `根据您当前的${mood}情绪状态，为您推荐了相关放松内容`,
+    const recommendationResult: RecommendationResult = {
+      items: enrichedItems,
+      strategy: parsed.strategy || '基于情绪状态的个性化推荐',
+      explanation: parsed.explanation || `根据您当前的${mood}情绪状态，为您推荐了相关放松内容`,
       timestamp: new Date().toISOString(),
     };
+
+    if (aiConfig.enableCache && cacheKey) {
+      await setCache(cacheKey, recommendationResult, aiConfig.cacheTTL);
+    }
+
+    const endTime = Date.now();
+    logger.info(`Recommendations generated in ${endTime - startTime}ms`);
+    return recommendationResult;
   }
 
   /**
    * 保存推荐点击记录
-   * @param userId 用户ID
-   * @param itemId 推荐项ID
-   * @param itemType 推荐项类型
    */
   async saveRecommendationClick(
     userId: number,
@@ -257,20 +123,16 @@ export class RecommendService {
     itemType: string,
   ): Promise<void> {
     try {
-      // 这里可以实现推荐点击记录的保存逻辑
-      // 例如保存到数据库或日志
       logger.info(
         `Recommendation click saved: user ${userId}, item ${itemId}, type ${itemType}`,
       );
     } catch (error) {
       logger.error("Failed to save recommendation click:", error);
-      // 不影响用户体验，静默处理错误
     }
   }
 
   /**
    * 基于用户历史数据获取个性化推荐
-   * 查询用户近30天的情绪记录、测评结果，构建真实偏好数据
    */
   async getPersonalizedRecommendations(
     userId: number,
@@ -279,7 +141,6 @@ export class RecommendService {
   ): Promise<RecommendationResult> {
     const pool = getMysqlPool();
 
-    // 查询用户近30天常见情绪
     const [emotionRows] = await pool.query<RowDataPacket[]>(
       `SELECT et.name, COUNT(*) as cnt
        FROM moods m
@@ -294,7 +155,6 @@ export class RecommendService {
 
     const commonEmotions: string[] = emotionRows.map((r) => r.name as string);
 
-    // 查询最近测评结果
     const [assessmentRows] = await pool.query<RowDataPacket[]>(
       `SELECT q.title, ar.score
        FROM assessment_sessions ass
@@ -311,7 +171,6 @@ export class RecommendService {
       score: Number(r.score),
     }));
 
-    // 构建用户偏好
     const userPreferences: string[] = [];
     if (commonEmotions.length > 0) {
       userPreferences.push(`常见情绪: ${commonEmotions.join('、')}`);
@@ -321,7 +180,6 @@ export class RecommendService {
       userPreferences.push(`测评结果: ${scores.join(', ')}`);
     }
 
-    // 构建推荐理由
     const baseReason = commonEmotions.length > 0
       ? `基于您最近经常感到${commonEmotions[0]}`
       : `根据您当前的${mood}情绪状态`;
@@ -334,24 +192,15 @@ export class RecommendService {
       recentActivities: [],
     };
 
-    try {
-      const result = await this.getRecommendations(request);
-      // 用真实内容匹配推荐项
-      const enrichedItems = await this.enrichWithRealContent(result.items);
-      return {
-        ...result,
-        items: enrichedItems,
-        explanation: `${baseReason}，为您推荐以下内容`,
-      };
-    } catch (error) {
-      logger.error("Personalized recommendation failed:", error);
-      return this.getLocalRecommendations(mood, limit);
-    }
+    const result = await this.getRecommendations(request);
+    return {
+      ...result,
+      explanation: `${baseReason}，为您推荐以下内容`,
+    };
   }
 
   /**
    * 用真实数据库内容匹配推荐项
-   * 将硬编码的推荐ID替换为真实数据库中的内容
    */
   private async enrichWithRealContent(
     items: RecommendationItem[],
@@ -410,7 +259,6 @@ export class RecommendService {
             continue;
           }
         }
-        // 无匹配内容时保留原始推荐
         enriched.push(item);
       } catch {
         enriched.push(item);

@@ -40,13 +40,28 @@ export const analyzeWithContext = async (req: AuthRequest, res: Response) => {
       })),
     })
 
+    // 调用四段式分析
+    let fourSection = null
+    try {
+      fourSection = await moodAnalysisService.analyzeWithFourSection(
+        contextPrompt,
+        message || '',
+      )
+    } catch (fourErr) {
+      logger.warn('四段式分析失败，将使用基础分析', { error: fourErr })
+    }
+
     res.json({
       code: 0,
       data: {
-        analysis: result.mood,
+        analysis: result.analysis || result.mood,
+        suggestions: result.suggestions || [result.suggestion],
+        mood: result.mood,
+        mood_score: result.mood_score || 5,
+        risk_level: result.risk_level || 'low',
         confidence: result.confidence,
         emotions: result.emotions,
-        suggestion: result.suggestion,
+        fourSection,
         dataScope: {
           moodRecordCount: context.summary.totalMoodRecords,
           dateRange: context.summary.dateRange,

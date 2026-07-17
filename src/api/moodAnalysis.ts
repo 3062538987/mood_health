@@ -1,3 +1,10 @@
+/**
+ * 情绪分析 API
+ * 调用后端 AI 上下文分析接口（DeepSeek）
+ */
+
+import request from '@/utils/request'
+
 export interface MoodAnalysisRequest {
   content: string
   mood_level: number
@@ -9,9 +16,21 @@ export interface MoodAnalysisResponse {
   mood_score?: number
   risk_level?: string
   mood: string
+  /** 四段式结构化分析（可选） */
+  fourSection?: {
+    summary: string
+    possibleCauses: string
+    todayActions: string[]
+    whenToSeekHelp: string
+  } | null
+  /** 数据范围（可选） */
+  dataScope?: {
+    moodRecordCount: number
+    dateRange: string
+    hasAssessment: boolean
+    latestAssessment?: any
+  } | null
 }
-
-const R0_DISABLED_MESSAGE = 'AI 情绪分析将在 v1.1 启用'
 
 const validateMoodAnalysisRequest = (data: MoodAnalysisRequest) => {
   if (!data.content || !data.content.trim()) {
@@ -23,9 +42,22 @@ const validateMoodAnalysisRequest = (data: MoodAnalysisRequest) => {
   }
 }
 
-export const analyzeMood = async (_data: MoodAnalysisRequest): Promise<MoodAnalysisResponse> => {
-  validateMoodAnalysisRequest(_data)
-  throw new Error(R0_DISABLED_MESSAGE)
+/**
+ * 分析情绪（调用后端 AI 上下文分析接口）
+ */
+export const analyzeMood = async (data: MoodAnalysisRequest): Promise<MoodAnalysisResponse> => {
+  validateMoodAnalysisRequest(data)
+
+  const res = await request<MoodAnalysisResponse>({
+    url: '/api/ai/context/analyze',
+    method: 'post',
+    data: {
+      message: data.content,
+      mood: data.mood_level,
+    },
+  })
+
+  return res
 }
 
 export const debouncedAnalyzeMood = (data: MoodAnalysisRequest): Promise<MoodAnalysisResponse> =>

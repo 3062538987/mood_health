@@ -3,11 +3,10 @@
  * 提供AI增强的文本违规检测功能
  */
 
-import aiClient from './aiClient';
+import { callChatCompletion } from './aiClient';
 import logger from '../logger';
 import { setCache, getCache } from '../cache';
 import { ContentAuditRequest, ContentAuditResult, getAICacheKey } from '../../models/aiModel';
-import { AiServiceError } from '../errors';
 import aiConfig from '../../config/aiConfig';
 
 /**
@@ -61,12 +60,55 @@ export class ContentAuditService {
       }
 
       // 调用AI接口进行深度审核
-      const result = await aiClient.callByModelType<ContentAuditResult>('/content-audit', {
-        content: request.content,
-        type: request.type
-      }, {
-        model: aiConfig.models.contentAudit
+      const messages: Array<{ role: 'system' | 'user'; content: string }> = [
+        {
+          role: 'system',
+          content: `你是一位内容审核助手。请审核以下内容是否包含违规信息。
+
+请严格按以下 JSON 格式返回（不要包含 markdown 代码块标记）：
+{
+  "isSafe": true/false,
+  "detectedIssues": ["问题1", "问题2"],
+  "severity": "low/medium/high",
+  "suggestion": "审核建议"
+}
+
+审核规则：
+1. 检查内容是否包含暴力、恐怖、色情、赌博、诈骗等违规信息
+2. 检查是否包含人身攻击、歧视、诽谤等不当言论
+3. severity: low=轻微问题, medium=需要关注, high=严重违规
+4. 如果内容安全，isSafe 为 true，detectedIssues 为空数组`,
+        },
+        {
+          role: 'user',
+          content: `内容类型：${request.type || '文本'}\n内容：${request.content}`,
+        },
+      ];
+
+      const rawResponse = await callChatCompletion(messages, {
+        temperature: 0.3,
+        maxTokens: 500,
       });
+
+      let parsed: any;
+      try {
+        const jsonStr = (rawResponse.match(/\{[\s\S]*\}/) || ['{}'])[0];
+        parsed = JSON.parse(jsonStr);
+      } catch {
+        parsed = {
+          isSafe: true,
+          detectedIssues: [],
+          severity: 'low',
+          suggestion: '审核服务暂时不可用',
+        };
+      }
+
+      const result: ContentAuditResult = {
+        isSafe: parsed.isSafe ?? true,
+        detectedIssues: parsed.detectedIssues || [],
+        severity: parsed.severity || 'low',
+        suggestion: parsed.suggestion || '',
+      };
 
       // 添加时间戳
       const auditResult: ContentAuditResult = {
@@ -84,8 +126,8 @@ export class ContentAuditService {
       return auditResult;
     } catch (error) {
       logger.error('Content audit failed:', error);
-      
-      // 本地fallback方案
+
+      // AI审核失败时使用基础过滤作为兜底
       return this.getLocalContentAudit(request.content);
     }
   }

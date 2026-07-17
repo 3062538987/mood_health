@@ -99,20 +99,15 @@ export class AIClient {
    * @param api 接口路径
    * @param params 请求参数
    * @returns 响应结果
+   * @deprecated 本地模型不可用，请使用 callChatCompletion 调用 DeepSeek API
    */
   async callLocalAI<T>(api: string, params: any): Promise<T> {
-    // 本地模型调用逻辑
-    // 这里可以根据实际情况实现本地模型的调用
-    // 例如调用本地部署的LLM服务
-    logger.info(`Calling local AI model: ${api}`);
-    
-    // 模拟本地模型响应
-    // 实际项目中应该替换为真实的本地模型调用
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({} as T);
-      }, 1000);
-    });
+    throw new AiServiceError(
+      `本地AI模型不可用 (${api})，请使用 callChatCompletion 调用 DeepSeek API`,
+      null,
+      'local',
+      api
+    );
   }
 
   /**
@@ -122,7 +117,6 @@ export class AIClient {
    * @returns 响应结果
    */
   async callOpenAI<T>(endpoint: string, params: any): Promise<T> {
-    // OpenAI API调用逻辑
     const openaiConfig = {
       baseURL: 'https://api.openai.com/v1',
       headers: {
@@ -153,6 +147,7 @@ export class AIClient {
    * @param params 请求参数
    * @param options 额外选项
    * @returns 响应结果
+   * @deprecated 请使用 callChatCompletion 直接调用 DeepSeek API
    */
   async callByModelType<T>(api: string, params: any, options: { model?: string; timeout?: number } = {}): Promise<T> {
     switch (aiConfig.modelType) {
@@ -161,10 +156,19 @@ export class AIClient {
       case 'local':
         return this.callLocalAI<T>(api, params);
       case 'deepseek':
-        // DeepSeek API调用逻辑
-        return this.callAI<T>(api, params, options);
+        throw new AiServiceError(
+          `请使用 callChatCompletion 直接调用 DeepSeek API，而非通过 callByModelType(${api})`,
+          null,
+          'deepseek',
+          api
+        );
       default:
-        return this.callAI<T>(api, params, options);
+        throw new AiServiceError(
+          `不支持的模型类型: ${aiConfig.modelType} (${api})`,
+          null,
+          aiConfig.modelType,
+          api
+        );
     }
   }
 }

@@ -1,9 +1,9 @@
 /**
  * 情绪分析服务
- * 提供情绪文本解析和趋势预测功能
+ * 通过 callChatCompletion 直接调用 DeepSeek API 进行情绪分析
  */
 
-import aiClient from "./aiClient";
+import { callChatCompletion } from "./aiClient";
 import logger from "../logger";
 import { setCache, getCache } from "../cache";
 import {
@@ -13,7 +13,6 @@ import {
   MoodPredictionResponse,
   getAICacheKey,
 } from "../../models/aiModel";
-import { AiServiceError } from "../errors";
 import aiConfig from "../../config/aiConfig";
 
 /**
@@ -27,7 +26,7 @@ export interface FourSectionAnalysis {
 }
 
 /**
- * 安全兜底 - 四段式分析
+ * 安全兜底 - 四段式分析（仅在 AI 响应解析失败时使用）
  */
 export const SAFE_FALLBACK_ANALYSIS: FourSectionAnalysis = {
   summary: '暂时无法生成分析，请稍后重试。',
@@ -40,7 +39,6 @@ export const SAFE_FALLBACK_ANALYSIS: FourSectionAnalysis = {
  * 校验并解析四段式 JSON
  */
 export const parseFourSection = (raw: string): FourSectionAnalysis => {
-  // 尝试提取 JSON
   let jsonStr = raw.trim()
   const jsonMatch = jsonStr.match(/\{[\s\S]*\}/)
   if (jsonMatch) {
@@ -66,6 +64,24 @@ export const parseFourSection = (raw: string): FourSectionAnalysis => {
  * 情绪分析服务类
  */
 export class MoodAnalysisService {
+  private readonly MOOD_ANALYSIS_SYSTEM_PROMPT = `你是一位专业的心理健康助手，请根据用户提供的情绪描述和历史数据进行分析。
+
+请严格按以下 JSON 格式返回（不要包含 markdown 代码块标记）：
+{
+  "analysis": "当前情绪状态分析（2-3句话）",
+  "suggestions": ["建议1", "建议2", "建议3"],
+  "mood": "识别出的情绪类型（如：开心、焦虑、平静、低落等）",
+  "mood_score": 5,
+  "risk_level": "low"
+}
+
+重要规则：
+1. 不要给出诊断结论，你只是心理健康助手
+2. mood_score 为 1-10 的整数，1 表示极度消极，10 表示极度积极
+3. risk_level 为 low/medium/high，根据内容风险判断
+4. 如果用户提到自伤、自杀等高风险内容，risk_level 设为 high
+5. 保持温和、共情的语气`
+
   /**
    * 分析情绪文本
    * @param request 情绪分析请求
@@ -77,7 +93,6 @@ export class MoodAnalysisService {
       ? getAICacheKey("mood", request.userId, request.text)
       : null;
 
-    // 尝试从缓存获取
     if (aiConfig.enableCache && cacheKey) {
       const cached = await getCache<MoodAnalysisResult>(cacheKey);
       if (cached) {
@@ -86,39 +101,64 @@ export class MoodAnalysisService {
       }
     }
 
-    try {
-      // 调用AI接口
-      const result = await aiClient.callByModelType<MoodAnalysisResult>(
-        "/analyze-mood",
-        {
-          text: request.text,
-          historicalData: request.historicalData,
-        },
-        {
-          model: aiConfig.models.moodAnalysis,
-        },
-      );
-
-      // 添加时间戳
-      const analysisResult: MoodAnalysisResult = {
-        ...result,
-        timestamp: new Date().toISOString(),
-      };
-
-      // 缓存结果
-      if (aiConfig.enableCache && cacheKey) {
-        await setCache(cacheKey, analysisResult, aiConfig.cacheTTL);
-      }
-
-      const endTime = Date.now();
-      logger.info(`Mood analysis completed in ${endTime - startTime}ms`);
-      return analysisResult;
-    } catch (error) {
-      logger.error("Mood analysis failed:", error);
-
-      // 本地fallback方案
-      return this.getLocalMoodAnalysis(request.text);
+    // 构建历史数据文本
+    let historyText = '';
+    if (request.historicalData && request.historicalData.length > 0) {
+      const recent = request.historicalData.slice(-5);
+      historyText = '\n近期情绪记录：' + recent.map((r: any) => {
+        const date = r.date || r.recorded_at || '';
+        const intensity = r.intensity || r.score || '';
+        const mood = Array.isArray(r.moodType) ? r.moodType.join('、') : (r.mood || '');
+        return `${date} 强度${intensity}/10 ${mood}`;
+      }).join('；');
     }
+
+    const messages: Array<{ role: 'system' | 'user'; content: string }> = [
+      { role: 'system', content: this.MOOD_ANALYSIS_SYSTEM_PROMPT },
+      { role: 'user', content: `用户情绪描述：${request.text}${historyText}` },
+    ];
+
+    const rawResponse = await callChatCompletion(messages, {
+      temperature: 0.7,
+      maxTokens: 800,
+    });
+
+    // 解析 JSON 响应
+    let parsed: any;
+    try {
+      const jsonStr = (rawResponse.match(/\{[\s\S]*\}/) || ['{}'])[0];
+      parsed = JSON.parse(jsonStr);
+    } catch {
+      parsed = {
+        analysis: rawResponse.slice(0, 200),
+        suggestions: ['保持积极心态', '适当放松身心'],
+        mood: '未知',
+        mood_score: 5,
+        risk_level: 'low',
+      };
+    }
+
+    const analysisResult: MoodAnalysisResult = {
+      mood: parsed.mood || '未知',
+      confidence: 0.85,
+      emotions: [
+        { tag: parsed.mood || '未知', score: 1 },
+      ],
+      suggestion: (parsed.suggestions || ['保持积极心态']).join('；'),
+      analysis: parsed.analysis || '',
+      suggestions: parsed.suggestions || [],
+      mood_score: parsed.mood_score || 5,
+      risk_level: parsed.risk_level || 'low',
+      timestamp: new Date().toISOString(),
+    };
+
+    if (aiConfig.enableCache && cacheKey) {
+      await setCache(cacheKey, analysisResult, aiConfig.cacheTTL);
+    }
+
+    const endTime = Date.now();
+    logger.info(`Mood analysis completed in ${endTime - startTime}ms`);
+    return analysisResult;
   }
 
   /**
@@ -131,59 +171,72 @@ export class MoodAnalysisService {
   ): Promise<MoodPredictionResponse> {
     const startTime = Date.now();
     const cacheKey = request.userId
-      ? getAICacheKey(
-          "trend",
-          request.userId,
-          JSON.stringify(request.historicalData),
-        )
+      ? getAICacheKey("trend", request.userId, JSON.stringify(request.historicalData))
       : null;
 
-    // 尝试从缓存获取
     if (aiConfig.enableCache && cacheKey) {
       const cached = await getCache<MoodPredictionResponse>(cacheKey);
       if (cached) {
-        logger.info(
-          `Mood trend prediction cache hit for user ${request.userId}`,
-        );
+        logger.info(`Mood trend prediction cache hit for user ${request.userId}`);
         return cached;
       }
     }
 
+    const historySummary = request.historicalData
+      .map((r: any) => `${r.date || ''}: 强度${r.intensity || r.score || ''}/10`)
+      .join('；');
+
+    const messages: Array<{ role: 'system' | 'user'; content: string }> = [
+      {
+        role: 'system',
+        content: `你是一位专业的心理健康助手。请根据用户的历史情绪数据预测未来 ${request.days} 天的情绪趋势。
+
+请严格按以下 JSON 格式返回（不要包含 markdown 代码块标记）：
+{
+  "labels": ["日期1", "日期2", ...],
+  "data": [5, 6, 4, ...],
+  "trend": "趋势描述（一句话）"
+}
+
+data 为 1-10 的整数数组，代表预测的情绪强度。`,
+      },
+      {
+        role: 'user',
+        content: `历史情绪数据：${historySummary}\n请预测未来 ${request.days} 天的情绪趋势。`,
+      },
+    ];
+
+    const rawResponse = await callChatCompletion(messages, {
+      temperature: 0.5,
+      maxTokens: 500,
+    });
+
+    let parsed: any;
     try {
-      // 调用AI接口
-      const result = await aiClient.callByModelType<MoodPredictionResponse>(
-        "/predict-mood-trend",
-        {
-          historicalData: request.historicalData,
-          days: request.days,
-        },
-        {
-          model: aiConfig.models.moodAnalysis,
-        },
-      );
-
-      // 添加时间戳
-      const predictionResult: MoodPredictionResponse = {
-        ...result,
-        timestamp: new Date().toISOString(),
+      const jsonStr = (rawResponse.match(/\{[\s\S]*\}/) || ['{}'])[0];
+      parsed = JSON.parse(jsonStr);
+    } catch {
+      parsed = {
+        labels: [],
+        data: [],
+        trend: '数据不足，无法预测',
       };
-
-      // 缓存结果
-      if (aiConfig.enableCache && cacheKey) {
-        await setCache(cacheKey, predictionResult, aiConfig.cacheTTL);
-      }
-
-      const endTime = Date.now();
-      logger.info(
-        `Mood trend prediction completed in ${endTime - startTime}ms`,
-      );
-      return predictionResult;
-    } catch (error) {
-      logger.error("Mood trend prediction failed:", error);
-
-      // 本地fallback方案
-      return this.getLocalMoodTrend(request.historicalData, request.days);
     }
+
+    const predictionResult: MoodPredictionResponse = {
+      labels: parsed.labels || [],
+      data: parsed.data || [],
+      trend: parsed.trend || '数据不足，无法预测',
+      timestamp: new Date().toISOString(),
+    };
+
+    if (aiConfig.enableCache && cacheKey) {
+      await setCache(cacheKey, predictionResult, aiConfig.cacheTTL);
+    }
+
+    const endTime = Date.now();
+    logger.info(`Mood trend prediction completed in ${endTime - startTime}ms`);
+    return predictionResult;
   }
 
   /**
@@ -194,19 +247,13 @@ export class MoodAnalysisService {
    */
   async analyzeUserMood(
     userId: number,
-    moodRecords: Array<{
-      date: string;
-      intensity: number;
-      moodType: string[];
-    }>,
+    moodRecords: Array<{ date: string; intensity: number; moodType: string[] }>,
   ): Promise<MoodAnalysisResult> {
-    // 构建情绪分析请求
     const request: MoodAnalysisRequest = {
       userId,
       text: this.generateMoodSummary(moodRecords),
       historicalData: moodRecords,
     };
-
     return this.analyzeMood(request);
   }
 
@@ -240,192 +287,44 @@ export class MoodAnalysisService {
 
     const userPrompt = `${contextText}\n\n用户当前描述：${userMessage || '无'}`
 
-    try {
-      const rawResponse = await aiClient.callByModelType<string>(
-        '/analyze-structured',
-        {
-          systemPrompt,
-          userPrompt,
-        },
-        {
-          model: aiConfig.models.moodAnalysis,
-        },
-      )
+    const messages: Array<{ role: 'system' | 'user'; content: string }> = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ]
 
-      const result = parseFourSection(typeof rawResponse === 'string' ? rawResponse : JSON.stringify(rawResponse))
+    const rawResponse = await callChatCompletion(messages, {
+      temperature: 0.7,
+      maxTokens: 800,
+    })
 
-      const endTime = Date.now()
-      logger.info(`Four-section analysis completed in ${endTime - startTime}ms`)
-      return result
-    } catch (error) {
-      logger.error('Four-section analysis failed:', error)
-      return SAFE_FALLBACK_ANALYSIS
-    }
+    const result = parseFourSection(rawResponse)
+
+    const endTime = Date.now()
+    logger.info(`Four-section analysis completed in ${endTime - startTime}ms`)
+    return result
   }
 
   /**
    * 生成情绪摘要
-   * @param moodRecords 情绪记录
-   * @returns 情绪摘要文本
    */
   private generateMoodSummary(
-    moodRecords: Array<{
-      date: string;
-      intensity: number;
-      moodType: string[];
-    }>,
+    moodRecords: Array<{ date: string; intensity: number; moodType: string[] }>,
   ): string {
     if (moodRecords.length === 0) {
       return "用户没有情绪记录";
     }
-
-    // 统计情绪分布
     const moodCount: Record<string, number> = {};
     let totalIntensity = 0;
-
     moodRecords.forEach((record) => {
       record.moodType.forEach((mood) => {
         moodCount[mood] = (moodCount[mood] || 0) + 1;
       });
       totalIntensity += record.intensity;
     });
-
     const averageIntensity = totalIntensity / moodRecords.length;
     const mostFrequentMood =
       Object.entries(moodCount).sort(([, a], [, b]) => b - a)[0]?.[0] || "平静";
-
     return `用户最近的情绪记录：平均强度${averageIntensity.toFixed(1)}，最常见情绪${mostFrequentMood}，共${moodRecords.length}条记录`;
-  }
-
-  /**
-   * 本地情绪分析fallback方案
-   * @param text 待分析的文本
-   * @returns 情绪分析结果
-   */
-  private getLocalMoodAnalysis(text: string): MoodAnalysisResult {
-    // 简单的关键词匹配逻辑
-    const happyKeywords = ["开心", "快乐", "高兴", "兴奋", "喜悦"];
-    const anxiousKeywords = ["焦虑", "紧张", "担心", "害怕", "恐惧"];
-    const depressedKeywords = ["抑郁", "难过", "伤心", "悲伤", "绝望"];
-
-    let happyScore = 0;
-    let anxiousScore = 0;
-    let depressedScore = 0;
-
-    happyKeywords.forEach((keyword) => {
-      if (text.includes(keyword)) happyScore += 1;
-    });
-
-    anxiousKeywords.forEach((keyword) => {
-      if (text.includes(keyword)) anxiousScore += 1;
-    });
-
-    depressedKeywords.forEach((keyword) => {
-      if (text.includes(keyword)) depressedScore += 1;
-    });
-
-    const totalScore = happyScore + anxiousScore + depressedScore;
-    let mood = "平静";
-    let confidence = 0.5;
-
-    if (totalScore > 0) {
-      if (happyScore > anxiousScore && happyScore > depressedScore) {
-        mood = "开心";
-        confidence = happyScore / totalScore;
-      } else if (anxiousScore > happyScore && anxiousScore > depressedScore) {
-        mood = "焦虑";
-        confidence = anxiousScore / totalScore;
-      } else if (depressedScore > happyScore && depressedScore > anxiousScore) {
-        mood = "抑郁";
-        confidence = depressedScore / totalScore;
-      }
-    }
-
-    return {
-      mood,
-      confidence,
-      emotions: [
-        { tag: "开心", score: happyScore / (totalScore || 1) },
-        { tag: "焦虑", score: anxiousScore / (totalScore || 1) },
-        { tag: "抑郁", score: depressedScore / (totalScore || 1) },
-        { tag: "平静", score: totalScore === 0 ? 1 : 0 },
-      ],
-      suggestion: this.getMoodSuggestion(mood),
-      timestamp: new Date().toISOString(),
-    };
-  }
-
-  /**
-   * 本地情绪趋势预测fallback方案
-   * @param historicalData 历史情绪数据
-   * @param days 预测天数
-   * @returns 情绪趋势预测结果
-   */
-  private getLocalMoodTrend(
-    historicalData: Array<{
-      date: string;
-      intensity: number;
-    }>,
-    days: number,
-  ): MoodPredictionResponse {
-    if (historicalData.length === 0) {
-      return {
-        labels: Array.from({ length: days }, (_, i) => {
-          const date = new Date();
-          date.setDate(date.getDate() + i + 1);
-          return date.toISOString().split("T")[0];
-        }),
-        data: Array(days).fill(5),
-        trend: "数据不足，无法预测",
-        timestamp: new Date().toISOString(),
-      };
-    }
-
-    // 简单的线性预测
-    const recentData = historicalData.slice(-7);
-    const averageIntensity =
-      recentData.reduce((sum, item) => sum + item.intensity, 0) /
-      recentData.length;
-
-    const labels = Array.from({ length: days }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() + i + 1);
-      return date.toISOString().split("T")[0];
-    });
-
-    const data = Array(days).fill(averageIntensity);
-    const trend =
-      averageIntensity > 6
-        ? "情绪趋于积极"
-        : averageIntensity < 4
-          ? "情绪趋于消极"
-          : "情绪趋于稳定";
-
-    return {
-      labels,
-      data,
-      trend,
-      timestamp: new Date().toISOString(),
-    };
-  }
-
-  /**
-   * 根据情绪类型获取建议
-   * @param mood 情绪类型
-   * @returns 建议文本
-   */
-  private getMoodSuggestion(mood: string): string {
-    const suggestions = {
-      开心: "保持积极的心态，继续享受美好的时光！",
-      焦虑: "尝试深呼吸和冥想，缓解焦虑情绪。",
-      抑郁: "建议多与朋友交流，适当运动，必要时寻求专业帮助。",
-      平静: "保持当前的良好状态，继续享受平静的生活。",
-    };
-
-    return (
-      suggestions[mood as keyof typeof suggestions] ||
-      "保持良好的心态，积极面对生活。"
-    );
   }
 }
 

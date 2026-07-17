@@ -75,6 +75,11 @@ export interface MoodAnalysisResult {
   }>;
   suggestion: string;
   timestamp?: string;
+  // 扩展字段（用于前端 AiSuggestCard 展示）
+  analysis?: string;
+  suggestions?: string[];
+  mood_score?: number;
+  risk_level?: string;
 }
 
 // 情绪预测请求接口
