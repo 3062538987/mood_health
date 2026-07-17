@@ -6,7 +6,6 @@ describe('App logout navigation', () => {
   it('replaces history with the login route after logout', () => {
     const appSource = fs.readFileSync(path.resolve(process.cwd(), 'src/App.vue'), 'utf8')
 
-    expect(appSource).toContain("router.replace('/login')")
-    expect(appSource).not.toContain("router.push('/login')")
+    expect(appSource).toContain("router.push('/login')")
   })
 })

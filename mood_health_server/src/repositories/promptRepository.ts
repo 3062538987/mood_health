@@ -67,7 +67,9 @@ const mapRow = (row: PromptTemplateRow): PromptTemplate => ({
   category: row.category,
   systemPrompt: row.system_prompt,
   userPromptTemplate: row.user_prompt_template,
-  variables: row.variables ? JSON.parse(row.variables) : null,
+  variables: row.variables
+    ? (typeof row.variables === 'string' ? JSON.parse(row.variables) : row.variables)
+    : null,
   model: row.model,
   temperature: row.temperature,
   maxTokens: row.max_tokens,

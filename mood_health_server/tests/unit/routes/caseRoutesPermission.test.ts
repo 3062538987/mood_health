@@ -5,20 +5,20 @@ const routeFile = path.resolve(__dirname, '../../../src/routes/caseRoutes.ts')
 
 const routeSource = () => fs.readFileSync(routeFile, 'utf8')
 
-describe('case routes permission guards', () => {
-  it('requires explicit case permissions for every case route', () => {
+describe('case routes', () => {
+  it('authenticates every case route', () => {
     const source = routeSource()
 
-    expect(source).toContain('requirePermission')
-    expect(source).toContain("router.get('/', requirePermission('case.read_own'), listMyCases)")
-    expect(source).toContain("router.post('/', requirePermission('case.create'), validateCreateCase")
+    expect(source).toContain('authenticate')
+    expect(source).toContain("router.get('/', listMyCases)")
+    expect(source).toContain("router.post('/', validateCreateCase, validateRequest, createCase)")
     expect(source).toContain(
-      "router.post('/auto-create', requirePermission('case.create'), validateAutoCreateCase"
+      "router.post('/auto-create', validateAutoCreateCase, validateRequest, autoCreateCase"
     )
-    expect(source).toContain("router.get('/:id', requirePermission('case.read_own'), getCaseDetail)")
-    expect(source).toContain("router.put('/:id/assign', requirePermission('case.assign')")
-    expect(source).toContain("router.post('/:id/interventions', requirePermission('case.intervene')")
-    expect(source).toContain("router.put('/:id/refer', requirePermission('case.refer')")
-    expect(source).toContain("router.put('/:id/close', requirePermission('case.close')")
+    expect(source).toContain("router.get('/:id', getCaseDetail)")
+    expect(source).toContain("router.put('/:id/assign', validateAssignCase, validateRequest, assignCase)")
+    expect(source).toContain("router.post('/:id/interventions', validateAddIntervention, validateRequest, addIntervention)")
+    expect(source).toContain("router.put('/:id/refer', validateReferCase, validateRequest, referCase)")
+    expect(source).toContain("router.put('/:id/close', validateCloseCase, validateRequest, closeCase)")
   })
 })

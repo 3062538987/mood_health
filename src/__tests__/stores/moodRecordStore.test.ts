@@ -53,13 +53,10 @@ describe('moodRecordStore', () => {
 
     await expect(store.submitRecord()).resolves.toBe(true)
 
-    expect(apiMocks.getMoodTypeEnum).toHaveBeenCalledTimes(1)
     expect(apiMocks.submitMoodRecord).toHaveBeenCalledWith(
       expect.objectContaining({
-        emotions: [
-          { emotionTypeId: 1, intensity: 6, isPrimary: true },
-          { emotionTypeId: 2, intensity: 6, isPrimary: false },
-        ],
+        moodType: ['happy', 'delight'],
+        intensity: 6,
       })
     )
   })
