@@ -119,6 +119,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { sendCounselingMessage } from '@/api/counseling'
 import { useUserStore } from '@/stores/userStore'
+import { ApiRequestError } from '@/utils/request'
 
 type RiskLevel = 'low' | 'medium' | 'high'
 type MessageStatus = 'sending' | 'sent' | 'failed'
@@ -255,8 +256,12 @@ const sendMessage = async () => {
     await sendToService(newUserMessage, inputSnapshot)
   } catch (error: unknown) {
     newUserMessage.status = 'failed'
-    const message = error instanceof Error ? error.message : '发送失败，请稍后再试'
-    ElMessage.error(message)
+    if (error instanceof ApiRequestError && error.status === 503) {
+      ElMessage.warning('AI 心理陪伴服务暂不可用，请稍后再试')
+    } else {
+      const message = error instanceof Error ? error.message : '发送失败，请稍后再试'
+      ElMessage.error(message)
+    }
   } finally {
     isSending.value = false
   }
@@ -279,8 +284,12 @@ const retryMessage = async (messageId: string) => {
     await sendToService(target, inputMessage.value)
   } catch (error: unknown) {
     target.status = 'failed'
-    const message = error instanceof Error ? error.message : '重试失败，请稍后再试'
-    ElMessage.error(message)
+    if (error instanceof ApiRequestError && error.status === 503) {
+      ElMessage.warning('AI 心理陪伴服务暂不可用，请稍后再试')
+    } else {
+      const message = error instanceof Error ? error.message : '重试失败，请稍后再试'
+      ElMessage.error(message)
+    }
   } finally {
     isSending.value = false
   }
