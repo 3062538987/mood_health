@@ -1,14 +1,19 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-// Vitest 全局类型声明
-declare global {
-  const vi: any
-}
+
+// Mock request 模块，避免真实 HTTP 调用
+vi.mock('@/utils/request', () => ({
+  default: vi.fn(),
+}))
+
+import request from '@/utils/request'
 import {
   sendCounselingMessage,
   sendCounselingMessageWithContext,
   validateCounselingRequest,
   formatMessagesToContext,
 } from '@/api/counseling'
+
+const requestMock = vi.mocked(request)
 
 describe('心理咨询API测试', () => {
   beforeEach(() => {
@@ -21,6 +26,13 @@ describe('心理咨询API测试', () => {
 
   describe('sendCounselingMessage', () => {
     it('应该成功发送心理咨询消息并返回响应', async () => {
+      requestMock.mockResolvedValueOnce({
+        response: '我理解你的焦虑感受。让我们一起来分析一下...',
+        mood: '焦虑',
+        riskLevel: 'low',
+        suggestion: '建议进行深呼吸练习',
+      })
+
       const result = await sendCounselingMessage({
         message: '我最近感到很焦虑，不知道该怎么办',
       })
@@ -28,6 +40,14 @@ describe('心理咨询API测试', () => {
       expect(result.riskLevel).toBe('low')
       expect(result.mood).toBe('焦虑')
       expect(result.response.length).toBeGreaterThan(0)
+      expect(requestMock).toHaveBeenCalledWith({
+        url: '/api/ai/counseling',
+        method: 'post',
+        data: {
+          message: '我最近感到很焦虑，不知道该怎么办',
+          context: undefined,
+        },
+      })
     })
 
     it('应该在消息为空时抛出错误', async () => {
@@ -43,6 +63,12 @@ describe('心理咨询API测试', () => {
     })
 
     it('应对低落情绪给出本地回复', async () => {
+      requestMock.mockResolvedValueOnce({
+        response: '我听到了你的难过，这很正常...',
+        mood: '低落',
+        riskLevel: 'low',
+      })
+
       const result = await sendCounselingMessage({
         message: '最近有点难过和低落',
       })
@@ -52,6 +78,12 @@ describe('心理咨询API测试', () => {
     })
 
     it('应对一般内容给出平静回复', async () => {
+      requestMock.mockResolvedValueOnce({
+        response: '好的，让我帮你理清思路...',
+        mood: '平静',
+        riskLevel: 'low',
+      })
+
       const result = await sendCounselingMessage({
         message: '我想把今天的安排理清楚',
       })
@@ -63,6 +95,12 @@ describe('心理咨询API测试', () => {
 
   describe('sendCounselingMessageWithContext', () => {
     it('应该成功发送带上下文的心理咨询消息', async () => {
+      requestMock.mockResolvedValueOnce({
+        response: '项目 deadlines 确实会带来压力...',
+        riskLevel: 'low',
+        mood: '焦虑',
+      })
+
       const context: Array<{ role: 'user' | 'assistant'; content: string }> = [
         { role: 'user', content: '我最近工作压力很大' },
         {

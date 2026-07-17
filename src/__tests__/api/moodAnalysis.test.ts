@@ -1,5 +1,14 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+// Mock request 模块，避免真实 HTTP 调用
+vi.mock('@/utils/request', () => ({
+  default: vi.fn(),
+}))
+
+import request from '@/utils/request'
 import { analyzeMood } from '@/api/moodAnalysis'
+
+const requestMock = vi.mocked(request)
 
 describe('R0 mood analysis boundary', () => {
   it('rejects empty mood text before any analysis request', async () => {
@@ -12,9 +21,23 @@ describe('R0 mood analysis boundary', () => {
     )
   })
 
-  it('does not infer a psychological label from keywords during R0', async () => {
-    await expect(analyzeMood({ content: '我今天感到很兴奋', mood_level: 7 })).rejects.toThrow(
-      'AI 情绪分析将在 v1.1 启用'
-    )
+  it('sends valid mood analysis request to the backend', async () => {
+    requestMock.mockResolvedValueOnce({
+      analysis: '分析结果',
+      suggestions: ['建议1', '建议2'],
+      mood: '兴奋',
+    })
+
+    const result = await analyzeMood({ content: '我今天感到很兴奋', mood_level: 7 })
+
+    expect(result.mood).toBe('兴奋')
+    expect(requestMock).toHaveBeenCalledWith({
+      url: '/api/ai/context/analyze',
+      method: 'post',
+      data: {
+        message: '我今天感到很兴奋',
+        mood: 7,
+      },
+    })
   })
 })

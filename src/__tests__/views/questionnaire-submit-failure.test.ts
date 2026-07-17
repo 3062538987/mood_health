@@ -91,7 +91,7 @@ describe('Questionnaire submit failure recovery', () => {
 
     expect(submitAssessmentMock).toHaveBeenCalledWith({
       questionnaire_id: 1,
-      answers: [1, 0],
+      answers: [{ itemId: 11, score: 1 }, { itemId: 12, score: 0 }],
     })
     expect(wrapper.find('[role="alert"]').text()).toContain('提交失败')
     expect(wrapper.find('.progress-text').text()).toBe('2 / 2')
