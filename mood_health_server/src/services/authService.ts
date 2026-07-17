@@ -154,10 +154,18 @@ export const createAuthService = (dependencies: AuthServiceDependencies = {}) =>
     return user
   }
 
+  const deleteMe = async (userId: number): Promise<void> => {
+    const result = await repository.deleteUser(userId)
+    if (!result.deleted) {
+      throw new HttpException('用户不存在', 404)
+    }
+  }
+
   return {
     register,
     login,
     getMe,
+    deleteMe,
   }
 }
 

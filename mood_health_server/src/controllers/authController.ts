@@ -68,3 +68,21 @@ export const getMe = async (req: AuthRequest, res: Response) => {
     return res.status(500).json(apiFailure(500, '获取用户信息失败'))
   }
 }
+
+export const deleteMe = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json(apiFailure(401, '未登录'))
+    }
+
+    await authService.deleteMe(req.user.userId)
+    res.clearCookie(TOKEN_COOKIE, { path: '/' })
+    res.json(apiSuccess(null, '账号已注销'))
+  } catch (error) {
+    if (error instanceof HttpException) {
+      return res.status(error.statusCode).json(apiFailure(error.statusCode, error.message))
+    }
+    logger.error('账号注销失败', { error, userId: req.user?.userId })
+    return res.status(500).json(apiFailure(500, '账号注销失败'))
+  }
+}

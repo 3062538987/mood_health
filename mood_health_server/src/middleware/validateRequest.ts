@@ -1,10 +1,28 @@
 import { validationResult } from 'express-validator';
 import { Request, Response, NextFunction } from 'express';
+import { API_ERROR_CODES } from '../utils/apiResponse';
+
+const SENSITIVE_FIELDS = new Set(['password', 'confirmPassword', 'token', 'secret', 'authorization']);
 
 export const validateRequest = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ code: 400, message: '参数验证失败', details: errors.array() });
+    const safeErrors = errors.array().map((err) => {
+      const field = ('path' in err ? err.path : (err as any).param) as string;
+      const isSensitive = SENSITIVE_FIELDS.has(field);
+      return {
+        field,
+        message: err.msg as string,
+        location: ('location' in err ? err.location : 'body') as string,
+        ...(isSensitive ? {} : { value: ('value' in err ? err.value : undefined) }),
+      };
+    });
+
+    return res.status(400).json({
+      code: API_ERROR_CODES.BAD_REQUEST,
+      message: '参数验证失败',
+      data: { errors: safeErrors },
+    });
   }
   next();
 };

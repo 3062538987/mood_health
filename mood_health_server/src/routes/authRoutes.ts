@@ -7,7 +7,7 @@
 
 import { Router } from 'express'
 import { body } from 'express-validator'
-import { register, login, logout, getMe } from '../controllers/authController'
+import { register, login, logout, getMe, deleteMe } from '../controllers/authController'
 import { authenticate } from '../middleware/auth'
 import { validateRequest } from '../middleware/validateRequest'
 
@@ -93,5 +93,18 @@ router.get('/me', authenticate, getMe)
  * @access 公开
  */
 router.post('/logout', logout)
+
+/**
+ * 当前账号注销接口
+ * @route DELETE /api/auth/me
+ * @description 注销当前登录账号，删除用户及关联数据
+ * @access 需要认证
+ * @header {string} Authorization - Bearer token
+ * @returns {Object} 200 - 注销成功
+ * @returns {Object} 401 - 未登录
+ * @returns {Object} 404 - 用户不存在
+ * @returns {Object} 500 - 服务器错误
+ */
+router.delete('/me', authenticate, deleteMe)
 
 export default router
