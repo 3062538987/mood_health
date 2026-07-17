@@ -143,6 +143,58 @@
                 </template>
               </div>
             </el-card>
+
+            <!-- 活动反馈 -->
+            <el-card v-if="isEnded && isJoined" class="feedback-card" shadow="hover">
+              <template #header>
+                <div class="card-header">
+                  <span class="card-title">
+                    <el-icon><Star /></el-icon>
+                    活动反馈
+                  </span>
+                </div>
+              </template>
+
+              <template v-if="myFeedback || feedbackSubmitted">
+                <div class="feedback-submitted">
+                  <el-result icon="success" title="感谢您的反馈！">
+                    <template #sub-title>
+                      <el-rate v-model="myFeedback!.rating" disabled show-score />
+                      <p v-if="myFeedback!.comment" class="feedback-comment-display">
+                        {{ myFeedback!.comment }}
+                      </p>
+                    </template>
+                  </el-result>
+                </div>
+              </template>
+
+              <template v-else>
+                <div class="feedback-form">
+                  <div class="rating-section">
+                    <span class="rating-label">评分</span>
+                    <el-rate v-model="feedbackRating" :max="5" show-score />
+                  </div>
+                  <div class="comment-section">
+                    <el-input
+                      v-model="feedbackComment"
+                      type="textarea"
+                      :rows="3"
+                      placeholder="分享您的活动体验（可选）"
+                      maxlength="500"
+                      show-word-limit
+                    />
+                  </div>
+                  <el-button
+                    type="primary"
+                    :loading="feedbackSubmitting"
+                    :disabled="feedbackRating === 0"
+                    @click="handleSubmitFeedback"
+                  >
+                    提交反馈
+                  </el-button>
+                </div>
+              </template>
+            </el-card>
           </div>
 
           <!-- 右侧：参与者列表 -->
@@ -242,6 +294,7 @@ import {
   UserFilled,
   DataLine,
   Bell,
+  Star,
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/userStore'
 import type { Activity } from '@/types/activity'
@@ -254,6 +307,8 @@ import {
   setActivityReminder,
   cancelActivityReminder,
   getReminderStatus,
+  submitActivityFeedback,
+  getUserActivityFeedback,
 } from '@/api/activityApi'
 import { getActivityStatus } from '@/utils/activityStatus'
 
@@ -275,6 +330,13 @@ const deleting = ref(false)
 const showDeleteModal = ref(false)
 const hasReminder = ref(false)
 const reminding = ref(false)
+
+// 反馈状态
+const feedbackRating = ref(0)
+const feedbackComment = ref('')
+const feedbackSubmitting = ref(false)
+const myFeedback = ref<{ rating: number; comment: string | null } | null>(null)
+const feedbackSubmitted = ref(false)
 
 // 计算属性
 const statusConfig = computed(() => {
@@ -335,6 +397,10 @@ const loadActivityDetail = async () => {
     if (isLoggedIn.value && isJoined.value) {
       loadReminderStatus()
     }
+    // 加载已有反馈
+    if (isLoggedIn.value && isJoined.value && isEnded.value) {
+      loadMyFeedback()
+    }
   } catch {
     error.value = true
   } finally {
@@ -379,6 +445,35 @@ const handleCancelReminder = async () => {
     // 错误已由拦截器处理
   } finally {
     reminding.value = false
+  }
+}
+
+// 加载我的反馈
+const loadMyFeedback = async () => {
+  if (!activity.value || !isLoggedIn.value) return
+  try {
+    const feedback = await getUserActivityFeedback(activity.value.id)
+    if (feedback) {
+      myFeedback.value = { rating: feedback.rating, comment: feedback.comment }
+    }
+  } catch {
+    // ignore
+  }
+}
+
+// 提交反馈
+const handleSubmitFeedback = async () => {
+  if (!activity.value || feedbackSubmitting.value || feedbackRating.value === 0) return
+  feedbackSubmitting.value = true
+  try {
+    await submitActivityFeedback(activity.value.id, feedbackRating.value, feedbackComment.value || undefined)
+    myFeedback.value = { rating: feedbackRating.value, comment: feedbackComment.value || null }
+    feedbackSubmitted.value = true
+    ElMessage.success('感谢您的反馈！')
+  } catch {
+    // 错误已由拦截器处理
+  } finally {
+    feedbackSubmitting.value = false
   }
 }
 
@@ -644,6 +739,52 @@ const formatDate = (dateStr: string) => {
   .el-button {
     flex: 1;
   }
+}
+
+// 活动反馈
+.feedback-card {
+  border-radius: 16px;
+  margin-top: 20px;
+
+  .card-header {
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #303133;
+
+      .el-icon {
+        color: #e6a23c;
+      }
+    }
+  }
+}
+
+.feedback-form {
+  .rating-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+
+    .rating-label {
+      font-size: 14px;
+      color: #606266;
+    }
+  }
+
+  .comment-section {
+    margin-bottom: 16px;
+  }
+}
+
+.feedback-comment-display {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #606266;
+  line-height: 1.6;
 }
 
 // 侧边栏

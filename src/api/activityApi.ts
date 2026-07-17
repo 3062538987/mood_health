@@ -234,6 +234,70 @@ export const getReminderStatus = async (id: number): Promise<boolean> => {
 }
 
 /**
+ * 活动反馈数据
+ */
+export interface ActivityFeedback {
+  id: number
+  activityId: number
+  userId: number
+  rating: number
+  comment: string | null
+  createdAt: string
+}
+
+export interface ActivityFeedbackStats {
+  averageRating: number
+  totalCount: number
+  ratingDistribution: Record<number, number>
+}
+
+/**
+ * 提交活动反馈
+ */
+export const submitActivityFeedback = async (
+  id: number,
+  rating: number,
+  comment?: string,
+): Promise<void> => {
+  await request({
+    url: `/api/activities/feedback/${id}`,
+    method: 'post',
+    data: { rating, comment },
+    ...noBlockingLoadingConfig,
+  })
+}
+
+/**
+ * 获取活动反馈列表
+ */
+export const getActivityFeedback = async (
+  id: number,
+): Promise<{ feedbacks: ActivityFeedback[]; stats: ActivityFeedbackStats }> => {
+  const response = await request<{
+    data: { feedbacks: ActivityFeedback[]; stats: ActivityFeedbackStats }
+  }>({
+    url: `/api/activities/feedback/${id}`,
+    method: 'get',
+    ...noBlockingLoadingConfig,
+  })
+  return response.data
+}
+
+/**
+ * 获取用户对活动的反馈
+ */
+export const getUserActivityFeedback = async (
+  id: number,
+): Promise<ActivityFeedback | null> => {
+  const response = await request<{ data: { feedback: ActivityFeedback | null } }>({
+    url: `/api/activities/my-feedback/${id}`,
+    method: 'get',
+    ...noBlockingLoadingConfig,
+  })
+  return response.data.feedback
+}
+
+/**
  * 参与者信息
  */
 export interface Participant {

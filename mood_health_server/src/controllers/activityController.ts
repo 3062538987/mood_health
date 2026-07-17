@@ -5,8 +5,10 @@ import {
   createActivityRepository,
   type ActivityFilter,
 } from '../repositories/activityRepository'
+import { createActivityFeedbackService } from '../services/activityFeedbackService'
 
 const activityRepo = createActivityRepository()
+const feedbackService = createActivityFeedbackService()
 
 export const getActivityList = async (req: Request, res: Response) => {
   try {
@@ -327,6 +329,73 @@ export const getActivityDetailWithParticipants = async (req: Request, res: Respo
     })
   } catch (error) {
     console.error('获取活动详情失败:', error)
+    res.status(500).json({ code: 500, message: '服务器错误' })
+  }
+}
+
+// 活动反馈
+export const submitFeedbackHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.userId
+    const activityId = parseInt(req.params.id as string)
+    const { rating, comment } = req.body
+
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ code: 400, message: '请提供 1-5 的评分' })
+    }
+
+    const activity = await activityRepo.findById(activityId)
+    if (!activity) {
+      return res.status(404).json({ code: 404, message: '活动不存在' })
+    }
+
+    const joined = await activityRepo.hasUserJoined(activityId, userId)
+    if (!joined) {
+      return res.status(400).json({ code: 400, message: '仅报名用户可提交反馈' })
+    }
+
+    // 活动未结束不允许反馈
+    if (new Date(activity.endTime) > new Date()) {
+      return res.status(400).json({ code: 400, message: '活动结束后才能提交反馈' })
+    }
+
+    const result = await feedbackService.submitFeedback(activityId, userId, { rating, comment })
+    if (result.duplicate) {
+      return res.status(400).json({ code: 400, message: '您已提交过反馈' })
+    }
+
+    res.status(201).json({ code: 0, message: '反馈提交成功', data: { id: result.id } })
+  } catch (error) {
+    console.error('提交反馈失败:', error)
+    res.status(500).json({ code: 500, message: '服务器错误' })
+  }
+}
+
+export const getFeedbackHandler = async (req: Request, res: Response) => {
+  try {
+    const activityId = parseInt(req.params.id as string)
+    const feedbacks = await feedbackService.getFeedbackByActivity(activityId)
+    const stats = await feedbackService.getFeedbackStats(activityId)
+
+    res.json({
+      code: 0,
+      data: { feedbacks, stats },
+    })
+  } catch (error) {
+    console.error('获取反馈失败:', error)
+    res.status(500).json({ code: 500, message: '服务器错误' })
+  }
+}
+
+export const getUserFeedbackHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.userId
+    const activityId = parseInt(req.params.id as string)
+
+    const feedback = await feedbackService.getUserFeedback(activityId, userId)
+    res.json({ code: 0, data: { feedback } })
+  } catch (error) {
+    console.error('获取用户反馈失败:', error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
