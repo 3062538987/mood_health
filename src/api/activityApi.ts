@@ -298,6 +298,30 @@ export const getUserActivityFeedback = async (
 }
 
 /**
+ * 获取活动统计（管理端）
+ */
+export interface ActivityStatsData {
+  totalActivities: number
+  totalParticipants: number
+  averageParticipants: number
+  totalFeedback: number
+  averageRating: number
+  ratingDistribution: Record<number, number>
+}
+
+export const getActivityStats = async (
+  params?: Record<string, string>,
+): Promise<ActivityStatsData> => {
+  const response = await request<{ data: ActivityStatsData }>({
+    url: '/api/activities/stats',
+    method: 'get',
+    params,
+    ...noBlockingLoadingConfig,
+  })
+  return response.data
+}
+
+/**
  * 参与者信息
  */
 export interface Participant {

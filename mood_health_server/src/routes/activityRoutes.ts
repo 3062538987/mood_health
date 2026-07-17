@@ -19,6 +19,7 @@ import {
   submitFeedbackHandler,
   getFeedbackHandler,
   getUserFeedbackHandler,
+  getActivityStatsHandler,
 } from '../controllers/activityController'
 
 const router = Router()
@@ -93,5 +94,8 @@ router.get('/remind/:id', authenticate, getReminderStatusHandler)
 router.post('/feedback/:id', authenticate, submitFeedbackHandler)
 router.get('/feedback/:id', getFeedbackHandler)
 router.get('/my-feedback/:id', authenticate, getUserFeedbackHandler)
+
+// 活动统计（管理端）
+router.get('/stats', authenticate, requirePermission('activity.manage'), getActivityStatsHandler)
 
 export default router

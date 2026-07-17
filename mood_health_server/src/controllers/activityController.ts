@@ -1,5 +1,7 @@
 import { Request, Response } from 'express'
 import { AuthRequest } from '../middleware/auth'
+import { RowDataPacket } from 'mysql2'
+import { getMysqlPool } from '../config/mysql'
 import { setCache, getCache, clearActivityCache } from '../utils/cache'
 import {
   createActivityRepository,
@@ -396,6 +398,91 @@ export const getUserFeedbackHandler = async (req: AuthRequest, res: Response) =>
     res.json({ code: 0, data: { feedback } })
   } catch (error) {
     console.error('获取用户反馈失败:', error)
+    res.status(500).json({ code: 500, message: '服务器错误' })
+  }
+}
+
+// 活动效果统计（管理端）
+export const getActivityStatsHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const pool = getMysqlPool()
+    const { startDate, endDate } = req.query as Record<string, string>
+
+    let dateFilter = ''
+    const params: unknown[] = []
+    if (startDate) {
+      dateFilter += ' AND a.start_time >= ?'
+      params.push(startDate)
+    }
+    if (endDate) {
+      dateFilter += ' AND a.start_time <= ?'
+      params.push(endDate)
+    }
+
+    // 总活动数
+    const [totalRows] = await pool.query<RowDataPacket[]>(
+      `SELECT COUNT(*) as total FROM activities a WHERE 1=1${dateFilter}`,
+      params
+    )
+    const totalActivities = Number(totalRows[0]?.total ?? 0)
+
+    // 总报名数
+    const [joinRows] = await pool.query<RowDataPacket[]>(
+      `SELECT COUNT(*) as total FROM activity_participants ap
+       JOIN activities a ON ap.activity_id = a.id WHERE 1=1${dateFilter}`,
+      params
+    )
+    const totalParticipants = Number(joinRows[0]?.total ?? 0)
+
+    // 平均报名率
+    const avgRate = totalActivities > 0
+      ? Math.round((totalParticipants / (totalActivities || 1)) * 100) / 100
+      : 0
+
+    // 反馈统计
+    const [feedbackStatsRows] = await pool.query<RowDataPacket[]>(
+      `SELECT
+         COUNT(*) as total,
+         COALESCE(AVG(af.rating), 0) as avg_rating
+       FROM activity_feedback af
+       JOIN activities a ON af.activity_id = a.id WHERE 1=1${dateFilter}`,
+      params
+    )
+    const totalFeedback = Number(feedbackStatsRows[0]?.total ?? 0)
+    const avgRating = Math.round(Number(feedbackStatsRows[0]?.avg_rating) * 10) / 10
+
+    // 评分分布
+    const [ratingDistRows] = await pool.query<RowDataPacket[]>(
+      `SELECT
+         SUM(CASE WHEN af.rating = 1 THEN 1 ELSE 0 END) as r1,
+         SUM(CASE WHEN af.rating = 2 THEN 1 ELSE 0 END) as r2,
+         SUM(CASE WHEN af.rating = 3 THEN 1 ELSE 0 END) as r3,
+         SUM(CASE WHEN af.rating = 4 THEN 1 ELSE 0 END) as r4,
+         SUM(CASE WHEN af.rating = 5 THEN 1 ELSE 0 END) as r5
+       FROM activity_feedback af
+       JOIN activities a ON af.activity_id = a.id WHERE 1=1${dateFilter}`,
+      params
+    )
+
+    res.json({
+      code: 0,
+      data: {
+        totalActivities,
+        totalParticipants,
+        averageParticipants: avgRate,
+        totalFeedback,
+        averageRating: avgRating,
+        ratingDistribution: {
+          1: Number(ratingDistRows[0]?.r1 ?? 0),
+          2: Number(ratingDistRows[0]?.r2 ?? 0),
+          3: Number(ratingDistRows[0]?.r3 ?? 0),
+          4: Number(ratingDistRows[0]?.r4 ?? 0),
+          5: Number(ratingDistRows[0]?.r5 ?? 0),
+        },
+      },
+    })
+  } catch (error) {
+    console.error('获取活动统计失败:', error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }

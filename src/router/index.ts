@@ -216,6 +216,7 @@ const baseRoutes: RouteRecordRaw[] = [
           icon: 'fas fa-music',
         },
         { path: '/admin/audit-logs', name: '审计日志', icon: 'fas fa-file-shield' },
+        { path: '/admin/activity-stats', name: '活动统计', icon: 'fas fa-chart-bar' },
       ],
     },
     children: [
@@ -292,6 +293,15 @@ const baseRoutes: RouteRecordRaw[] = [
           adminOnly: true,
           roles: ['super_admin'],
           permission: 'audit.record.view_all',
+        },
+      },
+      {
+        path: 'activity-stats',
+        component: () => import('@/views/admin/ActivityStats.vue'),
+        meta: {
+          adminOnly: true,
+          roles: ['admin', 'super_admin'],
+          permission: 'activity.manage',
         },
       },
     ],
