@@ -28,7 +28,7 @@
         <!-- 游戏网格 -->
         <div class="game-grid">
           <div
-            v-for="(cell, index) in gameGrid"
+            v-for="(cell, index) in displayGrid"
             :key="index"
             class="grid-cell"
             :class="{ filled: cell }"
@@ -61,6 +61,16 @@
             {{ isPaused ? '继续' : '暂停' }}
           </button>
           <button class="game-btn close-btn" @click="closeGame">关闭游戏</button>
+        </div>
+
+        <!-- 移动端控制按钮 -->
+        <div class="mobile-controls">
+          <button class="ctrl-btn rotate-btn" @touchstart.prevent="rotatePiece()">↻</button>
+          <div class="dpad">
+            <button class="ctrl-btn" @touchstart.prevent="movePiece(-1,0)">←</button>
+            <button class="ctrl-btn drop-btn" @touchstart.prevent="movePiece(0,1)">↓</button>
+            <button class="ctrl-btn" @touchstart.prevent="movePiece(1,0)">→</button>
+          </div>
         </div>
       </div>
 
@@ -174,6 +184,12 @@ interface Piece {
 // 游戏网格
 const gameGrid = ref<number[]>(Array(GRID_WIDTH * GRID_HEIGHT).fill(0))
 const nextPieceGrid = ref<number[]>(Array(NEXT_PIECE_GRID_SIZE * NEXT_PIECE_GRID_SIZE).fill(0))
+
+// 显示网格：基础网格 + 当前方块叠加
+const displayGrid = computed(() => {
+  if (!isGameStarted.value || gameOver.value) return gameGrid.value
+  return drawPiece(currentPiece.value, currentPiece.value.x, currentPiece.value.y, gameGrid.value)
+})
 
 // 当前方块
 const currentPiece = ref<Piece>({ shape: TETROMINOS.I, x: 0, y: 0, type: 'I' })
@@ -775,6 +791,59 @@ onUnmounted(() => {
   .game-controls {
     display: flex;
     gap: 10px;
+  }
+
+  .mobile-controls {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+
+    .rotate-btn {
+      width: 60px;
+      height: 40px;
+      font-size: 20px;
+    }
+
+    .dpad {
+      display: flex;
+      gap: 10px;
+
+      .ctrl-btn {
+        width: 56px;
+        height: 48px;
+        font-size: 20px;
+      }
+
+      .drop-btn {
+        background: #f39c12;
+        color: white;
+      }
+    }
+
+    .ctrl-btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.15s;
+      user-select: none;
+      -webkit-user-select: none;
+
+      &:active {
+        transform: scale(0.9);
+        opacity: 0.8;
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    .mobile-controls {
+      display: flex;
+    }
   }
 
   .game-over-buttons {

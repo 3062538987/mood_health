@@ -518,6 +518,16 @@ h2 {
 
 .mood-grid-scroll {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+  }
   padding-bottom: 0.25rem;
 }
 
@@ -537,11 +547,15 @@ h2 {
 }
 
 .mood-grid {
-  display: grid;
-  grid-template-columns: repeat(8, minmax(86px, 1fr));
-  gap: 0.58rem;
-  min-width: 760px;
-}
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 0.5rem;
+
+    @media (max-width: 640px) {
+      grid-template-columns: repeat(3, minmax(64px, 1fr));
+      gap: 0.4rem;
+    }
+  }
 
 .mood-type-item {
   min-height: 92px;

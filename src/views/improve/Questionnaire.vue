@@ -28,28 +28,32 @@
         </div>
 
         <!-- 问题内容 -->
-        <div v-if="currentQuestion" class="question-content">
-          <fieldset class="options">
-            <legend>{{ currentQuestion.question_text }}</legend>
-            <label
-              v-for="(option, index) in currentQuestion.options"
-              :key="index"
-              class="option-item"
-              :class="{ active: selectedAnswer === index }"
-              @click="selectAnswer(index)"
-            >
-              <input
-                class="option-radio"
-                type="radio"
-                :name="`question-${currentQuestion.id}`"
-                :value="index"
-                :checked="selectedAnswer === index"
-                @change="selectAnswer(index)"
-              />
-              {{ option }}
-            </label>
-          </fieldset>
-        </div>
+        <Transition name="question-slide" mode="out-in">
+          <div v-if="currentQuestion" class="question-content" :key="currentQuestion.id">
+            <fieldset class="options">
+              <legend>{{ currentQuestion.question_text }}</legend>
+              <div class="shortcut-hint">💡 按数字键 1-{{ currentQuestion.options.length }} 快速选择</div>
+              <label
+                v-for="(option, index) in currentQuestion.options"
+                :key="index"
+                class="option-item"
+                :class="{ active: selectedAnswer === index }"
+                @click="selectAnswer(index)"
+              >
+                <span class="option-key">{{ index + 1 }}</span>
+                <input
+                  class="option-radio"
+                  type="radio"
+                  :name="`question-${currentQuestion.id}`"
+                  :value="index"
+                  :checked="selectedAnswer === index"
+                  @change="selectAnswer(index)"
+                />
+                {{ option }}
+              </label>
+            </fieldset>
+          </div>
+        </Transition>
 
         <div v-if="submitError" class="submit-error" role="alert" aria-live="assertive">
           {{ submitError }}
@@ -74,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter, useRoute } from 'vue-router'
 
@@ -207,7 +211,24 @@ const nextQuestion = async () => {
 
 onMounted(() => {
   fetchQuestionnaireData()
+  window.addEventListener('keydown', handleKeydown)
 })
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+// 键盘快捷键
+const handleKeydown = (e: KeyboardEvent) => {
+  if (loading.value || isSubmitting.value) return
+  const num = parseInt(e.key)
+  if (num >= 1 && num <= currentQuestion.value?.options.length) {
+    selectAnswer(num - 1)
+  }
+  if (e.key === 'Enter') {
+    nextQuestion()
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -312,6 +333,32 @@ onMounted(() => {
     line-height: 1.5;
   }
 
+  .shortcut-hint {
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: $text-light-color;
+    opacity: 0.7;
+  }
+
+  .option-key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: $bg-light;
+    color: $text-light-color;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .option-item.active .option-key {
+    background: $primary-color;
+    color: white;
+  }
+
   .navigation-buttons {
     display: flex;
     justify-content: space-between;
@@ -322,6 +369,22 @@ onMounted(() => {
       font-size: $font-size-md;
     }
   }
+}
+
+// 过渡动画
+.question-slide-enter-active {
+  transition: all 0.3s ease-out;
+}
+.question-slide-leave-active {
+  transition: all 0.2s ease-in;
+}
+.question-slide-enter-from {
+  opacity: 0;
+  transform: translateX(30px);
+}
+.question-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-30px);
 }
 
 @media (max-width: 768px) {

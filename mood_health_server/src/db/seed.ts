@@ -5,6 +5,7 @@ import { readMysqlMigratorConfig } from '../config/mysql'
 import { SeedDatabase, seedReferenceData } from './seeds/coreSeed'
 import { seedDemoData, seedTestData } from './seeds/profileSeed'
 import { seedPromptTemplates } from './seeds/promptSeed'
+import { seedCourses } from './seeds/courseSeed'
 
 dotenv.config()
 
@@ -66,7 +67,8 @@ export const runSeedCommand = async (profile = process.argv[2] ?? 'reference'): 
       const demoResult = await seedDemoData(db)
       const testResult = await seedTestData(db)
       const promptResult = await seedPromptTemplates(db)
-      console.log(`All seed profiles applied: demoAccounts=${demoResult.accounts.length}, demoMoods=${demoResult.moods}, testAssessment=${testResult.assessmentCode}, prompts=${promptResult.count}.`)
+      const courseResult = await seedCourses(db)
+      console.log(`All seed profiles applied: demoAccounts=${demoResult.accounts.length}, demoMoods=${demoResult.moods}, testAssessment=${testResult.assessmentCode}, prompts=${promptResult.count}, courses=${courseResult.count}.`)
       return
     }
 
@@ -74,6 +76,13 @@ export const runSeedCommand = async (profile = process.argv[2] ?? 'reference'): 
       await seedReferenceData(db)
       const result = await seedPromptTemplates(db)
       console.log(`Prompt seed applied: ${result.count} templates.`)
+      return
+    }
+
+    if (profile === 'courses') {
+      await seedReferenceData(db)
+      const result = await seedCourses(db)
+      console.log(`Course seed applied: ${result.count} courses.`)
       return
     }
 
