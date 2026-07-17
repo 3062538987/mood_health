@@ -5,6 +5,7 @@ import { useDebounceFn } from '@vueuse/core'
 import {
   analyzeMoodWithRetry,
   getMoodAdviceHistory,
+  getMoodTypeEnum,
   saveMoodAdvice,
   submitMoodRecord,
   type AnalyzeMoodResponse,
@@ -282,6 +283,27 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
   const initialized = ref(false)
   const isSubmitting = ref(false)
   const isSubmittingSuccess = ref(false)
+
+  // 情绪code到emotionTypeId的映射表
+  const emotionTypeIdMap = ref<Record<string, number>>({})
+
+  const mapEmotionCodesToIds = (codes: string[]): number[] => {
+    return codes.map((code) => emotionTypeIdMap.value[code] ?? 0).filter((id) => id > 0)
+  }
+
+  const fetchEmotionTypeIdMap = async () => {
+    try {
+      const types = await getMoodTypeEnum()
+      const map: Record<string, number> = {}
+      for (const t of types) {
+        // 后端返回 { id, name, icon, category }，name 是 code
+        map[t.label] = (t as any).id ?? 0
+      }
+      emotionTypeIdMap.value = map
+    } catch {
+      // 非关键功能，失败时使用后端兼容格式
+    }
+  }
   const aiFailureCount = ref(0)
   const aiDisabledUntil = ref<number | null>(null)
   const aiServiceMessage = ref('')
@@ -840,6 +862,7 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
       hasDraft.value = false
     }
 
+    fetchEmotionTypeIdMap()
     refreshAutoRecommendations()
     initialized.value = true
   }

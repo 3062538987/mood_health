@@ -1,5 +1,6 @@
 import request from '@/utils/request'
 import {
+  CreateMoodRecordInput,
   MoodRecord,
   MoodListResponse,
   MoodListParams,
@@ -74,7 +75,7 @@ const shouldRetry = (error: any): boolean => {
   return false
 }
 
-export const submitMoodRecord = (data: Omit<MoodRecord, 'id' | 'userId' | 'createTime'>) => {
+export const submitMoodRecord = (data: CreateMoodRecordInput) => {
   return request<null>({
     url: '/api/moods/record',
     method: 'post',
