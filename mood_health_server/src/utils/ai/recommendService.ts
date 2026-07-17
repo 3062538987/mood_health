@@ -6,6 +6,8 @@
 import aiClient from "./aiClient";
 import logger from "../logger";
 import { setCache, getCache } from "../cache";
+import { getMysqlPool } from "../../config/mysql";
+import { RowDataPacket } from "mysql2";
 import {
   ContentRecommendationRequest,
   RecommendationResult,
@@ -228,10 +230,17 @@ export class RecommendService {
       recommendationsMap[mood] || recommendationsMap["平静"];
     const limitedRecommendations = recommendations.slice(0, limit);
 
+    const reasonMap: Record<string, string> = {
+      '开心': '您当前情绪状态较好，推荐保持愉悦的内容',
+      '焦虑': '您当前感到焦虑，推荐舒缓放松的内容',
+      '抑郁': '您当前情绪低落，推荐温暖治愈的内容',
+      '平静': '您当前情绪平稳，推荐保持平衡的内容',
+    };
+
     return {
       items: limitedRecommendations,
-      strategy: "基于情绪类型的推荐",
-      explanation: `根据您当前的${mood}情绪状态，为您推荐了相关的放松内容`,
+      strategy: "基于情绪状态的本地推荐",
+      explanation: reasonMap[mood] || `根据您当前的${mood}情绪状态，为您推荐了相关放松内容`,
       timestamp: new Date().toISOString(),
     };
   }
@@ -260,34 +269,81 @@ export class RecommendService {
   }
 
   /**
-   * 基于用户历史数据获取推荐
-   * @param userId 用户ID
-   * @param mood 情绪类型
-   * @param limit 推荐数量
-   * @param userPreferences 用户偏好
-   * @param recentActivities 最近活动
-   * @returns 推荐结果
+   * 基于用户历史数据获取个性化推荐
+   * 查询用户近30天的情绪记录、测评结果，构建真实偏好数据
    */
   async getPersonalizedRecommendations(
     userId: number,
     mood: string,
     limit: number = 5,
-    userPreferences: string[] = [],
-    recentActivities: Array<{
-      type: string;
-      duration: number;
-      timestamp: string;
-    }> = [],
   ): Promise<RecommendationResult> {
+    const pool = getMysqlPool();
+
+    // 查询用户近30天常见情绪
+    const [emotionRows] = await pool.query<RowDataPacket[]>(
+      `SELECT et.name, COUNT(*) as cnt
+       FROM moods m
+       JOIN mood_emotions me ON me.mood_id = m.id
+       JOIN emotion_types et ON et.id = me.emotion_type_id
+       WHERE m.user_id = ? AND DATE(m.recorded_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+       GROUP BY et.name
+       ORDER BY cnt DESC
+       LIMIT 5`,
+      [userId]
+    );
+
+    const commonEmotions: string[] = emotionRows.map((r) => r.name as string);
+
+    // 查询最近测评结果
+    const [assessmentRows] = await pool.query<RowDataPacket[]>(
+      `SELECT q.title, ar.score
+       FROM assessment_sessions ass
+       JOIN assessment_results ar ON ar.session_id = ass.id
+       JOIN questionnaires q ON q.id = ass.questionnaire_id
+       WHERE ass.user_id = ?
+       ORDER BY ass.created_at DESC
+       LIMIT 3`,
+      [userId]
+    );
+
+    const assessmentHistory = assessmentRows.map((r) => ({
+      title: r.title as string,
+      score: Number(r.score),
+    }));
+
+    // 构建用户偏好
+    const userPreferences: string[] = [];
+    if (commonEmotions.length > 0) {
+      userPreferences.push(`常见情绪: ${commonEmotions.join('、')}`);
+    }
+    if (assessmentHistory.length > 0) {
+      const scores = assessmentHistory.map((a) => `${a.title}(${a.score}分)`);
+      userPreferences.push(`测评结果: ${scores.join(', ')}`);
+    }
+
+    // 构建推荐理由
+    const baseReason = commonEmotions.length > 0
+      ? `基于您最近经常感到${commonEmotions[0]}`
+      : `根据您当前的${mood}情绪状态`;
+
     const request: ContentRecommendationRequest = {
       userId,
       mood,
       limit,
       userPreferences,
-      recentActivities,
+      recentActivities: [],
     };
 
-    return this.getRecommendations(request);
+    try {
+      const result = await this.getRecommendations(request);
+      return {
+        ...result,
+        explanation: `${baseReason}，为您推荐以下内容`,
+      };
+    } catch (error) {
+      logger.error("Personalized recommendation failed:", error);
+      return this.getLocalRecommendations(mood, limit);
+    }
   }
 }
 
