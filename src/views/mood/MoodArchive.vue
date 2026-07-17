@@ -736,9 +736,9 @@ onMounted(() => {
 .mood-archive {
   padding: 24px 20px 28px;
   background:
-    radial-gradient(circle at top left, rgba(255, 209, 102, 0.15), transparent 28%),
-    radial-gradient(circle at top right, rgba(106, 176, 165, 0.14), transparent 30%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(248, 245, 242, 0.92));
+    radial-gradient(ellipse at top left, rgba(240, 184, 96, 0.12), transparent 40%),
+    radial-gradient(ellipse at top right, rgba(232, 131, 74, 0.08), transparent 35%),
+    var(--bg-color);
 
   .container {
     max-width: 1200px;
@@ -768,6 +768,7 @@ onMounted(() => {
     font-size: 28px;
     font-weight: 800;
     color: var(--text-color);
+    font-family: var(--font-display);
   }
 
   .archive-copy {

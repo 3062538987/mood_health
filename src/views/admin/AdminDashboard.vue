@@ -227,7 +227,7 @@ const renderTrendChart = () => {
         type: 'line',
         data: moodTrend.value.map((item) => item.count),
         smooth: true,
-        itemStyle: { color: '#6366f1' },
+        itemStyle: { color: '#e8834a' },
       },
       {
         name: '平均强度',
@@ -235,7 +235,7 @@ const renderTrendChart = () => {
         yAxisIndex: 1,
         data: moodTrend.value.map((item) => item.avgIntensity),
         smooth: true,
-        itemStyle: { color: '#f59e0b' },
+        itemStyle: { color: '#f0b860' },
       },
     ],
   })
@@ -281,8 +281,8 @@ const renderModuleChart = () => {
         })),
         itemStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-            { offset: 0, color: '#6366f1' },
-            { offset: 1, color: '#a78bfa' },
+            { offset: 0, color: '#e8834a' },
+            { offset: 1, color: '#f0b860' },
           ]),
           borderRadius: [0, 4, 4, 0],
         },
@@ -307,7 +307,7 @@ const renderAssessmentChart = () => {
         name: '量表分布',
         type: 'bar',
         data: assessmentDist.value.instruments.map((item) => item.count),
-        itemStyle: { color: '#6366f1', borderRadius: [4, 4, 0, 0] },
+        itemStyle: { color: '#e8834a', borderRadius: [4, 4, 0, 0] },
       },
     ],
   })
@@ -353,6 +353,7 @@ onBeforeUnmount(() => {
   h2 {
     margin: 0;
     font-size: 1.5rem;
+    font-family: var(--font-display);
     color: var(--text-color, #1f2937);
   }
 }
@@ -365,11 +366,11 @@ onBeforeUnmount(() => {
 
 .date-input {
   padding: 6px 12px;
-  border: 1px solid var(--border-color, #d1d5db);
-  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
   font-size: 0.85rem;
-  background: #fff;
-  color: var(--text-color, #374151);
+  background: var(--surface);
+  color: var(--text-color);
 }
 
 .date-sep {
@@ -384,8 +385,8 @@ onBeforeUnmount(() => {
 .spinner {
   width: 2rem;
   height: 2rem;
-  border: 3px solid #e5e7eb;
-  border-top-color: #6366f1;
+  border: 3px solid var(--primary-soft);
+  border-top-color: var(--primary-color);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto 1rem;
@@ -404,10 +405,14 @@ onBeforeUnmount(() => {
 .retry-btn {
   margin-top: 1rem;
   padding: 0.5rem 1.5rem;
-  border: 1px solid var(--border-color, #d1d5db);
-  border-radius: 12px;
-  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface);
   cursor: pointer;
+  color: var(--text-color);
+  transition: all 0.2s;
+
+  &:hover { background: var(--primary-soft); }
 }
 
 .section-title {
@@ -427,16 +432,20 @@ onBeforeUnmount(() => {
 }
 
 .kpi-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
   padding: 16px;
   text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+
+  &:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 
   .kpi-label {
     display: block;
     font-size: 0.8rem;
-    color: #6b7280;
+    color: var(--text-light-color);
     margin-bottom: 4px;
   }
 
@@ -444,23 +453,25 @@ onBeforeUnmount(() => {
     display: block;
     font-size: 1.8rem;
     font-weight: 700;
-    color: #1f2937;
+    font-family: var(--font-display);
+    color: var(--primary-color);
   }
 
   .kpi-sub {
     display: block;
     font-size: 0.75rem;
-    color: #9ca3af;
+    color: var(--text-muted);
     margin-top: 2px;
   }
 }
 
 .chart-section {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
   padding: 16px;
   margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
 
   &.half {
     flex: 1;
@@ -481,16 +492,19 @@ onBeforeUnmount(() => {
 
   button {
     padding: 4px 12px;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    background: #fff;
+    background: var(--surface);
     font-size: 0.82rem;
     cursor: pointer;
+    color: var(--text-color);
+    transition: all 0.2s;
 
+    &:hover { background: var(--primary-soft); }
     &.active {
-      background: #6366f1;
+      background: var(--primary-color);
       color: #fff;
-      border-color: #6366f1;
+      border-color: var(--primary-color);
     }
   }
 }

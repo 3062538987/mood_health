@@ -330,7 +330,8 @@ const retryMessage = async (messageId: string) => {
     margin: 0;
     font-size: 30px;
     color: var(--chat-text-main);
-    letter-spacing: 1px;
+    font-family: var(--font-display);
+    letter-spacing: 0.02em;
   }
 
   .description {
