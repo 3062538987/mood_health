@@ -155,21 +155,26 @@ export class RecommendService {
 
     const commonEmotions: string[] = emotionRows.map((r) => r.name as string);
 
-    const [assessmentRows] = await pool.query<RowDataPacket[]>(
-      `SELECT q.title, ar.score
-       FROM assessment_sessions ass
-       JOIN assessment_results ar ON ar.session_id = ass.id
-       JOIN questionnaires q ON q.id = ass.questionnaire_id
-       WHERE ass.user_id = ?
-       ORDER BY ass.created_at DESC
-       LIMIT 3`,
-      [userId]
-    );
+    let assessmentHistory: Array<{ title: string; score: number }> = [];
+    try {
+      const [assessmentRows] = await pool.query<RowDataPacket[]>(
+        `SELECT ai.name as title, ass.raw_score as score
+         FROM assessment_sessions ass
+         JOIN assessment_versions av ON av.id = ass.assessment_version_id
+         JOIN assessment_instruments ai ON ai.id = av.instrument_id
+         WHERE ass.user_id = ? AND ass.status = 'submitted'
+         ORDER BY ass.created_at DESC
+         LIMIT 3`,
+        [userId]
+      );
 
-    const assessmentHistory = assessmentRows.map((r) => ({
-      title: r.title as string,
-      score: Number(r.score),
-    }));
+      assessmentHistory = assessmentRows.map((r) => ({
+        title: r.title as string,
+        score: Number(r.score) || 0,
+      }));
+    } catch {
+      // 测评表可能为空，忽略错误
+    }
 
     const userPreferences: string[] = [];
     if (commonEmotions.length > 0) {

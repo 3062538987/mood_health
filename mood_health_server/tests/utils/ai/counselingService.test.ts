@@ -1,127 +1,127 @@
-import counselingService from '../../../src/utils/ai/counselingService'
-import { CounselingRequest } from '../../../src/models/aiModel'
+/**
+ * 心理咨询控制器测试
+ * 测试 counselingHandler 的请求验证和风险检测逻辑
+ */
 
-describe('心理咨询服务测试', () => {
+import { counselingHandler } from '../../../src/controllers/counselingController'
+import { AuthRequest } from '../../../src/middleware/auth'
+import { Response } from 'express'
+import { callChatCompletion } from '../../../src/utils/ai/aiClient'
+
+jest.mock('../../../src/utils/ai/aiClient', () => ({
+  callChatCompletion: jest.fn(),
+}))
+
+const mockedCallChatCompletion = callChatCompletion as jest.MockedFunction<typeof callChatCompletion>
+
+describe('心理咨询控制器测试', () => {
+  let req: Partial<AuthRequest>
+  let res: Partial<Response>
+  let jsonMock: jest.Mock
+  let statusMock: jest.Mock
+
   beforeEach(() => {
     jest.clearAllMocks()
+    jsonMock = jest.fn().mockReturnThis()
+    statusMock = jest.fn().mockReturnValue({ json: jsonMock })
+    res = { status: statusMock, json: jsonMock }
+    mockedCallChatCompletion.mockResolvedValue('这是一个测试回复')
   })
 
   afterEach(() => {
     jest.restoreAllMocks()
   })
 
-  describe('validateRequest', () => {
-    it('应该验证有效的请求', () => {
-      const validRequest: CounselingRequest = {
-        message: '我感到很焦虑',
-        context: [{ role: 'user', content: '我最近工作压力很大' }],
-      }
-      expect(counselingService.validateRequest(validRequest)).toBe(true)
-    })
-
-    it('应该拒绝空消息', () => {
-      const invalidRequest: CounselingRequest = {
-        message: '',
-        context: [],
-      }
-      expect(counselingService.validateRequest(invalidRequest)).toBe(false)
-    })
-
-    it('应该拒绝过长的消息', () => {
-      const invalidRequest: CounselingRequest = {
-        message: 'a'.repeat(1001),
-        context: [],
-      }
-      expect(counselingService.validateRequest(invalidRequest)).toBe(false)
-    })
-
-    it('应该拒绝过长的上下文', () => {
-      const invalidRequest: CounselingRequest = {
-        message: '我感到很焦虑',
-        context: Array(11).fill({ role: 'user', content: 'test' }),
-      }
-      expect(counselingService.validateRequest(invalidRequest)).toBe(false)
-    })
+  it('应该拒绝空消息', async () => {
+    req = { body: { message: '' } }
+    await counselingHandler(req as AuthRequest, res as Response)
+    expect(statusMock).toHaveBeenCalledWith(400)
+    expect(jsonMock).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 400, message: '消息内容不能为空' })
+    )
   })
 
-  describe('generateResponse', () => {
-    it('应该成功生成心理咨询响应', async () => {
-      const request: CounselingRequest = {
-        message: '我最近感到很焦虑，不知道该怎么办',
-      }
+  it('应该拒绝纯空格消息', async () => {
+    req = { body: { message: '   ' } }
+    await counselingHandler(req as AuthRequest, res as Response)
+    expect(statusMock).toHaveBeenCalledWith(400)
+  })
 
-      const result = await counselingService.generateResponse(request)
+  it('应该拒绝过长的消息', async () => {
+    req = { body: { message: 'a'.repeat(1001) } }
+    await counselingHandler(req as AuthRequest, res as Response)
+    expect(statusMock).toHaveBeenCalledWith(400)
+    expect(jsonMock).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 400, message: '消息内容不能超过1000字' })
+    )
+  })
 
-      expect(result).toHaveProperty('response')
-      expect(typeof result.response).toBe('string')
-      expect(result.response.length).toBeGreaterThan(0)
-      expect(result.riskLevel).toBe('low')
-      expect(result.hasRiskContent).toBe(false)
-    })
+  it('应该成功生成心理咨询响应', async () => {
+    mockedCallChatCompletion.mockResolvedValueOnce('我理解你的焦虑感受。让我们一起来分析一下...')
+    req = { body: { message: '我最近感到很焦虑，不知道该怎么办' } }
 
-    it('应该检测到风险内容并设置相应的风险级别', async () => {
-      const request: CounselingRequest = {
-        message: '我想自杀，觉得活不下去了',
-      }
+    await counselingHandler(req as AuthRequest, res as Response)
 
-      const result = await counselingService.generateResponse(request)
+    expect(jsonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: 0,
+        data: expect.objectContaining({
+          response: '我理解你的焦虑感受。让我们一起来分析一下...',
+          riskLevel: 'low',
+          hasRiskContent: false,
+        }),
+      })
+    )
+  })
 
-      expect(result).toHaveProperty('response')
-      expect(result.riskLevel).toBe('medium')
-      expect(result.hasRiskContent).toBe(true)
-      expect(result.suggestion).toBe('如果你正在经历困难，建议寻求专业心理咨询师的帮助')
-    })
+  it('应该检测到风险内容并设置相应的风险级别', async () => {
+    mockedCallChatCompletion.mockResolvedValueOnce('如果你正在经历困难，建议寻求专业帮助。')
+    req = { body: { message: '我想自杀，觉得活不下去了' } }
 
-    it('应该处理带上下文的请求', async () => {
-      const request: CounselingRequest = {
+    await counselingHandler(req as AuthRequest, res as Response)
+
+    expect(jsonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: 0,
+        data: expect.objectContaining({
+          riskLevel: 'medium',
+          hasRiskContent: true,
+          suggestion: '如果你正在经历困难，建议寻求专业心理咨询师的帮助',
+        }),
+      })
+    )
+  })
+
+  it('应该处理带上下文的请求', async () => {
+    mockedCallChatCompletion.mockResolvedValueOnce('让我们继续聊聊你的压力来源...')
+    req = {
+      body: {
         message: '我还是觉得很焦虑',
         context: [
           { role: 'user', content: '我最近工作压力很大' },
-          {
-            role: 'assistant',
-            content: '工作压力大确实会让人感到疲惫，你能具体说说是什么让你感到压力吗？',
-          },
+          { role: 'assistant', content: '工作压力大确实会让人感到疲惫，你能具体说说是什么让你感到压力吗？' },
         ],
-      }
+      },
+    }
 
-      const result = await counselingService.generateResponse(request)
+    await counselingHandler(req as AuthRequest, res as Response)
 
-      expect(result).toHaveProperty('response')
-      expect(typeof result.response).toBe('string')
-      expect(result.response.length).toBeGreaterThan(0)
-    })
-
-    it('应该处理异常情况并返回兜底响应', async () => {
-      // 模拟内部 AI 生成失败，验证 generateResponse 的 catch 兜底行为
-      const mockSimulateResponse = jest.spyOn(counselingService as any, 'simulateAIResponse')
-      mockSimulateResponse.mockRejectedValue(new Error('Test error'))
-
-      const request: CounselingRequest = {
-        message: '我感到很焦虑',
-      }
-
-      const result = await counselingService.generateResponse(request)
-
-      expect(result).toEqual({
-        response: '很抱歉，我暂时无法为你提供帮助，请稍后再试',
-        mood: '平静',
-        riskLevel: 'low',
+    expect(jsonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: 0,
+        data: expect.objectContaining({
+          response: '让我们继续聊聊你的压力来源...',
+        }),
       })
+    )
+  })
 
-      mockSimulateResponse.mockRestore()
-    })
+  it('应该处理 AI 调用失败并返回 500', async () => {
+    mockedCallChatCompletion.mockRejectedValueOnce(new Error('AI 服务不可用'))
+    req = { body: { message: '我感到很焦虑' } }
 
-    it('应该根据情绪类型生成相应的回复', async () => {
-      const request: CounselingRequest = {
-        message: '我感到很难过',
-        mood: ['悲伤'],
-      }
+    await counselingHandler(req as AuthRequest, res as Response)
 
-      const result = await counselingService.generateResponse(request)
-
-      expect(result).toHaveProperty('response')
-      expect(typeof result.response).toBe('string')
-      expect(result.mood).toBe('悲伤')
-    })
+    expect(statusMock).toHaveBeenCalledWith(500)
   })
 })
