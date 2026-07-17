@@ -825,9 +825,7 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
 
   const initializePage = async () => {
     const emotionTypes = await getMoodTypeEnum()
-    emotionTypeIdByCode.value = Object.fromEntries(
-      emotionTypes.map((type) => [type.code, type.id])
-    )
+    emotionTypeIdByCode.value = Object.fromEntries(emotionTypes.map((type) => [type.code, type.id]))
 
     const draft = loadDraft()
     if (draft) {
