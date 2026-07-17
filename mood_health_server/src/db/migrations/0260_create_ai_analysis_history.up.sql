@@ -1,0 +1,21 @@
+CREATE TABLE ai_analysis_history (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  mood_record_id INT UNSIGNED NULL,
+  assessment_session_id INT UNSIGNED NULL,
+  analysis_type VARCHAR(50) NOT NULL,
+  input_context JSON NULL,
+  analysis_content JSON NOT NULL,
+  suggestion_content JSON NULL,
+  risk_level VARCHAR(20) NOT NULL DEFAULT 'low',
+  model_version VARCHAR(50) NULL,
+  request_status VARCHAR(20) NOT NULL,
+  error_message TEXT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_ai_history_user_created (user_id, created_at DESC),
+  KEY idx_ai_history_analysis_type (analysis_type),
+  KEY idx_ai_history_risk_level (risk_level),
+  CONSTRAINT fk_ai_history_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT fk_ai_history_mood_record FOREIGN KEY (mood_record_id) REFERENCES moods (id) ON DELETE SET NULL ON UPDATE RESTRICT,
+  CONSTRAINT fk_ai_history_assessment_session FOREIGN KEY (assessment_session_id) REFERENCES assessment_sessions (id) ON DELETE SET NULL ON UPDATE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
