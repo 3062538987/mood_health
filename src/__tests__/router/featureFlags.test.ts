@@ -17,13 +17,13 @@ const findRoute = (routes: readonly RouteRecordRaw[], path: string): RouteRecord
 }
 
 describe('frontend feature flags', () => {
-  it('keeps non-core modules disabled by default', () => {
-    expect(getFeatureFlags({})).toEqual({ nonCoreModules: false })
+  it('enables non-core modules by default', () => {
+    expect(getFeatureFlags({})).toEqual({ nonCoreModules: true })
   })
 
   it.each(['true', '1', 'yes', 'on', ' TRUE '])('ignores the retired enable value %s', (value) => {
     expect(getFeatureFlags({ VITE_FEATURE_NON_CORE_MODULES_ENABLED: value })).toEqual({
-      nonCoreModules: false,
+      nonCoreModules: true,
     })
   })
 })
@@ -52,18 +52,20 @@ describe('feature-aware routes', () => {
       '/admin/user-moods',
       '/admin/moods',
       '/admin/audit-logs',
+      '/admin/activity-stats',
     ])
   })
 
-  it('keeps non-core routes removed even when a legacy caller requests them', () => {
+  it('includes non-core routes when enabled', () => {
     const routes = createRoutes({ nonCoreModules: true })
 
-    expect(findRoute(routes, '/relax')).toBeUndefined()
-    expect(findRoute(routes, 'group')).toBeUndefined()
-    expect(findRoute(routes, 'knowledge')).toBeUndefined()
-    expect(findRoute(routes, 'courses')).toBeUndefined()
-    expect(findRoute(routes, 'posts')).toBeUndefined()
-    expect(findRoute(routes, 'music')).toBeUndefined()
+    expect(findRoute(routes, '/relax')).toBeDefined()
+    expect(findRoute(routes, 'group')).toBeDefined()
+    expect(findRoute(routes, 'group/:id')).toBeDefined()
+    expect(findRoute(routes, 'knowledge')).toBeDefined()
+    expect(findRoute(routes, 'courses')).toBeDefined()
+    expect(findRoute(routes, 'posts')).toBeDefined()
+    expect(findRoute(routes, 'music')).toBeDefined()
   })
 
   it.each([
