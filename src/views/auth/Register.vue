@@ -187,25 +187,37 @@ const handleRegister = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-color);
   padding: 20px;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(240, 184, 96, 0.15) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 80% 80%, rgba(232, 131, 74, 0.06) 0%, transparent 50%),
+    var(--bg-color);
 }
 
 .register-box {
   background: var(--surface);
-  padding: 40px;
-  border-radius: 12px;
+  padding: 44px 40px;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
+  animation: fadeInUp 0.5s ease both;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 h2 {
   text-align: center;
   color: var(--text-color);
-  margin-bottom: 30px;
-  font-size: 24px;
+  margin-bottom: 28px;
+  font-size: 28px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .form-group {
@@ -216,38 +228,44 @@ label {
   display: block;
   margin-bottom: 8px;
   color: var(--text-color);
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 14px;
 }
 
 input {
   width: 100%;
-  padding: 12px 15px;
-  border: 2px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 14px;
-  transition:
-    border-color 0.3s,
-    box-shadow 0.3s;
+  padding: 12px 16px;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  transition: all 0.25s ease;
   box-sizing: border-box;
-  background: var(--surface);
+  background: var(--surface-muted);
   color: var(--text-color);
+  font-family: var(--font-body);
 }
+
+input::placeholder { color: var(--text-muted); }
 
 input:focus {
   outline: none;
-  border-color: var(--focus);
-  box-shadow: 0 0 0 3px var(--primary-soft-bg);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+  background: var(--surface);
 }
 
 .error-message {
-  color: var(--danger);
+  color: var(--danger-color);
   font-size: 14px;
-  margin-bottom: 15px;
+  margin-bottom: 16px;
   text-align: center;
+  padding: 10px;
+  background: rgba(224, 85, 106, 0.08);
+  border-radius: var(--radius-md);
 }
 
 .field-error {
-  color: var(--danger);
+  color: var(--danger-color);
   font-size: 13px;
   margin: 6px 0 0;
 }
@@ -255,22 +273,21 @@ input:focus {
 .btn-register {
   width: 100%;
   padding: 14px;
-  background: var(--primary-color);
-  color: white;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(232, 131, 74, 0.25);
+  letter-spacing: 0.02em;
 }
 
 .btn-register:hover:not(:disabled) {
   transform: translateY(-2px);
-  background: var(--primary-hover);
-  box-shadow: 0 5px 20px rgba(106, 176, 165, 0.28);
+  box-shadow: 0 6px 22px rgba(232, 131, 74, 0.35);
 }
 
 .btn-register:focus-visible {
@@ -279,25 +296,26 @@ input:focus {
 }
 
 .btn-register:disabled {
-  opacity: 0.7;
+  opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .footer {
   text-align: center;
-  margin-top: 25px;
-  color: var(--muted);
+  margin-top: 28px;
+  color: var(--text-muted);
   font-size: 14px;
 }
 
 .link {
   color: var(--primary-color);
   text-decoration: none;
-  font-weight: 600;
-  margin-left: 5px;
+  font-weight: 700;
+  margin-left: 4px;
+  transition: color 0.2s;
 }
 
-.link:hover {
-  text-decoration: underline;
-}
+.link:hover { color: var(--primary-hover); text-decoration: underline; }
 </style>

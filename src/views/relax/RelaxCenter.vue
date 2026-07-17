@@ -93,7 +93,10 @@ const currentComponent = computed(() => {
 <style scoped lang="scss">
 .relax-center {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(240, 184, 96, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 80% 80%, rgba(138, 171, 124, 0.06) 0%, transparent 50%),
+    var(--bg-color);
   padding: 20px;
 
   .page-header {
@@ -102,14 +105,16 @@ const currentComponent = computed(() => {
 
     h1 {
       font-size: 32px;
-      color: #2c3e50;
+      color: var(--text-color);
+      font-family: var(--font-display);
       margin: 0 0 10px 0;
-      font-weight: 600;
+      font-weight: 700;
+      letter-spacing: 0.02em;
     }
 
     p {
       font-size: 16px;
-      color: #7f8c8d;
+      color: var(--text-light-color);
       margin: 0;
     }
   }
@@ -122,26 +127,27 @@ const currentComponent = computed(() => {
     margin: 0 auto 30px;
 
     .mode-card {
-      background: white;
-      border-radius: 16px;
+      background: var(--surface);
+      border-radius: var(--radius-lg);
       padding: 20px;
       cursor: pointer;
       transition: all 0.3s ease;
       display: flex;
       align-items: center;
       gap: 16px;
-      border: 2px solid transparent;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      border: 2px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
 
       &:hover {
         transform: translateY(-4px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-md);
+        border-color: rgba(232, 131, 74, 0.3);
       }
 
       &.active {
-        border-color: #42b983;
-        background: linear-gradient(135deg, #fff 0%, #f0faf6 100%);
-        box-shadow: 0 8px 25px rgba(66, 185, 131, 0.2);
+        border-color: var(--primary-color);
+        background: var(--primary-soft);
+        box-shadow: var(--shadow-md);
       }
 
       .mode-icon {
@@ -151,7 +157,7 @@ const currentComponent = computed(() => {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        background: var(--surface-muted);
         border-radius: 12px;
       }
 
