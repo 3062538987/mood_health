@@ -13,6 +13,9 @@ import {
   createActivityHandler,
   updateActivityHandler,
   deleteActivityHandler,
+  setReminderHandler,
+  cancelReminderHandler,
+  getReminderStatusHandler,
 } from '../controllers/activityController'
 
 const router = Router()
@@ -77,5 +80,10 @@ router.delete(
   }),
   deleteActivityHandler
 )
+
+// 活动提醒
+router.post('/remind/:id', authenticate, setReminderHandler)
+router.delete('/remind/:id', authenticate, cancelReminderHandler)
+router.get('/remind/:id', authenticate, getReminderStatusHandler)
 
 export default router

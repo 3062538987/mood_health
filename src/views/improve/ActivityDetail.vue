@@ -116,6 +116,17 @@
                     >
                       {{ isEnded ? '活动已结束' : '取消报名' }}
                     </el-button>
+                    <el-button
+                      v-if="!isEnded"
+                      :type="hasReminder ? 'warning' : 'primary'"
+                      size="large"
+                      plain
+                      :loading="reminding"
+                      @click="hasReminder ? handleCancelReminder() : handleSetReminder()"
+                    >
+                      <el-icon><Bell /></el-icon>
+                      {{ hasReminder ? '已设置提醒' : '设置提醒' }}
+                    </el-button>
                   </template>
                   <el-button v-else-if="isFull || isEnded" type="info" size="large" disabled>
                     {{ isFull ? '名额已满' : '活动已结束' }}
@@ -230,6 +241,7 @@ import {
   User,
   UserFilled,
   DataLine,
+  Bell,
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/userStore'
 import type { Activity } from '@/types/activity'
@@ -239,6 +251,9 @@ import {
   getActivityDetailWithParticipants,
   joinActivity,
   deleteActivity,
+  setActivityReminder,
+  cancelActivityReminder,
+  getReminderStatus,
 } from '@/api/activityApi'
 import { getActivityStatus } from '@/utils/activityStatus'
 
@@ -258,6 +273,8 @@ const joining = ref(false)
 const cancelling = ref(false)
 const deleting = ref(false)
 const showDeleteModal = ref(false)
+const hasReminder = ref(false)
+const reminding = ref(false)
 
 // 计算属性
 const statusConfig = computed(() => {
@@ -314,10 +331,54 @@ const loadActivityDetail = async () => {
     const response = await getActivityDetailWithParticipants(id)
     activity.value = response.activity
     participants.value = response.participants
+    // 加载提醒状态
+    if (isLoggedIn.value && isJoined.value) {
+      loadReminderStatus()
+    }
   } catch {
     error.value = true
   } finally {
     loading.value = false
+  }
+}
+
+// 加载提醒状态
+const loadReminderStatus = async () => {
+  if (!activity.value || !isLoggedIn.value) return
+  try {
+    hasReminder.value = await getReminderStatus(activity.value.id)
+  } catch {
+    hasReminder.value = false
+  }
+}
+
+// 设置提醒
+const handleSetReminder = async () => {
+  if (!activity.value || reminding.value) return
+  reminding.value = true
+  try {
+    await setActivityReminder(activity.value.id)
+    hasReminder.value = true
+    ElMessage.success('提醒设置成功，活动开始前30分钟将提醒您')
+  } catch {
+    // 错误已由拦截器处理
+  } finally {
+    reminding.value = false
+  }
+}
+
+// 取消提醒
+const handleCancelReminder = async () => {
+  if (!activity.value || reminding.value) return
+  reminding.value = true
+  try {
+    await cancelActivityReminder(activity.value.id)
+    hasReminder.value = false
+    ElMessage.success('已取消提醒')
+  } catch {
+    // 错误已由拦截器处理
+  } finally {
+    reminding.value = false
   }
 }
 

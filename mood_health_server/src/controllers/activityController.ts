@@ -242,6 +242,71 @@ export const deleteActivityHandler = async (req: AuthRequest, res: Response) => 
   }
 }
 
+export const setReminderHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.userId
+    const activityId = parseInt(req.params.id as string)
+
+    const activity = await activityRepo.findById(activityId)
+    if (!activity) {
+      return res.status(404).json({ code: 404, message: '活动不存在' })
+    }
+
+    const joined = await activityRepo.hasUserJoined(activityId, userId)
+    if (!joined) {
+      return res.status(400).json({ code: 400, message: '请先报名活动' })
+    }
+
+    // 提醒时间默认为活动开始前30分钟
+    const startTime = new Date(activity.startTime)
+    const remindAt = new Date(startTime.getTime() - 30 * 60 * 1000)
+
+    if (remindAt <= new Date()) {
+      return res.status(400).json({ code: 400, message: '活动即将开始，无法设置提醒' })
+    }
+
+    const created = await activityRepo.createReminder(activityId, userId, remindAt.toISOString())
+    if (!created) {
+      return res.status(400).json({ code: 400, message: '已设置过提醒' })
+    }
+
+    res.json({ code: 0, message: '提醒设置成功', data: { remindAt: remindAt.toISOString() } })
+  } catch (error) {
+    console.error('设置提醒失败:', error)
+    res.status(500).json({ code: 500, message: '服务器错误' })
+  }
+}
+
+export const cancelReminderHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.userId
+    const activityId = parseInt(req.params.id as string)
+
+    const cancelled = await activityRepo.cancelReminder(activityId, userId)
+    if (!cancelled) {
+      return res.status(404).json({ code: 404, message: '未找到提醒记录' })
+    }
+
+    res.json({ code: 0, message: '已取消提醒' })
+  } catch (error) {
+    console.error('取消提醒失败:', error)
+    res.status(500).json({ code: 500, message: '服务器错误' })
+  }
+}
+
+export const getReminderStatusHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.userId
+    const activityId = parseInt(req.params.id as string)
+
+    const hasReminder = await activityRepo.hasReminder(activityId, userId)
+    res.json({ code: 0, data: { hasReminder } })
+  } catch (error) {
+    console.error('获取提醒状态失败:', error)
+    res.status(500).json({ code: 500, message: '服务器错误' })
+  }
+}
+
 export const getActivityDetailWithParticipants = async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id as string)

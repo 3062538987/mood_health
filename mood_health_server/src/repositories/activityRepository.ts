@@ -309,7 +309,38 @@ export const createActivityRepository = (db: ActivityDatabase = getMysqlPool()) 
     return rows.map(mapParticipant)
   }
 
-  return { findAll, count, findById, hasUserJoined, join, cancelJoin, getUserJoinedActivities, create, update, remove, getParticipants }
+  const createReminder = async (activityId: number, userId: number, remindAt: string): Promise<boolean> => {
+    try {
+      await db.query(
+        `INSERT INTO activity_reminders (activity_id, user_id, remind_at) VALUES (?, ?, ?)`,
+        [activityId, userId, remindAt]
+      )
+      return true
+    } catch (error: any) {
+      if (String(error?.message || '').includes('Duplicate entry')) {
+        return false
+      }
+      throw error
+    }
+  }
+
+  const hasReminder = async (activityId: number, userId: number): Promise<boolean> => {
+    const [rows] = await db.query<RowDataPacket[]>(
+      'SELECT id FROM activity_reminders WHERE activity_id = ? AND user_id = ? LIMIT 1',
+      [activityId, userId]
+    )
+    return rows.length > 0
+  }
+
+  const cancelReminder = async (activityId: number, userId: number): Promise<boolean> => {
+    const [result] = await db.query<ResultSetHeader>(
+      'DELETE FROM activity_reminders WHERE activity_id = ? AND user_id = ?',
+      [activityId, userId]
+    )
+    return result.affectedRows > 0
+  }
+
+  return { findAll, count, findById, hasUserJoined, join, cancelJoin, getUserJoinedActivities, create, update, remove, getParticipants, createReminder, hasReminder, cancelReminder }
 }
 
 export type ActivityRepository = ReturnType<typeof createActivityRepository>

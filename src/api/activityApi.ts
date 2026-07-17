@@ -199,6 +199,41 @@ export const deleteActivity = async (id: number): Promise<void> => {
 }
 
 /**
+ * 设置活动提醒
+ */
+export const setActivityReminder = async (id: number): Promise<{ remindAt: string }> => {
+  const response = await request<{ data: { remindAt: string } }>({
+    url: `/api/activities/remind/${id}`,
+    method: 'post',
+    ...noBlockingLoadingConfig,
+  })
+  return response.data
+}
+
+/**
+ * 取消活动提醒
+ */
+export const cancelActivityReminder = async (id: number): Promise<void> => {
+  await request({
+    url: `/api/activities/remind/${id}`,
+    method: 'delete',
+    ...noBlockingLoadingConfig,
+  })
+}
+
+/**
+ * 获取提醒状态
+ */
+export const getReminderStatus = async (id: number): Promise<boolean> => {
+  const response = await request<{ data: { hasReminder: boolean } }>({
+    url: `/api/activities/remind/${id}`,
+    method: 'get',
+    ...noBlockingLoadingConfig,
+  })
+  return response.data.hasReminder
+}
+
+/**
  * 参与者信息
  */
 export interface Participant {
