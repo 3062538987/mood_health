@@ -133,6 +133,10 @@ const handleGlobalSearch = () => {
 
 // 组件挂载时获取情绪数据
 onMounted(async () => {
+  // 确保用户信息已加载（token 通过 HttpOnly Cookie 传递，可能尚未完成身份恢复）
+  if (userStore.token && !userStore.user) {
+    await userStore.fetchUserInfo()
+  }
   if (userStore.isLoggedIn) {
     // 当用户登录时，获取最近的情绪记录
     moodStore.fetchMoodList({ page: 1, size: 10 })
