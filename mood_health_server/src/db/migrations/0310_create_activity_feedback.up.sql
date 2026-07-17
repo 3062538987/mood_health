@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS activity_feedback (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  activity_id INT NOT NULL,
-  user_id INT NOT NULL,
+  activity_id INT UNSIGNED NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
   rating TINYINT NOT NULL CHECK (rating BETWEEN 1 AND 5) COMMENT '评分 1-5',
   comment TEXT COMMENT '反馈文字',
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),

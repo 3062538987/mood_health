@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS activity_reminders (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  activity_id INT NOT NULL,
-  user_id INT NOT NULL,
+  activity_id INT UNSIGNED NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
   remind_at DATETIME(3) NOT NULL COMMENT '提醒时间',
   is_sent TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否已发送',
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),

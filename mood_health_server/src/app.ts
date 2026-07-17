@@ -193,7 +193,7 @@ app.use('/api/courses', courseRoutes)
 app.use('/api/relax', relaxRoutes)
 app.use('/api/achievements', achievementRoutes)
 app.use('/api/recommend', recommendRoutes)
-app.use('/api/ai', feedbackRoutes)
+app.use('/api', feedbackRoutes)
 app.use('/api', managementRoutes)
 
   app.get(
