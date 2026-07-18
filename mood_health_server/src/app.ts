@@ -30,6 +30,7 @@ import redisClient from './utils/redis.client'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler'
 import { requestIdMiddleware } from './middleware/requestId'
 import { csrfMiddleware } from './middleware/csrf'
+import { requireNonCoreModules } from './middleware/featureFlag'
 import { API_ERROR_CODES, apiFailure, apiSuccess } from './utils/apiResponse'
 import { createHealthHandler, HealthDependencies } from './controllers/healthController'
 
@@ -192,12 +193,12 @@ app.use('/api/cases', caseRoutes)
 app.use('/api/prompts', promptRoutes)
 app.use('/api/ai', aiInterpretationRoutes)
 app.use('/api/ai', aiHistoryRoutes)
-app.use('/api/activities', activityRoutes)
-app.use('/api/posts', postRoutes)
-app.use('/api/music', musicRoutes)
-app.use('/api/courses', courseRoutes)
-app.use('/api/relax', relaxRoutes)
-app.use('/api/achievements', achievementRoutes)
+app.use('/api/activities', requireNonCoreModules, activityRoutes)
+app.use('/api/posts', requireNonCoreModules, postRoutes)
+app.use('/api/music', requireNonCoreModules, musicRoutes)
+app.use('/api/courses', requireNonCoreModules, courseRoutes)
+app.use('/api/relax', requireNonCoreModules, relaxRoutes)
+app.use('/api/achievements', requireNonCoreModules, achievementRoutes)
 app.use('/api/recommend', recommendRoutes)
 app.use('/api', feedbackRoutes)
 app.use('/api', managementRoutes)
