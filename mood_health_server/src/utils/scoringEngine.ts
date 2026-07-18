@@ -42,13 +42,15 @@ export const calculateScore = (
   const reverseSet = new Set(rule.reverse_items ?? [])
 
   for (const answer of answers) {
+    // 校验 score 范围：必须在 [0, max_score] 内
+    const clampedScore = Math.max(0, Math.min(answer.score, rule.max_score))
     const score = reverseSet.has(answer.itemId)
-      ? rule.max_score - answer.score
-      : answer.score
+      ? rule.max_score - clampedScore
+      : clampedScore
     total += score
   }
 
-  return total
+  return Math.max(0, total)
 }
 
 /**
