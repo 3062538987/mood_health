@@ -18,6 +18,7 @@
     "doctor": "node -e \"require('fs').existsSync('dist/server.js') ? (console.log('dist/server.js found'), process.exit(0)) : (console.log('dist/server.js missing, run npm run build'), process.exit(1))\"",
     "test": "npm run test:stable",
     "test:stable": "jest tests/unit --runInBand",
+    "typecheck": "tsc --noEmit",
     "test:integration": "jest tests/unit --runInBand",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch"
