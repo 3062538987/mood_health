@@ -1,18 +1,16 @@
 import crypto from "crypto";
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
-
-if (!ENCRYPTION_KEY) {
-  throw new Error("ENCRYPTION_KEY environment variable is required");
-}
-
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16;
 const AUTH_TAG_LENGTH = 16;
 const KEY_LENGTH = 32;
 
 function getKey(): Buffer {
-  const key = Buffer.from(ENCRYPTION_KEY!, "hex");
+  const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+  if (!ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY environment variable is required");
+  }
+  const key = Buffer.from(ENCRYPTION_KEY, "hex");
   if (key.length !== KEY_LENGTH) {
     throw new Error(
       `Invalid encryption key length. Expected ${KEY_LENGTH} bytes, got ${key.length} bytes`,

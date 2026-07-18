@@ -8,9 +8,18 @@ import { createMoodAlertService } from '../services/moodAlertService'
 const moodService = createMoodService()
 const moodAlertService = createMoodAlertService()
 
+function guardUserId(req: AuthRequest, res: Response): number | null {
+  if (!req.user) {
+    res.status(401).json(apiFailure(401, '未登录'))
+    return null
+  }
+  return req.user.userId
+}
+
 export const recordMood = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
+    const userId = guardUserId(req, res)
+    if (userId === null) return
     const {
       moodType,
       moodRatio,
@@ -101,7 +110,8 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
 }
 export const getMoodList = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
+    const userId = guardUserId(req, res)
+    if (userId === null) return
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.size as string) || parseInt(req.query.limit as string) || 20
     const emotionTypeId = req.query.emotionTypeId
@@ -122,7 +132,8 @@ export const getMoodList = async (req: AuthRequest, res: Response) => {
 }
 export const getWeeklyReportHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
+    const userId = guardUserId(req, res)
+    if (userId === null) return
     const report = await moodService.getWeeklyReport(userId)
     res.json(apiSuccess(report, '获取情绪周报成功'))
   } catch (error) {
@@ -133,7 +144,8 @@ export const getWeeklyReportHandler = async (req: AuthRequest, res: Response) =>
 
 export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
+    const userId = guardUserId(req, res)
+    if (userId === null) return
     const moodId = parseInt(req.params.id as string)
     const { moodType, intensity, note, event, tags, trigger, emotions, tagIds, recordDate } = req.body
 
@@ -222,7 +234,8 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
 
 export const deleteMoodHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
+    const userId = guardUserId(req, res)
+    if (userId === null) return
     const moodId = parseInt(req.params.id as string)
 
     if (!Number.isInteger(moodId) || moodId <= 0) {
@@ -245,7 +258,8 @@ export const deleteMoodHandler = async (req: AuthRequest, res: Response) => {
 
 export const getMoodTrend = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
+    const userId = guardUserId(req, res)
+    if (userId === null) return
     const range = (req.query.range as string) || 'week'
 
     if (!['week', 'month', 'quarter'].includes(range)) {
@@ -278,7 +292,8 @@ export const getMoodTypes = async (req: AuthRequest, res: Response) => {
 
 export const getTagsHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
+    const userId = guardUserId(req, res)
+    if (userId === null) return
     const tags = await moodService.listTags(userId)
     res.json({ code: 0, data: tags, message: '获取成功' })
   } catch (error) {
@@ -289,7 +304,8 @@ export const getTagsHandler = async (req: AuthRequest, res: Response) => {
 
 export const createTagHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
+    const userId = guardUserId(req, res)
+    if (userId === null) return
     const { name } = req.body
 
     if (!name || typeof name !== 'string') {
@@ -310,7 +326,8 @@ export const createTagHandler = async (req: AuthRequest, res: Response) => {
 
 export const getMoodComparison = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
+    const userId = guardUserId(req, res)
+    if (userId === null) return
     const period = (req.query.period as string) || 'week'
 
     if (!['week', 'month'].includes(period)) {
@@ -327,7 +344,8 @@ export const getMoodComparison = async (req: AuthRequest, res: Response) => {
 
 export const getMoodAlerts = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
+    const userId = guardUserId(req, res)
+    if (userId === null) return
     // 先检测新提醒，再获取所有提醒
     await moodAlertService.detectAlerts(userId)
     const alerts = await moodAlertService.getAlerts(userId)
@@ -340,7 +358,8 @@ export const getMoodAlerts = async (req: AuthRequest, res: Response) => {
 
 export const markAlertRead = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
+    const userId = guardUserId(req, res)
+    if (userId === null) return
     const alertId = parseInt(String(req.params.id))
 
     if (!Number.isInteger(alertId) || alertId <= 0) {
@@ -361,7 +380,8 @@ export const markAlertRead = async (req: AuthRequest, res: Response) => {
 
 export const getMoodAnalysisHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
+    const userId = guardUserId(req, res)
+    if (userId === null) return
     const range = (req.query.range as string) || 'month'
 
     if (!['week', 'month', 'quarter'].includes(range)) {
@@ -378,7 +398,8 @@ export const getMoodAnalysisHandler = async (req: AuthRequest, res: Response) =>
 
 export const getMoodInsightHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
+    const userId = guardUserId(req, res)
+    if (userId === null) return
     const period = (req.query.period as string) || 'week'
 
     if (!['day', 'week', 'month', 'year'].includes(period)) {
