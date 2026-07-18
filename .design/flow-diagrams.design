@@ -1,0 +1,42 @@
+{
+  "data": [
+    {
+      "id": "page-page-flow",
+      "title": "产品页面流程图",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784388000000,
+      "canvasData": {
+        "x": 0,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/page-flow.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-state-machines",
+      "title": "状态机与状态转换图",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784388000001,
+      "canvasData": {
+        "x": 620,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/state-machines.html",
+        "interactions": []
+      }
+    }
+  ],
+  "config": {
+    "autoLayout": true,
+    "deviceType": "desktop",
+    "projectName": "情绪健康平台 - 流程图集",
+    "designLibrary": null
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "name": "业务流程图",
+  "version": "1.0.0",
+  "description": "大学生情绪健康管理平台 - 业务流程图与业务逻辑流程图",
+  "data": [
+    {
+      "id": "page-01",
+      "type": "page",
+      "name": "系统总体业务流程图",
+      "tags": ["总览", "架构", "业务流程"],
+      "devMetadata": {
+        "htmlSrc": "pages/01-overall-business-flow.html",
+        "width": 1200,
+        "height": 900
+      }
+    },
+    {
+      "id": "page-02",
+      "type": "page",
+      "name": "情绪记录与分析流程图",
+      "tags": ["核心模块", "情绪记录", "数据分析"],
+      "devMetadata": {
+        "htmlSrc": "pages/02-mood-record-flow.html",
+        "width": 1200,
+        "height": 1000
+      }
+    },
+    {
+      "id": "page-03",
+      "type": "page",
+      "name": "测评与风险个案流程图",
+      "tags": ["测评", "风险个案", "干预流程"],
+      "devMetadata": {
+        "htmlSrc": "pages/03-assessment-case-flow.html",
+        "width": 1200,
+        "height": 1000
+      }
+    },
+    {
+      "id": "page-04",
+      "type": "page",
+      "name": "AI分析与认证流程图",
+      "tags": ["AI", "认证", "权限", "安全"],
+      "devMetadata": {
+        "htmlSrc": "pages/04-ai-auth-logic-flow.html",
+        "width": 1200,
+        "height": 1000
+      }
+    }
+  ]
+}

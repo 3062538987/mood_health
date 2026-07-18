@@ -50,7 +50,9 @@ describe('放松系统', () => {
       })
 
       expect(result.ok).toBe(false)
-      expect(result.message).toBeDefined()
+      if (!result.ok) {
+        expect(result.message).toBeDefined()
+      }
     })
   })
 

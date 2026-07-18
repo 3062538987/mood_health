@@ -1,8 +1,8 @@
 <template>
   <div v-if="pageLoading" class="loading-wrapper">
     <SoftLoadingState
-      title="情绪记录正在准备中"
-      description="正在为你整理情绪类型和触发因素选项，请稍等。"
+      :title="messages.loading.moodRecord.title"
+      :description="messages.loading.moodRecord.description"
       variant="panel"
       :item-count="5"
     />
@@ -11,9 +11,9 @@
     <div class="error-icon">
       <i class="fas fa-exclamation-circle"></i>
     </div>
-    <h3>准备过程中遇到点小问题</h3>
-    <p>请稍候再试</p>
-    <button type="button" class="error-retry" @click="loadPageData">再试一次</button>
+    <h3>{{ messages.error.server.title }}</h3>
+    <p>{{ messages.error.server.description }}</p>
+    <button type="button" class="error-retry" @click="loadPageData">{{ messages.error.server.action }}</button>
   </div>
   <div v-else class="mood-record-page">
     <div class="page-shell">
@@ -210,6 +210,17 @@
               <small>如果中途离开，这段内容会在 24 小时内等你回来。</small>
             </div>
 
+            <div v-if="showSuccessMessage" class="success-banner">
+              <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+              </div>
+              <div class="success-content">
+                <strong>{{ messages.success.moodRecord.title }}</strong>
+                <p>{{ messages.success.moodRecord.description }}</p>
+              </div>
+              <router-link to="/mood/analysis" class="success-action">{{ messages.success.moodRecord.action }}</router-link>
+            </div>
+
             <div class="action-row">
               <button
                 type="button"
@@ -241,6 +252,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { EMOTION_MAP } from '@/constants/emotions'
+import { messages } from '@/constants/messages'
 import { useMoodRecordStore } from '@/stores/moodRecordStore'
 import MoodComparison from '@/components/mood/MoodComparison.vue'
 import MoodAlert from '@/components/mood/MoodAlert.vue'
@@ -383,9 +395,16 @@ const isMoodDisabled = (moodId: string) => {
   return selectedMoodTypeIds.value.length >= 3 && !selectedMoodTypeIds.value.includes(moodId)
 }
 
+const showSuccessMessage = ref(false)
+
 const handleSubmit = async () => {
-  console.log('点击了保存按钮')
   await store.submitRecord()
+  if (store.isSubmittingSuccess) {
+    showSuccessMessage.value = true
+    setTimeout(() => {
+      showSuccessMessage.value = false
+    }, 10000)
+  }
 }
 
 const loadPageData = async () => {
@@ -999,6 +1018,66 @@ textarea:focus,
 
 .submit-action.success {
   background: var(--success-color);
+}
+
+.success-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  margin-bottom: 12px;
+}
+
+.success-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(34, 197, 94, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #22c55e;
+  flex-shrink: 0;
+}
+
+.success-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.success-content strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.success-content p {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.success-action {
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--primary-color);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.success-action:hover {
+  background: var(--primary-hover);
 }
 
 .submit-action.loading {

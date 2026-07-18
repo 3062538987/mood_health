@@ -1,0 +1,194 @@
+{
+  "data": [
+    {
+      "id": "page-home",
+      "title": "首页",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784387760000,
+      "canvasData": {
+        "x": 0,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/home.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-mood-record",
+      "title": "情绪记录",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784387761000,
+      "canvasData": {
+        "x": 309,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/mood-record.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-mood-insight",
+      "title": "情绪洞察",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784387762000,
+      "canvasData": {
+        "x": 618,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/mood-insight.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-ai-counseling",
+      "title": "AI咨询",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784387763000,
+      "canvasData": {
+        "x": 927,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/ai-counseling.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-relax",
+      "title": "放松中心",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784387764000,
+      "canvasData": {
+        "x": 1236,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/relax.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-treehole",
+      "title": "树洞",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784387765000,
+      "canvasData": {
+        "x": 1545,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/treehole.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-improve",
+      "title": "提升计划",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784387766000,
+      "canvasData": {
+        "x": 1854,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/improve.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-profile",
+      "title": "个人中心",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784387767000,
+      "canvasData": {
+        "x": 2163,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/profile.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "image-001",
+      "title": "日落花园主视觉",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1784387770000,
+      "canvasData": {
+        "x": 0,
+        "y": 376
+      },
+      "devMetadata": {
+        "imageSrc": "assets/hero-sunset-garden.jpg"
+      }
+    },
+    {
+      "id": "image-002",
+      "title": "情绪光谱插画",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1784387771000,
+      "canvasData": {
+        "x": 309,
+        "y": 376
+      },
+      "devMetadata": {
+        "imageSrc": "assets/mood-spectrum.jpg"
+      }
+    },
+    {
+      "id": "image-003",
+      "title": "禅意花园放松",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1784387772000,
+      "canvasData": {
+        "x": 618,
+        "y": 376
+      },
+      "devMetadata": {
+        "imageSrc": "assets/relax-zen-garden.jpg"
+      }
+    },
+    {
+      "id": "image-004",
+      "title": "AI陪伴之光",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1784387773000,
+      "canvasData": {
+        "x": 927,
+        "y": 376
+      },
+      "devMetadata": {
+        "imageSrc": "assets/ai-companion.jpg"
+      }
+    }
+  ],
+  "config": {
+    "autoLayout": true,
+    "deviceType": "mobile",
+    "projectName": "情绪健康平台 · UI原型",
+    "designLibrary": null
+  }
+}

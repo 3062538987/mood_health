@@ -59,9 +59,9 @@ const steps = [
     description: '你的情绪数据仅用于分析，AI 分析仅供参考，不能替代专业咨询',
   },
   {
-    icon: 'fas fa-rocket',
-    title: '开始探索',
-    description: '从记录第一条情绪开始，逐步了解自己的情绪变化规律',
+    icon: 'fas fa-chart-pie',
+    title: '情绪分析',
+    description: '系统会自动分析你的情绪记录，生成个性化的洞察报告',
   },
 ]
 

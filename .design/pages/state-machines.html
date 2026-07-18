@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>状态机与状态转换总览 · 情绪健康管理平台</title>
+  <link rel="stylesheet" href="../colors_and_type.css">
+  <style>
+    /* =========================================================
+       State Machines Diagram - Custom Styles
+       ========================================================= */
+
+    body {
+      background: linear-gradient(135deg, var(--color-bg) 0%, #EEF2FF 100%);
+      min-height: 100vh;
+      padding: var(--space-8) var(--space-6);
+    }
+
+    .page-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* ---------- Header ---------- */
+    .diagram-header {
+      text-align: center;
+      margin-bottom: var(--space-8);
+    }
+
+    .diagram-header h1 {
+      font-size: var(--text-4xl);
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin-bottom: var(--space-2);
+      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-mood) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .diagram-header .subtitle {
+      font-size: var(--text-lg);
+      color: var(--color-text-secondary);
+      font-weight: 400;
+    }
+
+    .diagram-header .stats-row {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-6);
+      margin-top: var(--space-6);
+      flex-wrap: wrap;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      background: var(--color-surface);
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--color-border-soft);
+    }
+
+    .stat-item .stat-number {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .stat-item .stat-label {
+      font-size: var(--text-sm);
+      color: var(--color-text-secondary);
+    }
+
+    /* ---------- Legend ---------- */
+    .legend-section {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      padding: var(--space-6);
+      margin-bottom: var(--space-8);
+      border: 1px solid var(--color-border-soft);
+    }
+
+    .legend-title {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: var(--space-4);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .legend-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 20px;
+      background: linear-gradient(180deg, var(--color-primary), var(--color-mood));
+      border-radius: 2px;
+    }
+
+    .legend-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-3);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-sm);
+      transition: background 0.2s;
+    }
+
+    .legend-item:hover {
+      background: var(--color-border-soft);
+    }
+
+    .legend-icon {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .legend-label {
+      font-size: var(--text-sm);
+      color: var(--color-text-secondary);
+    }
+
+    .legend-dot-initial {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--color-success);
+      border: 2px solid white;
+      box-shadow: 0 0 0 2px var(--color-success);
+    }
+
+    .legend-dot-terminal {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--color-danger);
+      border: 2px solid white;
+      box-shadow: 0 0 0 2px var(--color-danger);
+    }
+
+    .legend-pill {
+      width: 32px;
+      height: 16px;
+      border-radius: 8px;
+      background: var(--color-primary-light);
+      border: 1.5px solid var(--color-primary);
+    }
+
+    .legend-arrow-happy {
+      width: 32px;
+      height: 2px;
+      background: var(--color-success);
+      position: relative;
+    }
+
+    .legend-arrow-happy::after {
+      content: '';
+      position: absolute;
+      right: -1px;
+      top: -3px;
+      width: 0;
+      height: 0;
+      border-left: 6px solid var(--color-success);
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+    }
+
+    .legend-arrow-error {
+      width: 32px;
+      height: 2px;
+      background: repeating-linear-gradient(90deg, var(--color-danger) 0, var(--color-danger) 4px, transparent 4px, transparent 7px);
+      position: relative;
+    }
+
+    .legend-arrow-error::after {
+      content: '';
+      position: absolute;
+      right: -1px;
+      top: -3px;
+      width: 0;
+      height: 0;
+      border-left: 6px solid var(--color-danger);
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+    }
+
+    .legend-arrow-dashed {
+      width: 32px;
+      height: 2px;
+      background: repeating-linear-gradient(90deg, var(--color-text-tertiary) 0, var(--color-text-tertiary) 4px, transparent 4px, transparent 7px);
+      position: relative;
+    }
+
+    .legend-arrow-dashed::after {
+      content: '';
+      position: absolute;
+      right: -1px;
+      top: -3px;
+      width: 0;
+      height: 0;
+      border-left: 6px solid var(--color-text-tertiary);
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+    }
+
+    /* ---------- Category Section ---------- */
+    .category-section {
+      margin-bottom: var(--space-10);
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-6);
+    }
+
+    .category-badge {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--color-primary);
+      background: var(--color-primary-light);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      letter-spacing: 0.5px;
+    }
+
+    .category-title {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+
+    .category-divider {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--color-border) 0%, transparent 100%);
+    }
+
+    /* ---------- State Machine Grid ---------- */
+    .machines-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+      gap: var(--space-6);
+    }
+
+    /* ---------- State Machine Card ---------- */
+    .machine-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-border-soft);
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .machine-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .machine-header {
+      padding: var(--space-3) var(--space-5);
+      color: white;
+      font-weight: 600;
+      font-size: var(--text-base);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .machine-header .machine-name {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .machine-header .machine-count {
+      background: rgba(255, 255, 255, 0.25);
+      padding: 2px 10px;
+      border-radius: 10px;
+      font-size: var(--text-xs);
+      font-weight: 500;
+    }
+
+    .machine-source {
+      padding: var(--space-2) var(--space-5);
+      background: var(--color-border-soft);
+      font-size: var(--text-xs);
+      color: var(--color-text-tertiary);
+      font-family: var(--font-mono);
+      border-bottom: 1px solid var(--color-border-soft);
+    }
+
+    .machine-diagram {
+      padding: var(--space-5);
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border-soft);
+      flex-shrink: 0;
+    }
+
+    .machine-diagram svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .machine-table {
+      padding: var(--space-4) var(--space-5) var(--space-5);
+    }
+
+    .machine-table-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--space-3);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .machine-table-title::before {
+      content: '';
+      display: inline-block;
+      width: 3px;
+      height: 14px;
+      background: var(--color-border);
+      border-radius: 2px;
+    }
+
+    .state-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--text-xs);
+    }
+
+    .state-table th {
+      text-align: left;
+      font-weight: 600;
+      color: var(--color-text-tertiary);
+      padding: var(--space-2) var(--space-2);
+      border-bottom: 1px solid var(--color-border-soft);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .state-table td {
+      padding: var(--space-2) var(--space-2);
+      border-bottom: 1px solid var(--color-border-soft);
+      color: var(--color-text-secondary);
+      vertical-align: top;
+    }
+
+    .state-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .state-table .state-name-cell {
+      font-weight: 500;
+      color: var(--color-text-primary);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .state-table .state-desc-cell {
+      font-size: var(--text-xs);
+    }
+
+    .state-table .state-triggers-cell {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--color-text-tertiary);
+    }
+
+    /* SVG state node styles */
+    .state-node rect {
+      rx: 10;
+      ry: 10;
+      stroke-width: 1.5;
+      fill: white;
+    }
+
+    .state-node .state-label {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 600;
+      fill: var(--color-text-primary);
+      text-anchor: middle;
+    }
+
+    .state-node .state-code {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      fill: var(--color-text-tertiary);
+      text-anchor: middle;
+    }
+
+    .state-initial circle {
+      fill: var(--color-success);
+    }
+
+    .state-terminal circle {
+      fill: var(--color-danger);
+    }
+
+    .transition-path {
+      fill: none;
+      stroke-width: 1.5;
+      stroke-dasharray: none;
+    }
+
+    .transition-path.happy {
+      stroke: var(--color-success);
+    }
+
+    .transition-path.error {
+      stroke: var(--color-danger);
+      stroke-dasharray: 5 3;
+    }
+
+    .transition-path.alternate {
+      stroke: var(--color-text-tertiary);
+      stroke-dasharray: 5 3;
+    }
+
+    .transition-path.main {
+      stroke: var(--color-primary);
+    }
+
+    .transition-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      fill: var(--color-text-tertiary);
+    }
+
+    .arrowhead {
+      stroke-width: 0;
+    }
+
+    .arrowhead-happy { fill: var(--color-success); }
+    .arrowhead-error { fill: var(--color-danger); }
+    .arrowhead-alt { fill: var(--color-text-tertiary); }
+    .arrowhead-main { fill: var(--color-primary); }
+
+    /* ---------- Footer ---------- */
+    .diagram-footer {
+      text-align: center;
+      padding: var(--space-6) 0;
+      color: var(--color-text-tertiary);
+      font-size: var(--text-sm);
+    }
+
+    .diagram-footer .footer-info {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-6);
+      flex-wrap: wrap;
+      margin-bottom: var(--space-3);
+    }
+
+    .diagram-footer .footer-info span {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .diagram-footer .copyright {
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+    }
+
+    /* ---------- Machine color variants ---------- */
+    .machine-counseling .machine-header { background: #EC4899; }
+    .machine-mood .machine-header { background: #8B5CF6; }
+    .machine-analysis .machine-header { background: #6366F1; }
+    .machine-improve .machine-header { background: #F59E0B; }
+    .machine-orange .machine-header { background: #F97316; }
+    .machine-cyan .machine-header { background: #06B6D4; }
+    .machine-red .machine-header { background: #EF4444; }
+    .machine-relax .machine-header { background: #10B981; }
+    .machine-blue .machine-header { background: #3B82F6; }
+    .machine-slate .machine-header { background: #64748B; }
+
+    .machine-counseling .state-node rect { stroke: #EC4899; }
+    .machine-counseling .state-node.initial rect { fill: #FCE7F3; stroke: #EC4899; }
+    .machine-counseling .state-node.terminal rect { fill: #FCE7F3; stroke: #EC4899; }
+    .machine-counseling .state-node .state-code { fill: #EC4899; opacity: 0.7; }
+    .machine-counseling .transition-path.main { stroke: #EC4899; }
+    .machine-counseling .arrowhead-main { fill: #EC4899; }
+    .machine-counseling .machine-table-title::before { background: #EC4899; }
+
+    .machine-mood .state-node rect { stroke: #8B5CF6; }
+    .machine-mood .state-node.initial rect { fill: #EDE9FE; stroke: #8B5CF6; }
+    .machine-mood .state-node.terminal rect { fill: #EDE9FE; stroke: #8B5CF6; }
+    .machine-mood .state-node .state-code { fill: #8B5CF6; opacity: 0.7; }
+    .machine-mood .transition-path.main { stroke: #8B5CF6; }
+    .machine-mood .arrowhead-main { fill: #8B5CF6; }
+    .machine-mood .machine-table-title::before { background: #8B5CF6; }
+
+    .machine-analysis .state-node rect { stroke: #6366F1; }
+    .machine-analysis .state-node.initial rect { fill: #E0E7FF; stroke: #6366F1; }
+    .machine-analysis .state-node.terminal rect { fill: #E0E7FF; stroke: #6366F1; }
+    .machine-analysis .state-node .state-code { fill: #6366F1; opacity: 0.7; }
+    .machine-analysis .transition-path.main { stroke: #6366F1; }
+    .machine-analysis .arrowhead-main { fill: #6366F1; }
+    .machine-analysis .machine-table-title::before { background: #6366F1; }
+
+    .machine-improve .state-node rect { stroke: #F59E0B; }
+    .machine-improve .state-node.initial rect { fill: #FEF3C7; stroke: #F59E0B; }
+    .machine-improve .state-node.terminal rect { fill: #FEF3C7; stroke: #F59E0B; }
+    .machine-improve .state-node .state-code { fill: #F59E0B; opacity: 0.7; }
+    .machine-improve .transition-path.main { stroke: #F59E0B; }
+    .machine-improve .arrowhead-main { fill: #F59E0B; }
+    .machine-improve .machine-table-title::before { background: #F59E0B; }
+
+    .machine-orange .state-node rect { stroke: #F97316; }
+    .machine-orange .state-node.initial rect { fill: #FFEDD5; stroke: #F97316; }
+    .machine-orange .state-node.terminal rect { fill: #FFEDD5; stroke: #F97316; }
+    .machine-orange .state-node .state-code { fill: #F97316; opacity: 0.7; }
+    .machine-orange .transition-path.main { stroke: #F97316; }
+    .machine-orange .arrowhead-main { fill: #F97316; }
+    .machine-orange .machine-table-title::before { background: #F97316; }
+
+    .machine-cyan .state-node rect { stroke: #06B6D4; }
+    .machine-cyan .state-node.initial rect { fill: #CFFAFE; stroke: #06B6D4; }
+    .machine-cyan .state-node.terminal rect { fill: #CFFAFE; stroke: #06B6D4; }
+    .machine-cyan .state-node .state-code { fill: #06B6D4; opacity: 0.7; }
+    .machine-cyan .transition-path.main { stroke: #06B6D4; }
+    .machine-cyan .arrowhead-main { fill: #06B6D4; }
+    .machine-cyan .machine-table-title::before { background: #06B6D4; }
+
+    .machine-red .state-node rect { stroke: #EF4444; }
+    .machine-red .state-node.initial rect { fill: #FEE2E2; stroke: #EF4444; }
+    .machine-red .state-node.terminal rect { fill: #FEE2E2; stroke: #EF4444; }
+    .machine-red .state-node .state-code { fill: #EF4444; opacity: 0.7; }
+    .machine-red .transition-path.main { stroke: #EF4444; }
+    .machine-red .arrowhead-main { fill: #EF4444; }
+    .machine-red .machine-table-title::before { background: #EF4444; }
+
+    .machine-relax .state-node rect { stroke: #10B981; }
+    .machine-relax .state-node.initial rect { fill: #D1FAE5; stroke: #10B981; }
+    .machine-relax .state-node.terminal rect { fill: #D1FAE5; stroke: #10B981; }
+    .machine-relax .state-node .state-code { fill: #10B981; opacity: 0.7; }
+    .machine-relax .transition-path.main { stroke: #10B981; }
+    .machine-relax .arrowhead-main { fill: #10B981; }
+    .machine-relax .machine-table-title::before { background: #10B981; }
+
+    .machine-blue .state-node rect { stroke: #3B82F6; }
+    .machine-blue .state-node.initial rect { fill: #DBEAFE; stroke: #3B82F6; }
+    .machine-blue .state-node.terminal rect { fill: #DBEAFE; stroke: #3B82F6; }
+    .machine-blue .state-node .state-code { fill: #3B82F6; opacity: 0.7; }
+    .machine-blue .transition-path.main { stroke: #3B82F6; }
+    .machine-blue .arrowhead-main { fill: #3B82F6; }
+    .machine-blue .machine-table-title::before { background: #3B82F6; }
+
+    .machine-slate .state-node rect { stroke: #64748B; }
+    .machine-slate .state-node.initial rect { fill: #F1F5F9; stroke: #64748B; }
+    .machine-slate .state-node.terminal rect { fill: #F1F5F9; stroke: #64748B; }
+    .machine-slate .state-node .state-code { fill: #64748B; opacity: 0.7; }
+    .machine-slate .transition-path.main { stroke: #64748B; }
+    .machine-slate .arrowhead-main { fill: #64748B; }
+    .machine-slate .machine-table-title::before { background: #64748B; }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 1024px) {
+      .machines-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: var(--space-4) var(--space-3);
+      }
+
+      .diagram-header h1 {
+        font-size: var(--text-3xl);
+      }
+
+      .stats-row {
+        gap: var(--space-3);
+      }
+
+      .stat-item {
+        padding: var(--space-2) var(--space-3);
+      }
+
+      .machine-diagram {
+        padding: var(--space-4);
+      }
+
+      .machine-table {
+        padding: var(--space-3) var(--space-4) var(--space-4);
+      }
+
+      .legend-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+
+    <!-- ========== Header ========== -->
+    <header class="diagram-header">
+      <h1>状态机与状态转换总览</h1>
+      <p class="subtitle">基于代码现状的核心业务状态机梳理</p>
+      <div class="stats-row">
+        <div class="stat-item">
+          <span class="stat-number">11</span>
+          <span class="stat-label">状态机</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">37</span>
+          <span class="stat-label">状态节点</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">48</span>
+          <span class="stat-label">转换路径</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ========== Legend ========== -->
+    <section class="legend-section">
+      <div class="legend-title">图例说明</div>
+      <div class="legend-grid">
+        <div class="legend-item">
+          <div class="legend-icon">
+            <div class="legend-dot-initial"></div>
+          </div>
+          <span class="legend-label">初始状态</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-icon">
+            <div class="legend-dot-terminal"></div>
+          </div>
+          <span class="legend-label">终止状态</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-icon">
+            <div class="legend-pill"></div>
+          </div>
+          <span class="legend-label">中间状态</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-icon">
+            <div class="legend-arrow-happy"></div>
+          </div>
+          <span class="legend-label">主路径 (实线)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-icon">
+            <div class="legend-arrow-error"></div>
+          </div>
+          <span class="legend-label">错误路径 (红色虚线)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-icon">
+            <div class="legend-arrow-dashed"></div>
+          </div>
+          <span class="legend-label">可选路径 (灰色虚线)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== Category 1: Core Business ========== -->
+    <section class="category-section">
+      <div class="category-header">
+        <span class="category-badge">CATEGORY 01</span>
+        <span class="category-title">核心业务状态机</span>
+        <div class="category-divider"></div>
+      </div>
+
+      <div class="machines-grid">
+
+        <!-- 1. Case Status -->
+        <div class="machine-card machine-counseling">
+          <div class="machine-header">
+            <span class="machine-name">个案状态机 · Case Status</span>
+            <span class="machine-count">5 状态</span>
+          </div>
+          <div class="machine-source">caseRepository.ts · caseService.ts</div>
+          <div class="machine-diagram">
+            <svg viewBox="0 0 520 180" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker id="arrow-counseling" class="arrowhead arrowhead-main" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+                <marker id="arrow-alt-counseling" class="arrowhead arrowhead-alt" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+                <marker id="arrow-err-counseling" class="arrowhead arrowhead-error" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+              </defs>
+              <!-- Main path: open -> assigned -> in_progress -> referred -> closed -->
+              <path class="transition-path main" d="M 75 55 L 145 55" marker-end="url(#arrow-counseling)"/>
+              <path class="transition-path main" d="M 205 55 L 275 55" marker-end="url(#arrow-counseling)"/>
+              <path class="transition-path main" d="M 335 55 L 405 55" marker-end="url(#arrow-counseling)"/>
+              <path class="transition-path main" d="M 465 55 L 495 55" marker-end="url(#arrow-counseling)"/>
+              <!-- Direct closure: open -> closed (bottom arc) -->
+              <path class="transition-path alternate" d="M 50 75 Q 50 140 490 140 Q 500 140 500 75" marker-end="url(#arrow-alt-counseling)"/>
+              <!-- in_progress -> closed -->
+              <path class="transition-path alternate" d="M 252 75 Q 350 110 490 75" marker-end="url(#arrow-alt-counseling)"/>
+              <!-- State: open (initial) -->
+              <g class="state-node initial">
+                <rect x="10" y="35" width="70" height="40"/>
+                <text class="state-label" x="45" y="52">待处理</text>
+                <text class="state-code" x="45" y="66">open</text>
+              </g>
+              <!-- State: assigned -->
+              <g class="state-node">
+                <rect x="145" y="35" width="70" height="40"/>
+                <text class="state-label" x="180" y="52">已分配</text>
+                <text class="state-code" x="180" y="66">assigned</text>
+              </g>
+              <!-- State: in_progress -->
+              <g class="state-node">
+                <rect x="275" y="35" width="70" height="40"/>
+                <text class="state-label" x="310" y="52">进行中</text>
+                <text class="state-code" x="310" y="66">in_progress</text>
+              </g>
+              <!-- State: referred -->
+              <g class="state-node">
+                <rect x="405" y="35" width="70" height="40"/>
+                <text class="state-label" x="440" y="52">已转介</text>
+                <text class="state-code" x="440" y="66">referred</text>
+              </g>
+              <!-- State: closed (terminal) -->
+              <g class="state-node terminal">
+                <rect x="495" y="35" width="65" height="40"/>
+                <text class="state-label" x="527" y="52">已结案</text>
+                <text class="state-code" x="527" y="66">closed</text>
+              </g>
+              <!-- Trigger labels -->
+              <text class="transition-label" x="110" y="48">assign</text>
+              <text class="transition-label" x="240" y="48">start</text>
+              <text class="transition-label" x="370" y="48">refer</text>
+              <text class="transition-label" x="468" y="48">close</text>
+              <text class="transition-label" x="260" y="132">directClose</text>
+              <text class="transition-label" x="370" y="95">closeCase</text>
+            </svg>
+          </div>
+          <div class="machine-table">
+            <div class="machine-table-title">状态定义</div>

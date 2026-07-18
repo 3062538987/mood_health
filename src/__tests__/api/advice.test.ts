@@ -42,7 +42,9 @@ describe('情绪建议系统', () => {
       })
 
       expect(result.ok).toBe(false)
-      expect(result.message).toBeDefined()
+      if (!result.ok) {
+        expect(result.message).toBeDefined()
+      }
     })
 
     it('saveAdviceSafe 成功返回', async () => {
@@ -101,7 +103,9 @@ describe('情绪建议系统', () => {
       const result = await getAdviceHistorySafe()
 
       expect(result.ok).toBe(false)
-      expect(result.message).toBeDefined()
+      if (!result.ok) {
+        expect(result.message).toBeDefined()
+      }
     })
   })
 })

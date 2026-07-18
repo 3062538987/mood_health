@@ -29,7 +29,9 @@ describe('成就系统', () => {
       const result = await achievementAPI.getAchievementsSafe()
 
       expect(result.ok).toBe(true)
-      expect(result.data).toEqual([])
+      if (result.ok) {
+        expect(result.data).toEqual([])
+      }
     })
 
     it('getAchievementsSafe 处理错误', async () => {
@@ -38,7 +40,9 @@ describe('成就系统', () => {
       const result = await achievementAPI.getAchievementsSafe()
 
       expect(result.ok).toBe(false)
-      expect(result.message).toBeDefined()
+      if (!result.ok) {
+        expect(result.message).toBeDefined()
+      }
     })
   })
 

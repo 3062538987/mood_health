@@ -1,6 +1,5 @@
 <template>
   <div class="home-container">
-    <!-- 背景装饰元素 -->
     <div class="background-decoration">
       <div class="circle circle-1"></div>
       <div class="circle circle-2"></div>
@@ -12,77 +11,112 @@
     <header class="home-header">
       <div class="header-content">
         <h1 class="main-title">情绪健康管理平台</h1>
-        <p class="subtitle">记录情绪变化，找到适合自己的调节方式</p>
+        <p class="subtitle">{{ greeting }}</p>
         <p class="disclaimer">本平台提供情绪记录与自我调节建议，不能替代专业心理咨询或医疗诊断</p>
       </div>
     </header>
 
     <main class="home-content">
-      <div class="feature-grid">
-        <router-link to="/mood" class="feature-card">
-          <i class="fas fa-pencil-alt"></i>
-          <h3>情绪管理</h3>
-          <p>记录与分析你的情绪</p>
-        </router-link>
-        <router-link v-if="featureFlags.nonCoreModules" to="/relax" class="feature-card">
-          <i class="fas fa-headphones"></i>
-          <h3>放松中心</h3>
-          <p>多种放松方式，释放压力</p>
-        </router-link>
-        <router-link to="/improve" class="feature-card">
-          <i class="fas fa-users"></i>
-          <h3>提升计划</h3>
-          <p>专业团体活动，共同成长</p>
-        </router-link>
-        <router-link to="/user" class="feature-card">
-          <i class="fas fa-user"></i>
-          <h3>个人中心</h3>
-          <p>管理个人资料和设置</p>
-        </router-link>
-        <router-link v-if="isAdmin" to="/admin" class="feature-card">
-          <i class="fas fa-shield-alt"></i>
-          <h3>管理后台</h3>
-          <p>审核内容与管理平台配置</p>
-        </router-link>
+      <div v-if="userStore.isLoggedIn" class="today-section">
+        <div v-if="showFirstRecordOnboarding" class="today-card onboarding-card">
+          <div class="card-icon-wrapper">
+            <div class="card-icon">
+              <i class="fas fa-pencil-alt"></i>
+            </div>
+          </div>
+          <div class="card-content">
+            <p class="card-eyebrow">开始记录</p>
+            <h2>从第一条情绪开始了解自己</h2>
+            <p>你还没有情绪记录。先写下一件今天真实发生的小事，后续趋势才会更准确。</p>
+          </div>
+          <router-link to="/mood/record" class="card-action">记录第一条情绪</router-link>
+        </div>
+
+        <div v-else-if="latestRecord" class="today-card mood-card">
+          <div class="card-icon-wrapper">
+            <div class="card-icon" :class="getMoodIconClass(latestRecord.moodType[0])">
+              <i :class="getMoodIcon(latestRecord.moodType[0])"></i>
+            </div>
+          </div>
+          <div class="card-content">
+            <p class="card-eyebrow">今日状态</p>
+            <h2>{{ getMoodLabel(latestRecord.moodType[0]) }}</h2>
+            <p>{{ formatTimeAgo(latestRecord.createTime) }}记录 · 强度 {{ latestRecord.intensity }}/10</p>
+            <p v-if="latestRecord.event" class="record-desc">{{ latestRecord.event }}</p>
+          </div>
+          <div class="card-actions">
+            <router-link to="/mood/record" class="card-action primary">记录新情绪</router-link>
+            <router-link to="/mood/analysis" class="card-action secondary">查看分析</router-link>
+          </div>
+        </div>
+
+        <div v-else class="today-card empty-card">
+          <div class="card-icon-wrapper">
+            <div class="card-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+          </div>
+          <div class="card-content">
+            <p class="card-eyebrow">等待记录</p>
+            <h2>今天还没有记录情绪</h2>
+            <p>花一分钟记录当下的感受，了解自己的情绪变化规律</p>
+          </div>
+          <router-link to="/mood/record" class="card-action">记录今天的情绪</router-link>
+        </div>
       </div>
 
-      <section
-        v-if="showFirstRecordOnboarding"
-        class="first-record-onboarding"
-        aria-labelledby="first-record-title"
-      >
-        <div class="onboarding-copy">
-          <p class="onboarding-eyebrow">开始记录</p>
-          <h2 id="first-record-title">从第一条情绪开始了解自己</h2>
-          <p>你还没有情绪记录。先写下一件今天真实发生的小事，后续趋势才会更准确。</p>
+      <div v-else class="welcome-section">
+        <div class="welcome-card">
+          <div class="welcome-icon">
+            <i class="fas fa-heart"></i>
+          </div>
+          <h2>欢迎来到情绪健康管理平台</h2>
+          <p>记录情绪变化，找到适合自己的调节方式</p>
+          <div class="welcome-actions">
+            <router-link to="/login" class="welcome-btn primary">登录</router-link>
+            <router-link to="/register" class="welcome-btn secondary">注册</router-link>
+          </div>
         </div>
-        <router-link to="/mood/record" class="onboarding-action">记录第一条情绪</router-link>
-      </section>
+      </div>
 
-      <!-- 特色服务介绍 -->
-      <div class="feature-section">
-        <h2 class="section-title">特色服务</h2>
-        <div class="features">
-          <div class="feature-item">
-            <div class="feature-icon">📊</div>
-            <h3>情绪分析</h3>
-            <p>智能分析情绪变化趋势，提供专业建议</p>
-          </div>
-          <div class="feature-item">
-            <div class="feature-icon">🤝</div>
-            <h3>社区支持</h3>
-            <p>加入情绪支持社区，分享经验，相互鼓励</p>
-          </div>
-          <div class="feature-item">
-            <div class="feature-icon">🎯</div>
-            <h3>个性化计划</h3>
-            <p>根据情绪状态，定制专属的情绪管理计划</p>
-          </div>
+      <div v-if="userStore.isLoggedIn" class="quick-actions">
+        <h3 class="section-title">快速入口</h3>
+        <div class="action-grid">
+          <router-link to="/mood/record" class="action-item">
+            <i class="fas fa-pencil-alt"></i>
+            <span>记录情绪</span>
+          </router-link>
+          <router-link v-if="featureFlags.nonCoreModules" to="/relax" class="action-item">
+            <i class="fas fa-headphones"></i>
+            <span>放松中心</span>
+          </router-link>
+          <router-link to="/mood/analysis" class="action-item">
+            <i class="fas fa-chart-pie"></i>
+            <span>情绪洞察</span>
+          </router-link>
+          <router-link v-if="featureFlags.nonCoreModules" to="/relax/treehole" class="action-item">
+            <i class="fas fa-tree"></i>
+            <span>树洞</span>
+          </router-link>
+          <router-link to="/improve" class="action-item">
+            <i class="fas fa-users"></i>
+            <span>提升计划</span>
+          </router-link>
+          <router-link to="/user" class="action-item">
+            <i class="fas fa-user"></i>
+            <span>个人中心</span>
+          </router-link>
         </div>
+      </div>
+
+      <div v-if="isAdmin" class="admin-entry">
+        <router-link to="/admin" class="admin-link">
+          <i class="fas fa-shield-alt"></i>
+          <span>管理后台</span>
+        </router-link>
       </div>
     </main>
 
-    <!-- 页脚 -->
     <footer class="home-footer">
       <p>© 2026 情绪健康管理平台 | 用心呵护每一份情绪</p>
     </footer>
@@ -90,15 +124,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed } from 'vue'
 import { useMoodStore } from '@/stores/moodStore'
 import { useUserStore } from '@/stores/userStore'
 import { featureFlags } from '@/config/featureFlags'
+import type { MoodRecord } from '@/types/mood'
 
-const isLoaded = ref(false)
 const userStore = useUserStore()
 const moodStore = useMoodStore()
 const isAdmin = computed(() => userStore.isAdmin)
+
 const showFirstRecordOnboarding = computed(
   () =>
     userStore.isLoggedIn &&
@@ -108,16 +143,94 @@ const showFirstRecordOnboarding = computed(
     moodStore.moodRecords.length === 0
 )
 
-onMounted(() => {
-  // 添加页面加载动画
-  setTimeout(() => {
-    isLoaded.value = true
-  }, 300)
+const latestRecord = computed<MoodRecord | null>(() => {
+  if (!userStore.isLoggedIn || moodStore.moodRecords.length === 0) return null
+  const records = [...moodStore.moodRecords].sort(
+    (a, b) => new Date(b.createTime).getTime() - new Date(a.createTime).getTime()
+  )
+  return records[0] || null
 })
+
+const greeting = computed(() => {
+  const hour = new Date().getHours()
+  if (hour < 6) return '夜深了，照顾好自己'
+  if (hour < 12) return '早上好，今天也要好好的'
+  if (hour < 14) return '中午好，记得休息一下'
+  if (hour < 18) return '下午好，保持好心情'
+  return '晚上好，放松一下吧'
+})
+
+const getMoodLabel = (moodType: string): string => {
+  const map: Record<string, string> = {
+    happy: '开心',
+    sad: '难过',
+    angry: '生气',
+    anxious: '焦虑',
+    calm: '平静',
+    excited: '兴奋',
+    tired: '疲惫',
+    confused: '困惑',
+    hopeful: '期待',
+    grateful: '感恩',
+    lonely: '孤独',
+    stressed: '压力大',
+  }
+  return map[moodType] || moodType
+}
+
+const getMoodIcon = (moodType: string): string => {
+  const map: Record<string, string> = {
+    happy: 'fas fa-smile',
+    sad: 'fas fa-frown',
+    angry: 'fas fa-angry',
+    anxious: 'fas fa-meh',
+    calm: 'fas fa-smile-beam',
+    excited: 'fas fa-laugh',
+    tired: 'fas fa-sleep',
+    confused: 'fas fa-dizzy',
+    hopeful: 'fas fa-star',
+    grateful: 'fas fa-heart',
+    lonely: 'fas fa-user',
+    stressed: 'fas fa-exclamation-triangle',
+  }
+  return map[moodType] || 'fas fa-smile'
+}
+
+const getMoodIconClass = (moodType: string): string => {
+  const map: Record<string, string> = {
+    happy: 'mood-happy',
+    sad: 'mood-sad',
+    angry: 'mood-angry',
+    anxious: 'mood-anxious',
+    calm: 'mood-calm',
+    excited: 'mood-excited',
+    tired: 'mood-tired',
+    confused: 'mood-confused',
+    hopeful: 'mood-hopeful',
+    grateful: 'mood-grateful',
+    lonely: 'mood-lonely',
+    stressed: 'mood-stressed',
+  }
+  return map[moodType] || 'mood-neutral'
+}
+
+const formatTimeAgo = (dateStr: string): string => {
+  const now = new Date()
+  const date = new Date(dateStr)
+  const diff = now.getTime() - date.getTime()
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+
+  if (minutes < 1) return '刚刚'
+  if (minutes < 60) return `${minutes}分钟前`
+  if (hours < 24) return `${hours}小时前`
+  if (days < 7) return `${days}天前`
+  return date.toLocaleDateString()
+}
 </script>
 
 <style scoped lang="scss">
-/* ── 日落花园首页 ── */
 @keyframes float {
   0%, 100% { transform: translateY(0) rotate(0deg); }
   33% { transform: translateY(-12px) rotate(1deg); }
@@ -153,7 +266,6 @@ onMounted(() => {
   }
 }
 
-/* ── 背景装饰 ── */
 .background-decoration {
   position: absolute;
   inset: 0;
@@ -199,9 +311,8 @@ onMounted(() => {
   .wave-2 { height: 90px; animation-delay: 3s; opacity: 0.6; }
 }
 
-/* ── 头部 ── */
 .home-header {
-  padding: 80px 0 50px;
+  padding: 60px 0 30px;
   text-align: center;
   position: relative;
   z-index: 1;
@@ -213,149 +324,106 @@ onMounted(() => {
 
   .main-title {
     font-family: var(--font-display);
-    font-size: 44px;
+    font-size: 36px;
     font-weight: 700;
     color: var(--text-color);
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     letter-spacing: 0.02em;
     line-height: 1.3;
 
-    @media (max-width: 768px) { font-size: 32px; }
+    @media (max-width: 768px) { font-size: 28px; }
   }
 
   .subtitle {
-    font-size: 18px;
+    font-size: 17px;
     color: var(--text-light-color);
     font-weight: 400;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
 
-    @media (max-width: 768px) { font-size: 15px; }
+    @media (max-width: 768px) { font-size: 14px; }
   }
 
   .disclaimer {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--text-muted);
     font-weight: 400;
-    margin-top: 12px;
+    margin-top: 10px;
     line-height: 1.6;
 
-    @media (max-width: 768px) { font-size: 12px; }
+    @media (max-width: 768px) { font-size: 11px; }
   }
 }
 
 .home-content {
-  max-width: 1100px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 0 24px;
   position: relative;
   z-index: 1;
 }
 
-/* ── 功能卡片网格 ── */
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  padding: 1rem;
-  max-width: 1100px;
-  margin: 0 auto 60px;
-
-  @media (max-width: 768px) { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
-  @media (max-width: 480px) { grid-template-columns: 1fr; }
+.today-section {
+  margin-bottom: 40px;
 }
 
-.feature-grid > :is(.feature-card, a, button) {
-  background: var(--surface);
-  border-radius: var(--radius-xl);
-  padding: 2rem 1.25rem;
-  text-align: center;
-  text-decoration: none;
-  color: var(--text-color);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: fadeInUp 0.6s ease both;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(240, 184, 96, 0.06) 0%, transparent 60%);
-    opacity: 0;
-    transition: opacity 0.35s ease;
-  }
-
-  i, .feature-icon {
-    font-size: 2.5rem;
-    margin-bottom: 0.75rem;
-    display: block;
-    transition: transform 0.35s ease;
-  }
-
-  h3 {
-    font-family: var(--font-display);
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 0.35rem;
-    color: var(--text-color);
-  }
-
-  p {
-    font-size: 0.85rem;
-    color: var(--text-light-color);
-    line-height: 1.5;
-  }
-
-  &:hover {
-    transform: translateY(-6px);
-    box-shadow: var(--shadow-md);
-    border-color: rgba(232, 131, 74, 0.2);
-    &::before { opacity: 1; }
-    i, .feature-icon { transform: scale(1.1); }
-  }
-
-  &:nth-child(1) { animation-delay: 0.05s; i { color: var(--primary-color); } }
-  &:nth-child(2) { animation-delay: 0.15s; i { color: var(--secondary-color); } }
-  &:nth-child(3) { animation-delay: 0.25s; i { color: var(--accent-color); } }
-  &:nth-child(4) { animation-delay: 0.35s; i { color: var(--primary-color); } }
-}
-
-/* ── 新用户引导 ── */
-.first-record-onboarding {
+.today-card {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  margin: -20px auto 50px;
-  padding: 28px 32px;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
   border-radius: var(--radius-xl);
   background: var(--surface);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-md);
-  animation: fadeInUp 0.5s ease 0.4s both;
+  animation: fadeInUp 0.5s ease both;
 
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: flex-start;
-    margin: 0 0 40px;
-    padding: 22px;
+  @media (min-width: 768px) {
+    flex-direction: row;
+    align-items: center;
   }
 }
 
-.onboarding-copy {
-  display: grid;
-  gap: 6px;
+.card-icon-wrapper {
+  flex-shrink: 0;
+}
 
-  .onboarding-eyebrow {
+.card-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  box-shadow: 0 8px 20px rgba(232, 131, 74, 0.25);
+
+  &.mood-happy { background: linear-gradient(135deg, #22c55e, #16a34a); }
+  &.mood-sad { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+  &.mood-angry { background: linear-gradient(135deg, #ef4444, #dc2626); }
+  &.mood-anxious { background: linear-gradient(135deg, #f59e0b, #d97706); }
+  &.mood-calm { background: linear-gradient(135deg, #14b8a6, #0d9488); }
+  &.mood-excited { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+  &.mood-tired { background: linear-gradient(135deg, #64748b, #475569); }
+  &.mood-confused { background: linear-gradient(135deg, #f97316, #ea580c); }
+  &.mood-hopeful { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+  &.mood-grateful { background: linear-gradient(135deg, #ec4899, #db2777); }
+  &.mood-lonely { background: linear-gradient(135deg, #94a3b8, #64748b); }
+  &.mood-stressed { background: linear-gradient(135deg, #ef4444, #f97316); }
+}
+
+.card-content {
+  flex: 1;
+
+  .card-eyebrow {
     margin: 0;
     color: var(--primary-color);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
+    margin-bottom: 6px;
   }
 
   h2 {
@@ -364,17 +432,27 @@ onMounted(() => {
     color: var(--text-color);
     font-size: 22px;
     line-height: 1.35;
+    margin-bottom: 6px;
+
+    @media (max-width: 768px) { font-size: 19px; }
   }
 
   p {
     margin: 0;
     color: var(--text-light-color);
-    line-height: 1.7;
+    line-height: 1.6;
+    font-size: 14px;
+  }
+
+  .record-desc {
+    margin-top: 8px;
+    font-style: italic;
+    opacity: 0.8;
   }
 }
 
-.onboarding-action {
-  flex: 0 0 auto;
+.card-action {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -398,70 +476,194 @@ onMounted(() => {
     outline: 3px solid var(--focus);
     outline-offset: 4px;
   }
-}
 
-/* ── 特色服务 ── */
-.feature-section {
-  background: var(--surface);
-  border-radius: var(--radius-xl);
-  padding: 56px 40px;
-  margin-bottom: 50px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
-  text-align: center;
-
-  @media (max-width: 768px) { padding: 36px 20px; }
-
-  .section-title {
-    font-family: var(--font-display);
-    font-size: 28px;
-    font-weight: 700;
+  &.secondary {
+    background: var(--surface-muted);
     color: var(--text-color);
-    margin-bottom: 40px;
-    position: relative;
+    border: 1px solid var(--border-color);
+    box-shadow: none;
 
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: -12px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 60px;
-      height: 3px;
-      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-      border-radius: 2px;
-    }
-  }
-
-  .features {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 32px;
-
-    @media (max-width: 768px) { grid-template-columns: 1fr; gap: 24px; }
-
-    .feature-item {
-      padding: 32px 20px;
-      background: var(--surface-muted);
-      border-radius: var(--radius-lg);
-      transition: all 0.35s ease;
-      border: 1px solid transparent;
-
-      &:hover {
-        background: var(--surface);
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-md);
-        border-color: var(--border-color);
-      }
-
-      .feature-icon { font-size: 44px; margin-bottom: 16px; }
-      h3 { font-family: var(--font-display); font-size: 18px; font-weight: 600; margin-bottom: 8px; }
-      p { font-size: 14px; color: var(--text-light-color); line-height: 1.6; }
+    &:hover {
+      background: var(--border-color);
+      box-shadow: none;
     }
   }
 }
 
-/* ── 页脚 ── */
+.card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+  }
+}
+
+.welcome-section {
+  margin-bottom: 40px;
+}
+
+.welcome-card {
+  text-align: center;
+  padding: 48px 32px;
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  animation: fadeInUp 0.5s ease both;
+
+  .welcome-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 32px;
+    box-shadow: 0 12px 28px rgba(232, 131, 74, 0.3);
+  }
+
+  h2 {
+    font-family: var(--font-display);
+    font-size: 24px;
+    color: var(--text-color);
+    margin: 0 0 10px;
+  }
+
+  p {
+    color: var(--text-light-color);
+    font-size: 15px;
+    margin: 0 0 28px;
+    line-height: 1.6;
+  }
+}
+
+.welcome-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+.welcome-btn {
+  padding: 12px 32px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.3s ease;
+
+  &.primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(232, 131, 74, 0.25);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(232, 131, 74, 0.35);
+    }
+  }
+
+  &.secondary {
+    background: var(--surface-muted);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+
+    &:hover {
+      background: var(--border-color);
+    }
+  }
+}
+
+.quick-actions {
+  margin-bottom: 30px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0 0 16px;
+  padding-left: 4px;
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.action-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 12px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  text-decoration: none;
+  color: var(--text-color);
+  transition: all 0.25s ease;
+
+  i {
+    font-size: 24px;
+    color: var(--primary-color);
+  }
+
+  span {
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-sm);
+    border-color: rgba(232, 131, 74, 0.2);
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+}
+
+.admin-entry {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.admin-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  background: rgba(139, 92, 246, 0.08);
+  color: #7c3aed;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  transition: all 0.2s;
+
+  &:hover {
+    background: rgba(139, 92, 246, 0.12);
+    border-color: rgba(139, 92, 246, 0.3);
+  }
+}
+
 .home-footer {
   text-align: center;
   padding: 20px 0;

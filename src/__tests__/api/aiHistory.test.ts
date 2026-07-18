@@ -20,6 +20,8 @@ describe('AI 分析历史记录', () => {
             requestStatus: 'completed',
             analysisSummary: '用户表达了工作压力...',
             createdAt: '2026-01-01T00:00:00Z',
+            scene: null,
+            securityStatus: 'safe',
           },
         ],
         total: 1,
@@ -90,6 +92,10 @@ describe('AI 分析历史记录', () => {
         modelVersion: null,
         requestStatus: 'completed',
         errorMessage: null,
+        scene: null,
+        modelSource: null,
+        promptVersion: null,
+        securityStatus: 'safe',
         createdAt: '2026-01-01T00:00:00Z',
       } satisfies AiHistoryDetail)
 
