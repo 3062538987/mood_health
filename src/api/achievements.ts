@@ -1,5 +1,6 @@
 import request from '@/utils/request'
 import axios from 'axios'
+import type { SafeResult } from '@/types/api'
 
 interface Achievement {
   id: string
@@ -25,8 +26,6 @@ interface AchievementProgress {
   target: number
   isUnlocked: boolean
 }
-
-type SafeResult<T> = { ok: true; data: T } | { ok: false; message: string; status?: number }
 
 const toSafeError = (error: unknown, fallback: string) => {
   if (axios.isAxiosError(error)) {

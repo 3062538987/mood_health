@@ -1,5 +1,6 @@
 import request from '@/utils/request'
 import axios from 'axios'
+import type { SafeResult } from '@/types/api'
 
 interface RelaxRecord {
   id?: string
@@ -23,8 +24,6 @@ interface RelaxStatistics {
     duration: number
   }>
 }
-
-type SafeResult<T> = { ok: true; data: T } | { ok: false; message: string; status?: number }
 
 const toSafeError = (error: unknown, fallback: string) => {
   if (axios.isAxiosError(error)) {

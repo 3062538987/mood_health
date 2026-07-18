@@ -17,3 +17,7 @@ export interface ApiRequestErrorOptions {
   cause?: unknown
   requestId?: string
 }
+
+export type SafeResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; message: string; status?: number }
