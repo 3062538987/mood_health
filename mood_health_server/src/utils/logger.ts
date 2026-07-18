@@ -95,6 +95,14 @@ export const summarizeRequestBody = (body: unknown) => {
   return { type: typeof body }
 }
 
+/**
+ * AI 内容日志截断 - 防止日志中记录完整 prompt/response
+ */
+export const truncateAiContent = (content: string, maxLength = 200): string => {
+  if (content.length <= maxLength) return content
+  return content.substring(0, maxLength) + `...[truncated ${content.length - maxLength} chars]`
+}
+
 const sanitizeLogFormat = winston.format((info) => {
   return sanitizeForLogs(info) as winston.Logform.TransformableInfo
 })

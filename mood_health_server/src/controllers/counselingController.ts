@@ -4,6 +4,12 @@ import { apiSuccess, apiFailure } from '../utils/apiResponse'
 import { callChatCompletion } from '../utils/ai/aiClient'
 import logger from '../utils/logger'
 
+const CRISIS_HELPLINES = [
+  { name: '全国心理援助热线', number: '400-161-9995' },
+  { name: '全国24小时心理危机干预热线', number: '010-82951332' },
+  { name: '希望24热线', number: '400-161-9995' },
+]
+
 const SYSTEM_PROMPT = `你是一个专业的心理咨询陪伴助手，请注意以下安全规则：
 
 1. 禁止进行任何形式的诊断：
@@ -52,6 +58,16 @@ export const counselingHandler = async (req: AuthRequest, res: Response) => {
 
     const hasRisk = checkRiskContent(message)
 
+    // 记录危机检测事件
+    if (hasRisk) {
+      logger.warn('检测到风险内容', {
+        userId: req.user!.userId,
+        messageLength: message.length,
+        hasRiskContent: true,
+        timestamp: new Date().toISOString(),
+      })
+    }
+
     // 构建对话消息
     const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
       { role: 'system', content: SYSTEM_PROMPT },
@@ -84,6 +100,7 @@ export const counselingHandler = async (req: AuthRequest, res: Response) => {
       riskLevel: hasRisk ? 'medium' : 'low',
       hasRiskContent: hasRisk,
       suggestion: hasRisk ? '如果你正在经历困难，建议寻求专业心理咨询师的帮助' : undefined,
+      crisisHelplines: hasRisk ? CRISIS_HELPLINES : undefined,
     }, '回复成功'))
   } catch (error: any) {
     logger.error('心理咨询调用失败', { error: error?.message })
