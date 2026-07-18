@@ -92,8 +92,8 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
       return res.status(400).json(apiFailure(400, '标签数量不能超过20个'))
     }
     const tagIdMap = await moodService.createOrGetTagsBatch(tagNames, userId)
-    const tagIds = tagNames.map((name) => tagIdMap.get(name)!).filter(Boolean)
-    const resolvedTags = tagIds.map((id) => ({ id }))
+    const mappedTagIds = tagNames.map((name: string) => tagIdMap.get(name)!).filter(Boolean)
+    const resolvedTags = mappedTagIds.map((id: number) => ({ id }))
 
     await moodService.recordMood({
       userId,
@@ -214,8 +214,8 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
       return res.status(400).json(apiFailure(400, '标签数量不能超过20个'))
     }
     const tagIdMap = await moodService.createOrGetTagsBatch(tagNames, userId)
-    const tagIds = tagNames.map((name) => tagIdMap.get(name)!).filter(Boolean)
-    const resolvedTags = tagIds.map((id) => ({ id }))
+    const mappedTagIds = tagNames.map((name: string) => tagIdMap.get(name)!).filter(Boolean)
+    const resolvedTags = mappedTagIds.map((id: number) => ({ id }))
 
     const updated = await moodService.updateMood({
       id: moodId,

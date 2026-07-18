@@ -3,7 +3,7 @@ import { BusinessError } from '../utils/errors'
 import { encryptField as encryptFieldUtil, decryptField as decryptFieldUtil } from '../utils/encryption'
 
 // 情绪类型内存缓存（几乎不变的数据）
-let emotionTypesCache: { data: Array<{ id: number; name: string; code: string; category: string }>; timestamp: number } | null = null
+let emotionTypesCache: { data: Array<{ id: number; name: string; code: string; icon: string | null; category: string | null }>; timestamp: number } | null = null
 const EMOTION_TYPES_CACHE_TTL = 10 * 60 * 1000 // 10 分钟
 
 type EncryptField = (value: string | null | undefined) => string | null
