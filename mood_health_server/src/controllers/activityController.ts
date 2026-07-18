@@ -4,6 +4,7 @@ import { RowDataPacket } from 'mysql2'
 import { getMysqlPool } from '../config/mysql'
 import { setCache, getCache, clearActivityCache } from '../utils/cache'
 import { apiFailure, API_ERROR_CODES } from '../utils/apiResponse'
+import logger from '../utils/logger'
 import {
   createActivityRepository,
   type ActivityFilter,
@@ -74,7 +75,7 @@ export const getActivityList = async (req: Request, res: Response) => {
 
     res.json(response)
   } catch (error) {
-    console.error('获取活动列表失败:', error)
+    logger.error('获取活动列表失败:', error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
@@ -88,7 +89,7 @@ export const getActivityDetail = async (req: Request, res: Response) => {
     }
     res.json({ code: 0, data: activity })
   } catch (error) {
-    console.error(error)
+    logger.error(error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
@@ -108,7 +109,7 @@ export const joinActivityHandler = async (req: AuthRequest, res: Response) => {
 
     res.json({ code: 0, message: '报名成功' })
   } catch (error: any) {
-    console.error('报名活动失败:', error)
+    logger.error('报名活动失败:', error)
 
     switch (error.message) {
       case 'ACTIVITY_FULL':
@@ -138,7 +139,7 @@ export const cancelJoinActivityHandler = async (req: AuthRequest, res: Response)
 
     res.json({ code: 0, message: '已取消报名' })
   } catch (error: any) {
-    console.error('取消报名失败:', error)
+    logger.error('取消报名失败:', error)
 
     switch (error.message) {
       case 'NOT_JOINED':
@@ -157,7 +158,7 @@ export const getMyJoinedActivities = async (req: AuthRequest, res: Response) => 
     const activities = await activityRepo.getUserJoinedActivities(userId)
     res.json({ code: 0, data: activities })
   } catch (error) {
-    console.error(error)
+    logger.error(error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
@@ -189,7 +190,7 @@ export const createActivityHandler = async (req: AuthRequest, res: Response) => 
 
     res.status(201).json({ code: 0, message: '活动创建成功', data: { id: activityId } })
   } catch (error) {
-    console.error(error)
+    logger.error(error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
@@ -218,7 +219,7 @@ export const updateActivityHandler = async (req: AuthRequest, res: Response) => 
 
     res.json({ code: 0, message: '活动更新成功' })
   } catch (error) {
-    console.error(error)
+    logger.error(error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
@@ -237,7 +238,7 @@ export const deleteActivityHandler = async (req: AuthRequest, res: Response) => 
 
     res.json({ code: 0, message: '活动删除成功' })
   } catch (error) {
-    console.error(error)
+    logger.error(error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
@@ -272,7 +273,7 @@ export const setReminderHandler = async (req: AuthRequest, res: Response) => {
 
     res.json({ code: 0, message: '提醒设置成功', data: { remindAt: remindAt.toISOString() } })
   } catch (error) {
-    console.error('设置提醒失败:', error)
+    logger.error('设置提醒失败:', error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
@@ -289,7 +290,7 @@ export const cancelReminderHandler = async (req: AuthRequest, res: Response) => 
 
     res.json({ code: 0, message: '已取消提醒' })
   } catch (error) {
-    console.error('取消提醒失败:', error)
+    logger.error('取消提醒失败:', error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
@@ -302,7 +303,7 @@ export const getReminderStatusHandler = async (req: AuthRequest, res: Response) 
     const hasReminder = await activityRepo.hasReminder(activityId, userId)
     res.json({ code: 0, data: { hasReminder } })
   } catch (error) {
-    console.error('获取提醒状态失败:', error)
+    logger.error('获取提醒状态失败:', error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
@@ -326,7 +327,7 @@ export const getActivityDetailWithParticipants = async (req: Request, res: Respo
       },
     })
   } catch (error) {
-    console.error('获取活动详情失败:', error)
+    logger.error('获取活动详情失败:', error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
@@ -364,7 +365,7 @@ export const submitFeedbackHandler = async (req: AuthRequest, res: Response) => 
 
     res.status(201).json({ code: 0, message: '反馈提交成功', data: { id: result.id } })
   } catch (error) {
-    console.error('提交反馈失败:', error)
+    logger.error('提交反馈失败:', error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
@@ -380,7 +381,7 @@ export const getFeedbackHandler = async (req: Request, res: Response) => {
       data: { feedbacks, stats },
     })
   } catch (error) {
-    console.error('获取反馈失败:', error)
+    logger.error('获取反馈失败:', error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
@@ -393,7 +394,7 @@ export const getUserFeedbackHandler = async (req: AuthRequest, res: Response) =>
     const feedback = await feedbackService.getUserFeedback(activityId, userId)
     res.json({ code: 0, data: { feedback } })
   } catch (error) {
-    console.error('获取用户反馈失败:', error)
+    logger.error('获取用户反馈失败:', error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }
@@ -487,7 +488,7 @@ export const getActivityStatsHandler = async (req: AuthRequest, res: Response) =
       },
     })
   } catch (error) {
-    console.error('获取活动统计失败:', error)
+    logger.error('获取活动统计失败:', error)
     res.status(500).json({ code: 500, message: '服务器错误' })
   }
 }

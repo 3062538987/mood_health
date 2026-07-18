@@ -64,6 +64,25 @@ const getAuditRepository = (): AuditRepository => {
 }
 
 /**
+ * 设置自定义 Repository（用于测试注入 mock）
+ */
+export const setAccessRepository = (repo: AccessRepository): void => {
+  accessRepository = repo
+}
+
+export const setAuditRepository = (repo: AuditRepository): void => {
+  auditRepository = repo
+}
+
+/**
+ * 重置 Repository 为默认值（测试清理用）
+ */
+export const resetAuthRepositories = (): void => {
+  accessRepository = undefined
+  auditRepository = undefined
+}
+
+/**
  * 角色-权限映射表
  * granted: 当前角色允许的权限
  * forbidden: 当前角色显式禁止的权限（命中直接 403）

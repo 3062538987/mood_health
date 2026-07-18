@@ -3,8 +3,8 @@
  * 聚合用户近期情绪记录和测评结果，构建 AI 分析上下文
  */
 
-import { createMoodRepository } from '../repositories/moodRepository'
-import { createAssessmentRepository } from '../repositories/assessmentRepository'
+import { createMoodRepository, MoodRepository } from '../repositories/moodRepository'
+import { createAssessmentRepository, AssessmentRepository } from '../repositories/assessmentRepository'
 import logger from '../utils/logger'
 
 export interface AggregatedContext {
@@ -30,10 +30,17 @@ export interface AggregatedContext {
   }
 }
 
-const moodRepo = createMoodRepository()
-const assessmentRepo = createAssessmentRepository()
+export interface AiContextServiceDependencies {
+  moodRepo?: MoodRepository
+  assessmentRepo?: AssessmentRepository
+}
 
-export const buildAiContext = async (userId: number): Promise<AggregatedContext> => {
+export const buildAiContext = async (
+  userId: number,
+  deps: AiContextServiceDependencies = {}
+): Promise<AggregatedContext> => {
+  const moodRepo = deps.moodRepo ?? createMoodRepository()
+  const assessmentRepo = deps.assessmentRepo ?? createAssessmentRepository()
   const endDate = new Date()
   const startDate = new Date()
   startDate.setDate(startDate.getDate() - 7)

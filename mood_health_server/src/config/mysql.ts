@@ -1,4 +1,5 @@
 import { createPool, Pool } from 'mysql2/promise'
+import logger from '../utils/logger'
 
 export interface MysqlConfig {
   host: string
@@ -105,7 +106,7 @@ export const connectMysql = async (retries = 3, delayMs = 2000): Promise<void> =
       if (attempt === retries) {
         throw new Error(`MySQL 连接失败（已重试 ${retries} 次）: ${(error as Error).message}`)
       }
-      console.warn(`MySQL 连接失败，${delayMs / 1000}s 后重试 (${attempt}/${retries})...`)
+      logger.warn(`MySQL 连接失败，${delayMs / 1000}s 后重试 (${attempt}/${retries})...`)
       await new Promise((resolve) => setTimeout(resolve, delayMs))
     }
   }
@@ -150,7 +151,7 @@ export const withDeadlockRetry = async <T>(
       const errno = (error as { errno?: number }).errno
       if (attempt < maxRetries && (errno === ER_LOCK_DEADLOCK || errno === ER_LOCK_WAIT_TIMEOUT)) {
         const delay = baseDelayMs * Math.pow(2, attempt) + Math.random() * 50
-        console.warn(
+        logger.warn(
           `数据库死锁/锁等待 (errno=${errno})，${delay.toFixed(0)}ms 后重试 (${attempt + 1}/${maxRetries})...`
         )
         await new Promise((resolve) => setTimeout(resolve, delay))

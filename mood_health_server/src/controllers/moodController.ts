@@ -4,6 +4,7 @@ import { clearMoodCache } from '../utils/cache'
 import { apiFailure, apiSuccess } from '../utils/apiResponse'
 import { createMoodService } from '../services/moodService'
 import { createMoodAlertService } from '../services/moodAlertService'
+import logger from '../utils/logger'
 
 const moodService = createMoodService()
 const moodAlertService = createMoodAlertService()
@@ -55,7 +56,7 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
         emotions,
         tagIds: resolvedTagIds,
       })
-      clearMoodCache(userId).catch((err) => console.error('清除缓存失败(非阻塞):', err.message))
+      clearMoodCache(userId).catch((err) => logger.warn('清除缓存失败(非阻塞)', { error: (err as Error).message }))
       return res.status(201).json(apiSuccess(null, '记录成功'))
     }
 
@@ -106,10 +107,10 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
       })),
       tagIds: resolvedTags.map((tag) => tag.id),
     })
-    clearMoodCache(userId).catch((err) => console.error('清除缓存失败(非阻塞):', err.message))
+    clearMoodCache(userId).catch((err) => logger.warn('清除缓存失败(非阻塞)', { error: (err as Error).message }))
     res.status(201).json(apiSuccess(null, '记录成功'))
   } catch (error) {
-    console.error(error)
+    logger.error('请求处理异常', { error: (error as Error).message })
     res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
@@ -131,7 +132,7 @@ export const getMoodList = async (req: AuthRequest, res: Response) => {
     })
     res.json(apiSuccess(result, '获取情绪记录成功'))
   } catch (error) {
-    console.error(error)
+    logger.error('请求处理异常', { error: (error as Error).message })
     res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
@@ -142,7 +143,7 @@ export const getWeeklyReportHandler = async (req: AuthRequest, res: Response) =>
     const report = await moodService.getWeeklyReport(userId)
     res.json(apiSuccess(report, '获取情绪周报成功'))
   } catch (error) {
-    console.error(error)
+    logger.error('请求处理异常', { error: (error as Error).message })
     res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
@@ -181,7 +182,7 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
         return res.status(404).json(apiFailure(404, '记录不存在'))
       }
 
-      clearMoodCache(userId).catch((err) => console.error('清除缓存失败(非阻塞):', err.message))
+      clearMoodCache(userId).catch((err) => logger.warn('清除缓存失败(非阻塞)', { error: (err as Error).message }))
       return res.json(apiSuccess(null, '更新成功'))
     }
 
@@ -234,10 +235,10 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
       return res.status(404).json(apiFailure(404, '记录不存在'))
     }
 
-    clearMoodCache(userId).catch((err) => console.error('清除缓存失败(非阻塞):', err.message))
+    clearMoodCache(userId).catch((err) => logger.warn('清除缓存失败(非阻塞)', { error: (err as Error).message }))
     res.json(apiSuccess(null, '更新成功'))
   } catch (error) {
-    console.error(error)
+    logger.error('请求处理异常', { error: (error as Error).message })
     res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
@@ -258,10 +259,10 @@ export const deleteMoodHandler = async (req: AuthRequest, res: Response) => {
       return res.status(404).json(apiFailure(404, '记录不存在'))
     }
 
-    clearMoodCache(userId).catch((err) => console.error('清除缓存失败(非阻塞):', err.message))
+    clearMoodCache(userId).catch((err) => logger.warn('清除缓存失败(非阻塞)', { error: (err as Error).message }))
     res.json(apiSuccess(null, '删除成功'))
   } catch (error) {
-    console.error(error)
+    logger.error('请求处理异常', { error: (error as Error).message })
     res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
@@ -279,7 +280,7 @@ export const getMoodTrend = async (req: AuthRequest, res: Response) => {
     const trendData = await moodService.getMoodTrend(userId, range as 'week' | 'month' | 'quarter')
     res.json(apiSuccess(trendData, '获取情绪趋势成功'))
   } catch (error) {
-    console.error(error)
+    logger.error('请求处理异常', { error: (error as Error).message })
     res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
@@ -295,7 +296,7 @@ export const getMoodTypes = async (req: AuthRequest, res: Response) => {
     }))
     res.json(apiSuccess(formattedTypes, '获取成功'))
   } catch (error) {
-    console.error(error)
+    logger.error('请求处理异常', { error: (error as Error).message })
     res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
@@ -307,7 +308,7 @@ export const getTagsHandler = async (req: AuthRequest, res: Response) => {
     const tags = await moodService.listTags(userId)
     res.json(apiSuccess(tags, '获取成功'))
   } catch (error) {
-    console.error(error)
+    logger.error('请求处理异常', { error: (error as Error).message })
     res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
@@ -329,7 +330,7 @@ export const createTagHandler = async (req: AuthRequest, res: Response) => {
     const tag = await moodService.createOrGetTag(name.trim(), userId)
     res.status(201).json(apiSuccess(tag, '创建成功'))
   } catch (error) {
-    console.error(error)
+    logger.error('请求处理异常', { error: (error as Error).message })
     res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
@@ -347,7 +348,7 @@ export const getMoodComparison = async (req: AuthRequest, res: Response) => {
     const comparison = await moodService.getPeriodComparison(userId, period as 'week' | 'month')
     res.json(apiSuccess(comparison, '获取周期对比成功'))
   } catch (error) {
-    console.error(error)
+    logger.error('请求处理异常', { error: (error as Error).message })
     res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
@@ -361,7 +362,7 @@ export const getMoodAlerts = async (req: AuthRequest, res: Response) => {
     const alerts = await moodAlertService.getAlerts(userId)
     res.json(apiSuccess(alerts, '获取提醒成功'))
   } catch (error) {
-    console.error(error)
+    logger.error('请求处理异常', { error: (error as Error).message })
     res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
@@ -383,7 +384,7 @@ export const markAlertRead = async (req: AuthRequest, res: Response) => {
 
     res.json(apiSuccess(null, '已标记为已读'))
   } catch (error) {
-    console.error(error)
+    logger.error('请求处理异常', { error: (error as Error).message })
     res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
@@ -401,7 +402,7 @@ export const getMoodAnalysisHandler = async (req: AuthRequest, res: Response) =>
     const analysis = await moodService.getMoodAnalysis(userId, range as 'week' | 'month' | 'quarter')
     res.json(apiSuccess(analysis, '获取情绪统计成功'))
   } catch (error) {
-    console.error(error)
+    logger.error('请求处理异常', { error: (error as Error).message })
     res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
@@ -419,7 +420,7 @@ export const getMoodInsightHandler = async (req: AuthRequest, res: Response) => 
     const insight = await moodService.getMoodInsight(userId, period as 'day' | 'week' | 'month' | 'year')
     res.json(apiSuccess(insight))
   } catch (error) {
-    console.error(error)
+    logger.error('请求处理异常', { error: (error as Error).message })
     res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }

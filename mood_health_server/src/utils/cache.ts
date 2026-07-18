@@ -45,7 +45,7 @@ export const clearActivityCache = async (): Promise<void> => {
   try {
     if (keys.length > 0) {
       await redisClient.del(...keys);
-      console.log(`已清除 ${keys.length} 个活动缓存键`);
+      logger.info(`已清除 ${keys.length} 个活动缓存键`);
     }
   } catch (error) {
     logger.warn("Redis缓存清除失败:", { error: (error as Error).message, keyCount: keys.length });
@@ -109,7 +109,7 @@ export const clearMoodCache = async (userId: number): Promise<void> => {
 
       if (keysToDelete.length > 0) {
         await redisClient.del(...keysToDelete);
-        console.log(`已清除用户 ${userId} 的情绪缓存: ${keysToDelete.length} 个键`);
+        logger.info(`已清除用户 ${userId} 的情绪缓存: ${keysToDelete.length} 个键`);
       }
     }
   } catch (error) {

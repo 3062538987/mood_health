@@ -1,6 +1,7 @@
 import { Response } from 'express'
 import { AuthRequest } from '../middleware/auth'
 import { apiFailure, apiSuccess } from '../utils/apiResponse'
+import logger from '../utils/logger'
 import { createFeedbackService } from '../services/feedbackService'
 
 const feedbackService = createFeedbackService()
@@ -27,7 +28,7 @@ export const submitFeedback = async (req: AuthRequest, res: Response) => {
 
     res.json(apiSuccess({ id: result.id }, '反馈提交成功'))
   } catch (error) {
-    console.error(error)
+    logger.error(error)
     res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
@@ -37,7 +38,7 @@ export const getFeedbackStats = async (req: AuthRequest, res: Response) => {
     const stats = await feedbackService.getStats()
     res.json(apiSuccess(stats, '获取反馈统计成功'))
   } catch (error) {
-    console.error(error)
+    logger.error(error)
     res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }

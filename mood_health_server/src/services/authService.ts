@@ -92,7 +92,7 @@ const incrementLoginAttempts = async (
       await redis.setex(lockKey, LOGIN_LOCK_MINUTES * 60, '1')
     }
   } catch (err) {
-    console.error('[authService] incrementLoginAttempts failed:', (err as Error).message)
+    logger.error('[authService] incrementLoginAttempts failed', { error: (err as Error).message })
   }
 }
 
@@ -148,7 +148,7 @@ export const createAuthService = (dependencies: AuthServiceDependencies = {}) =>
 
     if (redis.lastError) {
       // Redis 不可用时跳过锁定检查，仅记录日志
-      console.warn('[authService] Redis 不可用，跳过登录锁定检查')
+      logger.warn('[authService] Redis 不可用，跳过登录锁定检查')
     } else {
       const isLocked = await redis.get(lockKey)
       if (isLocked) {
@@ -185,7 +185,7 @@ export const createAuthService = (dependencies: AuthServiceDependencies = {}) =>
     )
 
     await repository.updateLastLoginAt(user.id).catch((err) => {
-        console.error('[authService] updateLastLoginAt failed:', (err as Error).message)
+        logger.error('[authService] updateLastLoginAt failed', { error: (err as Error).message })
       })
 
     return {

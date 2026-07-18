@@ -45,7 +45,7 @@ const validateEnv = () => {
   const missing = requiredVars.filter((key) => !process.env[key]?.trim())
   if (missing.length > 0) {
     const message = `服务启动失败：缺少必要的环境变量: ${missing.join(', ')}`
-    console.error(message)
+    logger.error(message)
     throw new Error(message)
   }
 }

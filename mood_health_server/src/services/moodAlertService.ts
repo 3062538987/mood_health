@@ -1,5 +1,6 @@
 import { getMysqlPool } from '../config/mysql'
-import { ResultSetHeader, RowDataPacket } from 'mysql2'
+import { ResultSetHeader, RowDataPacket, Pool } from 'mysql2'
+import logger from '../utils/logger'
 
 interface MoodAlertRow extends RowDataPacket {
   id: number
@@ -34,8 +35,7 @@ const ALERT_TYPES = {
   high_fluctuation: '明显波动',
 }
 
-const checkContinuousLow = async (userId: number): Promise<{ triggered: boolean; recordIds: number[] }> => {
-  const pool = getMysqlPool()
+const checkContinuousLow = async (pool: Pool, userId: number): Promise<{ triggered: boolean; recordIds: number[] }> => {
   const [rows] = await pool.query<MoodIntensityRow[]>(
     `
     SELECT m.id, me.intensity
@@ -59,8 +59,7 @@ const checkContinuousLow = async (userId: number): Promise<{ triggered: boolean;
   }
 }
 
-const checkHighFluctuation = async (userId: number): Promise<{ triggered: boolean; recordIds: number[] }> => {
-  const pool = getMysqlPool()
+const checkHighFluctuation = async (pool: Pool, userId: number): Promise<{ triggered: boolean; recordIds: number[] }> => {
   const [rows] = await pool.query<MoodIntensityRow[]>(
     `
     SELECT m.id, me.intensity
@@ -85,8 +84,7 @@ const checkHighFluctuation = async (userId: number): Promise<{ triggered: boolea
   }
 }
 
-const hasRecentAlert = async (userId: number, alertType: string): Promise<boolean> => {
-  const pool = getMysqlPool()
+const hasRecentAlert = async (pool: Pool, userId: number, alertType: string): Promise<boolean> => {
   const [rows] = await pool.query<CountRow[]>(
     `
     SELECT COUNT(*) as cnt
@@ -99,12 +97,12 @@ const hasRecentAlert = async (userId: number, alertType: string): Promise<boolea
 }
 
 const saveAlert = async (
+  pool: Pool,
   userId: number,
   alertType: string,
   message: string,
   recordIds: number[]
 ): Promise<number> => {
-  const pool = getMysqlPool()
   const [result] = await pool.query<ResultSetHeader>(
     `
     INSERT INTO mood_alerts (user_id, alert_type, alert_message, trigger_records, is_read, created_at)
@@ -115,20 +113,27 @@ const saveAlert = async (
   return Number(result.insertId)
 }
 
-export const createMoodAlertService = () => {
+export interface MoodAlertServiceDependencies {
+  pool?: Pool
+}
+
+export const createMoodAlertService = (deps: MoodAlertServiceDependencies = {}) => {
+  const pool = deps.pool ?? getMysqlPool()
+
   const detectAlerts = async (userId: number): Promise<MoodAlert[]> => {
     try {
       const alerts: MoodAlert[] = []
 
       const [continuousLow, highFluctuation] = await Promise.all([
-        checkContinuousLow(userId),
-        checkHighFluctuation(userId),
+        checkContinuousLow(pool, userId),
+        checkHighFluctuation(pool, userId),
       ])
 
       if (continuousLow.triggered) {
-        const alreadyAlerted = await hasRecentAlert(userId, 'continuous_low')
+        const alreadyAlerted = await hasRecentAlert(pool, userId, 'continuous_low')
         if (!alreadyAlerted) {
           const id = await saveAlert(
+            pool,
             userId,
             'continuous_low',
             '最近3天情绪持续处于较低水平，建议关注自己的情绪状态，适当安排放松活动或与信任的人交流。',
@@ -146,9 +151,10 @@ export const createMoodAlertService = () => {
       }
 
       if (highFluctuation.triggered) {
-        const alreadyAlerted = await hasRecentAlert(userId, 'high_fluctuation')
+        const alreadyAlerted = await hasRecentAlert(pool, userId, 'high_fluctuation')
         if (!alreadyAlerted) {
           const id = await saveAlert(
+            pool,
             userId,
             'high_fluctuation',
             '最近3天情绪波动较大，情绪起伏明显，建议回顾近期事件并尝试稳定情绪节奏。',
@@ -167,14 +173,13 @@ export const createMoodAlertService = () => {
 
       return alerts
     } catch (error) {
-      console.error('检测提醒失败（可能表未创建）:', error)
+      logger.warn('检测提醒失败（可能表未创建）', { error: (error as Error).message })
       return []
     }
   }
 
   const getAlerts = async (userId: number): Promise<MoodAlert[]> => {
     try {
-      const pool = getMysqlPool()
       const [rows] = await pool.query<MoodAlertRow[]>(
         `
       SELECT id, user_id, alert_type, alert_message, trigger_records, is_read, created_at
@@ -195,14 +200,13 @@ export const createMoodAlertService = () => {
         createdAt: new Date(row.created_at).toISOString(),
       }))
     } catch (error) {
-      console.error('获取提醒列表失败（可能表未创建）:', error)
+      logger.warn('获取提醒列表失败（可能表未创建）', { error: (error as Error).message })
       return []
     }
   }
 
   const markAsRead = async (userId: number, alertId: number): Promise<boolean> => {
     try {
-      const pool = getMysqlPool()
       const [result] = await pool.query<ResultSetHeader>(
         `
       UPDATE mood_alerts
@@ -213,7 +217,7 @@ export const createMoodAlertService = () => {
       )
       return Number(result.affectedRows) > 0
     } catch (error) {
-      console.error('标记提醒已读失败（可能表未创建）:', error)
+      logger.warn('标记提醒已读失败（可能表未创建）', { error: (error as Error).message })
       return false
     }
   }

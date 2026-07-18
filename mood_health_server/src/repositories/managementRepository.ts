@@ -1,6 +1,7 @@
 import { ResultSetHeader, RowDataPacket } from 'mysql2'
 import { createUserRepository } from './userRepository'
 import { getMysqlPool } from '../config/mysql'
+import logger from '../utils/logger'
 
 export interface ManagementDatabase {
   query<T>(sql: string, params?: unknown[]): Promise<[T, unknown]>
@@ -244,7 +245,7 @@ export const createManagementRepository = (db: ManagementDatabase = getMysqlPool
       const [rows] = await db.query<CountRow[]>(query, params)
       return Number(rows[0]?.total || 0)
     } catch (err) {
-      console.error(`[managementRepository] Query failed: ${query.substring(0, 80)}`, (err as Error).message)
+      logger.error(`[managementRepository] Query failed: ${query.substring(0, 80)}`, (err as Error).message)
       return 0
     }
   }

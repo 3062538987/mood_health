@@ -2,6 +2,7 @@ import { Response } from 'express'
 import { AuthRequest } from '../middleware/auth'
 import { callChatCompletion } from '../utils/ai/aiClient'
 import { apiSuccess, apiFailure } from '../utils/apiResponse'
+import logger from '../utils/logger'
 
 const buildInsightPrompt = (period: string, data: Record<string, unknown>): string => {
   const periodLabel = { day: '今天', week: '本周', month: '本月', year: '今年' }[period] || '当前'
@@ -48,7 +49,7 @@ export const generateInsight = async (req: AuthRequest, res: Response) => {
 
     return res.json(apiSuccess({ analysis: response }))
   } catch (error) {
-    console.error('AI 洞察生成失败:', error)
+    logger.error('AI 洞察生成失败:', error)
     return res.status(500).json(apiFailure(500, 'AI 分析暂时不可用，请稍后重试'))
   }
 }
