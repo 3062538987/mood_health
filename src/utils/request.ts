@@ -9,6 +9,12 @@ import router from '@/router'
 import type { ApiRequestErrorOptions, ApiResponse } from '@/types/api'
 import { getApiBaseUrl } from '@/utils/apiBase'
 
+// 读取非 HttpOnly Cookie（用于 CSRF Token）
+const getCookie = (name: string): string | null => {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name.replace(/([.$?*|{}()\[\]\\\/+^])/g, '\\$1')}=([^;]*)`))
+  return match ? decodeURIComponent(match[1]) : null
+}
+
 type ApiPayload<T = unknown> = Partial<ApiResponse<T>> & Record<string, unknown>
 
 type RequestConfigWithLoading = InternalAxiosRequestConfig & {
@@ -97,8 +103,6 @@ const getSafeCurrentFullPath = () => {
 }
 
 const handleUnauthorized = () => {
-  localStorage.removeItem('token')
-
   if (router.currentRoute.value.path === '/login') {
     unauthorizedRedirectPending = false
     return true
@@ -136,9 +140,14 @@ service.interceptors.request.use(
       config.url = config.url.slice(4)
     }
 
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    // Token 通过 HttpOnly Cookie 自动携带，无需手动设置 Authorization header
+    // CSRF Token: 非安全方法需要携带 x-csrf-token 头
+    const safeMethods = ['get', 'head', 'options']
+    if (!safeMethods.includes(config.method?.toLowerCase() || '')) {
+      const csrfToken = getCookie('csrf_token')
+      if (csrfToken) {
+        config.headers['x-csrf-token'] = csrfToken
+      }
     }
     return config
   },

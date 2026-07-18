@@ -28,6 +28,7 @@ import feedbackRoutes from './routes/feedbackRoutes'
 import logger, { summarizeRequestBody } from './utils/logger'
 import redisClient from './utils/redis.client'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler'
+import { csrfMiddleware } from './middleware/csrf'
 import { API_ERROR_CODES, apiFailure, apiSuccess } from './utils/apiResponse'
 import { createHealthHandler, HealthDependencies } from './controllers/healthController'
 
@@ -89,15 +90,16 @@ export const createApp = (dependencies: AppDependencies = {}) => {
   }
 
   // 安全: 配置 CSP 作为 XSS 纵深防御 (EXPRESS-HEADERS-001)
+  const isProduction = process.env.NODE_ENV === 'production'
   app.use(
     helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: isProduction ? ["'self'"] : ["'self'", "'unsafe-inline'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
           imgSrc: ["'self'", 'data:', 'https:'],
-          connectSrc: ["'self'", 'http://localhost:*', 'ws://localhost:*'],
+          connectSrc: isProduction ? ["'self'"] : ["'self'", 'http://localhost:*', 'ws://localhost:*'],
           fontSrc: ["'self'", 'https://cdnjs.cloudflare.com'],
           objectSrc: ["'none'"],
           frameAncestors: ["'none'"],
@@ -107,6 +109,8 @@ export const createApp = (dependencies: AppDependencies = {}) => {
   )
   app.disable('x-powered-by')
   app.use(cookieParser())
+  // 安全: CSRF 防护 (Double Submit Cookie 模式)
+  app.use('/api', csrfMiddleware)
   app.use(cors(corsOptions))
   // 安全: 限制请求体大小防止 DoS 攻击 (EXPRESS-BODY-001)
   app.use(express.json({ limit: '1mb' }))

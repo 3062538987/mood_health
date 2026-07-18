@@ -16,7 +16,7 @@ const getErrorMessage = (error: unknown, fallback: string): string =>
 
 export const useUserStore = defineStore('user', () => {
   const user = ref<User | null>(null)
-  const token = ref<string>(localStorage.getItem('token') || '')
+  const token = ref<string>('')
   const loading = ref(false)
   const error = ref<string>('')
   const authInitialized = ref(false)
@@ -27,13 +27,11 @@ export const useUserStore = defineStore('user', () => {
 
   const setToken = (newToken: string) => {
     token.value = newToken
-    localStorage.setItem('token', newToken)
   }
 
   const clearToken = () => {
     token.value = ''
     user.value = null
-    localStorage.removeItem('token')
   }
 
   const clearError = () => {
