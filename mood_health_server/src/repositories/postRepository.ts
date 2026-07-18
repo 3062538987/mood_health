@@ -137,16 +137,16 @@ export const createPostRepository = (db: PostDatabase = getMysqlPool()) => {
     const offset = (safePage - 1) * safePageSize
 
     const [countRows] = await db.query<RowDataPacket[]>(
-      'SELECT COUNT(*) AS total FROM posts WHERE status = 1'
+      'SELECT COUNT(*) AS total FROM posts WHERE status = 1 AND deleted_at IS NULL'
     )
     const total = Number(countRows[0]?.total || 0)
 
     const [rows] = await db.query<PostRow[]>(
       `SELECT p.*, u.username,
-        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count
+        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count
        FROM posts p
        LEFT JOIN users u ON p.user_id = u.id
-       WHERE p.status = 1
+       WHERE p.status = 1 AND p.deleted_at IS NULL
        ORDER BY p.created_at DESC
        LIMIT ? OFFSET ?`,
       [safePageSize, offset]
@@ -326,7 +326,7 @@ export const createPostRepository = (db: PostDatabase = getMysqlPool()) => {
   }
 
   const deleteById = async (id: number): Promise<void> => {
-    await db.query('DELETE FROM posts WHERE id = ?', [id])
+    await db.query('UPDATE posts SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL', [id])
   }
 
   return {

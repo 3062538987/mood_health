@@ -51,6 +51,7 @@ describe('feature-aware routes', () => {
       '/admin/users',
       '/admin/user-moods',
       '/admin/moods',
+      '/admin/cases',
       '/admin/audit-logs',
       '/admin/activity-stats',
     ])
@@ -65,6 +66,7 @@ describe('feature-aware routes', () => {
     expect(findRoute(routes, 'knowledge')).toBeDefined()
     expect(findRoute(routes, 'courses')).toBeDefined()
     expect(findRoute(routes, 'posts')).toBeDefined()
+    expect(findRoute(routes, 'treehole')).toBeDefined()
     expect(findRoute(routes, 'music')).toBeDefined()
   })
 
@@ -74,6 +76,7 @@ describe('feature-aware routes', () => {
     '/improve/knowledge',
     '/improve/courses',
     '/admin/posts',
+    '/admin/treehole',
     '/admin/music',
   ])(
     'resolves disabled URL %s to the catch-all route without loading its page',

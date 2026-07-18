@@ -198,7 +198,7 @@ const baseRoutes: RouteRecordRaw[] = [
       adminOnly: true,
       roles: ['admin', 'super_admin'],
       permission: 'user.manage',
-      nonCoreSubNavPaths: ['/admin/posts', '/admin/courses', '/admin/music'],
+      nonCoreSubNavPaths: ['/admin/posts', '/admin/treehole', '/admin/courses', '/admin/music'],
       subNav: [
         { path: '/admin/dashboard', name: '管理首页', icon: 'fas fa-gauge-high' },
         { path: '/admin/users', name: '用户管理', icon: 'fas fa-users-cog' },
@@ -208,6 +208,17 @@ const baseRoutes: RouteRecordRaw[] = [
           path: '/admin/posts',
           name: '帖子审核',
           icon: 'fas fa-clipboard-check',
+        },
+        {
+          path: '/admin/treehole',
+          name: '树洞审核',
+          icon: 'fas fa-tree',
+          feature: 'nonCore',
+        },
+        {
+          path: '/admin/cases',
+          name: '风险个案',
+          icon: 'fas fa-heart-circle-exclamation',
         },
         {
           path: '/admin/courses',
@@ -306,6 +317,34 @@ const baseRoutes: RouteRecordRaw[] = [
           adminOnly: true,
           roles: ['admin', 'super_admin'],
           permission: 'activity.manage',
+        },
+      },
+      {
+        path: 'treehole',
+        component: () => import('@/views/admin/TreeHoleAudit.vue'),
+        meta: {
+          feature: 'nonCore',
+          adminOnly: true,
+          roles: ['admin', 'super_admin'],
+          permission: 'post.audit',
+        },
+      },
+      {
+        path: 'cases',
+        component: () => import('@/views/admin/Cases.vue'),
+        meta: {
+          adminOnly: true,
+          roles: ['admin', 'super_admin'],
+          permission: 'case.manage',
+        },
+      },
+      {
+        path: 'cases/:id',
+        component: () => import('@/views/admin/CaseDetail.vue'),
+        meta: {
+          adminOnly: true,
+          roles: ['admin', 'super_admin'],
+          permission: 'case.manage',
         },
       },
     ],
