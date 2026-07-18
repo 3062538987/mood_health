@@ -281,7 +281,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   ArrowLeft,
   Picture,
@@ -481,6 +481,16 @@ const handleSubmitFeedback = async () => {
 const handleJoin = async () => {
   if (!activity.value || joining.value) return
 
+  try {
+    await ElMessageBox.confirm(
+      `确定要报名参加「${activity.value.title}」吗？`,
+      '确认报名',
+      { confirmButtonText: '确定报名', cancelButtonText: '取消', type: 'info' }
+    )
+  } catch {
+    return
+  }
+
   joining.value = true
   try {
     await joinActivity(activity.value.id)
@@ -506,6 +516,16 @@ const editActivity = () => {
 
 const handleCancelJoin = async () => {
   if (!activity.value || cancelling.value) return
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要取消报名「${activity.value.title}」吗？`,
+      '确认取消报名',
+      { confirmButtonText: '确定取消', cancelButtonText: '返回', type: 'warning' }
+    )
+  } catch {
+    return
+  }
 
   cancelling.value = true
   try {

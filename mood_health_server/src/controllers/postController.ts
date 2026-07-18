@@ -340,3 +340,31 @@ export const getPostAuditLogsHandler = async (req: AuthRequest, res: Response) =
     res.status(500).json({ code: 500, message: '服务器内部错误' })
   }
 }
+
+/**
+ * 删除帖子（仅作者可删除）
+ */
+export const deletePostHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const postId = parseInt(req.params.postId)
+    const userId = req.user!.userId
+
+    if (isNaN(postId)) {
+      return res.status(400).json(apiFailure(400, '帖子ID无效'))
+    }
+
+    const post = await postRepo.findPostById(postId)
+    if (!post) {
+      return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '帖子不存在'))
+    }
+    if (post.userId !== userId) {
+      return res.status(403).json(apiFailure(403, '无权删除此帖子'))
+    }
+
+    await postRepo.deleteById(postId)
+    res.status(200).json({ code: 0, data: null, message: '帖子已删除' })
+  } catch (error) {
+    console.error('删除帖子失败:', error)
+    res.status(500).json(apiFailure(1500, '服务器内部错误'))
+  }
+}

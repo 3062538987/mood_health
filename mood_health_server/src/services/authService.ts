@@ -3,6 +3,10 @@ import crypto from 'crypto'
 import { createUserRepository, DuplicateUserError, PublicUser, UserRepository } from '../repositories/userRepository'
 import { comparePassword as comparePasswordUtil, hashPassword as hashPasswordUtil } from '../utils/password'
 import { BusinessError, HttpException } from '../utils/errors'
+import redisClient from '../utils/redis.client'
+
+const MAX_LOGIN_ATTEMPTS = 5
+const LOGIN_LOCK_MINUTES = 15
 
 type JwtSigner = (
   payload: { userId: number; username: string; role: string },
@@ -74,6 +78,24 @@ const toPublicUser = (user: {
   lastLoginAt: user.lastLoginAt,
 })
 
+const incrementLoginAttempts = async (
+  redis: typeof redisClient,
+  username: string
+): Promise<void> => {
+  if (redis.lastError) return
+  try {
+    const attemptsKey = `login_attempts:${username}`
+    const lockKey = `login_locked:${username}`
+    const attempts = await redis.incr(attemptsKey)
+    await redis.expire(attemptsKey, LOGIN_LOCK_MINUTES * 60)
+    if (attempts >= MAX_LOGIN_ATTEMPTS) {
+      await redis.setex(lockKey, LOGIN_LOCK_MINUTES * 60, '1')
+    }
+  } catch (err) {
+    console.error('[authService] incrementLoginAttempts failed:', (err as Error).message)
+  }
+}
+
 export const createAuthService = (dependencies: AuthServiceDependencies = {}) => {
   const repository = dependencies.repository ?? createUserRepository()
   const hashPassword = dependencies.hashPassword ?? hashPasswordUtil
@@ -119,14 +141,37 @@ export const createAuthService = (dependencies: AuthServiceDependencies = {}) =>
       throw new BusinessError('请提供用户名和密码')
     }
 
+    // 登录失败次数限制：检查是否被锁定
+    const redis = redisClient
+    const lockKey = `login_locked:${input.username}`
+    const attemptsKey = `login_attempts:${input.username}`
+
+    if (redis.lastError) {
+      // Redis 不可用时跳过锁定检查，仅记录日志
+      console.warn('[authService] Redis 不可用，跳过登录锁定检查')
+    } else {
+      const isLocked = await redis.get(lockKey)
+      if (isLocked) {
+        throw new HttpException(`登录失败次数过多，请${LOGIN_LOCK_MINUTES}分钟后再试`, 429)
+      }
+    }
+
     const user = await repository.findAuthUserByUsername(input.username)
     if (!user) {
+      await incrementLoginAttempts(redis, input.username)
       throw new HttpException('用户名或密码错误', 401)
     }
 
     const isValid = await comparePassword(input.password, user.passwordHash)
     if (!isValid) {
+      await incrementLoginAttempts(redis, input.username)
       throw new HttpException('用户名或密码错误', 401)
+    }
+
+    // 登录成功，清除失败计数
+    if (!redis.lastError) {
+      await redis.del(attemptsKey)
+      await redis.del(lockKey)
     }
 
     if (!jwtSecret) {

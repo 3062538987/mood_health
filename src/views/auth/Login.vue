@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
@@ -123,6 +123,13 @@ const getSafeRedirect = () => {
     return '/'
   }
 }
+
+onMounted(() => {
+  const username = route.query.username as string
+  if (username && isValidUsername(username)) {
+    form.username = username
+  }
+})
 
 const handleLogin = async () => {
   if (userStore.loading) {

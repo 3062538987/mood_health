@@ -37,6 +37,10 @@ router.post(
       .matches(/^[\u4e00-\u9fa5a-zA-Z0-9_]{3,20}$/)
       .withMessage('用户名需为3-20位，可包含中文、字母、数字或下划线'),
     body('password').isLength({ min: 6 }).withMessage('密码至少6个字符'),
+    body('email')
+      .optional({ values: 'null' })
+      .matches(/^\d{5,11}@qq\.com$/)
+      .withMessage('请输入正确的QQ邮箱（例如：123456789@qq.com）'),
   ],
   validateRequest,
   register

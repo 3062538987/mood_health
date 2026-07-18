@@ -18,6 +18,9 @@
           <i class="far fa-comment"></i>
           {{ post.commentCount || 0 }}
         </span>
+        <button class="stat-btn delete-btn" @click.stop="handleDelete(post)">
+          <i class="far fa-trash-alt"></i>
+        </button>
       </div>
     </div>
   </div>
@@ -34,6 +37,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'view-detail', postId: number): void
   (e: 'like-updated', postId: number, likes: number, liked: boolean): void
+  (e: 'delete', postId: number): void
 }>()
 
 const goToDetail = (postId: number) => {
@@ -49,6 +53,10 @@ const handleLike = async (post: Post) => {
   } catch (error) {
     console.error('点赞失败:', error)
   }
+}
+
+const handleDelete = (post: Post) => {
+  emit('delete', post.id)
 }
 
 const formatDate = (dateStr: string) => {
@@ -118,6 +126,10 @@ const formatDate = (dateStr: string) => {
         .far.fa-heart {
           color: #e74c3c;
         }
+      }
+      &.delete-btn:hover {
+        background: #fff0f0;
+        color: #e74c3c;
       }
     }
   }

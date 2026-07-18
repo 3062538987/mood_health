@@ -176,7 +176,7 @@ const handleRegister = async () => {
 
   if (success) {
     ElMessage.success('注册成功！请登录')
-    router.push('/login')
+    router.push({ path: '/login', query: { username: form.username } })
   }
 }
 </script>

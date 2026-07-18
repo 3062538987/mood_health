@@ -34,6 +34,14 @@
         <header class="chat-header">
           <h2>今日对话</h2>
           <p>你说的话会被认真对待，请放心表达。</p>
+          <button
+            class="clear-chat-button"
+            type="button"
+            :disabled="isSending"
+            @click="clearConversation"
+          >
+            清空对话
+          </button>
         </header>
 
         <div ref="messageContainerRef" class="message-container">
@@ -120,7 +128,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { sendCounselingMessage } from '@/api/counseling'
 import { useUserStore } from '@/stores/userStore'
 
@@ -306,6 +314,30 @@ const retryMessage = async (messageId: string) => {
     isSending.value = false
   }
 }
+
+const clearConversation = async () => {
+  if (isSending.value) return
+  try {
+    await ElMessageBox.confirm('确定要清空所有对话记录吗？此操作不可撤销。', '清空对话', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    messages.value = [
+      {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content:
+          '你好，欢迎来到心理咨询陪伴空间。你可以和我聊聊今天让你最在意的一件事，我们一步一步来。',
+        createdAt: new Date().toISOString(),
+      },
+    ]
+    sendError.value = ''
+    ElMessage.success('对话已清空')
+  } catch {
+    // 用户取消操作
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -406,6 +438,11 @@ const retryMessage = async (messageId: string) => {
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-color);
   background: var(--surface-muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 
   h2 {
     margin: 0;
@@ -417,6 +454,29 @@ const retryMessage = async (messageId: string) => {
     margin: 6px 0 0;
     color: var(--chat-text-sub);
     font-size: 13px;
+    flex-basis: 100%;
+  }
+}
+
+.clear-chat-button {
+  padding: 6px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    color: var(--danger-color);
+    border-color: var(--danger-color);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }
 

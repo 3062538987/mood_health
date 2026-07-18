@@ -325,10 +325,15 @@ export const createPostRepository = (db: PostDatabase = getMysqlPool()) => {
     return rows.length > 0
   }
 
+  const deleteById = async (id: number): Promise<void> => {
+    await db.query('DELETE FROM posts WHERE id = ?', [id])
+  }
+
   return {
     createPost, findPosts, findPostById, findPendingPosts, getAuditStats, auditPost,
     likePost, checkUserLikedPost,
     createComment, findCommentsByPostId, likeComment, checkUserLikedComment,
+    deleteById,
   }
 }
 

@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { getPostListSafe, createPost, getPostDetail, likePost } from '@/api/post'
+import { getPostListSafe, createPost, getPostDetail, likePost, deletePost } from '@/api/post'
 import type { Post, CreatePostData } from '@/types/post'
 
 /**
@@ -111,6 +111,28 @@ export function usePosts() {
     }
   }
 
+  /**
+   * 删除帖子
+   * @param postId 帖子ID
+   * @returns 是否删除成功
+   */
+  const deletePostById = async (postId: number): Promise<boolean> => {
+    loading.value = true
+    error.value = null
+    try {
+      await deletePost(postId)
+      posts.value = posts.value.filter((p) => p.id !== postId)
+      total.value = Math.max(0, total.value - 1)
+      return true
+    } catch (err) {
+      error.value = '删除失败'
+      console.error('删除失败', err)
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     /** 帖子列表 */
     posts,
@@ -132,5 +154,7 @@ export function usePosts() {
     getPost,
     /** 点赞帖子方法 */
     likePostById,
+    /** 删除帖子方法 */
+    deletePostById,
   }
 }

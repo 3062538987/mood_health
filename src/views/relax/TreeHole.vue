@@ -34,6 +34,7 @@
         :posts="posts"
         @view-detail="goToDetail"
         @like-updated="handleLikeUpdated"
+        @delete="handleDeletePost"
       />
     </transition>
 
@@ -51,7 +52,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import PostForm from '@/components/treehole/PostForm.vue'
 import PostList from '@/components/treehole/PostList.vue'
 import RelaxEmptyState from '@/components/relax/RelaxEmptyState.vue'
@@ -59,7 +60,7 @@ import { usePosts } from '@/composables/usePosts'
 import type { CreatePostData } from '@/types/post'
 
 const router = useRouter()
-const { posts, currentPage, pageSize, loading, loadPosts, createNewPost } = usePosts()
+const { posts, currentPage, pageSize, loading, loadPosts, createNewPost, deletePostById } = usePosts()
 const error = ref(false)
 
 const handleSubmitPost = async (post: CreatePostData) => {
@@ -95,6 +96,24 @@ const handleLikeUpdated = (postId: number, likes: number, liked: boolean) => {
   if (post) {
     post.likes = likes
     post.liked = liked
+  }
+}
+
+const handleDeletePost = async (postId: number) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这条帖子吗？此操作不可撤销。', '确认删除', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
+  const success = await deletePostById(postId)
+  if (success) {
+    ElMessage.success('帖子已删除')
+  } else {
+    ElMessage.error('删除失败，请稍后重试')
   }
 }
 

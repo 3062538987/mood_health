@@ -82,6 +82,13 @@ export const likePost = (postId: number) => {
   })
 }
 
+export const deletePost = (postId: number) => {
+  return request<{ message: string }>({
+    url: `/api/posts/${postId}`,
+    method: 'delete',
+  })
+}
+
 export const getComments = (postId: number) => {
   return request<Record<string, any>[]>({
     url: `/api/posts/${postId}/comments`,

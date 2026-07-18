@@ -12,6 +12,7 @@ import {
   getPostAuditStatsHandler,
   auditPostHandler,
   getPostAuditLogsHandler,
+  deletePostHandler,
 } from '../controllers/postController'
 import { authenticate, requirePermission } from '../middleware/auth'
 import { validateRequest } from '../middleware/validateRequest'
@@ -108,5 +109,8 @@ router.post(
 
 // 点赞评论（需要认证）
 router.post('/comments/:commentId/like', authenticate, likeCommentHandler)
+
+// 删除帖子（仅作者可删除）
+router.delete('/:postId', authenticate, deletePostHandler)
 
 export default router
