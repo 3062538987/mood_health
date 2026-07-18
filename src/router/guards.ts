@@ -38,6 +38,9 @@ const normalizeRole = (role: string | undefined): UserRole => {
   if (role === 'admin' || role === 'super_admin') {
     return role
   }
+  if (role === 'student' || role === 'counselor') {
+    return 'user'
+  }
   return 'user'
 }
 

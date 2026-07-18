@@ -73,7 +73,7 @@ const unwrapResponse = <T>(payload: unknown): T => {
     })
   }
 
-  if (payload.code === 0) {
+  if (Number(payload.code) === 0) {
     return payload.data as T
   }
 
