@@ -234,31 +234,23 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
       )
       const moodId = Number(result.insertId)
 
-      for (const emotion of input.emotions) {
+      // 批量插入情绪关联
+      if (input.emotions.length > 0) {
+        const emotionValues = input.emotions.map((e) => [moodId, e.emotionTypeId, e.intensity, e.isPrimary ? 1 : 0])
+        const emotionPlaceholders = emotionValues.map(() => '(?, ?, ?, ?)').join(', ')
         await connection.query<ResultSetHeader>(
-          `
-          INSERT INTO mood_emotions (
-            mood_id,
-            emotion_type_id,
-            intensity,
-            is_primary
-          )
-          VALUES (?, ?, ?, ?)
-          `,
-          [moodId, emotion.emotionTypeId, emotion.intensity, emotion.isPrimary ? 1 : 0]
+          `INSERT INTO mood_emotions (mood_id, emotion_type_id, intensity, is_primary) VALUES ${emotionPlaceholders}`,
+          emotionValues.flat()
         )
       }
 
-      for (const tagId of input.tagIds) {
+      // 批量插入标签关联
+      if (input.tagIds.length > 0) {
+        const tagValues = input.tagIds.map((tagId) => [moodId, tagId])
+        const tagPlaceholders = tagValues.map(() => '(?, ?)').join(', ')
         await connection.query<ResultSetHeader>(
-          `
-          INSERT INTO mood_tags (
-            mood_id,
-            tag_id
-          )
-          VALUES (?, ?)
-          `,
-          [moodId, tagId]
+          `INSERT INTO mood_tags (mood_id, tag_id) VALUES ${tagPlaceholders}`,
+          tagValues.flat()
         )
       }
 

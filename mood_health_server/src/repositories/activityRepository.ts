@@ -186,6 +186,18 @@ export const createActivityRepository = (db: ActivityDatabase = getMysqlPool()) 
     try {
       await conn.beginTransaction()
 
+      // 锁定活动行，防止并发报名超限
+      const [rows] = await conn.query<RowDataPacket[]>(
+        'SELECT current_participants, max_participants FROM activities WHERE id = ? FOR UPDATE',
+        [activityId]
+      )
+      if (rows.length === 0) {
+        throw new Error('ACTIVITY_NOT_FOUND')
+      }
+      if (rows[0].current_participants >= rows[0].max_participants) {
+        throw new Error('ACTIVITY_FULL')
+      }
+
       try {
         await conn.query(
           'INSERT INTO activity_participants (activity_id, user_id) VALUES (?, ?)',
@@ -198,11 +210,10 @@ export const createActivityRepository = (db: ActivityDatabase = getMysqlPool()) 
         throw error
       }
 
-      const [result] = await conn.query<ResultSetHeader>(
-        'UPDATE activities SET current_participants = current_participants + 1 WHERE id = ? AND current_participants < max_participants',
+      await conn.query<ResultSetHeader>(
+        'UPDATE activities SET current_participants = current_participants + 1 WHERE id = ?',
         [activityId]
       )
-      if (result.affectedRows === 0) throw new Error('ACTIVITY_FULL')
 
       await conn.commit()
     } catch (error) {
