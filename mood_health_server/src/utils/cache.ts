@@ -124,7 +124,12 @@ export const getOrSetMoodCache = async <T>(
     return cached;
   }
 
-  const data = await fetchFn();
-  await setMoodCache(key, data);
-  return data;
+  try {
+    const data = await fetchFn();
+    await setMoodCache(key, data);
+    return data;
+  } catch (error) {
+    console.error(`缓存回填失败 (${key}):`, error instanceof Error ? error.message : String(error));
+    throw error;
+  }
 };
