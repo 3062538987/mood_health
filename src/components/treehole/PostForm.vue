@@ -1,8 +1,12 @@
 <template>
   <div class="create-post card">
     <h2>分享你的心事</h2>
+    <div class="post-privacy-info">
+      <i class="fas fa-info-circle"></i>
+      <span>发布后需经过审核，审核通过后其他用户才能看到</span>
+    </div>
     <div class="form-group">
-      <input v-model="newPost.title" placeholder="标题" />
+      <input v-model="newPost.title" placeholder="标题" autocomplete="off" />
     </div>
     <div class="form-group">
       <textarea
@@ -24,6 +28,12 @@
       <label class="checkbox-label">
         <input v-model="newPost.isAnonymous" type="checkbox" />
         <span>匿名发布</span>
+      </label>
+    </div>
+    <div class="form-group checkbox-group">
+      <label class="checkbox-label">
+        <input v-model="showPreview" type="checkbox" />
+        <span>发布前预览温柔回复</span>
       </label>
     </div>
 
@@ -83,6 +93,7 @@ const isLoading = ref(false)
 const gentleReply = ref('')
 const isFallback = ref(false)
 const sensitiveWarning = ref('')
+const showPreview = ref(true)
 
 const emit = defineEmits<{
   (e: 'submit', post: CreatePostData): void
@@ -173,9 +184,25 @@ const submitPost = async () => {
 
   h2 {
     color: $text-color;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
     font-size: $font-size-xl;
     font-weight: 600;
+  }
+
+  .post-privacy-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    background: rgba(138, 171, 124, 0.1);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #6b8e78;
+
+    i {
+      font-size: 14px;
+    }
   }
 
   .form-group {

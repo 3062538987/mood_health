@@ -5,22 +5,37 @@
       <p>选择适合你的放松方式，释放压力，找回内心的平静</p>
     </header>
 
+    <div class="mode-filter">
+      <button
+        v-for="filter in modeFilters"
+        :key="filter.key"
+        type="button"
+        :class="{ active: activeFilter === filter.key }"
+        @click="activeFilter = filter.key"
+      >
+        {{ filter.label }}
+      </button>
+    </div>
+
     <AudioPlayer />
 
-    <div v-if="relaxModes.length > 0" class="relax-modes">
-      <div
-        v-for="mode in relaxModes"
+    <div v-if="filteredModes.length > 0" class="relax-modes">
+      <button
+        v-for="mode in filteredModes"
         :key="mode.id"
+        type="button"
         class="mode-card"
         :class="{ active: activeMode === mode.id }"
         @click="activeMode = mode.id"
+        :aria-label="`选择${mode.name}，${mode.description}`"
       >
         <div class="mode-icon">{{ mode.icon }}</div>
         <div class="mode-info">
           <h3>{{ mode.name }}</h3>
           <p>{{ mode.description }}</p>
+          <span class="mode-meta">{{ mode.duration }}</span>
         </div>
-      </div>
+      </button>
     </div>
     <transition name="empty-fade" mode="out-in">
       <RelaxEmptyState
@@ -52,6 +67,13 @@ import AudioPlayer from '@/components/relax/AudioPlayer.vue'
 import RelaxEmptyState from '@/components/relax/RelaxEmptyState.vue'
 
 const activeMode = ref('wooden-fish')
+const activeFilter = ref('all')
+
+const modeFilters = [
+  { key: 'all', label: '全部' },
+  { key: 'quiet', label: '安静放松' },
+  { key: 'active', label: '活动解压' },
+]
 
 const relaxModes = [
   {
@@ -59,6 +81,8 @@ const relaxModes = [
     name: '木鱼敲击',
     icon: '🪘',
     description: '敲击木鱼，释放焦虑',
+    duration: '随时开始',
+    type: 'quiet',
     component: MoodWoodenFish,
   },
   {
@@ -66,6 +90,8 @@ const relaxModes = [
     name: '呼吸冥想',
     icon: '🧘',
     description: '跟随呼吸，放松身心',
+    duration: '3-10分钟',
+    type: 'quiet',
     component: BreathingGuide,
   },
   {
@@ -73,6 +99,8 @@ const relaxModes = [
     name: '弹珠消砖',
     icon: '🎮',
     description: '打碎砖块，击碎压力',
+    duration: '休闲时长',
+    type: 'active',
     component: PinballGame,
   },
   {
@@ -80,9 +108,16 @@ const relaxModes = [
     name: '俄罗斯方块',
     icon: '🧩',
     description: '经典游戏，转移注意力',
+    duration: '休闲时长',
+    type: 'active',
     component: TetrisGame,
   },
 ]
+
+const filteredModes = computed(() => {
+  if (activeFilter.value === 'all') return relaxModes
+  return relaxModes.filter((mode) => mode.type === activeFilter.value)
+})
 
 const currentComponent = computed(() => {
   const mode = relaxModes.find((m) => m.id === activeMode.value)
@@ -101,7 +136,7 @@ const currentComponent = computed(() => {
 
   .page-header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 
     h1 {
       font-size: 32px;
@@ -116,6 +151,36 @@ const currentComponent = computed(() => {
       font-size: 16px;
       color: var(--text-light-color);
       margin: 0;
+    }
+  }
+
+  .mode-filter {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+
+    button {
+      padding: 8px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      background: var(--surface);
+      color: var(--text-color);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+      }
+
+      &.active {
+        background: var(--primary-color);
+        color: #fff;
+        border-color: var(--primary-color);
+      }
     }
   }
 
@@ -172,9 +237,17 @@ const currentComponent = computed(() => {
         }
 
         p {
-          margin: 0;
+          margin: 0 0 6px 0;
           font-size: 13px;
           color: #95a5a6;
+        }
+
+        .mode-meta {
+          font-size: 11px;
+          color: var(--primary-color);
+          background: var(--primary-soft);
+          padding: 2px 8px;
+          border-radius: 10px;
         }
       }
     }
