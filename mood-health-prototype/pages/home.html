@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页</title>
+    <style id="theme-vars">
+/* ============================================
+   日落花园 · 暖光治愈 — 情绪健康平台主题
+   ============================================ */
+
+:root {
+  /* Brand prefix: mh (mood health) */
+  --mh-primary: #e8834a;
+  --mh-primary-foreground: #ffffff;
+  --mh-primary-light: #f5c5a3;
+  --mh-primary-hover: #d4723a;
+  --mh-primary-soft: #fdf0e6;
+
+  --mh-secondary: #8aab7c;
+  --mh-secondary-foreground: #ffffff;
+  --mh-secondary-light: #b8d0a8;
+  --mh-secondary-hover: #7a9b6c;
+
+  --mh-accent: #f0b860;
+  --mh-accent-foreground: #4a3f38;
+  --mh-accent-light: #f8d898;
+  --mh-accent-hover: #e0a848;
+
+  /* Background & Surface */
+  --mh-background: #fef8f2;
+  --mh-foreground: #4a3f38;
+  --mh-warm: #fdf2e8;
+  --mh-card: #fffdf9;
+  --mh-card-foreground: #4a3f38;
+  --mh-popover: #fffdf9;
+  --mh-popover-foreground: #4a3f38;
+  --mh-surface-muted: #faf5ee;
+
+  /* Text */
+  --mh-text: #4a3f38;
+  --mh-text-light: #8c8078;
+  --mh-text-muted: #b0a69c;
+  --mh-muted: #faf5ee;
+  --mh-muted-foreground: #8c8078;
+
+  /* Border & Input */
+  --mh-border: #e8ddd0;
+  --mh-input: #e8ddd0;
+  --mh-ring: #e8834a;
+
+  /* Radius */
+  --mh-radius-sm: 6px;
+  --mh-radius-md: 10px;
+  --mh-radius-lg: 16px;
+  --mh-radius-xl: 24px;
+  --mh-radius-full: 9999px;
+
+  /* Status Colors */
+  --mh-success: #7cb89a;
+  --mh-success-foreground: #ffffff;
+  --mh-warning: #f0b860;
+  --mh-warning-foreground: #4a3f38;
+  --mh-error: #e0556a;
+  --mh-error-foreground: #ffffff;
+  --mh-info: #7ba5c4;
+  --mh-info-foreground: #ffffff;
+
+  /* Risk Levels */
+  --mh-risk-low: #8aab7c;
+  --mh-risk-low-soft: rgba(138, 171, 124, 0.12);
+  --mh-risk-medium: #d2a35f;
+  --mh-risk-medium-soft: rgba(210, 163, 95, 0.12);
+  --mh-risk-high: #cf6b7f;
+  --mh-risk-high-soft: rgba(207, 107, 127, 0.12);
+
+  /* Mental States */
+  --mh-mental-calm: #8aab7c;
+  --mh-mental-neutral: #b0a69c;
+  --mh-mental-anxious: #c090d0;
+  --mh-mental-stressed: #d2a35f;
+  --mh-mental-distressed: #cf6b7f;
+
+  /* Mood Colors */
+  --mh-mood-happy: #f0b860;
+  --mh-mood-sad: #7ba5c4;
+  --mh-mood-angry: #e0556a;
+  --mh-mood-anxious: #c090d0;
+  --mh-mood-calm: #8aab7c;
+  --mh-mood-neutral: #b0a69c;
+
+  /* Shadow */
+  --mh-shadow-sm: 0 2px 8px rgba(180, 140, 100, 0.08);
+  --mh-shadow-md: 0 4px 16px rgba(180, 140, 100, 0.10);
+  --mh-shadow-lg: 0 8px 32px rgba(180, 140, 100, 0.14);
+  --mh-shadow-glow: 0 0 40px rgba(240, 184, 96, 0.12);
+
+  /* Typography */
+  --mh-font-display: 'Noto Serif SC', 'Georgia', 'Songti SC', serif;
+  --mh-font-body: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+
+  /* Semantic aliases for Tailwind compatibility */
+  --background: var(--mh-background);
+  --foreground: var(--mh-foreground);
+  --card: var(--mh-card);
+  --card-foreground: var(--mh-card-foreground);
+  --popover: var(--mh-popover);
+  --popover-foreground: var(--mh-popover-foreground);
+  --primary: var(--mh-primary);
+  --primary-foreground: var(--mh-primary-foreground);
+  --secondary: var(--mh-secondary);
+  --secondary-foreground: var(--mh-secondary-foreground);
+  --accent: var(--mh-accent);
+  --accent-foreground: var(--mh-accent-foreground);
+  --muted: var(--mh-muted);
+  --muted-foreground: var(--mh-muted-foreground);
+  --destructive: var(--mh-error);
+  --destructive-foreground: var(--mh-error-foreground);
+  --border: var(--mh-border);
+  --input: var(--mh-input);
+  --ring: var(--mh-ring);
+  --radius: var(--mh-radius-lg);
+  --radius-sm: var(--mh-radius-sm);
+  --radius-md: var(--mh-radius-md);
+  --radius-lg: var(--mh-radius-lg);
+  --radius-xl: var(--mh-radius-xl);
+  --radius-full: var(--mh-radius-full);
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --mh-background: #1e1b18;
+    --mh-foreground: #e8ddd0;
+    --mh-warm: #25211d;
+    --mh-card: #2a2520;
+    --mh-card-foreground: #e8ddd0;
+    --mh-popover: #2a2520;
+    --mh-popover-foreground: #e8ddd0;
+    --mh-surface-muted: #2f2a24;
+    --mh-text: #e8ddd0;
+    --mh-text-light: #b0a69c;
+    --mh-text-muted: #8c8078;
+    --mh-muted: #2f2a24;
+    --mh-muted-foreground: #b0a69c;
+    --mh-border: #3d3630;
+    --mh-input: #3d3630;
+    --mh-primary: #f0a070;
+    --mh-primary-hover: #f5b890;
+    --mh-primary-soft: rgba(240, 160, 112, 0.12);
+    --mh-secondary: #a8c898;
+    --mh-accent: #f8c878;
+    --mh-ring: #f5b890;
+
+    --background: var(--mh-background);
+    --foreground: var(--mh-foreground);
+    --card: var(--mh-card);
+    --card-foreground: var(--mh-card-foreground);
+    --popover: var(--mh-popover);
+    --popover-foreground: var(--mh-popover-foreground);
+    --primary: var(--mh-primary);
+    --secondary: var(--mh-secondary);
+    --accent: var(--mh-accent);
+    --muted: var(--mh-muted);
+    --muted-foreground: var(--mh-muted-foreground);
+    --destructive: var(--mh-error);
+    --border: var(--mh-border);
+    --input: var(--mh-input);
+    --ring: var(--mh-ring);
+  }
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--mh-font-body);
+  background: var(--mh-background);
+  color: var(--mh-text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--mh-font-display);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--mh-background);
+    --color-foreground: var(--mh-foreground);
+    --color-card: var(--mh-card);
+    --color-card-foreground: var(--mh-card-foreground);
+    --color-popover: var(--mh-popover);
+    --color-popover-foreground: var(--mh-popover-foreground);
+    --color-primary: var(--mh-primary);
+    --color-primary-foreground: var(--mh-primary-foreground);
+    --color-secondary: var(--mh-secondary);
+    --color-secondary-foreground: var(--mh-secondary-foreground);
+    --color-muted: var(--mh-muted);
+    --color-muted-foreground: var(--mh-muted-foreground);
+    --color-accent: var(--mh-accent);
+    --color-accent-foreground: var(--mh-accent-foreground);
+    --color-border: var(--mh-border);
+    --color-input: var(--mh-input);
+    --color-ring: var(--mh-ring);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --radius-sm: var(--mh-radius-sm);
+    --radius-md: var(--mh-radius-md);
+    --radius-lg: var(--mh-radius-lg);
+    --radius-xl: var(--mh-radius-xl);
+  }
+  @layer base {
+    body { background: var(--mh-background); color: var(--mh-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--mh-background); }
+      .text-background { color: var(--mh-background); }
+      .border-background { border-color: var(--mh-background); }
+      .ring-background { --tw-ring-color: var(--mh-background); }
+      .bg-foreground { background-color: var(--mh-foreground); }
+      .text-foreground { color: var(--mh-foreground); }
+      .border-foreground { border-color: var(--mh-foreground); }
+      .ring-foreground { --tw-ring-color: var(--mh-foreground); }
+      .bg-card { background-color: var(--mh-card); }
+      .text-card { color: var(--mh-card); }
+      .border-card { border-color: var(--mh-card); }
+      .ring-card { --tw-ring-color: var(--mh-card); }
+      .bg-card-foreground { background-color: var(--mh-card-foreground); }
+      .text-card-foreground { color: var(--mh-card-foreground); }
+      .border-card-foreground { border-color: var(--mh-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--mh-card-foreground); }
+      .bg-popover { background-color: var(--mh-popover); }
+      .text-popover { color: var(--mh-popover); }
+      .border-popover { border-color: var(--mh-popover); }
+      .ring-popover { --tw-ring-color: var(--mh-popover); }
+      .bg-popover-foreground { background-color: var(--mh-popover-foreground); }
+      .text-popover-foreground { color: var(--mh-popover-foreground); }
+      .border-popover-foreground { border-color: var(--mh-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--mh-popover-foreground); }
+      .bg-primary { background-color: var(--mh-primary); }
+      .text-primary { color: var(--mh-primary); }
+      .border-primary { border-color: var(--mh-primary); }
+      .ring-primary { --tw-ring-color: var(--mh-primary); }
+      .bg-primary-foreground { background-color: var(--mh-primary-foreground); }
+      .text-primary-foreground { color: var(--mh-primary-foreground); }
+      .border-primary-foreground { border-color: var(--mh-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--mh-primary-foreground); }
+      .bg-secondary { background-color: var(--mh-secondary); }
+      .text-secondary { color: var(--mh-secondary); }
+      .border-secondary { border-color: var(--mh-secondary); }
+      .ring-secondary { --tw-ring-color: var(--mh-secondary); }
+      .bg-secondary-foreground { background-color: var(--mh-secondary-foreground); }
+      .text-secondary-foreground { color: var(--mh-secondary-foreground); }
+      .border-secondary-foreground { border-color: var(--mh-secondary-foreground); }
+      .ring-secondary-foreground { --tw-ring-color: var(--mh-secondary-foreground); }
+      .bg-muted { background-color: var(--mh-muted); }
+      .text-muted { color: var(--mh-muted); }
+      .border-muted { border-color: var(--mh-muted); }
+      .ring-muted { --tw-ring-color: var(--mh-muted); }
+      .bg-muted-foreground { background-color: var(--mh-muted-foreground); }
+      .text-muted-foreground { color: var(--mh-muted-foreground); }
+      .border-muted-foreground { border-color: var(--mh-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--mh-muted-foreground); }
+      .bg-accent { background-color: var(--mh-accent); }
+      .text-accent { color: var(--mh-accent); }
+      .border-accent { border-color: var(--mh-accent); }
+      .ring-accent { --tw-ring-color: var(--mh-accent); }
+      .bg-accent-foreground { background-color: var(--mh-accent-foreground); }
+      .text-accent-foreground { color: var(--mh-accent-foreground); }
+      .border-accent-foreground { border-color: var(--mh-accent-foreground); }
+      .ring-accent-foreground { --tw-ring-color: var(--mh-accent-foreground); }
+      .bg-border { background-color: var(--mh-border); }
+      .text-border { color: var(--mh-border); }
+      .border-border { border-color: var(--mh-border); }
+      .ring-border { --tw-ring-color: var(--mh-border); }
+      .bg-input { background-color: var(--mh-input); }
+      .text-input { color: var(--mh-input); }
+      .border-input { border-color: var(--mh-input); }
+      .ring-input { --tw-ring-color: var(--mh-input); }
+      .bg-ring { background-color: var(--mh-ring); }
+      .text-ring { color: var(--mh-ring); }
+      .border-ring { border-color: var(--mh-ring); }
+      .ring-ring { --tw-ring-color: var(--mh-ring); }
+      .bg-destructive { background-color: var(--destructive); }
+      .text-destructive { color: var(--destructive); }
+      .border-destructive { border-color: var(--destructive); }
+      .ring-destructive { --tw-ring-color: var(--destructive); }
+      .bg-destructive-foreground { background-color: var(--destructive-foreground); }
+      .text-destructive-foreground { color: var(--destructive-foreground); }
+      .border-destructive-foreground { border-color: var(--destructive-foreground); }
+      .ring-destructive-foreground { --tw-ring-color: var(--destructive-foreground); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <main class="relative mx-auto w-full max-w-[430px] min-h-screen bg-[var(--mh-background)] pb-28">
+
+      <!-- Status Bar -->
+      <div class="flex items-center justify-between px-6 pt-3 pb-1 text-[13px] font-semibold text-[var(--mh-text)]">
+        <span>9:41</span>
+        <div class="flex items-center gap-1.5">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="0.5"/><rect x="4.5" y="5" width="3" height="6" rx="0.5"/><rect x="9" y="2.5" width="3" height="8.5" rx="0.5"/><rect x="13.5" y="0" width="3" height="11" rx="0.5"/></svg>
+          <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><path d="M8 2.5c2.2 0 4.2.9 5.7 2.3l1.1-1.1C13.1 2.1 10.7 1 8 1S2.9 2.1 1.2 3.7l1.1 1.1C3.8 3.4 5.8 2.5 8 2.5zm0 3c1.4 0 2.7.5 3.7 1.4l1.1-1.1C11.5 4.4 9.8 3.8 8 3.8s-3.5.6-4.8 2l1.1 1.1C5.3 6 6.6 5.5 8 5.5zm0 3c.7 0 1.3.2 1.8.7L8 11l-1.8-1.8c.5-.5 1.1-.7 1.8-.7z"/></svg>
+          <svg width="25" height="12" viewBox="0 0 25 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5"/><rect x="2" y="2" width="16" height="8" rx="1" fill="currentColor"/><rect x="22.5" y="4" width="1.5" height="4" rx="0.5" fill="currentColor" stroke="none"/></svg>
+        </div>
+      </div>
+
+      <!-- Hero Greeting Section -->
+      <section class="relative px-5 pt-4 pb-6">
+        <div class="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[var(--mh-primary-soft)] via-[var(--mh-warm)] to-[var(--mh-accent-light)]/30 p-5">
+          <!-- Decorative hero image -->
+          <div class="absolute -right-10 -top-6 w-40 h-40 opacity-25">
+            <img src="../assets/hero-sunset-garden.jpg" alt="" class="w-full h-full object-cover rounded-full blur-sm" />
+          </div>
+          <div class="absolute right-4 bottom-2 w-20 h-20 opacity-30">
+            <img src="../assets/hero-sunset-garden.jpg" alt="" class="w-full h-full object-cover rounded-full" />
+          </div>
+          <!-- Decorative circles -->
+          <div class="absolute -right-4 -bottom-4 w-24 h-24 rounded-full bg-[var(--mh-accent)]/15 blur-xl"></div>
+          <div class="absolute left-20 -top-6 w-16 h-16 rounded-full bg-[var(--mh-primary)]/10 blur-lg"></div>
+
+          <div class="relative z-10">
+            <p class="text-sm text-[var(--mh-text-light)] mb-1">2026年7月18日 · 星期六</p>
+            <h1 class="text-[26px] font-semibold text-[var(--mh-text)] leading-tight" style="font-family: var(--mh-font-display); text-wrap: balance; word-break: keep-all;">
+              你好，晚晴
+            </h1>
+            <p class="mt-2 text-[14px] text-[var(--mh-text-light)] leading-relaxed line-clamp-2">
+              日落花园里的晚风正温柔，愿你今天也被暖意包围。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Today's Mood Card -->
+      <section class="px-5 pb-5">
+        <div class="rounded-[20px] bg-[var(--mh-card)] p-4 shadow-[var(--mh-shadow-sm)]">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-[15px] font-semibold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">今日心情</h2>
+            <span class="text-xs text-[var(--mh-text-muted)]">今日已记录</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--mh-mood-happy)]/20 to-[var(--mh-accent)]/20 flex items-center justify-center">
+              <span class="text-2xl">🌤️</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-[17px] font-semibold text-[var(--mh-text)] truncate">平静愉悦</p>
+              <p class="text-xs text-[var(--mh-text-light)] mt-0.5">今天上午 08:30 记录</p>
+            </div>
+            <button data-dom-id="btn-record-mood" class="flex-shrink-0 px-4 py-2 rounded-xl bg-[var(--mh-primary)] text-white text-[13px] font-medium transition-transform active:scale-95 hover:bg-[var(--mh-primary-hover)]">
+              记录
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quick Action Grid -->
+      <section class="px-5 pb-5">
+        <div class="grid grid-cols-3 gap-y-5 gap-x-2">
+          <button data-dom-id="action-mood-record" class="flex flex-col items-center gap-2 group">
+            <div class="w-14 h-14 rounded-2xl bg-[var(--mh-primary-soft)] flex items-center justify-center text-[var(--mh-primary)] transition-transform active:scale-95 group-hover:bg-[var(--mh-primary)]/15">
+              <i data-lucide="pen-line" class="w-6 h-6"></i>
+            </div>
+            <span class="text-[12px] text-[var(--mh-text)]">记录情绪</span>
+          </button>
+          <button data-dom-id="action-mood-insight" class="flex flex-col items-center gap-2 group">
+            <div class="w-14 h-14 rounded-2xl bg-[var(--mh-secondary)]/12 flex items-center justify-center text-[var(--mh-secondary)] transition-transform active:scale-95 group-hover:bg-[var(--mh-secondary)]/20">
+              <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
+            </div>
+            <span class="text-[12px] text-[var(--mh-text)]">情绪洞察</span>
+          </button>
+          <button data-dom-id="action-ai-counseling" class="flex flex-col items-center gap-2 group">
+            <div class="w-14 h-14 rounded-2xl bg-[var(--mh-accent)]/18 flex items-center justify-center text-[var(--mh-accent-foreground)] transition-transform active:scale-95 group-hover:bg-[var(--mh-accent)]/25">
+              <i data-lucide="bot" class="w-6 h-6"></i>
+            </div>
+            <span class="text-[12px] text-[var(--mh-text)]">AI咨询</span>
+          </button>
+          <button data-dom-id="action-relax" class="flex flex-col items-center gap-2 group">
+            <div class="w-14 h-14 rounded-2xl bg-[var(--mh-secondary)]/10 flex items-center justify-center text-[var(--mh-secondary)] transition-transform active:scale-95 group-hover:bg-[var(--mh-secondary)]/18">
+              <i data-lucide="leaf" class="w-6 h-6"></i>
+            </div>
+            <span class="text-[12px] text-[var(--mh-text)]">放松中心</span>
+          </button>
+          <button data-dom-id="action-treehole" class="flex flex-col items-center gap-2 group">
+            <div class="w-14 h-14 rounded-2xl bg-[var(--mh-primary-soft)] flex items-center justify-center text-[var(--mh-primary)] transition-transform active:scale-95 group-hover:bg-[var(--mh-primary)]/15">
+              <i data-lucide="trees" class="w-6 h-6"></i>
+            </div>
+            <span class="text-[12px] text-[var(--mh-text)]">树洞</span>
+          </button>
+          <button data-dom-id="action-improve" class="flex flex-col items-center gap-2 group">
+            <div class="w-14 h-14 rounded-2xl bg-[var(--mh-accent)]/15 flex items-center justify-center text-[var(--mh-accent-foreground)] transition-transform active:scale-95 group-hover:bg-[var(--mh-accent)]/22">
+              <i data-lucide="sparkles" class="w-6 h-6"></i>
+            </div>
+            <span class="text-[12px] text-[var(--mh-text)]">提升计划</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Mood Streak / Calendar Preview -->
+      <section class="px-5 pb-5">
+        <div class="rounded-[20px] bg-[var(--mh-card)] p-4 shadow-[var(--mh-shadow-sm)]">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-[15px] font-semibold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">连续记录</h2>
+            <div class="flex items-center gap-1 text-xs text-[var(--mh-primary)] font-medium">
+              <i data-lucide="flame" class="w-3.5 h-3.5"></i>
+              <span>7 天</span>
+            </div>
+          </div>
+          <div class="flex items-end justify-between gap-1.5">
+            <div class="flex flex-col items-center gap-1.5">
+              <div class="w-7 h-7 rounded-full bg-[var(--mh-mood-happy)] flex items-center justify-center">
+                <span class="text-[10px]">😊</span>
+              </div>
+              <span class="text-[10px] text-[var(--mh-text-muted)]">一</span>
+            </div>
+            <div class="flex flex-col items-center gap-1.5">
+              <div class="w-7 h-7 rounded-full bg-[var(--mh-mood-calm)] flex items-center justify-center">
+                <span class="text-[10px]">😌</span>
+              </div>
+              <span class="text-[10px] text-[var(--mh-text-muted)]">二</span>
+            </div>
+            <div class="flex flex-col items-center gap-1.5">
+              <div class="w-7 h-7 rounded-full bg-[var(--mh-mood-neutral)] flex items-center justify-center">
+                <span class="text-[10px]">😐</span>
+              </div>
+              <span class="text-[10px] text-[var(--mh-text-muted)]">三</span>
+            </div>
+            <div class="flex flex-col items-center gap-1.5">
+              <div class="w-7 h-7 rounded-full bg-[var(--mh-mood-happy)] flex items-center justify-center">
+                <span class="text-[10px]">😄</span>
+              </div>
+              <span class="text-[10px] text-[var(--mh-text-muted)]">四</span>
+            </div>
+            <div class="flex flex-col items-center gap-1.5">
+              <div class="w-7 h-7 rounded-full bg-[var(--mh-mood-sad)] flex items-center justify-center">
+                <span class="text-[10px]">😔</span>
+              </div>
+              <span class="text-[10px] text-[var(--mh-text-muted)]">五</span>
+            </div>
+            <div class="flex flex-col items-center gap-1.5">
+              <div class="w-7 h-7 rounded-full bg-[var(--mh-mood-calm)] flex items-center justify-center">
+                <span class="text-[10px]">😌</span>
+              </div>
+              <span class="text-[10px] text-[var(--mh-text-muted)]">六</span>
+            </div>
+            <div class="flex flex-col items-center gap-1.5">
+              <div class="w-9 h-9 rounded-full bg-[var(--mh-mood-happy)] flex items-center justify-center ring-2 ring-[var(--mh-primary)] ring-offset-2 ring-offset-[var(--mh-card)]">
+                <span class="text-sm">🌤️</span>
+              </div>
+              <span class="text-[10px] text-[var(--mh-primary)] font-medium">今天</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI Insight Card -->
+      <section class="px-5 pb-6">
+        <div data-dom-id="card-ai-insight" class="relative overflow-hidden rounded-[20px] p-5 cursor-pointer transition-transform active:scale-[0.98]" style="background: linear-gradient(135deg, rgba(232, 131, 74, 0.85) 0%, rgba(240, 184, 96, 0.75) 50%, rgba(138, 171, 124, 0.65) 100%);">
+          <!-- Decorative elements -->
+          <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10 blur-2xl"></div>
+          <div class="absolute -left-6 bottom-0 w-24 h-24 rounded-full bg-[var(--mh-accent-light)]/20 blur-xl"></div>
+          <div class="absolute right-6 top-4 opacity-40">
+            <img src="../assets/ai-companion.jpg" alt="" class="w-16 h-16 rounded-full object-cover" />
+          </div>
+
+          <div class="relative z-10">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-7 h-7 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <i data-lucide="sparkles" class="w-4 h-4 text-white"></i>
+              </div>
+              <span class="text-sm font-medium text-white/90">AI 暖心洞察</span>
+            </div>
+            <h3 class="text-[17px] font-semibold text-white mb-1.5" style="font-family: var(--mh-font-display);">
+              本周情绪趋势向好
+            </h3>
+            <p class="text-[13px] text-white/80 leading-relaxed line-clamp-2 mb-3">
+              你已连续7天记录心情，平静与愉悦占比达62%。傍晚散步时段的放松练习效果显著。
+            </p>
+            <div class="inline-flex items-center gap-1 text-white/90 text-[12px] font-medium">
+              <span>查看完整分析</span>
+              <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Relax Suggestion Card -->
+      <section class="px-5 pb-6">
+        <div class="rounded-[20px] bg-[var(--mh-card)] overflow-hidden shadow-[var(--mh-shadow-sm)]">
+          <div class="relative h-36 overflow-hidden">
+            <img src="../assets/relax-zen-garden.jpg" alt="禅意花园" class="w-full h-full object-cover" />
+            <div class="absolute inset-0 bg-gradient-to-t from-[var(--mh-card)] via-transparent to-transparent"></div>
+            <div class="absolute bottom-3 left-4">
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/80 backdrop-blur-sm text-[11px] text-[var(--mh-text)] font-medium">
+                <i data-lucide="headphones" class="w-3 h-3"></i>
+                冥想音频
+              </span>
+            </div>
+          </div>
+          <div class="p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex-1 min-w-0">
+                <h3 class="text-[15px] font-semibold text-[var(--mh-text)] truncate" style="font-family: var(--mh-font-display);">
+                  日落花园 · 5分钟呼吸冥想
+                </h3>
+                <p class="text-xs text-[var(--mh-text-light)] mt-1 line-clamp-1">
+                  跟随温柔的引导，在日落余晖中安放身心
+                </p>
+              </div>
+              <button class="flex-shrink-0 w-10 h-10 rounded-full bg-[var(--mh-primary)] text-white flex items-center justify-center transition-transform active:scale-95 hover:bg-[var(--mh-primary-hover)]">
+                <i data-lucide="play" class="w-4 h-4 ml-0.5"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Tab Navigation -->
+      <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-[var(--mh-card)]/95 backdrop-blur-md border-t border-[var(--mh-border)]/60 z-50">
+        <div class="flex items-center justify-around px-2 pt-2 pb-[env(safe-area-inset-bottom,16px)]">
+          <button data-dom-id="nav-home" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-[var(--mh-primary)]">
+            <i data-lucide="home" class="w-5 h-5 fill-current"></i>
+            <span class="text-[10px] font-medium">首页</span>
+          </button>
+          <button data-dom-id="nav-mood" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-[var(--mh-text-muted)] transition-colors hover:text-[var(--mh-text-light)]">
+            <i data-lucide="heart" class="w-5 h-5"></i>
+            <span class="text-[10px]">情绪</span>
+          </button>
+          <button data-dom-id="nav-relax" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-[var(--mh-text-muted)] transition-colors hover:text-[var(--mh-text-light)]">
+            <i data-lucide="moon" class="w-5 h-5"></i>
+            <span class="text-[10px]">放松</span>
+          </button>
+          <button data-dom-id="nav-treehole" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-[var(--mh-text-muted)] transition-colors hover:text-[var(--mh-text-light)]">
+            <i data-lucide="trees" class="w-5 h-5"></i>
+            <span class="text-[10px]">树洞</span>
+          </button>
+          <button data-dom-id="nav-profile" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-[var(--mh-text-muted)] transition-colors hover:text-[var(--mh-text-light)]">
+            <i data-lucide="user" class="w-5 h-5"></i>
+            <span class="text-[10px]">我的</span>
+          </button>
+        </div>
+      </nav>
+
+    </main>
+    <script>lucide.createIcons();</script>
+</body>
+</html>
