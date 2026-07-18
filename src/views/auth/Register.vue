@@ -244,8 +244,8 @@ const handleRegister = async () => {
   const success = await userStore.register(form.username, form.password, email)
 
   if (success) {
-    ElMessage.success('注册成功！请登录')
-    router.push({ path: '/login', query: { username: form.username } })
+    ElMessage.success('注册成功！')
+    router.push('/guide')
   }
 }
 </script>

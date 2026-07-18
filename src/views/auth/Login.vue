@@ -127,6 +127,10 @@ const getSafeRedirect = () => {
   const redirect = route.query.redirect
   const target = Array.isArray(redirect) ? redirect[0] : redirect
 
+  if (!localStorage.getItem('guideCompleted')) {
+    return '/guide'
+  }
+
   if (typeof target !== 'string' || !target.startsWith('/') || target.startsWith('//')) {
     return '/'
   }
