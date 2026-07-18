@@ -454,4 +454,94 @@ input:focus {
 }
 
 .link:hover { color: var(--primary-hover); text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .register-container {
+    padding: 16px;
+    align-items: flex-start;
+    padding-top: 80px;
+  }
+
+  .register-box {
+    padding: 32px 24px;
+    max-width: 100%;
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+  }
+
+  h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .form-group {
+    margin-bottom: 18px;
+  }
+
+  label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  input {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .btn-register {
+    padding: 13px;
+    font-size: 15px;
+  }
+
+  .footer {
+    margin-top: 24px;
+    font-size: 13px;
+  }
+
+  .error-message {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .password-strength {
+    margin-top: 6px;
+  }
+
+  .strength-label {
+    font-size: 12px;
+  }
+
+  .strength-hint {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 380px) {
+  .register-container {
+    padding-top: 60px;
+  }
+
+  .register-box {
+    padding: 24px 16px;
+  }
+
+  h2 {
+    font-size: 22px;
+    margin-bottom: 16px;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  input {
+    padding: 11px 12px;
+    font-size: 14px;
+  }
+
+  .btn-register {
+    padding: 12px;
+    font-size: 14px;
+  }
+}
 </style>

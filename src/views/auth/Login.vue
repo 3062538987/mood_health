@@ -336,4 +336,79 @@ input:focus {
 }
 
 .link:hover { color: var(--primary-hover); text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .login-container {
+    padding: 16px;
+    align-items: flex-start;
+    padding-top: 100px;
+  }
+
+  .login-box {
+    padding: 32px 24px;
+    max-width: 100%;
+  }
+
+  h2 {
+    font-size: 24px;
+    margin-bottom: 6px;
+  }
+
+  .form-group {
+    margin-bottom: 18px;
+  }
+
+  label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  input {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .btn-login {
+    padding: 13px;
+    font-size: 15px;
+  }
+
+  .footer {
+    margin-top: 24px;
+    font-size: 13px;
+  }
+
+  .error-message {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 380px) {
+  .login-container {
+    padding-top: 80px;
+  }
+
+  .login-box {
+    padding: 24px 16px;
+  }
+
+  h2 {
+    font-size: 22px;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  input {
+    padding: 11px 12px;
+    font-size: 14px;
+  }
+
+  .btn-login {
+    padding: 12px;
+    font-size: 14px;
+  }
+}
 </style>
