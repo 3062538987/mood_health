@@ -15,9 +15,13 @@ const frontendUrl = `http://127.0.0.1:${frontendPort}`
 const backendUrl = `http://127.0.0.1:${backendPort}`
 const noProxy = '127.0.0.1,localhost'
 
+// E2E MySQL 固定使用 3316（Docker 容器 mood-health-e2e-fullreview-mysql-1 的主机映射端口）
+process.env.MYSQL_PORT = process.env.E2E_MYSQL_PORT || '3316'
+console.log('[DEBUG] E2E_MYSQL_PORT:', process.env.E2E_MYSQL_PORT, 'MYSQL_PORT:', process.env.MYSQL_PORT)
+
 process.env.NO_PROXY = process.env.NO_PROXY ? `${process.env.NO_PROXY},${noProxy}` : noProxy
 process.env.no_proxy = process.env.no_proxy ? `${process.env.no_proxy},${noProxy}` : noProxy
-process.env.VITE_API_BASE_URL = backendUrl
+// 前端通过 Vite proxy 访问 /api，不直接指向 backendUrl，避免跨域 cookie/CSRF 问题
 process.env.FRONTEND_URL = frontendUrl
 
 const e2eEnv = {
@@ -25,8 +29,10 @@ const e2eEnv = {
   NODE_ENV: 'test',
   HOST: '127.0.0.1',
   PORT: String(backendPort),
-  VITE_API_BASE_URL: backendUrl,
+  E2E_BACKEND_PORT: String(backendPort),
+  E2E_FRONTEND_PORT: String(frontendPort),
   FRONTEND_URL: frontendUrl,
+  MYSQL_PORT: process.env.E2E_MYSQL_PORT || '3316',
   MYSQL_DATABASE: process.env.MYSQL_DATABASE || 'mood_health_e2e',
   ALLOW_DEMO_SEED: 'true',
   DEMO_PASSWORD: process.env.DEMO_PASSWORD || 'E2eDemoPass123!',
@@ -54,19 +60,22 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
   },
-  globalSetup: './tests/e2e/global-setup.ts',
+  // globalSetup: './tests/e2e/global-setup.ts',
   webServer: [
     {
-      command: 'npm --prefix mood_health_server run dev',
+      command:
+        process.platform === 'win32'
+          ? 'cmd /c tests\\e2e\\scripts\\start-backend.bat'
+          : 'node mood_health_server/dist/server.js',
       url: `${backendUrl}/__e2e/ready`,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: process.env.E2E_REUSE_SERVER !== 'false',
       timeout: 120_000,
       env: e2eEnv,
     },
     {
-      command: `npm run dev -- --host 127.0.0.1 --port ${frontendPort}`,
+      command: `npx vite --port ${frontendPort} --strictPort -c vite.e2e.config.ts --mode e2e`,
       url: frontendUrl,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: process.env.E2E_REUSE_SERVER !== 'false',
       timeout: 120_000,
       env: e2eEnv,
     },
