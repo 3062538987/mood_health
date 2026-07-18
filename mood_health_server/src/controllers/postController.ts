@@ -359,7 +359,7 @@ export const getPostAuditLogsHandler = async (req: AuthRequest, res: Response) =
  */
 export const deletePostHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const postId = parseInt(req.params.postId)
+    const postId = parseInt(String(req.params.postId))
     const userId = req.user!.userId
 
     if (isNaN(postId)) {
