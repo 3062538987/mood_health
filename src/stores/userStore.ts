@@ -111,7 +111,10 @@ export const useUserStore = defineStore('user', () => {
       pendingLogout.value = true
       // 重试退出请求
       try {
-        await request.post('/api/auth/logout')
+        await request({
+          url: '/api/auth/logout',
+          method: 'post',
+        })
         pendingLogout.value = false
         sessionStorage.removeItem(PENDING_LOGOUT_KEY)
       } catch {
@@ -151,7 +154,10 @@ export const useUserStore = defineStore('user', () => {
     sessionStorage.removeItem(PENDING_LOGOUT_KEY)
 
     try {
-      await request.post('/api/auth/logout')
+      await request({
+        url: '/api/auth/logout',
+        method: 'post',
+      })
     } catch {
       // 网络失败时清除本地状态，标记待退出
       clearToken()

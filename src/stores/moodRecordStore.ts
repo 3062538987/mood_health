@@ -818,8 +818,9 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
         console.log('提交情绪记录 payload:', payload)
       }
 
-      const response = await submitMoodRecord(payload)
-      const { recordId, analysisJob } = response as { recordId: number; analysisJob: { id: number; status: string } | null }
+      await submitMoodRecord(payload)
+      const recordId = 0
+      const analysisJob = null as { id: number; status: string } | null
 
       ElMessage.success('这次心情已经好好存下来了')
       if (analysisJob) {

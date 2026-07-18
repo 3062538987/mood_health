@@ -213,7 +213,6 @@ const baseRoutes: RouteRecordRaw[] = [
           path: '/admin/treehole',
           name: '树洞审核',
           icon: 'fas fa-tree',
-          feature: 'nonCore',
         },
         {
           path: '/admin/cases',

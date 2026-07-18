@@ -1,9 +1,12 @@
-/**
- * 情绪分析 API
- * 调用后端 AI 上下文分析接口（DeepSeek）
- */
-
 import request from '@/utils/request'
+import type {
+  AnalysisPeriod,
+  AnalysisStatus,
+  AiAnalysisResult,
+  AnalysisJob,
+  AnalysisHistoryItem,
+  AnalysisDataScope,
+} from '@/types/moodAnalysis'
 
 export interface MoodAnalysisRequest {
   content: string
@@ -13,42 +16,37 @@ export interface MoodAnalysisRequest {
 export interface MoodAnalysisResponse {
   analysis: string
   suggestions: string[]
-  mood_score?: number
-  risk_level?: string
-  mood: string
-  /** 四段式结构化分析（可选） */
-  fourSection?: {
-    summary: string
-    possibleCauses: string
-    todayActions: string[]
-    whenToSeekHelp: string
-  } | null
-  /** 数据范围（可选） */
-  dataScope?: {
-    moodRecordCount: number
-    dateRange: string
-    hasAssessment: boolean
-    latestAssessment?: any
-  } | null
+  mood?: string
 }
 
-const validateMoodAnalysisRequest = (data: MoodAnalysisRequest) => {
+export interface CreateAnalysisParams {
+  period: AnalysisPeriod
+  dataScope?: AnalysisDataScope
+  useJournal?: boolean
+}
+
+export interface AnalysisResponse {
+  id: string
+  period: AnalysisPeriod
+  status: AnalysisStatus
+  result?: AiAnalysisResult
+  job?: AnalysisJob
+  createdAt: string
+  updatedAt: string
+}
+
+const validateMoodAnalysisRequest = (data: MoodAnalysisRequest): void => {
   if (!data.content || !data.content.trim()) {
     throw new Error('情绪描述不能为空')
   }
-
-  if (!data.mood_level || data.mood_level < 1 || data.mood_level > 10) {
+  if (data.mood_level < 1 || data.mood_level > 10) {
     throw new Error('情绪强度必须在1-10之间')
   }
 }
 
-/**
- * 分析情绪（调用后端 AI 上下文分析接口）
- */
 export const analyzeMood = async (data: MoodAnalysisRequest): Promise<MoodAnalysisResponse> => {
   validateMoodAnalysisRequest(data)
-
-  const res = await request<MoodAnalysisResponse>({
+  return request<MoodAnalysisResponse>({
     url: '/api/ai/context/analyze',
     method: 'post',
     data: {
@@ -56,14 +54,115 @@ export const analyzeMood = async (data: MoodAnalysisRequest): Promise<MoodAnalys
       mood: data.mood_level,
     },
   })
-
-  return res
 }
 
-export const debouncedAnalyzeMood = (data: MoodAnalysisRequest): Promise<MoodAnalysisResponse> =>
-  analyzeMood(data)
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
-export const analyzeMoodWithRetry = (
+export const debouncedAnalyzeMood = async (
   data: MoodAnalysisRequest,
-  _maxRetries = 2
-): Promise<MoodAnalysisResponse> => analyzeMood(data)
+  delay: number = 300
+): Promise<MoodAnalysisResponse> => {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+  }
+
+  return new Promise((resolve, reject) => {
+    debounceTimer = setTimeout(async () => {
+      try {
+        const result = await analyzeMood(data)
+        resolve(result)
+      } catch (error) {
+        reject(error)
+      }
+    }, delay)
+  })
+}
+
+export const analyzeMoodWithRetry = async (
+  data: MoodAnalysisRequest,
+  retries: number = 2,
+  delay: number = 1000
+): Promise<MoodAnalysisResponse> => {
+  try {
+    return await analyzeMood(data)
+  } catch (error: any) {
+    if (retries > 0 && shouldRetry(error)) {
+      await new Promise((resolve) => setTimeout(resolve, delay))
+      return analyzeMoodWithRetry(data, retries - 1, delay * 2)
+    }
+    throw error
+  }
+}
+
+const shouldRetry = (error: any): boolean => {
+  if (error.response) {
+    const status = error.response.status
+    return status >= 500 || status === 429
+  }
+  if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+    return true
+  }
+  if (error.message && error.message.includes('Network Error')) {
+    return true
+  }
+  return false
+}
+
+export const createAnalysis = (params: CreateAnalysisParams) => {
+  return request<AnalysisResponse>({
+    url: '/mood-analysis',
+    method: 'post',
+    data: params,
+  })
+}
+
+export const getAnalysis = (id: string) => {
+  return request<AnalysisResponse>({
+    url: `/mood-analysis/${id}`,
+    method: 'get',
+  })
+}
+
+export const getAnalysisStatus = (id: string) => {
+  return request<{ status: AnalysisStatus; job?: AnalysisJob }>({
+    url: `/mood-analysis/${id}/status`,
+    method: 'get',
+  })
+}
+
+export const getAnalysisHistory = (params?: {
+  page?: number
+  pageSize?: number
+}) => {
+  return request<{
+    data: AnalysisHistoryItem[]
+    total: number
+    page: number
+    pageSize: number
+  }>({
+    url: '/mood-analysis/history',
+    method: 'get',
+    params,
+  })
+}
+
+export const deleteAnalysis = (id: string) => {
+  return request<void>({
+    url: `/mood-analysis/${id}`,
+    method: 'delete',
+  })
+}
+
+export const retryAnalysis = (id: string) => {
+  return request<AnalysisResponse>({
+    url: `/mood-analysis/${id}/retry`,
+    method: 'post',
+  })
+}
+
+export const getLatestAnalysis = (period: AnalysisPeriod) => {
+  return request<AnalysisResponse | null>({
+    url: `/mood-analysis/latest/${period}`,
+    method: 'get',
+  })
+}
