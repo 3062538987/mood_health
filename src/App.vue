@@ -170,8 +170,13 @@ const handleDocumentClick = () => {
 }
 
 // 退出登录
-const handleLogout = () => {
-  userStore.logout()
+const handleLogout = async () => {
+  if (userStore.logoutInProgress) return
+  try {
+    await userStore.logout()
+  } catch {
+    // 退出已由 store 处理
+  }
   router.push('/login')
 }
 

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import request from '@/utils/request'
+import request, { ApiRequestError } from '@/utils/request'
 
 export interface User {
   id: number
@@ -14,12 +14,16 @@ export interface User {
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error && error.message ? error.message : fallback
 
+const PENDING_LOGOUT_KEY = 'pendingLogout'
+
 export const useUserStore = defineStore('user', () => {
   const user = ref<User | null>(null)
   const token = ref<string>('')
   const loading = ref(false)
   const error = ref<string>('')
   const authInitialized = ref(false)
+  const pendingLogout = ref(false)
+  const logoutInProgress = ref(false)
 
   const isLoggedIn = computed(() => !!user.value)
   const username = computed(() => user.value?.username || '')
@@ -101,6 +105,24 @@ export const useUserStore = defineStore('user', () => {
       authInitialized.value = true
       return true
     }
+
+    // 检查是否有待处理的退出
+    if (sessionStorage.getItem(PENDING_LOGOUT_KEY) === '1') {
+      pendingLogout.value = true
+      // 重试退出请求
+      try {
+        await request.post('/api/auth/logout')
+        pendingLogout.value = false
+        sessionStorage.removeItem(PENDING_LOGOUT_KEY)
+      } catch {
+        // 退出仍然失败，不恢复用户状态
+        authInitialized.value = true
+        return false
+      }
+      authInitialized.value = true
+      return false
+    }
+
     try {
       const response = await request<{ user: User }>({
         url: '/api/auth/me',
@@ -120,8 +142,30 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  const logout = () => {
+  const logout = async (): Promise<void> => {
+    if (logoutInProgress.value) return
+    logoutInProgress.value = true
+    loading.value = true
+    error.value = ''
+    pendingLogout.value = false
+    sessionStorage.removeItem(PENDING_LOGOUT_KEY)
+
+    try {
+      await request.post('/api/auth/logout')
+    } catch {
+      // 网络失败时清除本地状态，标记待退出
+      clearToken()
+      pendingLogout.value = true
+      sessionStorage.setItem(PENDING_LOGOUT_KEY, '1')
+      error.value = '服务器未响应退出请求，已清除本地登录状态并将在网络恢复后同步退出'
+      loading.value = false
+      logoutInProgress.value = false
+      return
+    }
+
     clearToken()
+    loading.value = false
+    logoutInProgress.value = false
   }
 
   const init = async () => {
@@ -136,6 +180,8 @@ export const useUserStore = defineStore('user', () => {
     loading,
     error,
     authInitialized,
+    pendingLogout,
+    logoutInProgress,
     isLoggedIn,
     username,
     isAdmin,
