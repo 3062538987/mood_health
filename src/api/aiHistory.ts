@@ -10,6 +10,8 @@ export interface AiHistoryItem {
   riskLevel: string
   requestStatus: string
   analysisSummary: string
+  scene: string | null
+  securityStatus: string
   createdAt: string
 }
 
@@ -31,6 +33,10 @@ export interface AiHistoryDetail {
   modelVersion: string | null
   requestStatus: string
   errorMessage: string | null
+  scene: string | null
+  modelSource: string | null
+  promptVersion: string | null
+  securityStatus: string
   createdAt: string
 }
 

@@ -416,6 +416,62 @@ export const createManagementRepository = (db: ManagementDatabase = getMysqlPool
     ]
   }
 
+  const getAiUsageStats = async (startDate?: string, endDate?: string) => {
+    const dateFilter = (startDate && endDate)
+      ? 'WHERE created_at >= ? AND created_at <= ?'
+      : ''
+    const dateParams = (startDate && endDate) ? [startDate, endDate] : []
+
+    // 按场景统计
+    const [sceneRows] = await db.query<RowDataPacket[]>(
+      `SELECT scene, COUNT(*) as count FROM ai_analysis_history ${dateFilter} GROUP BY scene ORDER BY count DESC`,
+      dateParams,
+    )
+
+    // 按分析类型统计
+    const [typeRows] = await db.query<RowDataPacket[]>(
+      `SELECT analysis_type as type, COUNT(*) as count FROM ai_analysis_history ${dateFilter} GROUP BY analysis_type ORDER BY count DESC`,
+      dateParams,
+    )
+
+    // 安全状态统计
+    const [securityRows] = await db.query<RowDataPacket[]>(
+      `SELECT security_status as status, COUNT(*) as count FROM ai_analysis_history ${dateFilter} GROUP BY security_status`,
+      dateParams,
+    )
+
+    // 反馈统计
+    const [feedbackRows] = await db.query<RowDataPacket[]>(
+      `SELECT feedback_type as type, COUNT(*) as count FROM ai_feedback ${dateFilter} GROUP BY feedback_type`,
+      dateParams,
+    )
+
+    const [feedbackTotal] = await db.query<RowDataPacket[]>(
+      `SELECT COUNT(*) as total FROM ai_feedback ${dateFilter}`,
+      dateParams,
+    )
+
+    // 每日趋势
+    const [dailyRows] = await db.query<RowDataPacket[]>(
+      `SELECT DATE(created_at) as date, COUNT(*) as count
+       FROM ai_analysis_history ${dateFilter}
+       GROUP BY DATE(created_at)
+       ORDER BY date ASC`,
+      dateParams,
+    )
+
+    return {
+      byScene: sceneRows.map((r: RowDataPacket) => ({ scene: r.scene || 'unknown', count: Number(r.count) })),
+      byType: typeRows.map((r: RowDataPacket) => ({ type: r.type, count: Number(r.count) })),
+      security: securityRows.map((r: RowDataPacket) => ({ status: r.status || 'passed', count: Number(r.count) })),
+      feedback: {
+        total: Number(feedbackTotal[0]?.total ?? 0),
+        byType: feedbackRows.map((r: RowDataPacket) => ({ type: r.type, count: Number(r.count) })),
+      },
+      dailyTrend: dailyRows.map((r: RowDataPacket) => ({ date: r.date, count: Number(r.count) })),
+    }
+  }
+
   return {
     listAdminUsers,
     findAdminUserById,
@@ -428,6 +484,7 @@ export const createManagementRepository = (db: ManagementDatabase = getMysqlPool
     getMoodDistribution,
     getAssessmentDistribution,
     getModuleUsage,
+    getAiUsageStats,
   }
 }
 

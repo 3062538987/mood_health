@@ -8,7 +8,10 @@ const feedbackService = createFeedbackService()
 
 export const submitFeedback = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
+    const userId = req.user?.userId
+    if (!userId) {
+      return res.status(401).json(apiFailure(401, '未登录'))
+    }
     const { analysisHistoryId, feedbackType, comment } = req.body
 
     if (!analysisHistoryId || !['helpful', 'not_helpful'].includes(feedbackType)) {
@@ -37,6 +40,20 @@ export const getFeedbackStats = async (req: AuthRequest, res: Response) => {
   try {
     const stats = await feedbackService.getStats()
     res.json(apiSuccess(stats, '获取反馈统计成功'))
+  } catch (error) {
+    logger.error(error)
+    res.status(500).json(apiFailure(500, '服务器错误'))
+  }
+}
+
+export const getFeedbackList = async (req: AuthRequest, res: Response) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize as string) || 20))
+    const feedbackType = req.query.feedbackType as string | undefined
+
+    const result = await feedbackService.getList(feedbackType, page, pageSize)
+    res.json(apiSuccess(result, '获取反馈列表成功'))
   } catch (error) {
     logger.error(error)
     res.status(500).json(apiFailure(500, '服务器错误'))

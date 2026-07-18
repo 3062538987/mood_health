@@ -42,6 +42,9 @@ export const createManagementService = (dependencies: ManagementServiceDependenc
   const getModuleUsage = async (startDate: string, endDate: string) =>
     repository.getModuleUsage(startDate, endDate)
 
+  const getAiUsageStats = async (startDate?: string, endDate?: string) =>
+    repository.getAiUsageStats(startDate, endDate)
+
   return {
     listAdminUsers,
     findAdminUserById,
@@ -54,6 +57,7 @@ export const createManagementService = (dependencies: ManagementServiceDependenc
     getMoodDistribution,
     getAssessmentDistribution,
     getModuleUsage,
+    getAiUsageStats,
   }
 }
 

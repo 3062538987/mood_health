@@ -456,3 +456,14 @@ export const getModuleUsageHandler = async (req: AuthRequest, res: Response) => 
     return res.status(500).json(apiFailure(500, '获取模块使用统计失败'))
   }
 }
+
+export const getAiUsageStatsHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const { startDate, endDate } = req.query as { startDate?: string; endDate?: string }
+    const stats = await managementService.getAiUsageStats(startDate, endDate)
+    return res.status(200).json(apiSuccess(stats, '获取 AI 使用统计成功'))
+  } catch (error) {
+    logger.error('[getAiUsageStats] Error:', error)
+    return res.status(500).json(apiFailure(500, '获取 AI 使用统计失败'))
+  }
+}

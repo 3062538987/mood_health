@@ -11,6 +11,10 @@ export interface SaveHistoryInput {
   analysisContent: Record<string, unknown>
   suggestionContent?: Record<string, unknown> | null
   riskLevel?: string
+  scene?: string | null
+  modelSource?: string | null
+  promptVersion?: string | null
+  securityStatus?: string
 }
 
 export interface HistoryListParams {
@@ -25,6 +29,8 @@ export interface HistoryListItem {
   riskLevel: string
   requestStatus: string
   analysisSummary: string
+  scene: string | null
+  securityStatus: string
   createdAt: string
 }
 
@@ -41,6 +47,10 @@ export interface HistoryDetailRecord {
   modelVersion: string | null
   requestStatus: string
   errorMessage: string | null
+  scene: string | null
+  modelSource: string | null
+  promptVersion: string | null
+  securityStatus: string
   createdAt: string
 }
 
@@ -49,8 +59,8 @@ export const createAiHistoryRepository = () => {
 
   const saveHistory = async (input: SaveHistoryInput): Promise<number> => {
     const [result] = await pool.query<ResultSetHeader>(
-      `INSERT INTO ai_analysis_history (user_id, mood_record_id, assessment_session_id, analysis_type, input_context, analysis_content, suggestion_content, risk_level, request_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'success')`,
+      `INSERT INTO ai_analysis_history (user_id, mood_record_id, assessment_session_id, analysis_type, input_context, analysis_content, suggestion_content, risk_level, request_status, scene, model_source, prompt_version, security_status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'success', ?, ?, ?, ?)`,
       [
         input.userId,
         input.moodRecordId ?? null,
@@ -60,6 +70,10 @@ export const createAiHistoryRepository = () => {
         JSON.stringify(input.analysisContent),
         input.suggestionContent ? JSON.stringify(input.suggestionContent) : null,
         input.riskLevel || 'low',
+        input.scene ?? null,
+        input.modelSource ?? null,
+        input.promptVersion ?? null,
+        input.securityStatus || 'passed',
       ],
     )
     logger.info('AI 分析记录已保存', { userId: input.userId, id: result.insertId })
@@ -76,7 +90,7 @@ export const createAiHistoryRepository = () => {
     const total = countResult[0]?.total || 0
 
     const [rows] = await pool.query<RowDataPacket[]>(
-      `SELECT id, analysis_type, risk_level, request_status, created_at,
+      `SELECT id, analysis_type, risk_level, request_status, created_at, scene, security_status,
               JSON_EXTRACT(analysis_content, '$.summary') as analysis_summary
        FROM ai_analysis_history
        WHERE user_id = ?
@@ -92,6 +106,8 @@ export const createAiHistoryRepository = () => {
         riskLevel: row.risk_level as string,
         requestStatus: row.request_status as string,
         analysisSummary: typeof row.analysis_summary === 'string' ? (row.analysis_summary as string).replace(/^"|"$/g, '') : '',
+        scene: row.scene as string | null,
+        securityStatus: row.security_status as string || 'passed',
         createdAt: row.created_at as string,
       })),
       total,
@@ -102,7 +118,8 @@ export const createAiHistoryRepository = () => {
     const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT id, user_id, mood_record_id, assessment_session_id, analysis_type,
               input_context, analysis_content, suggestion_content, risk_level,
-              model_version, request_status, error_message, created_at
+              model_version, request_status, error_message, scene, model_source,
+              prompt_version, security_status, created_at
        FROM ai_analysis_history
        WHERE id = ?`,
       [id],
@@ -124,6 +141,10 @@ export const createAiHistoryRepository = () => {
       modelVersion: row.model_version as string | null,
       requestStatus: row.request_status as string,
       errorMessage: row.error_message as string | null,
+      scene: row.scene as string | null,
+      modelSource: row.model_source as string | null,
+      promptVersion: row.prompt_version as string | null,
+      securityStatus: row.security_status as string || 'passed',
       createdAt: row.created_at as string,
     }
   }

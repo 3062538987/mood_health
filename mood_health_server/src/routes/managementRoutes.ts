@@ -16,6 +16,7 @@ import {
   getMoodDistributionHandler,
   getAssessmentDistributionHandler,
   getModuleUsageHandler,
+  getAiUsageStatsHandler,
 } from '../controllers/managementController'
 import { authenticate, requireAdmin, requirePermission } from '../middleware/auth'
 import { validateRequest } from '../middleware/validateRequest'
@@ -90,5 +91,6 @@ router.get('/admin/analytics/mood-trend', authenticate, requireAdmin, getMoodTre
 router.get('/admin/analytics/mood-distribution', authenticate, requireAdmin, getMoodDistributionHandler)
 router.get('/admin/analytics/assessment-distribution', authenticate, requireAdmin, getAssessmentDistributionHandler)
 router.get('/admin/analytics/module-usage', authenticate, requireAdmin, getModuleUsageHandler)
+router.get('/admin/analytics/ai-usage', authenticate, requireAdmin, getAiUsageStatsHandler)
 
 export default router

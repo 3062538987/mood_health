@@ -42,26 +42,6 @@ export const createFeedbackService = () => {
     }
   }
 
-  const getList = async (userId: number) => {
-    const pool = getMysqlPool()
-    const [rows] = await pool.query<FeedbackRow[]>(
-      `SELECT id, user_id, analysis_history_id, feedback_type, comment, created_at
-       FROM ai_feedback
-       WHERE user_id = ?
-       ORDER BY created_at DESC
-       LIMIT 50`,
-      [userId]
-    )
-    return rows.map((row) => ({
-      id: Number(row.id),
-      userId: Number(row.user_id),
-      analysisHistoryId: Number(row.analysis_history_id),
-      feedbackType: row.feedback_type,
-      comment: row.comment,
-      createdAt: new Date(row.created_at).toISOString(),
-    }))
-  }
-
   const getStats = async (): Promise<FeedbackStats> => {
     const pool = getMysqlPool()
     const [rows] = await pool.query<RowDataPacket[]>(
@@ -77,6 +57,50 @@ export const createFeedbackService = () => {
     const rate = total > 0 ? Math.round((helpful / total) * 100) : 0
 
     return { total, helpful, notHelpful, rate }
+  }
+
+  const getList = async (feedbackType?: string, page = 1, pageSize = 20) => {
+    const pool = getMysqlPool()
+    const offset = (page - 1) * pageSize
+    const typeFilter = feedbackType && ['helpful', 'not_helpful'].includes(feedbackType)
+      ? 'WHERE feedback_type = ?'
+      : ''
+    const typeParams = typeFilter ? [feedbackType] : []
+
+    const [countRows] = await pool.query<RowDataPacket[]>(
+      `SELECT COUNT(*) as total FROM ai_feedback ${typeFilter}`,
+      typeParams,
+    )
+    const total = Number(countRows[0]?.total ?? 0)
+
+    const [rows] = await pool.query<FeedbackRow[]>(
+      `SELECT f.id, f.user_id, f.analysis_history_id, f.feedback_type, f.comment, f.created_at, f.reviewed,
+              u.username, h.analysis_type
+       FROM ai_feedback f
+       LEFT JOIN users u ON f.user_id = u.id
+       LEFT JOIN ai_analysis_history h ON f.analysis_history_id = h.id
+       ${typeFilter}
+       ORDER BY f.created_at DESC
+       LIMIT ? OFFSET ?`,
+      [...typeParams, pageSize, offset],
+    )
+
+    return {
+      list: rows.map((row) => ({
+        id: Number(row.id),
+        userId: Number(row.user_id),
+        username: (row as any).username || null,
+        analysisHistoryId: Number(row.analysis_history_id),
+        analysisType: (row as any).analysis_type || null,
+        feedbackType: row.feedback_type,
+        comment: row.comment,
+        reviewed: Boolean((row as any).reviewed),
+        createdAt: new Date(row.created_at).toISOString(),
+      })),
+      total,
+      page,
+      pageSize,
+    }
   }
 
   return {

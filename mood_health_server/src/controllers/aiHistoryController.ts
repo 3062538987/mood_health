@@ -24,7 +24,7 @@ export const saveHistory = async (req: AuthRequest, res: Response) => {
       return res.status(401).json(apiFailure(401, '未登录'))
     }
 
-    const { analysis_type, input_context, analysis_content, suggestion_content, risk_level, mood_record_id, assessment_session_id } = req.body
+    const { analysis_type, input_context, analysis_content, suggestion_content, risk_level, mood_record_id, assessment_session_id, scene, model_source, prompt_version, security_status } = req.body
 
     if (!analysis_type || !analysis_content) {
       return res.status(400).json(apiFailure(API_ERROR_CODES.BAD_REQUEST, '缺少必要参数'))
@@ -39,6 +39,10 @@ export const saveHistory = async (req: AuthRequest, res: Response) => {
       analysisContent: analysis_content,
       suggestionContent: suggestion_content || null,
       riskLevel: risk_level || 'low',
+      scene: scene || null,
+      modelSource: model_source || null,
+      promptVersion: prompt_version || null,
+      securityStatus: security_status || 'passed',
     })
 
     res.json(apiSuccess({ id }, '保存成功'))
@@ -120,6 +124,10 @@ export const getHistoryDetail = async (req: AuthRequest, res: Response) => {
       modelVersion: record.modelVersion,
       requestStatus: record.requestStatus,
       errorMessage: record.errorMessage,
+      scene: record.scene,
+      modelSource: record.modelSource,
+      promptVersion: record.promptVersion,
+      securityStatus: record.securityStatus,
       createdAt: record.createdAt,
     }, '获取详情成功'))
   } catch (error) {
