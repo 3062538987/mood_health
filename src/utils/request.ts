@@ -135,7 +135,7 @@ const service = axios.create({
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const typedConfig = config as RequestConfigWithLoading
-    if (typedConfig.showLoading !== false) {
+    if (typedConfig.showLoading === true) {
       startLoading()
       typedConfig._withLoading = true
     }
@@ -144,8 +144,6 @@ service.interceptors.request.use(
       config.url = config.url.slice(4)
     }
 
-    // Token 通过 HttpOnly Cookie 自动携带，无需手动设置 Authorization header
-    // CSRF Token: 非安全方法需要携带 x-csrf-token 头
     const safeMethods = ['get', 'head', 'options']
     if (!safeMethods.includes(config.method?.toLowerCase() || '')) {
       const csrfToken = getCookie('csrf_token')
