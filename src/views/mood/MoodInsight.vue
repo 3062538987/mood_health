@@ -23,32 +23,30 @@
         </button>
       </section>
 
-      <!-- 骨架屏 -->
-      <div v-if="pageLoading" class="loading-area">
-        <el-skeleton :rows="4" animated />
-        <div class="skeleton-charts">
-          <el-skeleton :rows="3" animated class="sk-block" />
-          <el-skeleton :rows="3" animated class="sk-block" />
+      <SoftLoadingState
+        v-if="pageLoading"
+        title="情绪洞察正在生成中"
+        description="正在为你分析最近的情绪数据，马上就能看到完整的洞察报告。"
+        variant="panel"
+        :item-count="4"
+      />
+
+      <div v-else-if="pageError" class="error-state">
+        <div class="error-icon">
+          <i class="fas fa-exclamation-circle"></i>
         </div>
+        <h3>数据加载失败</h3>
+        <p>请稍后重试</p>
+        <button type="button" class="error-retry" @click="loadData">重新加载</button>
       </div>
 
-      <!-- 错误状态 -->
-      <el-empty
-        v-else-if="pageError"
-        description="数据加载失败，请稍后重试"
-      >
-        <el-button type="primary" @click="loadData">重新加载</el-button>
-      </el-empty>
-
-      <!-- 无数据 -->
-      <div v-else-if="isEmpty" class="empty-state">
-        <div class="empty-icon">
-          <i class="fas fa-chart-bar"></i>
-        </div>
-        <h3>暂无{{ periodLabel }}的情绪数据</h3>
-        <p>去记录一些情绪，积累数据后这里会生成洞察分析。</p>
-        <el-button type="primary" @click="goRecord">去记录情绪</el-button>
-      </div>
+      <SoftEmptyState
+        v-else-if="isEmpty"
+        :title="`暂无${periodLabel}的情绪数据`"
+        description="去记录一些情绪，积累数据后这里会生成洞察分析。"
+        action-text="去记录情绪"
+        @action="goRecord"
+      />
 
       <!-- 数据内容 -->
       <template v-else>
@@ -153,6 +151,8 @@ import type { MoodInsightResponse, InsightPeriod, Polarity } from '@/types/moodI
 import EmotionPieChart from './components/EmotionPieChart.vue'
 import IntensityTrendChart from './components/IntensityTrendChart.vue'
 import PolarityBarChart from './components/PolarityBarChart.vue'
+import SoftLoadingState from '@/components/shared/SoftLoadingState.vue'
+import SoftEmptyState from '@/components/shared/SoftEmptyState.vue'
 
 const router = useRouter()
 
@@ -309,53 +309,51 @@ onMounted(() => {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-/* Loading */
-.loading-area {
-  padding: 20px 0;
-}
-
-.skeleton-charts {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 16px;
-}
-
-.sk-block {
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 16px;
-}
-
-/* Empty */
-.empty-state {
+/* Error State */
+.error-state {
   text-align: center;
   padding: 64px 20px;
 }
 
-.empty-icon {
+.error-icon {
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: #f1f5f9;
+  background: rgba(224, 85, 106, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 16px;
   font-size: 28px;
-  color: #94a3b8;
+  color: #e0556a;
 }
 
-.empty-state h3 {
+.error-state h3 {
   font-size: 18px;
   color: #334155;
   margin: 0 0 8px;
 }
 
-.empty-state p {
+.error-state p {
   font-size: 14px;
   color: #94a3b8;
   margin: 0 0 20px;
+}
+
+.error-retry {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: #8b5cf6;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.error-retry:hover {
+  background: #7c3aed;
 }
 
 /* Summary Cards */

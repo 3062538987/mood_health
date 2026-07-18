@@ -1,10 +1,20 @@
 <template>
   <div v-if="pageLoading" class="loading-wrapper">
-    <el-skeleton :rows="8" animated />
+    <SoftLoadingState
+      title="情绪记录正在准备中"
+      description="正在为你整理情绪类型和触发因素选项，请稍等。"
+      variant="panel"
+      :item-count="5"
+    />
   </div>
-  <el-empty v-else-if="pageError" description="加载失败，请稍后重试">
-    <el-button type="primary" @click="loadPageData">重新加载</el-button>
-  </el-empty>
+  <div v-else-if="pageError" class="error-state">
+    <div class="error-icon">
+      <i class="fas fa-exclamation-circle"></i>
+    </div>
+    <h3>加载失败</h3>
+    <p>请稍后重试</p>
+    <button type="button" class="error-retry" @click="loadPageData">重新加载</button>
+  </div>
   <div v-else class="mood-record-page">
     <div class="page-shell">
       <section class="hero-panel">
@@ -234,6 +244,7 @@ import { EMOTION_MAP } from '@/constants/emotions'
 import { useMoodRecordStore } from '@/stores/moodRecordStore'
 import MoodComparison from '@/components/mood/MoodComparison.vue'
 import MoodAlert from '@/components/mood/MoodAlert.vue'
+import SoftLoadingState from '@/components/shared/SoftLoadingState.vue'
 
 const pageLoading = ref(true)
 const pageError = ref(false)
@@ -402,6 +413,52 @@ onMounted(() => {
   align-items: flex-start;
   justify-content: center;
   padding-top: 80px;
+}
+
+.error-state {
+  text-align: center;
+  padding: 64px 20px;
+}
+
+.error-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(224, 85, 106, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  font-size: 28px;
+  color: #e0556a;
+}
+
+.error-state h3 {
+  font-size: 18px;
+  color: #334155;
+  margin: 0 0 8px;
+}
+
+.error-state p {
+  font-size: 14px;
+  color: #94a3b8;
+  margin: 0 0 20px;
+}
+
+.error-retry {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: #8b5cf6;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.error-retry:hover {
+  background: #7c3aed;
 }
 
 .mood-record-page {
