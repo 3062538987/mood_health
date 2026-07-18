@@ -19,6 +19,7 @@ var mockMoodService: {
   listEmotionTypes: jest.Mock
   listTags: jest.Mock
   createOrGetTag: jest.Mock
+  createOrGetTagsBatch: jest.Mock
   getMoodTrend: jest.Mock
   getWeeklyReport: jest.Mock
   getMoodAnalysis: jest.Mock
@@ -34,6 +35,7 @@ jest.mock('../../../src/services/moodService', () => ({
       listEmotionTypes: jest.fn(),
       listTags: jest.fn(),
       createOrGetTag: jest.fn(),
+      createOrGetTagsBatch: jest.fn(),
       getMoodTrend: jest.fn(),
       getWeeklyReport: jest.fn(),
       getMoodAnalysis: jest.fn(),
@@ -44,6 +46,12 @@ jest.mock('../../../src/services/moodService', () => ({
 
 jest.mock('../../../src/utils/cache', () => ({
   clearMoodCache: jest.fn().mockResolvedValue(undefined),
+}))
+
+jest.mock('../../../src/services/moodAnalysisDataService', () => ({
+  createMoodAnalysisDataService: jest.fn(() => ({
+    markStaleByRecordIds: jest.fn().mockResolvedValue(undefined),
+  })),
 }))
 
 jest.mock('../../../src/utils/logger', () => ({
@@ -74,7 +82,8 @@ describe('moodController response contract', () => {
   })
 
   it('returns a complete write envelope when recording a mood', async () => {
-    mockMoodService.recordMood.mockResolvedValue(10)
+    const recordResult = { recordId: 10, analysisJob: null }
+    mockMoodService.recordMood.mockResolvedValue(recordResult)
     const req = createRequest({
       body: {
         emotions: [{ emotionTypeId: 1, intensity: 6 }],
@@ -92,20 +101,22 @@ describe('moodController response contract', () => {
       userId: 1,
       note: '普通的一天',
       trigger: '学习',
+      includeNote: false,
       recordedAt: new Date('2026-07-15T00:00:00.000Z'),
       emotions: [{ emotionTypeId: 1, intensity: 6 }],
       tagIds: [2],
     })
     expect(res.status).toHaveBeenCalledWith(201)
-    expect(res.json).toHaveBeenCalledWith({ code: 0, message: '记录成功', data: null })
+    expect(res.json).toHaveBeenCalledWith({ code: 0, message: '记录成功', data: recordResult })
   })
 
   it('routes legacy mood write payloads through mood service', async () => {
     mockMoodService.listEmotionTypes.mockResolvedValue([
       { id: 3, name: 'anxious', icon: 'alert', category: 'negative' },
     ])
-    mockMoodService.createOrGetTag.mockResolvedValue({ id: 8, name: 'study' })
-    mockMoodService.recordMood.mockResolvedValue(11)
+    mockMoodService.createOrGetTagsBatch.mockResolvedValue(new Map([['study', 8]]))
+    const recordResult = { recordId: 11, analysisJob: null }
+    mockMoodService.recordMood.mockResolvedValue(recordResult)
     const req = createRequest({
       body: {
         moodType: 'anxious',
@@ -121,17 +132,18 @@ describe('moodController response contract', () => {
     await recordMood(req, res)
 
     expect(mockMoodService.listEmotionTypes).toHaveBeenCalledWith()
-    expect(mockMoodService.createOrGetTag).toHaveBeenCalledWith('study', 1)
+    expect(mockMoodService.createOrGetTagsBatch).toHaveBeenCalledWith(['study'], 1)
     expect(mockMoodService.recordMood).toHaveBeenCalledWith({
       userId: 1,
       note: 'legacy-note',
       trigger: 'exam',
+      includeNote: false,
       recordedAt: new Date('2026-07-15T00:00:00.000Z'),
       emotions: [{ emotionTypeId: 3, intensity: 4, isPrimary: true }],
       tagIds: [8],
     })
     expect(res.status).toHaveBeenCalledWith(201)
-    expect(res.json).toHaveBeenCalledWith({ code: 0, message: '记录成功', data: null })
+    expect(res.json).toHaveBeenCalledWith({ code: 0, message: '记录成功', data: recordResult })
   })
 
   it('returns a paginated list DTO', async () => {
@@ -228,6 +240,7 @@ describe('moodController response contract', () => {
       userId: 1,
       note: 'updated-note',
       trigger: 'updated-trigger',
+      includeNote: false,
       recordedAt: new Date('2026-07-15T00:00:00.000Z'),
       emotions: [{ emotionTypeId: 1, intensity: 8, isPrimary: true }],
       tagIds: [2],
@@ -241,7 +254,7 @@ describe('moodController response contract', () => {
     mockMoodService.listEmotionTypes.mockResolvedValue([
       { id: 4, name: 'calm', icon: 'leaf', category: 'positive' },
     ])
-    mockMoodService.createOrGetTag.mockResolvedValue({ id: 6, name: 'sleep' })
+    mockMoodService.createOrGetTagsBatch.mockResolvedValue(new Map([['sleep', 6]]))
     mockMoodService.updateMood.mockResolvedValue(true)
     const res = createResponse()
 
@@ -261,12 +274,13 @@ describe('moodController response contract', () => {
     )
 
     expect(mockMoodService.listEmotionTypes).toHaveBeenCalledWith()
-    expect(mockMoodService.createOrGetTag).toHaveBeenCalledWith('sleep', 1)
+    expect(mockMoodService.createOrGetTagsBatch).toHaveBeenCalledWith(['sleep'], 1)
     expect(mockMoodService.updateMood).toHaveBeenCalledWith({
       id: 12,
       userId: 1,
       note: 'legacy-update-note',
       trigger: 'rest',
+      includeNote: false,
       recordedAt: new Date('2026-07-15T00:00:00.000Z'),
       emotions: [{ emotionTypeId: 4, intensity: 7, isPrimary: true }],
       tagIds: [6],

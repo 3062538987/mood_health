@@ -8,8 +8,31 @@ import { createMoodAnalysisDataService } from '../services/moodAnalysisDataServi
 import logger from '../utils/logger'
 
 const moodService = createMoodService()
-const moodAlertService = createMoodAlertService()
-const moodAnalysisDataService = createMoodAnalysisDataService()
+
+let moodAlertService: ReturnType<typeof createMoodAlertService> | undefined
+let moodAnalysisDataService: ReturnType<typeof createMoodAnalysisDataService> | undefined
+
+const getMoodAlertService = () => {
+  if (!moodAlertService) {
+    moodAlertService = createMoodAlertService()
+  }
+  return moodAlertService
+}
+
+const getMoodAnalysisDataService = () => {
+  if (!moodAnalysisDataService) {
+    moodAnalysisDataService = createMoodAnalysisDataService()
+  }
+  return moodAnalysisDataService
+}
+
+export const setMoodAlertService = (service: ReturnType<typeof createMoodAlertService>) => {
+  moodAlertService = service
+}
+
+export const setMoodAnalysisDataService = (service: ReturnType<typeof createMoodAnalysisDataService>) => {
+  moodAnalysisDataService = service
+}
 
 function guardUserId(req: AuthRequest, res: Response): number | null {
   if (!req.user) {
@@ -189,7 +212,7 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
       }
 
       clearMoodCache(userId).catch((err) => logger.warn('清除缓存失败(非阻塞)', { error: (err as Error).message }))
-      moodAnalysisDataService.markStaleByRecordIds([moodId]).catch((err) => logger.warn('标记分析版本过期失败(非阻塞)', { error: (err as Error).message }))
+      getMoodAnalysisDataService().markStaleByRecordIds([moodId]).catch((err) => logger.warn('标记分析版本过期失败(非阻塞)', { error: (err as Error).message }))
       return res.json(apiSuccess(null, '更新成功'))
     }
 
@@ -244,7 +267,7 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
     }
 
     clearMoodCache(userId).catch((err) => logger.warn('清除缓存失败(非阻塞)', { error: (err as Error).message }))
-    moodAnalysisDataService.markStaleByRecordIds([moodId]).catch((err) => logger.warn('标记分析版本过期失败(非阻塞)', { error: (err as Error).message }))
+    getMoodAnalysisDataService().markStaleByRecordIds([moodId]).catch((err) => logger.warn('标记分析版本过期失败(非阻塞)', { error: (err as Error).message }))
     res.json(apiSuccess(null, '更新成功'))
   } catch (error) {
     logger.error('请求处理异常', { error: (error as Error).message })
@@ -269,7 +292,7 @@ export const deleteMoodHandler = async (req: AuthRequest, res: Response) => {
     }
 
     clearMoodCache(userId).catch((err) => logger.warn('清除缓存失败(非阻塞)', { error: (err as Error).message }))
-    moodAnalysisDataService.markStaleByRecordIds([moodId]).catch((err) => logger.warn('标记分析版本过期失败(非阻塞)', { error: (err as Error).message }))
+    getMoodAnalysisDataService().markStaleByRecordIds([moodId]).catch((err) => logger.warn('标记分析版本过期失败(非阻塞)', { error: (err as Error).message }))
     res.json(apiSuccess(null, '删除成功'))
   } catch (error) {
     logger.error('请求处理异常', { error: (error as Error).message })
@@ -368,8 +391,8 @@ export const getMoodAlerts = async (req: AuthRequest, res: Response) => {
     const userId = guardUserId(req, res)
     if (userId === null) return
     // 先检测新提醒，再获取所有提醒
-    await moodAlertService.detectAlerts(userId)
-    const alerts = await moodAlertService.getAlerts(userId)
+    await getMoodAlertService().detectAlerts(userId)
+    const alerts = await getMoodAlertService().getAlerts(userId)
     res.json(apiSuccess(alerts, '获取提醒成功'))
   } catch (error) {
     logger.error('请求处理异常', { error: (error as Error).message })
@@ -387,7 +410,7 @@ export const markAlertRead = async (req: AuthRequest, res: Response) => {
       return res.status(400).json(apiFailure(400, '无效的提醒 ID'))
     }
 
-    const updated = await moodAlertService.markAsRead(userId, alertId)
+    const updated = await getMoodAlertService().markAsRead(userId, alertId)
     if (!updated) {
       return res.status(404).json(apiFailure(404, '提醒不存在'))
     }

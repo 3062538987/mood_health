@@ -12,6 +12,7 @@ const createRepository = (): jest.Mocked<MoodRepository> => ({
   listEmotionTypes: jest.fn(),
   listTags: jest.fn(),
   createOrGetTag: jest.fn(),
+  createOrGetTagsBatch: jest.fn(),
   listTrendRows: jest.fn(),
   listWeeklyRows: jest.fn(),
   listAnalysisRows: jest.fn(),
@@ -22,14 +23,15 @@ const createRepository = (): jest.Mocked<MoodRepository> => ({
 describe('moodService', () => {
   it('encrypts note and trigger before creating a mood with one primary emotion', async () => {
     const repository = createRepository()
-    repository.createMood.mockResolvedValue(21)
+    repository.createMood.mockResolvedValue({ moodId: 21, jobId: null })
     const encryptField = jest.fn((value: string | null | undefined) => (value ? 'encrypted-value' : null))
     const service = createMoodService({ repository, encryptField })
 
-    const moodId = await service.recordMood({
+    const result = await service.recordMood({
       userId: 7,
       note: '今天考试压力很大',
       trigger: '期末复习',
+      includeNote: true,
       recordedAt: new Date('2026-07-15T10:00:00.000Z'),
       emotions: [
         { emotionTypeId: 3, intensity: 8, isPrimary: true },
@@ -38,11 +40,12 @@ describe('moodService', () => {
       tagIds: [1, 2],
     })
 
-    expect(moodId).toBe(21)
+    expect(result).toEqual({ recordId: 21, analysisJob: null })
     expect(repository.createMood).toHaveBeenCalledWith({
       userId: 7,
       noteCiphertext: 'encrypted-value',
       triggerCiphertext: 'encrypted-value',
+      includeNote: true,
       recordedAt: new Date('2026-07-15T10:00:00.000Z'),
       emotions: [
         { emotionTypeId: 3, intensity: 8, isPrimary: true },
@@ -64,6 +67,7 @@ describe('moodService', () => {
         userId: 7,
         note: '',
         trigger: '',
+        includeNote: false,
         recordedAt: new Date(),
         emotions: [],
         tagIds: [],
@@ -75,6 +79,7 @@ describe('moodService', () => {
         userId: 7,
         note: '',
         trigger: '',
+        includeNote: false,
         recordedAt: new Date(),
         emotions: [{ emotionTypeId: 1, intensity: 11 }],
         tagIds: [],
@@ -93,6 +98,7 @@ describe('moodService', () => {
         userId: 7,
         note: '',
         trigger: '',
+        includeNote: false,
         recordedAt: new Date(),
         emotions: [
           { emotionTypeId: 1, intensity: 5, isPrimary: true },
@@ -206,6 +212,7 @@ describe('moodService', () => {
       userId: 7,
       note: '更新后的记录',
       trigger: '复盘',
+      includeNote: true,
       recordedAt: new Date('2026-07-15T11:00:00.000Z'),
       emotions: [{ emotionTypeId: 2, intensity: 6, isPrimary: true }],
       tagIds: [4],
@@ -217,6 +224,7 @@ describe('moodService', () => {
       userId: 7,
       noteCiphertext: 'encrypted-value',
       triggerCiphertext: 'encrypted-value',
+      includeNote: true,
       recordedAt: new Date('2026-07-15T11:00:00.000Z'),
       emotions: [{ emotionTypeId: 2, intensity: 6, isPrimary: true }],
       tagIds: [4],
@@ -237,6 +245,7 @@ describe('moodService', () => {
         userId: 7,
         note: '',
         trigger: '',
+        includeNote: false,
         recordedAt: new Date(),
         emotions: [{ emotionTypeId: 1, intensity: 0 }],
         tagIds: [],

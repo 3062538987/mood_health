@@ -20,6 +20,7 @@ const createRepository = (): jest.Mocked<ManagementRepository> => ({
   getMoodDistribution: jest.fn(),
   getAssessmentDistribution: jest.fn(),
   getModuleUsage: jest.fn(),
+  getAiUsageStats: jest.fn(),
 })
 
 describe('managementService', () => {

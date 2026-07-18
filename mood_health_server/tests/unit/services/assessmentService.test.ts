@@ -19,9 +19,11 @@ const createRepository = (): jest.Mocked<AssessmentRepository> => ({
   getQuestionnaireById: jest.fn(),
   listQuestionsByQuestionnaireId: jest.fn(),
   createSubmittedSession: jest.fn(),
+  createSubmittedSessionWithCase: jest.fn(),
   listUserAssessmentHistory: jest.fn(),
   getScoringRules: jest.fn(),
   getSessionById: jest.fn(),
+  getInstrumentById: jest.fn(),
   listAllSessions: jest.fn(),
   getSessionByIdAdmin: jest.fn(),
 })
@@ -103,7 +105,8 @@ describe('assessmentService', () => {
         levels: { '低风险': '正常', '中风险': '关注', '高风险': '干预' },
       },
     })
-    repository.createSubmittedSession.mockResolvedValue(31)
+    repository.getInstrumentById.mockResolvedValue({ status: 'approved' })
+    repository.createSubmittedSessionWithCase.mockResolvedValue(31)
     jest.mocked(createAssessmentRepository).mockReturnValue(repository)
     const service = createAssessmentService()
 
@@ -126,7 +129,8 @@ describe('assessmentService', () => {
     })
     expect(repository.getQuestionnaireById).toHaveBeenCalledWith(1)
     expect(repository.getScoringRules).toHaveBeenCalledWith(1)
-    expect(repository.createSubmittedSession).toHaveBeenCalled()
+    expect(repository.getInstrumentById).toHaveBeenCalledWith(1)
+    expect(repository.createSubmittedSessionWithCase).toHaveBeenCalled()
   })
 
   it('lists user assessment history through the repository boundary', async () => {

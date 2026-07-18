@@ -64,10 +64,11 @@ describe('moodRepository', () => {
     db.connection.queueResult({ insertId: 15, affectedRows: 1 })
     const repository = createMoodRepository(db)
 
-    const moodId = await repository.createMood({
+    const { moodId } = await repository.createMood({
       userId: 7,
       noteCiphertext: 'encrypted-note',
       triggerCiphertext: 'encrypted-trigger',
+      includeNote: true,
       recordedAt: new Date('2026-07-15T10:00:00.000Z'),
       emotions: [
         { emotionTypeId: 1, intensity: 8, isPrimary: true },
@@ -84,18 +85,18 @@ describe('moodRepository', () => {
     expect(db.connection.calls[0].sql).toContain('INSERT INTO moods')
     expect(db.connection.calls[0].sql).toContain('note_ciphertext')
     expect(db.connection.calls[0].sql).toContain('trigger_ciphertext')
+    expect(db.connection.calls[0].sql).toContain('include_note')
     expect(db.connection.calls[0].params).toEqual([
       7,
       'encrypted-note',
       'encrypted-trigger',
+      1,
       new Date('2026-07-15T10:00:00.000Z'),
     ])
     expect(db.connection.calls[1].sql).toContain('INSERT INTO mood_emotions')
-    expect(db.connection.calls[1].params).toEqual([15, 1, 8, 1])
-    expect(db.connection.calls[2].params).toEqual([15, 2, 4, 0])
-    expect(db.connection.calls[3].sql).toContain('INSERT INTO mood_tags')
-    expect(db.connection.calls[3].params).toEqual([15, 3])
-    expect(db.connection.calls[4].params).toEqual([15, 4])
+    expect(db.connection.calls[1].params).toEqual([15, 1, 8, 1, 15, 2, 4, 0])
+    expect(db.connection.calls[2].sql).toContain('INSERT INTO mood_tags')
+    expect(db.connection.calls[2].params).toEqual([15, 3, 15, 4])
   })
 
   it('rolls back and releases the connection when any association insert fails', async () => {
@@ -113,6 +114,7 @@ describe('moodRepository', () => {
         userId: 7,
         noteCiphertext: null,
         triggerCiphertext: null,
+        includeNote: false,
         recordedAt: new Date('2026-07-15T10:00:00.000Z'),
         emotions: [{ emotionTypeId: 999, intensity: 8, isPrimary: true }],
         tagIds: [],
@@ -259,6 +261,7 @@ describe('moodRepository', () => {
       userId: 7,
       noteCiphertext: 'new-note',
       triggerCiphertext: null,
+      includeNote: true,
       recordedAt: new Date('2026-07-15T11:00:00.000Z'),
       emotions: [{ emotionTypeId: 2, intensity: 6, isPrimary: true }],
       tagIds: [4],
@@ -274,6 +277,7 @@ describe('moodRepository', () => {
     expect(db.connection.calls[0].params).toEqual([
       'new-note',
       null,
+      1,
       new Date('2026-07-15T11:00:00.000Z'),
       15,
       7,
@@ -298,6 +302,7 @@ describe('moodRepository', () => {
       userId: 7,
       noteCiphertext: null,
       triggerCiphertext: null,
+      includeNote: false,
       recordedAt: new Date('2026-07-15T11:00:00.000Z'),
       emotions: [{ emotionTypeId: 2, intensity: 6, isPrimary: true }],
       tagIds: [],

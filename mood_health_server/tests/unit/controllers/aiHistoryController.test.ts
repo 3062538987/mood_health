@@ -2,15 +2,15 @@
  * AI 分析历史控制器测试
  */
 
-import { saveHistory, listHistory, getHistoryDetail } from '../../../src/controllers/aiHistoryController'
+import { createAiHistoryController } from '../../../src/controllers/aiHistoryController'
 
-jest.mock('../../../src/repositories/aiHistoryRepository', () => ({
-  createAiHistoryRepository: jest.fn(() => ({
-    saveHistory: jest.fn().mockResolvedValue(1),
-    listHistory: jest.fn().mockResolvedValue({ list: [], total: 0 }),
-    getHistoryDetail: jest.fn().mockResolvedValue(null),
-  })),
-}))
+const createMockRepo = () => ({
+  saveHistory: jest.fn().mockResolvedValue(1),
+  listHistory: jest.fn().mockResolvedValue({ list: [], total: 0 }),
+  getHistoryDetail: jest.fn().mockResolvedValue(null),
+})
+
+type MockRepo = ReturnType<typeof createMockRepo>
 
 describe('aiHistoryController', () => {
   const mockReq = (overrides: Record<string, unknown> = {}) => {
@@ -33,6 +33,8 @@ describe('aiHistoryController', () => {
 
   describe('saveHistory', () => {
     it('未登录返回 401', async () => {
+      const repo = createMockRepo()
+      const { saveHistory } = createAiHistoryController({ repo: repo as unknown as MockRepo })
       const req = mockReq({ user: undefined })
       const res = mockRes()
       await saveHistory(req, res)
@@ -40,6 +42,8 @@ describe('aiHistoryController', () => {
     })
 
     it('缺少必要参数返回 400', async () => {
+      const repo = createMockRepo()
+      const { saveHistory } = createAiHistoryController({ repo: repo as unknown as MockRepo })
       const req = mockReq({ body: { analysis_type: '' } })
       const res = mockRes()
       await saveHistory(req, res)
@@ -49,6 +53,8 @@ describe('aiHistoryController', () => {
 
   describe('listHistory', () => {
     it('未登录返回 401', async () => {
+      const repo = createMockRepo()
+      const { listHistory } = createAiHistoryController({ repo: repo as unknown as MockRepo })
       const req = mockReq({ user: undefined })
       const res = mockRes()
       await listHistory(req, res)
@@ -56,6 +62,8 @@ describe('aiHistoryController', () => {
     })
 
     it('空列表返回空数组', async () => {
+      const repo = createMockRepo()
+      const { listHistory } = createAiHistoryController({ repo: repo as unknown as MockRepo })
       const req = mockReq()
       const res = mockRes()
       await listHistory(req, res)
@@ -68,6 +76,8 @@ describe('aiHistoryController', () => {
 
   describe('getHistoryDetail', () => {
     it('未登录返回 401', async () => {
+      const repo = createMockRepo()
+      const { getHistoryDetail } = createAiHistoryController({ repo: repo as unknown as MockRepo })
       const req = mockReq({ user: undefined })
       const res = mockRes()
       await getHistoryDetail(req, res)
@@ -75,6 +85,8 @@ describe('aiHistoryController', () => {
     })
 
     it('无效 ID 返回 400', async () => {
+      const repo = createMockRepo()
+      const { getHistoryDetail } = createAiHistoryController({ repo: repo as unknown as MockRepo })
       const req = mockReq({ params: { id: 'abc' } })
       const res = mockRes()
       await getHistoryDetail(req, res)
@@ -82,6 +94,8 @@ describe('aiHistoryController', () => {
     })
 
     it('不存在的记录返回 404', async () => {
+      const repo = createMockRepo()
+      const { getHistoryDetail } = createAiHistoryController({ repo: repo as unknown as MockRepo })
       const req = mockReq({ params: { id: '999' } })
       const res = mockRes()
       await getHistoryDetail(req, res)
