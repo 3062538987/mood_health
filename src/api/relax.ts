@@ -9,6 +9,8 @@ interface RelaxRecord {
   endTime: string
   metrics: Record<string, any>
   moodTag?: string
+  clientId?: string
+  clientTimestamp?: number
 }
 
 interface RelaxStatistics {

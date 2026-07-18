@@ -12,7 +12,7 @@ export const saveRelaxRecordHandler = async (
 ) => {
   try {
     const userId = req.user!.userId;
-    const { activityType, startTime, endTime, metrics, moodTag } = req.body;
+    const { activityType, startTime, endTime, metrics, moodTag, clientId, clientTimestamp } = req.body;
 
     if (!activityType || !startTime || !endTime) {
       return res.status(400).json(apiFailure(400, "放松记录参数不完整"));
@@ -30,12 +30,14 @@ export const saveRelaxRecordHandler = async (
       return res.status(400).json(apiFailure(400, "放松时长不能超过4小时"));
     }
 
-    const record = await relaxRepo.create(userId, {
+    const record = await relaxRepo.createOrUpsert(userId, {
       activityType,
       startTime,
       endTime,
       metrics,
       moodTag,
+      clientId: clientId || null,
+      clientTimestamp: clientTimestamp || 0,
     });
     res.status(201).json(apiSuccess(record, "保存放松记录成功"));
   } catch (error) {

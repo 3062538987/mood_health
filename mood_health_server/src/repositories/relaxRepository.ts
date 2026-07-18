@@ -22,6 +22,8 @@ export interface CreateRelaxRecordInput {
   endTime: string
   metrics?: Record<string, unknown>
   moodTag?: string | null
+  clientId?: string | null
+  clientTimestamp?: number
 }
 
 export interface RelaxStatisticsDto {
@@ -76,8 +78,8 @@ const mapRecord = (row: RelaxRecordRow): RelaxRecordDto => ({
 export const createRelaxRepository = (db: RelaxDatabase = getMysqlPool()) => {
   const create = async (userId: number, input: CreateRelaxRecordInput): Promise<RelaxRecordDto> => {
     const [result] = await db.query<ResultSetHeader>(
-      `INSERT INTO relax_records (user_id, activity_type, start_time, end_time, metrics, mood_tag)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO relax_records (user_id, activity_type, start_time, end_time, metrics, mood_tag, client_id, client_timestamp)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userId,
         input.activityType,
@@ -85,6 +87,8 @@ export const createRelaxRepository = (db: RelaxDatabase = getMysqlPool()) => {
         new Date(input.endTime).toISOString().slice(0, 23).replace('T', ' '),
         JSON.stringify(input.metrics || {}),
         input.moodTag ?? null,
+        input.clientId ?? null,
+        input.clientTimestamp ?? 0,
       ]
     )
 
@@ -93,6 +97,43 @@ export const createRelaxRepository = (db: RelaxDatabase = getMysqlPool()) => {
       [result.insertId]
     )
     return mapRecord(rows[0])
+  }
+
+  /**
+   * 按 clientId 去重创建或更新，防止离线同步时重复记录
+   */
+  const createOrUpsert = async (userId: number, input: CreateRelaxRecordInput): Promise<RelaxRecordDto> => {
+    if (input.clientId) {
+      // 按 clientId 去重：已存在则更新，不存在则创建
+      const [existing] = await db.query<RelaxRecordRow[]>(
+        'SELECT * FROM relax_records WHERE user_id = ? AND client_id = ? LIMIT 1',
+        [userId, input.clientId]
+      )
+      if (existing[0]) {
+        await db.query<ResultSetHeader>(
+          `UPDATE relax_records SET
+             activity_type = ?, start_time = ?, end_time = ?,
+             metrics = ?, mood_tag = ?, client_timestamp = ?
+           WHERE id = ? AND user_id = ?`,
+          [
+            input.activityType,
+            new Date(input.startTime).toISOString().slice(0, 23).replace('T', ' '),
+            new Date(input.endTime).toISOString().slice(0, 23).replace('T', ' '),
+            JSON.stringify(input.metrics || {}),
+            input.moodTag ?? null,
+            input.clientTimestamp ?? 0,
+            existing[0].id,
+            userId,
+          ]
+        )
+        const [rows] = await db.query<RelaxRecordRow[]>(
+          'SELECT * FROM relax_records WHERE id = ? LIMIT 1',
+          [existing[0].id]
+        )
+        return mapRecord(rows[0])
+      }
+    }
+    return create(userId, input)
   }
 
   const findAll = async (userId: number, params: RelaxQueryParams): Promise<{ records: RelaxRecordDto[]; total: number }> => {
@@ -171,7 +212,7 @@ export const createRelaxRepository = (db: RelaxDatabase = getMysqlPool()) => {
     return { todayDuration, thisWeekCount, mostUsedActivity, activityBreakdown }
   }
 
-  return { create, findAll, findById, getStatistics }
+  return { create, createOrUpsert, findAll, findById, getStatistics }
 }
 
 export type RelaxRepository = ReturnType<typeof createRelaxRepository>
