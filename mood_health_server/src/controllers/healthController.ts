@@ -29,24 +29,30 @@ export const createHealthHandler = ({
   timeoutMs = 2000,
 }: HealthDependencies): RequestHandler => {
   return async (_request, response) => {
-    const [mysqlHealthy, redisHealthy] = await Promise.all([
-      runWithTimeout(checkMysql, timeoutMs),
-      runWithTimeout(checkRedis, timeoutMs),
-    ])
-    const data = {
-      status: mysqlHealthy ? (redisHealthy ? 'ok' : 'degraded') : 'unhealthy',
-      api: 'healthy',
-      mysql: mysqlHealthy ? 'connected' : 'disconnected',
-      redis: redisHealthy ? 'connected' : 'disconnected',
-    }
+    try {
+      const [mysqlHealthy, redisHealthy] = await Promise.all([
+        runWithTimeout(checkMysql, timeoutMs),
+        runWithTimeout(checkRedis, timeoutMs),
+      ])
+      const data = {
+        status: mysqlHealthy ? (redisHealthy ? 'ok' : 'degraded') : 'unhealthy',
+        api: 'healthy',
+        mysql: mysqlHealthy ? 'connected' : 'disconnected',
+        redis: redisHealthy ? 'connected' : 'disconnected',
+      }
 
-    if (!mysqlHealthy) {
+      if (!mysqlHealthy) {
+        response
+          .status(503)
+          .json(apiFailure(API_ERROR_CODES.SERVICE_UNAVAILABLE, '服务不可用', data))
+        return
+      }
+
+      response.json(apiSuccess(data, redisHealthy ? '服务健康' : '服务降级'))
+    } catch (error) {
       response
-        .status(503)
-        .json(apiFailure(API_ERROR_CODES.SERVICE_UNAVAILABLE, '服务不可用', data))
-      return
+        .status(500)
+        .json(apiFailure(API_ERROR_CODES.INTERNAL_ERROR, '健康检查失败'))
     }
-
-    response.json(apiSuccess(data, redisHealthy ? '服务健康' : '服务降级'))
   }
 }

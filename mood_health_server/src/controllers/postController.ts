@@ -64,8 +64,13 @@ export const createPostHandler = async (req: AuthRequest, res: Response) => {
         }
         riskLevel = auditResult.severity === 'medium' ? 'medium' : 'low'
       }
-    } catch {
+    } catch (auditError) {
       // AI 审核失败时降级为基础过滤
+      logger.warn('AI 内容审核失败，降级为本地审核', {
+        error: (auditError as Error).message,
+        contentLength: content.length,
+        userId,
+      })
       riskLevel = 'low'
     }
 

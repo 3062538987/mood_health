@@ -82,7 +82,7 @@ export const getMysqlPool = (): Pool => {
       connectionLimit: poolConfig.connectionLimit,
       maxIdle: poolConfig.connectionLimit,
       idleTimeout: 30000,
-      queueLimit: 0,
+      queueLimit: poolConfig.connectionLimit * 2,
       connectTimeout: poolConfig.connectTimeoutMs,
       enableKeepAlive: true,
       keepAliveInitialDelay: 0,
@@ -126,4 +126,38 @@ export const closeMysqlPool = async (): Promise<void> => {
   await pool.end()
   pool = undefined
   poolConfig = undefined
+}
+
+// MySQL 死锁错误码
+const ER_LOCK_DEADLOCK = 1213
+const ER_LOCK_WAIT_TIMEOUT = 1205
+
+/**
+ * 带死锁重试的数据库操作包装器
+ * 遇到死锁错误时自动重试，最多3次，指数退避
+ */
+export const withDeadlockRetry = async <T>(
+  operation: () => Promise<T>,
+  maxRetries = 3,
+  baseDelayMs = 100
+): Promise<T> => {
+  let lastError: unknown
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation()
+    } catch (error: unknown) {
+      lastError = error
+      const errno = (error as { errno?: number }).errno
+      if (attempt < maxRetries && (errno === ER_LOCK_DEADLOCK || errno === ER_LOCK_WAIT_TIMEOUT)) {
+        const delay = baseDelayMs * Math.pow(2, attempt) + Math.random() * 50
+        console.warn(
+          `数据库死锁/锁等待 (errno=${errno})，${delay.toFixed(0)}ms 后重试 (${attempt + 1}/${maxRetries})...`
+        )
+        await new Promise((resolve) => setTimeout(resolve, delay))
+        continue
+      }
+      throw error
+    }
+  }
+  throw lastError
 }

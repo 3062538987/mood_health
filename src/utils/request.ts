@@ -55,9 +55,12 @@ const endLoading = () => {
   if (loadingCount > 0) {
     loadingCount--
   }
-  if (loadingCount === 0 && loadingInstance) {
-    loadingInstance.close()
-    loadingInstance = null
+  if (loadingCount <= 0) {
+    loadingCount = 0
+    if (loadingInstance) {
+      loadingInstance.close()
+      loadingInstance = null
+    }
   }
 }
 
@@ -198,6 +201,12 @@ service.interceptors.response.use(
           break
         case 500:
           message = responseMessage || '服务器内部错误'
+          break
+        case 502:
+          message = responseMessage || '网关错误，服务可能正在重启'
+          break
+        case 503:
+          message = responseMessage || '服务暂时不可用，请稍后重试'
           break
       }
 
