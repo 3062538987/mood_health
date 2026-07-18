@@ -241,7 +241,8 @@ input {
 input::placeholder { color: var(--text-muted); }
 
 input:focus {
-  outline: none;
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 4px var(--focus-ring);
   background: var(--surface);

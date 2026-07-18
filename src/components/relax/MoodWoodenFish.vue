@@ -359,7 +359,8 @@ onMounted(() => {
         transition: border-color 0.3s;
 
         &:focus {
-          outline: none;
+          outline: 3px solid var(--focus);
+          outline-offset: 2px;
           border-color: #42b983;
         }
       }

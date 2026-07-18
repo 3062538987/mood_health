@@ -514,8 +514,13 @@ onUnmounted(() => {
         height: 6px;
         border-radius: 3px;
         background: #f0f0f0;
-        outline: none;
         -webkit-appearance: none;
+        cursor: pointer;
+
+        &:focus-visible {
+          outline: 3px solid var(--focus);
+          outline-offset: 2px;
+        }
 
         &::-webkit-slider-thumb {
           -webkit-appearance: none;
@@ -550,8 +555,13 @@ onUnmounted(() => {
         height: 4px;
         border-radius: 2px;
         background: #f0f0f0;
-        outline: none;
         -webkit-appearance: none;
+        cursor: pointer;
+
+        &:focus-visible {
+          outline: 3px solid var(--focus);
+          outline-offset: 2px;
+        }
 
         &::-webkit-slider-thumb {
           -webkit-appearance: none;

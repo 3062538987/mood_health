@@ -446,7 +446,7 @@ footer {
 
       i { width: 18px; color: var(--primary-color); }
       &:hover,
-      &:focus-visible { background: var(--primary-soft); outline: none; }
+      &:focus-visible { background: var(--primary-soft); outline: 3px solid var(--focus); outline-offset: 2px; }
     }
   }
 

@@ -147,7 +147,8 @@ onUnmounted(() => {
         }
 
         &:focus {
-          outline: none;
+          outline: 3px solid var(--focus);
+          outline-offset: 2px;
           border-color: #42b983;
           box-shadow: 0 0 0 3px rgba(66, 185, 131, 0.1);
         }
@@ -226,8 +227,12 @@ onUnmounted(() => {
             appearance: none;
             background: #e4e8ec;
             border-radius: 2px;
-            outline: none;
             cursor: pointer;
+
+            &:focus-visible {
+              outline: 3px solid var(--focus);
+              outline-offset: 2px;
+            }
 
             &::-webkit-slider-thumb {
               -webkit-appearance: none;

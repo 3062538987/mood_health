@@ -520,7 +520,8 @@ const deleteAccount = async () => {
   }
 
   &:focus {
-    outline: none;
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
     border-color: #42b983;
     box-shadow: 0 0 0 2px rgba(66, 185, 131, 0.1);
   }

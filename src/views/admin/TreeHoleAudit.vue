@@ -585,7 +585,8 @@ onMounted(loadData)
         margin-bottom: 15px;
 
         &:focus {
-          outline: none;
+          outline: 3px solid var(--focus);
+          outline-offset: 2px;
           border-color: $primary-color;
         }
       }

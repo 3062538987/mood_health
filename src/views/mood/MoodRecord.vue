@@ -774,11 +774,16 @@ textarea,
   background: var(--surface);
   color: var(--text-color);
   padding: 1.15rem 1.2rem;
-  outline: none;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease,
     background 0.2s ease;
+
+  &:focus {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+    border-color: var(--primary-color);
+  }
 }
 
 textarea {

@@ -219,7 +219,8 @@ const submitPost = async () => {
       background: rgba(255, 255, 255, 0.8);
 
       &:focus {
-        outline: none;
+        outline: 3px solid var(--focus);
+        outline-offset: 2px;
         border-color: $primary-color;
         box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
       }

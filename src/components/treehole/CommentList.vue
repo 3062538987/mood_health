@@ -101,7 +101,8 @@ const formatDate = (dateStr: string) => {
       font-size: $font-size-md;
       min-height: 100px;
       &:focus {
-        outline: none;
+        outline: 3px solid var(--focus);
+        outline-offset: 2px;
         border-color: $primary-color;
         box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
       }

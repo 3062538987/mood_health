@@ -530,7 +530,8 @@ onMounted(() => {
   box-sizing: border-box;
 
   &:focus {
-    outline: none;
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
     border-color: $primary-color;
   }
 }
