@@ -6,12 +6,9 @@ import {
 } from '../repositories/assessmentRepository'
 import { scoreAssessment, ScoringRule, RiskStratification, SuggestionTemplate } from '../utils/scoringEngine'
 import { HttpException } from '../utils/errors'
-import { createCaseService, type CaseService } from './caseService'
-import logger from '../utils/logger'
 
 export interface AssessmentServiceDependencies {
   repository?: AssessmentRepository
-  caseService?: CaseService
 }
 
 export interface SubmitAssessmentInput {
@@ -22,7 +19,6 @@ export interface SubmitAssessmentInput {
 
 export const createAssessmentService = (dependencies: AssessmentServiceDependencies = {}) => {
   const repository = dependencies.repository ?? createAssessmentRepository()
-  const caseService = dependencies.caseService ?? createCaseService()
 
   const listQuestionnaires = async () => repository.listQuestionnaires()
 
@@ -51,19 +47,25 @@ export const createAssessmentService = (dependencies: AssessmentServiceDependenc
     repository.getSessionByIdAdmin(sessionId)
 
   const submitAssessment = async (input: SubmitAssessmentInput) => {
-    // 1. 验证量表存在
+    // 1. 验证量表存在且已批准
     const questionnaire = await repository.getQuestionnaireById(input.questionnaireId)
     if (!questionnaire) {
       throw new HttpException('测评工具不存在', 404)
     }
 
-    // 2. 获取计分规则
+    // 2. 检查量表是否已批准
+    const instrument = await repository.getInstrumentById(input.questionnaireId)
+    if (!instrument || instrument.status !== 'approved') {
+      throw new HttpException('该测评工具尚未通过审核，暂不可用', 403)
+    }
+
+    // 3. 获取计分规则
     const rules = await repository.getScoringRules(input.questionnaireId)
     if (!rules) {
       throw new HttpException('测评计分规则未配置', 500)
     }
 
-    // 3. 计分
+    // 4. 计分
     const scoringResult = scoreAssessment(
       input.answers,
       rules.scoringRule as unknown as ScoringRule,
@@ -71,7 +73,7 @@ export const createAssessmentService = (dependencies: AssessmentServiceDependenc
       rules.suggestionTemplate as unknown as SuggestionTemplate
     )
 
-    // 4. 构建插入数据
+    // 5. 构建插入数据
     const now = new Date()
     const sessionInput: CreateSubmittedAssessmentSessionInput = {
       userId: input.userId,
@@ -87,17 +89,9 @@ export const createAssessmentService = (dependencies: AssessmentServiceDependenc
       submittedAt: now,
     }
 
-    // 5. 创建会话
-    const sessionId = await repository.createSubmittedSession(sessionInput)
-
-    // 6. 高风险自动创建个案
-    if (scoringResult.riskLevel === '高风险') {
-      try {
-        await caseService.autoCreateCase(sessionId)
-      } catch (error) {
-        logger.error('自动创建个案失败', { sessionId, error })
-      }
-    }
+    // 6. 创建会话 + 高风险个案（同一事务防重复）
+    const isHighRisk = scoringResult.riskLevel === '高风险'
+    const sessionId = await repository.createSubmittedSessionWithCase(sessionInput, isHighRisk)
 
     return {
       sessionId,

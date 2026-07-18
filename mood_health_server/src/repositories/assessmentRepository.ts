@@ -127,7 +127,7 @@ export const createAssessmentRepository = (db: AssessmentDatabase = getMysqlPool
       av.created_at AS created_at
     FROM assessment_versions av
     INNER JOIN assessment_instruments ai ON ai.id = av.instrument_id
-    WHERE ai.status = 'active'
+    WHERE ai.status = 'approved'
       AND av.status = 'active'
   `
 
@@ -165,7 +165,7 @@ export const createAssessmentRepository = (db: AssessmentDatabase = getMysqlPool
         INNER JOIN assessment_instruments instrument ON instrument.id = av.instrument_id
         WHERE ai.assessment_version_id = ?
           AND av.status = 'active'
-          AND instrument.status = 'active'
+          AND instrument.status = 'approved'
         ORDER BY ai.item_order ASC, ai.id ASC
       `,
       [questionnaireId]
@@ -488,14 +488,89 @@ export const createAssessmentRepository = (db: AssessmentDatabase = getMysqlPool
     }
   }
 
+  const getInstrumentById = async (versionId: number): Promise<{ status: string } | null> => {
+    const [rows] = await db.query<RowDataPacket[]>(
+      `SELECT ai.status
+       FROM assessment_versions av
+       INNER JOIN assessment_instruments ai ON ai.id = av.instrument_id
+       WHERE av.id = ?
+       LIMIT 1`,
+      [versionId]
+    )
+    return rows[0] ? { status: rows[0].status } : null
+  }
+
+  const createSubmittedSessionWithCase = async (
+    input: CreateSubmittedAssessmentSessionInput,
+    createCase: boolean
+  ): Promise<number> => {
+    const connection = await db.getConnection()
+
+    try {
+      await connection.beginTransaction()
+
+      const [sessionResult] = await connection.query<ResultSetHeader>(
+        `
+          INSERT INTO assessment_sessions (
+            user_id, assessment_version_id, raw_score, screening_level,
+            result_summary_json, status, started_at, submitted_at, created_at, updated_at
+          )
+          VALUES (?, ?, ?, ?, ?, 'submitted', ?, ?, ?, ?)
+        `,
+        [
+          input.userId, input.questionnaireId, input.score, input.riskLevel,
+          JSON.stringify({ result_text: input.resultText }),
+          input.submittedAt, input.submittedAt, input.submittedAt, input.submittedAt,
+        ]
+      )
+      const sessionId = sessionResult.insertId
+
+      for (const answer of input.answers) {
+        await connection.query<ResultSetHeader>(
+          `INSERT INTO assessment_answers (session_id, item_id, answer_value_json, score, created_at)
+           VALUES (?, ?, ?, ?, ?)`,
+          [sessionId, answer.itemId, JSON.stringify(answer.value), answer.score, input.submittedAt]
+        )
+      }
+
+      // 高风险时在同一事务中创建个案（防重复）
+      if (createCase) {
+        await connection.query<ResultSetHeader>(
+          `INSERT INTO cases (student_user_id, source_session_id, status, risk_level, summary, created_at, updated_at)
+           SELECT ?, ?, 'open', ?, ?, ?, ?
+           WHERE NOT EXISTS (
+             SELECT 1 FROM cases
+             WHERE source_session_id = ? AND student_user_id = ?
+           )`,
+          [
+            input.userId, sessionId, input.riskLevel,
+            `测评得分 ${input.score}，风险等级：${input.riskLevel}`,
+            input.submittedAt, input.submittedAt,
+            sessionId, input.userId,
+          ]
+        )
+      }
+
+      await connection.commit()
+      return sessionId
+    } catch (error) {
+      await connection.rollback()
+      throw error
+    } finally {
+      connection.release()
+    }
+  }
+
   return {
     listQuestionnaires,
     getQuestionnaireById,
     listQuestionsByQuestionnaireId,
     createSubmittedSession,
+    createSubmittedSessionWithCase,
     listUserAssessmentHistory,
     getScoringRules,
     getSessionById,
+    getInstrumentById,
     listAllSessions,
     getSessionByIdAdmin,
   }
