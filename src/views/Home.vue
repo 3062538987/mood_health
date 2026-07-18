@@ -12,7 +12,8 @@
     <header class="home-header">
       <div class="header-content">
         <h1 class="main-title">情绪健康管理平台</h1>
-        <p class="subtitle">记录情绪 · 释放压力 · 拥抱生活</p>
+        <p class="subtitle">记录情绪变化，找到适合自己的调节方式</p>
+        <p class="disclaimer">本平台提供情绪记录与自我调节建议，不能替代专业心理咨询或医疗诊断</p>
       </div>
     </header>
 
@@ -229,6 +230,16 @@ onMounted(() => {
     letter-spacing: 0.04em;
 
     @media (max-width: 768px) { font-size: 15px; }
+  }
+
+  .disclaimer {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-top: 12px;
+    line-height: 1.6;
+
+    @media (max-width: 768px) { font-size: 12px; }
   }
 }
 

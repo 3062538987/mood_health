@@ -1,10 +1,11 @@
 <template>
   <div class="guide-page">
     <div class="guide-container">
-      <h1>欢迎使用情绪健康平台</h1>
-      <p class="subtitle">开始您的情绪管理之旅</p>
+    <h1>欢迎使用情绪健康平台</h1>
+    <p class="subtitle">记录情绪变化，找到适合自己的调节方式</p>
+    <p class="disclaimer">本平台提供情绪记录与自我调节建议，不能替代专业心理咨询或医疗诊断</p>
 
-      <div class="guide-steps">
+    <div class="guide-steps">
         <div
           v-for="(step, index) in steps"
           :key="index"
@@ -60,27 +61,27 @@ const router = useRouter()
 const steps = [
   {
     icon: 'fas fa-smile',
-    title: '情绪记录',
-    description: '记录您的情绪状态，了解情绪变化趋势',
+    title: '记录情绪',
+    description: '记录当下的情绪状态，追踪变化趋势',
     route: '/mood/record',
   },
   {
     icon: 'fas fa-chart-pie',
-    title: '情绪洞察',
-    description: '通过图表分析您的情绪模式和触发因素',
+    title: '查看分析',
+    description: '了解情绪模式，获取个性化调节建议',
     route: '/mood/insight',
   },
   {
     icon: 'fas fa-leaf',
     title: '放松减压',
-    description: '使用音乐和树洞功能缓解压力，放松心情',
+    description: '尝试呼吸练习、音乐放松等方式缓解压力',
     route: '/relax',
   },
   {
-    icon: 'fas fa-chart-line',
-    title: '自我提升',
-    description: '参与团体辅导和成长课程，提升情绪管理能力',
-    route: '/improve',
+    icon: 'fas fa-comments',
+    title: '倾诉交流',
+    description: '在树洞中匿名分享，获得同伴支持',
+    route: '/relax/treehole',
   },
 ]
 
@@ -164,7 +165,14 @@ const skipGuide = () => {
 .subtitle {
   font-size: 1.2rem;
   color: #666;
+  margin-bottom: 10px;
+}
+
+.disclaimer {
+  font-size: 0.85rem;
+  color: #999;
   margin-bottom: 40px;
+  line-height: 1.5;
 }
 
 .guide-steps {
