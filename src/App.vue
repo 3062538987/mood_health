@@ -49,9 +49,9 @@
     </nav>
     <!-- 路由出口 -->
     <main class="app-content">
-      <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
-          <component :is="Component" />
+      <router-view v-slot="{ Component, route }">
+        <transition :name="getTransitionName(route)" mode="out-in">
+          <component :is="Component" :key="route.path" />
         </transition>
       </router-view>
     </main>
@@ -153,6 +153,18 @@ const themeColor = computed(() => {
 })
 
 const isMoreSectionActive = computed(() => route.path.startsWith('/user') || route.path.startsWith('/admin'))
+
+const getTransitionName = (route: ReturnType<typeof useRoute>) => {
+  const authPaths = ['/login', '/register']
+  if (authPaths.includes(route.path)) {
+    return 'slide-up'
+  }
+  const modalPaths = ['/user/profile', '/admin']
+  if (modalPaths.some(p => route.path.startsWith(p))) {
+    return 'fade-scale'
+  }
+  return 'fade-slide'
+}
 
 const closeMoreMenu = async (restoreFocus = false) => {
   isMoreMenuOpen.value = false

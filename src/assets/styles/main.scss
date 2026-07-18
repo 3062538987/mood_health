@@ -232,6 +232,126 @@ textarea,
   50% { opacity: 0.8; transform: scale(1.04); }
 }
 
+/* ── 页面过渡动画 ── */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition:
+    opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition:
+    opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-up-enter-from {
+  opacity: 0;
+  transform: translateY(30px) scale(0.98);
+}
+
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.98);
+}
+
+.fade-scale-enter-active,
+.fade-scale-leave-active {
+  transition:
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-scale-enter-from {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+.fade-scale-leave-to {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+/* ── 组件入场动画 ── */
+.enter-from-bottom {
+  animation: enterFromBottom 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes enterFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.enter-from-left {
+  animation: enterFromLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes enterFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.enter-scale {
+  animation: enterScale 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes enterScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ── 列表项交错动画 ── */
+.list-item-stagger {
+  animation: enterFromBottom 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.list-item-stagger:nth-child(1) { animation-delay: 0ms; }
+.list-item-stagger:nth-child(2) { animation-delay: 50ms; }
+.list-item-stagger:nth-child(3) { animation-delay: 100ms; }
+.list-item-stagger:nth-child(4) { animation-delay: 150ms; }
+.list-item-stagger:nth-child(5) { animation-delay: 200ms; }
+.list-item-stagger:nth-child(6) { animation-delay: 250ms; }
+
 /* ── 标题 ── */
 h1, h2, h3, h4, h5, h6 {
   color: var(--text-color);
