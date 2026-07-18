@@ -99,7 +99,6 @@ describe('request response contract', () => {
 
   it('normalizes a 401 HTTP error, clears the expired login, and preserves current route', async () => {
     const { ApiRequestError } = await import('@/utils/request')
-    localStorage.setItem('token', 'expired-token')
 
     const promise = mocks.responseHandlers.rejected?.({
       config: {},
@@ -113,7 +112,7 @@ describe('request response contract', () => {
       code: 1002,
       message: '登录已过期，请重新登录',
     })
-    expect(localStorage.getItem('token')).toBeNull()
+    // A2-02: 401 处理不再清除 localStorage，改用 HttpOnly Cookie + 重定向
     expect(mocks.routerPush).toHaveBeenCalledWith({
       path: '/login',
       query: { redirect: '/mood/record?source=expired' },
@@ -124,7 +123,6 @@ describe('request response contract', () => {
 
   it('suppresses duplicate redirect and message for concurrent 401 responses', async () => {
     const { ApiRequestError } = await import('@/utils/request')
-    localStorage.setItem('token', 'expired-token')
 
     const first = mocks.responseHandlers.rejected?.({
       config: {},

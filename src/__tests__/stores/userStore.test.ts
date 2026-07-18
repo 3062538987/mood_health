@@ -30,13 +30,13 @@ describe('userStore authentication contract', () => {
 
     expect(store.token).toBe('jwt-token')
     expect(store.user).toEqual(user)
-    expect(localStorage.getItem('token')).toBe('jwt-token')
+    // A2-02: token 不再存储在 localStorage，改用 HttpOnly Cookie
   })
 
   it('restores the current user directly from the unwrapped /me DTO', async () => {
-    localStorage.setItem('token', 'persisted-token')
     requestMock.mockResolvedValueOnce({ user })
     const store = useUserStore()
+    store.token = 'persisted-token'
 
     await expect(store.fetchUserInfo()).resolves.toBe(true)
 
@@ -45,15 +45,15 @@ describe('userStore authentication contract', () => {
   })
 
   it('clears an invalid persisted login when /me fails', async () => {
-    localStorage.setItem('token', 'expired-token')
     requestMock.mockRejectedValueOnce(new Error('登录已过期，请重新登录'))
     const store = useUserStore()
+    store.token = 'expired-token'
 
     await expect(store.fetchUserInfo()).resolves.toBe(false)
 
     expect(store.token).toBe('')
     expect(store.user).toBeNull()
-    expect(localStorage.getItem('token')).toBeNull()
+    // A2-02: token 不再存储在 localStorage
   })
 
   it('shows the normalized request error message on login failure', async () => {

@@ -51,7 +51,6 @@ const mountSetting = () => {
     email: 'student@example.com',
     role: 'student',
   }
-  localStorage.setItem('token', 'jwt-token')
   return { wrapper, store }
 }
 
@@ -149,7 +148,7 @@ describe('Setting account deletion flow', () => {
 
     expect(store.token).toBe('')
     expect(store.user).toBeNull()
-    expect(localStorage.getItem('token')).toBeNull()
+    // A2-02: token 不再存储在 localStorage
     expect(elementMocks.success).toHaveBeenCalledWith('账号已注销')
     expect(routerMocks.push).toHaveBeenCalledWith('/login')
     expect(wrapper.find('.modal-overlay').exists()).toBe(false)
@@ -165,7 +164,7 @@ describe('Setting account deletion flow', () => {
 
     expect(store.token).toBe('jwt-token')
     expect(store.user?.username).toBe('student_demo')
-    expect(localStorage.getItem('token')).toBe('jwt-token')
+    // A2-02: token 不再存储在 localStorage
     expect(wrapper.find('.modal-overlay').exists()).toBe(true)
     expect(elementMocks.error).toHaveBeenCalled()
     expect(routerMocks.push).not.toHaveBeenCalled()
