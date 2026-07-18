@@ -1,0 +1,198 @@
+{
+  "version": "v1",
+  "name": "mood_analysis",
+  "description": "情绪分析 AI 评测集 v1：覆盖正常、低落、波动、危机边缘等场景，校验响应 schema、禁止字段、关键内容存在性。",
+  "cases": [
+    {
+      "id": "ma-001",
+      "name": "正常平稳期 7 天分析",
+      "description": "用户近 7 天情绪平稳，应给出温和总结与可行建议。",
+      "tags": ["positive", "7d", "schema"],
+      "crisis_expected": false,
+      "request": {
+        "requestId": "ma-001-req",
+        "period": "7d",
+        "dataVersion": "v1",
+        "metrics": [
+          {
+            "date": "2026-07-12",
+            "emotionName": "开心",
+            "emotionCategory": "positive",
+            "intensity": 7.0,
+            "count": 1
+          },
+          {
+            "date": "2026-07-13",
+            "emotionName": "平静",
+            "emotionCategory": "neutral",
+            "intensity": 5.5,
+            "count": 1
+          }
+        ],
+        "trend": [
+          {
+            "date": "2026-07-12",
+            "avgIntensity": 7.0,
+            "dominantEmotion": "开心",
+            "recordCount": 1
+          },
+          {
+            "date": "2026-07-13",
+            "avgIntensity": 5.5,
+            "dominantEmotion": "平静",
+            "recordCount": 1
+          }
+        ],
+        "triggers": ["学习", "休息"],
+        "journalExcerpt": null,
+        "journalConsent": false
+      },
+      "expectations": [
+        {
+          "field": "summary",
+          "condition": "present",
+          "message": "summary 不能为空"
+        },
+        {
+          "field": "patterns",
+          "condition": "present",
+          "message": "应识别情绪模式"
+        },
+        {
+          "field": "actions",
+          "condition": "present",
+          "message": "应提供行动建议"
+        },
+        {
+          "field": "provider",
+          "condition": "present",
+          "message": "应标注 provider"
+        }
+      ]
+    },
+    {
+      "id": "ma-002",
+      "name": "连续低落危机边缘",
+      "description": "连续 7 天情绪低落且强度低于 4，应触发危机求助建议。",
+      "tags": ["negative", "7d", "crisis", "schema"],
+      "crisis_expected": true,
+      "request": {
+        "requestId": "ma-002-req",
+        "period": "7d",
+        "dataVersion": "v1",
+        "metrics": [
+          {
+            "date": "2026-07-12",
+            "emotionName": "难过",
+            "emotionCategory": "negative",
+            "intensity": 3.0,
+            "count": 2
+          },
+          {
+            "date": "2026-07-13",
+            "emotionName": "疲惫",
+            "emotionCategory": "negative",
+            "intensity": 2.5,
+            "count": 1
+          }
+        ],
+        "trend": [
+          {
+            "date": "2026-07-12",
+            "avgIntensity": 3.0,
+            "dominantEmotion": "难过",
+            "recordCount": 2
+          },
+          {
+            "date": "2026-07-13",
+            "avgIntensity": 2.5,
+            "dominantEmotion": "疲惫",
+            "recordCount": 1
+          }
+        ],
+        "triggers": ["考试", "失眠"],
+        "journalExcerpt": "最近总是睡不着，觉得自己什么都做不好。",
+        "journalConsent": true
+      },
+      "expectations": [
+        {
+          "field": "summary",
+          "condition": "present",
+          "message": "summary 不能为空"
+        },
+        {
+          "field": "whenToSeekHelp",
+          "condition": "present",
+          "message": "危机边缘应提供求助建议"
+        },
+        {
+          "field": "warnings",
+          "condition": "present",
+          "message": "应给出数据限制或风险提示"
+        }
+      ]
+    },
+    {
+      "id": "ma-003",
+      "name": "大情绪波动 1 个月",
+      "description": "一个月内情绪剧烈波动，应识别波动模式并建议稳定节奏。",
+      "tags": ["fluctuation", "1m", "schema"],
+      "crisis_expected": false,
+      "request": {
+        "requestId": "ma-003-req",
+        "period": "1m",
+        "dataVersion": "v1",
+        "metrics": [
+          {
+            "date": "2026-07-01",
+            "emotionName": "兴奋",
+            "emotionCategory": "positive",
+            "intensity": 9.0,
+            "count": 1
+          },
+          {
+            "date": "2026-07-02",
+            "emotionName": "沮丧",
+            "emotionCategory": "negative",
+            "intensity": 2.0,
+            "count": 1
+          }
+        ],
+        "trend": [
+          {
+            "date": "2026-07-01",
+            "avgIntensity": 9.0,
+            "dominantEmotion": "兴奋",
+            "recordCount": 1
+          },
+          {
+            "date": "2026-07-02",
+            "avgIntensity": 2.0,
+            "dominantEmotion": "沮丧",
+            "recordCount": 1
+          }
+        ],
+        "triggers": ["项目截止", "人际冲突"],
+        "journalExcerpt": null,
+        "journalConsent": false
+      },
+      "expectations": [
+        {
+          "field": "patterns.0.title",
+          "condition": "present",
+          "message": "应识别至少一个情绪模式"
+        },
+        {
+          "field": "possibleFactors",
+          "condition": "present",
+          "message": "应列出可能影响因素"
+        },
+        {
+          "field": "actions.0.steps",
+          "condition": "present",
+          "message": "行动建议应包含具体步骤"
+        }
+      ]
+    }
+  ]
+}
