@@ -66,9 +66,9 @@ const steps = [
   },
   {
     icon: 'fas fa-chart-pie',
-    title: '情绪分析',
+    title: '情绪洞察',
     description: '通过图表分析您的情绪模式和触发因素',
-    route: '/mood/analysis',
+    route: '/mood/insight',
   },
   {
     icon: 'fas fa-leaf',
@@ -89,7 +89,7 @@ const demoSteps = [
   {
     title: '登录/注册',
     desc: '使用演示账号登录系统，体验完整功能',
-    route: '/auth/login',
+    route: '/login',
   },
   {
     title: '情绪记录',
@@ -104,7 +104,7 @@ const demoSteps = [
   {
     title: 'AI 智能建议',
     desc: '查看基于情绪和测评数据的个性化 AI 建议',
-    route: '/mood/analysis',
+    route: '/mood/insight',
   },
   {
     title: '社区互动',
