@@ -4,6 +4,7 @@ import { createUserRepository, DuplicateUserError, PublicUser, UserRepository } 
 import { comparePassword as comparePasswordUtil, hashPassword as hashPasswordUtil } from '../utils/password'
 import { BusinessError, HttpException } from '../utils/errors'
 import redisClient from '../utils/redis.client'
+import logger from '../utils/logger'
 
 const MAX_LOGIN_ATTEMPTS = 5
 const LOGIN_LOCK_MINUTES = 15
@@ -87,9 +88,10 @@ const incrementLoginAttempts = async (
     const attemptsKey = `login_attempts:${username}`
     const lockKey = `login_locked:${username}`
     const attempts = await redis.incr(attemptsKey)
+    if (attempts === null) return
     await redis.expire(attemptsKey, LOGIN_LOCK_MINUTES * 60)
     if (attempts >= MAX_LOGIN_ATTEMPTS) {
-      await redis.setex(lockKey, LOGIN_LOCK_MINUTES * 60, '1')
+      await redis.set(lockKey, '1', LOGIN_LOCK_MINUTES * 60)
     }
   } catch (err) {
     logger.error('[authService] incrementLoginAttempts failed', { error: (err as Error).message })

@@ -32,7 +32,7 @@ const createRepository = (): jest.Mocked<UserRepository> => ({
   findAuthUserByUsername: jest.fn(),
   findPublicUserById: jest.fn(),
   createStudentUser: jest.fn(),
-  updateLastLoginAt: jest.fn(),
+  updateLastLoginAt: jest.fn().mockResolvedValue(undefined),
   disableUser: jest.fn(),
   deleteUser: jest.fn(),
 })

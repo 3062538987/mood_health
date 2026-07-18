@@ -160,6 +160,50 @@ class RedisClient {
   }
 
   /**
+   * 自增计数器
+   */
+  public async incr(key: string): Promise<number | null> {
+    return this.execute(this.client.incr.bind(this.client), key);
+  }
+
+  /**
+   * 设置键过期时间（秒）
+   */
+  public async expire(key: string, seconds: number): Promise<number | null> {
+    return this.execute(this.client.expire.bind(this.client), key, seconds);
+  }
+
+  /**
+   * 使用 SCAN 迭代匹配模式的键（避免 KEYS 阻塞 Redis）
+   * 返回匹配的键数组
+   */
+  public async scan(pattern: string, count: number = 100): Promise<string[]> {
+    try {
+      if (!this.isConnected) {
+        if (this.fallbackEnabled) {
+          logger.warn('Redis 未连接，scan 返回空数组');
+          return [];
+        }
+        throw new RedisError('Redis 未连接', new Error('Redis 未连接'));
+      }
+      const keys: string[] = [];
+      let cursor = '0';
+      do {
+        const [newCursor, batch] = await this.client.scan(cursor, 'MATCH', pattern, 'COUNT', count);
+        cursor = newCursor;
+        keys.push(...batch);
+      } while (cursor !== '0');
+      return keys;
+    } catch (error) {
+      logger.error('Redis scan 失败:', error);
+      if (this.fallbackEnabled) {
+        return [];
+      }
+      throw new RedisError('Redis scan 失败', error);
+    }
+  }
+
+  /**
    * 关闭 Redis 连接
    */
   public async close(): Promise<void> {

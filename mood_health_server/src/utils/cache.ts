@@ -99,13 +99,7 @@ export const clearMoodCache = async (userId: number): Promise<void> => {
   try {
     for (const pattern of patterns) {
       // 使用 SCAN 替代 KEYS 避免阻塞 Redis
-      let cursor = '0';
-      const keysToDelete: string[] = [];
-      do {
-        const [newCursor, keys] = await redisClient.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
-        cursor = newCursor;
-        keysToDelete.push(...keys);
-      } while (cursor !== '0');
+      const keysToDelete = await redisClient.scan(pattern, 100);
 
       if (keysToDelete.length > 0) {
         await redisClient.del(...keysToDelete);
