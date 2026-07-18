@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express'
 import logger, { sanitizeForLogs } from '../utils/logger'
 import { AppError } from '../utils/errors'
-import { API_ERROR_CODES, apiFailure, businessCodeForHttpStatus } from '../utils/apiResponse'
+import { API_ERROR_CODES, apiFailure, businessCodeForHttpStatus, generateRequestId, type ValidationDetail } from '../utils/apiResponse'
 
 type ErrorLike = Error & {
   status?: number
@@ -9,7 +9,7 @@ type ErrorLike = Error & {
   path?: string
   timestamp?: string
   data?: unknown
-  array?: () => unknown[]
+  array?: () => { path: string; msg: string }[]
 }
 
 export const errorHandler = (
@@ -27,14 +27,17 @@ export const errorHandler = (
       ? '服务器内部错误'
       : error.message || '服务器内部错误'
 
+  const requestId = generateRequestId()
+
   const logContext = {
+    requestId,
     name: error.name || 'Error',
     message: error.message || '服务器内部错误',
     statusCode,
     path: request.originalUrl,
     method: request.method,
     timestamp: new Date().toISOString(),
-    stack: error.stack,
+    stack: process.env.NODE_ENV === 'production' ? undefined : error.stack,
     data: sanitizeForLogs(error.data ?? null),
   }
 
@@ -48,7 +51,21 @@ export const errorHandler = (
     ? API_ERROR_CODES.BAD_REQUEST
     : businessCodeForHttpStatus(statusCode)
 
-  return response.status(statusCode).json(apiFailure(businessCode, message))
+  // 提取验证错误详情
+  let details: ValidationDetail[] | undefined
+  if (isValidationError && typeof error.array === 'function') {
+    const validationErrors = error.array()
+    if (validationErrors.length > 0) {
+      details = validationErrors.map((e) => ({
+        field: e.path,
+        message: e.msg,
+      }))
+    }
+  }
+
+  const body = apiFailure(businessCode, message, null, details)
+  body.requestId = requestId
+  return response.status(statusCode).json(body)
 }
 
 export const notFoundHandler = (request: Request, _response: Response, next: NextFunction) => {

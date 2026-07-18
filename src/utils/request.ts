@@ -28,6 +28,7 @@ export class ApiRequestError extends Error {
   readonly status?: number
   readonly data?: unknown
   readonly cause?: unknown
+  readonly requestId?: string
 
   constructor(options: ApiRequestErrorOptions) {
     super(options.message)
@@ -37,6 +38,7 @@ export class ApiRequestError extends Error {
     this.status = options.status
     this.data = options.data
     this.cause = options.cause
+    this.requestId = options.requestId
   }
 }
 
@@ -79,6 +81,7 @@ const unwrapResponse = <T>(payload: unknown): T => {
       kind: 'business',
       message: '响应缺少业务状态码',
       data: payload,
+      requestId: isApiPayload(payload) ? (payload.requestId as string) : undefined,
     })
   }
 
@@ -91,6 +94,7 @@ const unwrapResponse = <T>(payload: unknown): T => {
     code: typeof payload.code === 'number' ? payload.code : undefined,
     message: typeof payload.message === 'string' ? payload.message : '请求失败',
     data: payload.data,
+    requestId: typeof payload.requestId === 'string' ? payload.requestId : undefined,
   })
 }
 
@@ -226,6 +230,7 @@ service.interceptors.response.use(
         message,
         data: responseData?.data,
         cause: error,
+        requestId: typeof responseData?.requestId === 'string' ? responseData.requestId : undefined,
       })
       if (shouldShowMessage) {
         ElMessage.error(requestError.message)

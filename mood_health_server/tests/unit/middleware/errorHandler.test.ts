@@ -49,11 +49,13 @@ describe('error middleware contract', () => {
     errorHandler(error, request, response, next)
 
     expect(response.status).toHaveBeenCalledWith(400)
-    expect(response.json).toHaveBeenCalledWith({
+    expect(response.json).toHaveBeenCalledWith(expect.objectContaining({
       code: API_ERROR_CODES.BAD_REQUEST,
       message: '请求参数验证失败',
       data: null,
-    })
+    }))
+    const call = (response.json as jest.Mock).mock.calls[0][0]
+    expect(call.requestId).toEqual(expect.any(String))
   })
 
   it('turns an unknown route into the unified 404 response', () => {
@@ -63,11 +65,13 @@ describe('error middleware contract', () => {
     notFoundHandler(request, response, captureNext)
 
     expect(response.status).toHaveBeenCalledWith(404)
-    expect(response.json).toHaveBeenCalledWith({
+    expect(response.json).toHaveBeenCalledWith(expect.objectContaining({
       code: API_ERROR_CODES.NOT_FOUND,
       message: '请求的资源不存在',
       data: null,
-    })
+    }))
+    const call = (response.json as jest.Mock).mock.calls[0][0]
+    expect(call.requestId).toEqual(expect.any(String))
   })
 
   it('hides internal details in a production 500 response', () => {
@@ -78,11 +82,13 @@ describe('error middleware contract', () => {
     errorHandler(error, request, response, next)
 
     expect(response.status).toHaveBeenCalledWith(500)
-    expect(response.json).toHaveBeenCalledWith({
+    expect(response.json).toHaveBeenCalledWith(expect.objectContaining({
       code: API_ERROR_CODES.INTERNAL_ERROR,
       message: '服务器内部错误',
       data: null,
-    })
+    }))
+    const call = (response.json as jest.Mock).mock.calls[0][0]
+    expect(call.requestId).toEqual(expect.any(String))
     expect(JSON.stringify((response.json as jest.Mock).mock.calls)).not.toContain('database password leaked')
     expect(JSON.stringify((response.json as jest.Mock).mock.calls)).not.toContain('stack')
   })

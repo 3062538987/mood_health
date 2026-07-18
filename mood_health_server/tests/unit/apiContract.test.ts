@@ -55,10 +55,11 @@ describe('application API contract', () => {
     const body = await response.json()
 
     expect(response.status).toBe(404)
-    expect(body).toEqual({
+    expect(body).toEqual(expect.objectContaining({
       code: 1004,
       message: '请求的资源不存在',
       data: null,
-    })
+    }))
+    expect(body.requestId).toEqual(expect.any(String))
   })
 })

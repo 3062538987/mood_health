@@ -3,7 +3,7 @@ import { AuthRequest } from '../middleware/auth'
 import { RowDataPacket } from 'mysql2'
 import { getMysqlPool } from '../config/mysql'
 import { setCache, getCache, clearActivityCache } from '../utils/cache'
-import { apiFailure, API_ERROR_CODES } from '../utils/apiResponse'
+import { apiFailure, apiSuccess, API_ERROR_CODES } from '../utils/apiResponse'
 import logger from '../utils/logger'
 import {
   createActivityRepository,
@@ -60,14 +60,10 @@ export const getActivityList = async (req: Request, res: Response) => {
       totalPages: Math.ceil(total / limit),
     }
 
-    const response = {
-      code: 0,
-      data: {
-        list: activities,
-        pagination,
-      },
+    const response = apiSuccess({
+      list: activities,
       pagination,
-    }
+    }, '获取活动列表成功')
 
     if (!hasFilter) {
       await setCache(cacheKey, response, 600)
@@ -76,7 +72,7 @@ export const getActivityList = async (req: Request, res: Response) => {
     res.json(response)
   } catch (error) {
     logger.error('获取活动列表失败:', error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -87,10 +83,10 @@ export const getActivityDetail = async (req: Request, res: Response) => {
     if (!activity) {
       return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '活动不存在'))
     }
-    res.json({ code: 0, data: activity })
+    res.json(apiSuccess(activity, '获取活动详情成功'))
   } catch (error) {
     logger.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -107,19 +103,19 @@ export const joinActivityHandler = async (req: AuthRequest, res: Response) => {
     await activityRepo.join(activityId, userId)
     await clearActivityCache()
 
-    res.json({ code: 0, message: '报名成功' })
+    res.json(apiSuccess(null, '报名成功'))
   } catch (error: any) {
     logger.error('报名活动失败:', error)
 
     switch (error.message) {
       case 'ACTIVITY_FULL':
-        return res.status(400).json({ code: 400, message: '报名失败，活动名额已满' })
+        return res.status(400).json(apiFailure(400, '报名失败，活动名额已满'))
       case 'ALREADY_JOINED':
-        return res.status(400).json({ code: 400, message: '您已经报名过该活动' })
+        return res.status(400).json(apiFailure(400, '您已经报名过该活动'))
       case 'TRANSACTION_TIMEOUT':
-        return res.status(500).json({ code: 500, message: '报名超时，请稍后重试' })
+        return res.status(500).json(apiFailure(500, '报名超时，请稍后重试'))
       default:
-        return res.status(500).json({ code: 500, message: '报名失败，请稍后重试' })
+        return res.status(500).json(apiFailure(500, '报名失败，请稍后重试'))
     }
   }
 }
@@ -137,17 +133,17 @@ export const cancelJoinActivityHandler = async (req: AuthRequest, res: Response)
     await activityRepo.cancelJoin(activityId, userId)
     await clearActivityCache()
 
-    res.json({ code: 0, message: '已取消报名' })
+    res.json(apiSuccess(null, '已取消报名'))
   } catch (error: any) {
     logger.error('取消报名失败:', error)
 
     switch (error.message) {
       case 'NOT_JOINED':
-        return res.status(400).json({ code: 400, message: '您尚未报名该活动' })
+        return res.status(400).json(apiFailure(400, '您尚未报名该活动'))
       case 'TRANSACTION_TIMEOUT':
-        return res.status(500).json({ code: 500, message: '取消报名超时，请稍后重试' })
+        return res.status(500).json(apiFailure(500, '取消报名超时，请稍后重试'))
       default:
-        return res.status(500).json({ code: 500, message: '取消报名失败，请稍后重试' })
+        return res.status(500).json(apiFailure(500, '取消报名失败，请稍后重试'))
     }
   }
 }
@@ -156,10 +152,10 @@ export const getMyJoinedActivities = async (req: AuthRequest, res: Response) => 
   try {
     const userId = req.user!.userId
     const activities = await activityRepo.getUserJoinedActivities(userId)
-    res.json({ code: 0, data: activities })
+    res.json(apiSuccess(activities, '获取已报名活动成功'))
   } catch (error) {
     logger.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -168,12 +164,12 @@ export const createActivityHandler = async (req: AuthRequest, res: Response) => 
     const { title, description, startTime, endTime, maxParticipants, location, imageUrl } = req.body
 
     if (!title || !startTime || !endTime || !maxParticipants || !location) {
-      return res.status(400).json({ code: 400, message: '请提供完整的活动信息' })
+      return res.status(400).json(apiFailure(400, '请提供完整的活动信息'))
     }
 
     // 校验开始时间必须早于结束时间
     if (new Date(startTime) >= new Date(endTime)) {
-      return res.status(400).json({ code: 400, message: '开始时间必须早于结束时间' })
+      return res.status(400).json(apiFailure(400, '开始时间必须早于结束时间'))
     }
 
     const activityId = await activityRepo.create({
@@ -188,10 +184,10 @@ export const createActivityHandler = async (req: AuthRequest, res: Response) => 
 
     await clearActivityCache()
 
-    res.status(201).json({ code: 0, message: '活动创建成功', data: { id: activityId } })
+    res.status(201).json(apiSuccess({ id: activityId }, '活动创建成功'))
   } catch (error) {
     logger.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -217,10 +213,10 @@ export const updateActivityHandler = async (req: AuthRequest, res: Response) => 
 
     await clearActivityCache()
 
-    res.json({ code: 0, message: '活动更新成功' })
+    res.json(apiSuccess(null, '活动更新成功'))
   } catch (error) {
     logger.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -236,10 +232,10 @@ export const deleteActivityHandler = async (req: AuthRequest, res: Response) => 
     await activityRepo.remove(id)
     await clearActivityCache()
 
-    res.json({ code: 0, message: '活动删除成功' })
+    res.json(apiSuccess(null, '活动删除成功'))
   } catch (error) {
     logger.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -255,7 +251,7 @@ export const setReminderHandler = async (req: AuthRequest, res: Response) => {
 
     const joined = await activityRepo.hasUserJoined(activityId, userId)
     if (!joined) {
-      return res.status(400).json({ code: 400, message: '请先报名活动' })
+      return res.status(400).json(apiFailure(400, '请先报名活动'))
     }
 
     // 提醒时间默认为活动开始前30分钟
@@ -263,18 +259,18 @@ export const setReminderHandler = async (req: AuthRequest, res: Response) => {
     const remindAt = new Date(startTime.getTime() - 30 * 60 * 1000)
 
     if (remindAt <= new Date()) {
-      return res.status(400).json({ code: 400, message: '活动即将开始，无法设置提醒' })
+      return res.status(400).json(apiFailure(400, '活动即将开始，无法设置提醒'))
     }
 
     const created = await activityRepo.createReminder(activityId, userId, remindAt.toISOString())
     if (!created) {
-      return res.status(400).json({ code: 400, message: '已设置过提醒' })
+      return res.status(400).json(apiFailure(400, '已设置过提醒'))
     }
 
-    res.json({ code: 0, message: '提醒设置成功', data: { remindAt: remindAt.toISOString() } })
+    res.json(apiSuccess({ remindAt: remindAt.toISOString() }, '提醒设置成功'))
   } catch (error) {
     logger.error('设置提醒失败:', error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -288,10 +284,10 @@ export const cancelReminderHandler = async (req: AuthRequest, res: Response) => 
       return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '未找到提醒记录'))
     }
 
-    res.json({ code: 0, message: '已取消提醒' })
+    res.json(apiSuccess(null, '已取消提醒'))
   } catch (error) {
     logger.error('取消提醒失败:', error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -301,10 +297,10 @@ export const getReminderStatusHandler = async (req: AuthRequest, res: Response) 
     const activityId = parseInt(req.params.id as string)
 
     const hasReminder = await activityRepo.hasReminder(activityId, userId)
-    res.json({ code: 0, data: { hasReminder } })
+    res.json(apiSuccess({ hasReminder }, '获取提醒状态成功'))
   } catch (error) {
     logger.error('获取提醒状态失败:', error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -319,16 +315,13 @@ export const getActivityDetailWithParticipants = async (req: Request, res: Respo
 
     const participants = await activityRepo.getParticipants(id)
 
-    res.json({
-      code: 0,
-      data: {
-        activity,
-        participants,
-      },
-    })
+    res.json(apiSuccess({
+      activity,
+      participants,
+    }, '获取活动详情成功'))
   } catch (error) {
     logger.error('获取活动详情失败:', error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -340,7 +333,7 @@ export const submitFeedbackHandler = async (req: AuthRequest, res: Response) => 
     const { rating, comment } = req.body
 
     if (rating == null || !Number.isInteger(rating) || rating < 1 || rating > 5) {
-      return res.status(400).json({ code: 400, message: '请提供 1-5 的评分' })
+      return res.status(400).json(apiFailure(400, '请提供 1-5 的评分'))
     }
 
     const activity = await activityRepo.findById(activityId)
@@ -350,23 +343,23 @@ export const submitFeedbackHandler = async (req: AuthRequest, res: Response) => 
 
     const joined = await activityRepo.hasUserJoined(activityId, userId)
     if (!joined) {
-      return res.status(400).json({ code: 400, message: '仅报名用户可提交反馈' })
+      return res.status(400).json(apiFailure(400, '仅报名用户可提交反馈'))
     }
 
     // 活动未结束不允许反馈
     if (new Date(activity.endTime) > new Date()) {
-      return res.status(400).json({ code: 400, message: '活动结束后才能提交反馈' })
+      return res.status(400).json(apiFailure(400, '活动结束后才能提交反馈'))
     }
 
     const result = await feedbackService.submitFeedback(activityId, userId, { rating, comment })
     if (result.duplicate) {
-      return res.status(400).json({ code: 400, message: '您已提交过反馈' })
+      return res.status(400).json(apiFailure(400, '您已提交过反馈'))
     }
 
-    res.status(201).json({ code: 0, message: '反馈提交成功', data: { id: result.id } })
+    res.status(201).json(apiSuccess({ id: result.id }, '反馈提交成功'))
   } catch (error) {
     logger.error('提交反馈失败:', error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -376,13 +369,10 @@ export const getFeedbackHandler = async (req: Request, res: Response) => {
     const feedbacks = await feedbackService.getFeedbackByActivity(activityId)
     const stats = await feedbackService.getFeedbackStats(activityId)
 
-    res.json({
-      code: 0,
-      data: { feedbacks, stats },
-    })
+    res.json(apiSuccess({ feedbacks, stats }, '获取反馈成功'))
   } catch (error) {
     logger.error('获取反馈失败:', error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -392,10 +382,10 @@ export const getUserFeedbackHandler = async (req: AuthRequest, res: Response) =>
     const activityId = parseInt(req.params.id as string)
 
     const feedback = await feedbackService.getUserFeedback(activityId, userId)
-    res.json({ code: 0, data: { feedback } })
+    res.json(apiSuccess({ feedback }, '获取用户反馈成功'))
   } catch (error) {
     logger.error('获取用户反馈失败:', error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -408,10 +398,10 @@ export const getActivityStatsHandler = async (req: AuthRequest, res: Response) =
     // 日期格式校验
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/
     if (startDate && !dateRegex.test(startDate)) {
-      return res.status(400).json({ code: 400, message: 'startDate 格式无效，请使用 YYYY-MM-DD 格式' })
+      return res.status(400).json(apiFailure(400, 'startDate 格式无效，请使用 YYYY-MM-DD 格式'))
     }
     if (endDate && !dateRegex.test(endDate)) {
-      return res.status(400).json({ code: 400, message: 'endDate 格式无效，请使用 YYYY-MM-DD 格式' })
+      return res.status(400).json(apiFailure(400, 'endDate 格式无效，请使用 YYYY-MM-DD 格式'))
     }
 
     let dateFilter = ''
@@ -470,25 +460,22 @@ export const getActivityStatsHandler = async (req: AuthRequest, res: Response) =
     const totalFeedback = Number(feedbackStatsRows[0]?.total ?? 0)
     const avgRating = Math.round(Number(feedbackStatsRows[0]?.avg_rating) * 10) / 10
 
-    res.json({
-      code: 0,
-      data: {
-        totalActivities,
-        totalParticipants,
-        averageParticipants: avgRate,
-        totalFeedback,
-        averageRating: avgRating,
-        ratingDistribution: {
-          1: Number(ratingDistRows[0]?.r1 ?? 0),
-          2: Number(ratingDistRows[0]?.r2 ?? 0),
-          3: Number(ratingDistRows[0]?.r3 ?? 0),
-          4: Number(ratingDistRows[0]?.r4 ?? 0),
-          5: Number(ratingDistRows[0]?.r5 ?? 0),
-        },
+    res.json(apiSuccess({
+      totalActivities,
+      totalParticipants,
+      averageParticipants: avgRate,
+      totalFeedback,
+      averageRating: avgRating,
+      ratingDistribution: {
+        1: Number(ratingDistRows[0]?.r1 ?? 0),
+        2: Number(ratingDistRows[0]?.r2 ?? 0),
+        3: Number(ratingDistRows[0]?.r3 ?? 0),
+        4: Number(ratingDistRows[0]?.r4 ?? 0),
+        5: Number(ratingDistRows[0]?.r5 ?? 0),
       },
-    })
+    }, '获取活动统计成功'))
   } catch (error) {
     logger.error('获取活动统计失败:', error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }

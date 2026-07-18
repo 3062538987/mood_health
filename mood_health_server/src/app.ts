@@ -28,6 +28,7 @@ import feedbackRoutes from './routes/feedbackRoutes'
 import logger, { summarizeRequestBody } from './utils/logger'
 import redisClient from './utils/redis.client'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler'
+import { requestIdMiddleware } from './middleware/requestId'
 import { csrfMiddleware } from './middleware/csrf'
 import { API_ERROR_CODES, apiFailure, apiSuccess } from './utils/apiResponse'
 import { createHealthHandler, HealthDependencies } from './controllers/healthController'
@@ -108,6 +109,7 @@ export const createApp = (dependencies: AppDependencies = {}) => {
     })
   )
   app.disable('x-powered-by')
+  app.use(requestIdMiddleware)
   app.use(cookieParser())
   // 安全: CSRF 防护 (Double Submit Cookie 模式)
   app.use('/api', csrfMiddleware)

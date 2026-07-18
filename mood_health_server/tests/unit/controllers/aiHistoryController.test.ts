@@ -4,9 +4,11 @@
 
 import { saveHistory, listHistory, getHistoryDetail } from '../../../src/controllers/aiHistoryController'
 
-jest.mock('../../../src/config/mysql', () => ({
-  getMysqlPool: jest.fn(() => ({
-    query: jest.fn(),
+jest.mock('../../../src/repositories/aiHistoryRepository', () => ({
+  createAiHistoryRepository: jest.fn(() => ({
+    saveHistory: jest.fn().mockResolvedValue(1),
+    listHistory: jest.fn().mockResolvedValue({ list: [], total: 0 }),
+    getHistoryDetail: jest.fn().mockResolvedValue(null),
   })),
 }))
 
@@ -54,14 +56,6 @@ describe('aiHistoryController', () => {
     })
 
     it('空列表返回空数组', async () => {
-      const { getMysqlPool } = require('../../../src/config/mysql')
-      const mockPool = {
-        query: jest.fn()
-          .mockResolvedValueOnce([{ total: 0 }])
-          .mockResolvedValueOnce([[]]),
-      }
-      getMysqlPool.mockReturnValue(mockPool)
-
       const req = mockReq()
       const res = mockRes()
       await listHistory(req, res)
@@ -88,10 +82,6 @@ describe('aiHistoryController', () => {
     })
 
     it('不存在的记录返回 404', async () => {
-      const { getMysqlPool } = require('../../../src/config/mysql')
-      const mockPool = { query: jest.fn().mockResolvedValue([[]]) }
-      getMysqlPool.mockReturnValue(mockPool)
-
       const req = mockReq({ params: { id: '999' } })
       const res = mockRes()
       await getHistoryDetail(req, res)

@@ -6,7 +6,7 @@
 import { Request, Response } from 'express'
 import { createAiHistoryRepository } from '../repositories/aiHistoryRepository'
 import logger from '../utils/logger'
-import { apiFailure, API_ERROR_CODES } from '../utils/apiResponse'
+import { apiFailure, apiSuccess, API_ERROR_CODES } from '../utils/apiResponse'
 
 interface AuthRequest extends Request {
   user?: { userId: number; username: string; role: string }
@@ -21,13 +21,13 @@ const aiHistoryRepo = createAiHistoryRepository()
 export const saveHistory = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user) {
-      return res.status(401).json({ code: 401, message: '未登录' })
+      return res.status(401).json(apiFailure(401, '未登录'))
     }
 
     const { analysis_type, input_context, analysis_content, suggestion_content, risk_level, mood_record_id, assessment_session_id } = req.body
 
     if (!analysis_type || !analysis_content) {
-      return res.status(400).json({ code: 1001, message: '缺少必要参数', data: { errors: [{ field: 'analysis_type', message: 'analysis_type 是必填项' }] } })
+      return res.status(400).json(apiFailure(API_ERROR_CODES.BAD_REQUEST, '缺少必要参数'))
     }
 
     const id = await aiHistoryRepo.saveHistory({
@@ -41,10 +41,10 @@ export const saveHistory = async (req: AuthRequest, res: Response) => {
       riskLevel: risk_level || 'low',
     })
 
-    res.json({ code: 0, data: { id } })
+    res.json(apiSuccess({ id }, '保存成功'))
   } catch (error) {
     logger.error('保存 AI 分析记录失败', { error, userId: req.user?.userId })
-    res.status(500).json({ code: 500, message: '保存失败' })
+    res.status(500).json(apiFailure(500, '保存失败'))
   }
 }
 
@@ -55,7 +55,7 @@ export const saveHistory = async (req: AuthRequest, res: Response) => {
 export const listHistory = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user) {
-      return res.status(401).json({ code: 401, message: '未登录' })
+      return res.status(401).json(apiFailure(401, '未登录'))
     }
 
     const page = Math.max(1, parseInt(req.query.page as string) || 1)
@@ -63,18 +63,15 @@ export const listHistory = async (req: AuthRequest, res: Response) => {
 
     const result = await aiHistoryRepo.listHistory({ userId: req.user.userId, page, pageSize })
 
-    res.json({
-      code: 0,
-      data: {
-        list: result.list,
-        total: result.total,
-        page,
-        pageSize,
-      },
-    })
+    res.json(apiSuccess({
+      list: result.list,
+      total: result.total,
+      page,
+      pageSize,
+    }, '获取历史记录成功'))
   } catch (error) {
     logger.error('获取 AI 分析历史列表失败', { error, userId: req.user?.userId })
-    res.status(500).json({ code: 500, message: '获取历史记录失败' })
+    res.status(500).json(apiFailure(500, '获取历史记录失败'))
   }
 }
 
@@ -85,12 +82,12 @@ export const listHistory = async (req: AuthRequest, res: Response) => {
 export const getHistoryDetail = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user) {
-      return res.status(401).json({ code: 401, message: '未登录' })
+      return res.status(401).json(apiFailure(401, '未登录'))
     }
 
     const id = parseInt(String(req.params.id))
     if (isNaN(id)) {
-      return res.status(400).json({ code: 1001, message: '无效的 ID' })
+      return res.status(400).json(apiFailure(API_ERROR_CODES.BAD_REQUEST, '无效的 ID'))
     }
 
     const record = await aiHistoryRepo.getHistoryDetail(id)
@@ -110,26 +107,23 @@ export const getHistoryDetail = async (req: AuthRequest, res: Response) => {
       return val
     }
 
-    res.json({
-      code: 0,
-      data: {
-        id: record.id,
-        userId: record.userId,
-        moodRecordId: record.moodRecordId,
-        assessmentSessionId: record.assessmentSessionId,
-        analysisType: record.analysisType,
-        inputContext: parseJson(record.inputContext),
-        analysisContent: parseJson(record.analysisContent),
-        suggestionContent: parseJson(record.suggestionContent),
-        riskLevel: record.riskLevel,
-        modelVersion: record.modelVersion,
-        requestStatus: record.requestStatus,
-        errorMessage: record.errorMessage,
-        createdAt: record.createdAt,
-      },
-    })
+    res.json(apiSuccess({
+      id: record.id,
+      userId: record.userId,
+      moodRecordId: record.moodRecordId,
+      assessmentSessionId: record.assessmentSessionId,
+      analysisType: record.analysisType,
+      inputContext: parseJson(record.inputContext),
+      analysisContent: parseJson(record.analysisContent),
+      suggestionContent: parseJson(record.suggestionContent),
+      riskLevel: record.riskLevel,
+      modelVersion: record.modelVersion,
+      requestStatus: record.requestStatus,
+      errorMessage: record.errorMessage,
+      createdAt: record.createdAt,
+    }, '获取详情成功'))
   } catch (error) {
     logger.error('获取 AI 分析历史详情失败', { error, id: req.params.id })
-    res.status(500).json({ code: 500, message: '获取详情失败' })
+    res.status(500).json(apiFailure(500, '获取详情失败'))
   }
 }

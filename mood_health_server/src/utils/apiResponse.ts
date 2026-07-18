@@ -1,7 +1,16 @@
+import { randomUUID } from 'crypto'
+
 export interface ApiResponse<T> {
   code: number
   message: string
   data: T
+  requestId?: string
+  details?: ValidationDetail[]
+}
+
+export interface ValidationDetail {
+  field: string
+  message: string
 }
 
 export const API_ERROR_CODES = {
@@ -15,6 +24,8 @@ export const API_ERROR_CODES = {
   SERVICE_UNAVAILABLE: 1503,
 } as const
 
+export const generateRequestId = (): string => randomUUID()
+
 export const apiSuccess = <T>(data: T, message = '操作成功'): ApiResponse<T> => ({
   code: 0,
   message,
@@ -24,7 +35,8 @@ export const apiSuccess = <T>(data: T, message = '操作成功'): ApiResponse<T>
 export const apiFailure = <T = null>(
   code: number,
   message: string,
-  data: T = null as T
+  data: T = null as T,
+  details?: ValidationDetail[]
 ): ApiResponse<T> => {
   if (typeof code !== 'number' || isNaN(code)) {
     throw new Error('失败响应必须提供有效的数字业务码')
@@ -33,7 +45,11 @@ export const apiFailure = <T = null>(
     throw new Error('失败响应必须使用非零业务码')
   }
 
-  return { code, message, data }
+  const response: ApiResponse<T> = { code, message, data }
+  if (details) {
+    response.details = details
+  }
+  return response
 }
 
 export const businessCodeForHttpStatus = (statusCode: number): number => {
