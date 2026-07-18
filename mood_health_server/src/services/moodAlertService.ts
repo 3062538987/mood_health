@@ -1,5 +1,5 @@
 import { getMysqlPool } from '../config/mysql'
-import { ResultSetHeader, RowDataPacket, Pool } from 'mysql2'
+import { ResultSetHeader, RowDataPacket, Pool } from 'mysql2/promise'
 import logger from '../utils/logger'
 
 interface MoodAlertRow extends RowDataPacket {
