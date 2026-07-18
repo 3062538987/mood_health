@@ -9,6 +9,26 @@ import type { PromptTemplate } from '../../repositories/promptRepository'
 import aiConfig from '../../config/aiConfig'
 import logger from '../logger'
 
+// 模板缓存，避免每次调用都查询数据库
+let templateCache: PromptTemplate[] | null = null
+let templateCacheTime = 0
+const TEMPLATE_CACHE_TTL = 60_000 // 60秒
+
+const loadAllTemplates = async (): Promise<PromptTemplate[]> => {
+  const now = Date.now()
+  if (templateCache && now - templateCacheTime < TEMPLATE_CACHE_TTL) {
+    return templateCache
+  }
+
+  const categories = ['assessment_interpretation', 'mood_report', 'counseling', 'recommendation']
+  const results = await Promise.all(categories.map((cat) => promptService.getActiveByCategory(cat)))
+  const allTemplates = results.flat()
+
+  templateCache = allTemplates
+  templateCacheTime = now
+  return allTemplates
+}
+
 /**
  * 使用 Prompt 模板调用 AI
  * @param templateName 模板名称
@@ -25,14 +45,8 @@ export const callWithTemplate = async (
     throw new Error('AI 服务未启用，请设置 AI_ENABLED=true')
   }
 
-  // 从数据库加载模板
-  const templates = await promptService.getActiveByCategory('assessment_interpretation')
-  const allTemplates = [
-    ...templates,
-    ...(await promptService.getActiveByCategory('mood_report')),
-    ...(await promptService.getActiveByCategory('counseling')),
-    ...(await promptService.getActiveByCategory('recommendation')),
-  ]
+  // 从数据库加载模板（带缓存）
+  const allTemplates = await loadAllTemplates()
   const template = allTemplates.find((t) => t.name === templateName)
 
   if (!template) {

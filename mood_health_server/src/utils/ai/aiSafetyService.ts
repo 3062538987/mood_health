@@ -91,7 +91,6 @@ export const sanitizeOutput = (output: Record<string, unknown>): Record<string, 
       sanitized[key] = value
         .replace(/\b1[3-9]\d{9}\b/g, '[手机号]')
         .replace(/\b\d{17}[\dXx]\b/g, '[身份证号]')
-        .replace(/\b\d{6}\d{8}\d{4}\b/g, '[身份证号]')
     } else if (Array.isArray(value)) {
       sanitized[key] = value.map((v) =>
         typeof v === 'string'

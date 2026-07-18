@@ -7,6 +7,7 @@ import { Response } from 'express'
 import { AuthRequest } from '../middleware/auth'
 import { apiSuccess, apiFailure } from '../utils/apiResponse'
 import { callChatCompletion } from '../utils/ai/aiClient'
+import { filterContent } from '../utils/contentFilter'
 import logger from '../utils/logger'
 
 const TREEHOLE_SYSTEM_PROMPT = `你是一个温暖、善解人意的树洞倾听者。用户会在这里倾诉心事，请用温柔的语气回复。
@@ -29,6 +30,12 @@ export const generateGentleReply = async (req: AuthRequest, res: Response) => {
 
     if (content.length > 1000) {
       return res.status(400).json(apiFailure(400, '内容长度不能超过1000字'))
+    }
+
+    // 内容安全检测
+    const filterResult = filterContent(content)
+    if (!filterResult.isSafe && filterResult.severity === 'high') {
+      return res.status(400).json(apiFailure(400, '内容包含不当信息，请修改后重试'))
     }
 
     const messages: Array<{ role: 'system' | 'user'; content: string }> = [

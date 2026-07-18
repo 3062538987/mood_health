@@ -2,7 +2,11 @@ import { validationResult } from 'express-validator';
 import { Request, Response, NextFunction } from 'express';
 import { API_ERROR_CODES } from '../utils/apiResponse';
 
-const SENSITIVE_FIELDS = new Set(['password', 'confirmPassword', 'token', 'secret', 'authorization']);
+const SENSITIVE_FIELDS = new Set([
+  'password', 'newPassword', 'oldPassword', 'currentPassword', 'confirmPassword',
+  'token', 'accessToken', 'refreshToken', 'secret', 'apiKey',
+  'authorization', 'Authorization',
+]);
 
 export const validateRequest = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);

@@ -216,10 +216,10 @@ export class ContentAuditService {
    * @returns 脱敏后的内容
    */
   sanitizeContent(content: string): string {
-    // 简单的脱敏处理，实际项目中可以根据需要扩展
+    // 脱敏处理：手机号、身份证、邮箱、链接
     return content
-      .replace(/\d{11}/g, '***') // 隐藏手机号
-      .replace(/\d{18}/g, '***') // 隐藏身份证号
+      .replace(/\b1[3-9]\d{9}\b/g, '***') // 隐藏手机号
+      .replace(/\b\d{17}[\dXx]\b/g, '***') // 隐藏身份证号
       .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '***') // 隐藏邮箱
       .replace(/https?:\/\/[^\s]+/g, '***'); // 隐藏链接
   }
