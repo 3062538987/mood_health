@@ -8,20 +8,20 @@
     <!-- 加载状态 -->
     <div v-if="loading" class="state-container">
       <div class="loading-spinner"></div>
-      <p>正在加载历史记录...</p>
+      <p>正在整理你的分析记录...</p>
     </div>
 
     <!-- 错误状态 -->
     <div v-else-if="error" class="state-container error-state">
-      <p class="error-text">{{ error }}</p>
-      <button class="retry-btn" @click="loadHistory">重新加载</button>
+      <p class="error-text">网络有点小问题，分析记录暂时无法显示</p>
+      <button class="retry-btn" @click="loadHistory">再试一次</button>
     </div>
 
     <!-- 空状态 -->
     <div v-else-if="list.length === 0" class="state-container empty-state">
       <div class="empty-icon">📋</div>
-      <p class="empty-title">暂无 AI 分析记录</p>
-      <p class="empty-desc">去情绪记录页面生成你的第一条 AI 分析吧</p>
+      <p class="empty-title">还没有 AI 分析记录</p>
+      <p class="empty-desc">在情绪记录页面记录情绪后，AI 会为你生成分析报告</p>
       <router-link to="/mood" class="go-btn">去记录情绪</router-link>
     </div>
 

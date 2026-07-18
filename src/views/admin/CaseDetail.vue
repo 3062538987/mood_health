@@ -5,8 +5,8 @@
       <h2>个案详情 #{{ caseData?.case.id }}</h2>
     </div>
 
-    <div v-if="loading" class="state-block">加载中...</div>
-    <div v-else-if="!caseData" class="state-block">个案不存在</div>
+    <div v-if="loading" class="state-block">正在加载个案信息...</div>
+    <div v-else-if="!caseData" class="state-block">该个案不存在或已被删除</div>
 
     <template v-else>
       <!-- 个案基本信息 -->
@@ -134,7 +134,7 @@
       <!-- 干预记录 -->
       <div class="interventions-card">
         <h3>干预记录（{{ interventions.length }}）</h3>
-        <div v-if="interventions.length === 0" class="state-block text-muted">暂无干预记录</div>
+        <div v-if="interventions.length === 0" class="state-block text-muted">还没有干预记录</div>
         <div v-else class="intervention-list">
           <div v-for="item in interventions" :key="item.id" class="intervention-item">
             <div class="intervention-header">

@@ -22,13 +22,13 @@
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div>
-      <p>正在加载数据...</p>
+      <p>正在整理数据，请稍候...</p>
     </div>
 
     <!-- 错误状态 -->
     <div v-else-if="error" class="error-state">
-      <p>{{ error }}</p>
-      <button class="retry-btn" @click="loadAllData">重新加载</button>
+      <p>数据加载出现问题，请再试一次</p>
+      <button class="retry-btn" @click="loadAllData">再试一次</button>
     </div>
 
     <!-- 数据面板 -->
@@ -87,27 +87,27 @@
             @click="granularity = 'week'; loadMoodTrend()"
           >按周</button>
         </div>
-        <div v-if="moodTrend.length === 0" class="empty-chart">暂无数据</div>
+        <div v-if="moodTrend.length === 0" class="empty-chart">还没有情绪趋势数据</div>
         <div v-else ref="trendChartRef" class="chart-box"></div>
       </section>
 
       <div class="chart-row">
         <section class="chart-section half">
           <h3 class="section-title">情绪分布</h3>
-          <div v-if="moodDistribution.length === 0" class="empty-chart">暂无数据</div>
+          <div v-if="moodDistribution.length === 0" class="empty-chart">还没有情绪分布数据</div>
           <div v-else ref="distributionChartRef" class="chart-box"></div>
         </section>
 
         <section class="chart-section half">
           <h3 class="section-title">模块使用</h3>
-          <div v-if="moduleUsage.length === 0" class="empty-chart">暂无数据</div>
+          <div v-if="moduleUsage.length === 0" class="empty-chart">还没有模块使用数据</div>
           <div v-else ref="moduleChartRef" class="chart-box"></div>
         </section>
       </div>
 
       <section class="chart-section">
         <h3 class="section-title">测评分布</h3>
-        <div v-if="!assessmentDist || assessmentDist.instruments.length === 0" class="empty-chart">暂无数据</div>
+        <div v-if="!assessmentDist || assessmentDist.instruments.length === 0" class="empty-chart">还没有测评数据</div>
         <div v-else ref="assessmentChartRef" class="chart-box"></div>
       </section>
     </template>

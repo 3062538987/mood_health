@@ -3,7 +3,7 @@
     <div class="content">
       <p class="code">404</p>
       <h1>页面不存在</h1>
-      <p class="description">你访问的页面路径无效，可能是地址输入错误，或者该页面已经被移动。</p>
+      <p class="description">哎呀，你来到了一个不存在的页面。可能是地址输入有误，或者页面已经迁移了。</p>
       <div class="actions">
         <router-link to="/" class="primary-action">返回首页</router-link>
         <button type="button" class="secondary-action" @click="$router.back()">返回上一页</button>

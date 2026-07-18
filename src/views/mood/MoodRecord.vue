@@ -11,9 +11,9 @@
     <div class="error-icon">
       <i class="fas fa-exclamation-circle"></i>
     </div>
-    <h3>加载失败</h3>
-    <p>请稍后重试</p>
-    <button type="button" class="error-retry" @click="loadPageData">重新加载</button>
+    <h3>准备过程中遇到点小问题</h3>
+    <p>请稍候再试</p>
+    <button type="button" class="error-retry" @click="loadPageData">再试一次</button>
   </div>
   <div v-else class="mood-record-page">
     <div class="page-shell">

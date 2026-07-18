@@ -15,8 +15,8 @@
       </div>
 
       <!-- 错误提示 -->
-      <el-empty v-else-if="error" description="加载失败，请稍后重试" :image-size="200">
-        <el-button type="primary" @click="loadActivityDetail">重新加载</el-button>
+      <el-empty v-else-if="error" description="活动信息加载出现问题，请再试一次" :image-size="200">
+        <el-button type="primary" @click="loadActivityDetail">再试一次</el-button>
       </el-empty>
 
       <!-- 活动详情内容 -->

@@ -20,14 +20,14 @@
       <!-- 错误状态 -->
       <el-empty
         v-if="error"
-        description="加载失败"
+        description="音乐列表加载出现问题"
       >
-        <el-button type="primary" @click="loadCatalog">重试</el-button>
+        <el-button type="primary" @click="loadCatalog">再试一次</el-button>
       </el-empty>
 
       <!-- 音乐列表 -->
       <div v-if="!error" class="music-list">
-        <div v-if="isLoadingCatalog" class="loading-skeleton" aria-label="加载中">
+        <div v-if="isLoadingCatalog" class="loading-skeleton" aria-label="正在整理音乐列表">
           <div v-for="index in 4" :key="index" class="skeleton-row"></div>
         </div>
         <transition name="empty-fade" mode="out-in">

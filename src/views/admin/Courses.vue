@@ -8,8 +8,8 @@
       </div>
     </div>
 
-    <div v-if="loading" class="state">加载中...</div>
-    <div v-else-if="courses.length === 0" class="state">暂无课程</div>
+    <div v-if="loading" class="state">正在加载课程列表...</div>
+    <div v-else-if="courses.length === 0" class="state">还没有课程</div>
 
     <table v-else class="table">
       <thead>

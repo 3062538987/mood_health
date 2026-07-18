@@ -35,15 +35,15 @@
         <div class="error-icon">
           <i class="fas fa-exclamation-circle"></i>
         </div>
-        <h3>数据加载失败</h3>
-        <p>请稍后重试</p>
-        <button type="button" class="error-retry" @click="loadData">重新加载</button>
+        <h3>数据加载遇到点小问题</h3>
+        <p>请稍候再试</p>
+        <button type="button" class="error-retry" @click="loadData">再试一次</button>
       </div>
 
       <SoftEmptyState
         v-else-if="isEmpty"
-        :title="`暂无${periodLabel}的情绪数据`"
-        description="去记录一些情绪，积累数据后这里会生成洞察分析。"
+        :title="`还没有${periodLabel}的情绪数据`"
+        description="记录你的情绪，积累数据后这里会生成贴心的洞察分析。"
         action-text="去记录情绪"
         @action="goRecord"
       />

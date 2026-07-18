@@ -37,12 +37,12 @@
         <!-- 错误状态 -->
         <el-empty
           v-if="error"
-          description="加载失败"
+          description="网络有点小问题，成就列表暂时无法显示"
         >
-          <el-button type="primary" @click="loadAchievements">重试</el-button>
+          <el-button type="primary" @click="loadAchievements">再试一次</el-button>
         </el-empty>
 
-        <div v-if="!error && isLoading" class="loading-skeleton" aria-label="加载中">
+        <div v-if="!error && isLoading" class="loading-skeleton" aria-label="正在整理你的成就">
           <div v-for="index in 6" :key="index" class="skeleton-card"></div>
         </div>
         <transition name="empty-fade" mode="out-in">

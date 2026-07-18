@@ -25,10 +25,10 @@
     <!-- 错误状态 -->
     <el-empty
       v-else-if="error"
-      description="加载失败，请稍后重试"
+      description="数据加载出现问题，请再试一次"
       :image-size="160"
     >
-      <el-button type="primary" @click="loadStats">重新加载</el-button>
+      <el-button type="primary" @click="loadStats">再试一次</el-button>
     </el-empty>
 
     <!-- 统计数据 -->

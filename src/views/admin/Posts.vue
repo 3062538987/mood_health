@@ -5,8 +5,8 @@
       <button :disabled="loading" @click="load">刷新</button>
     </div>
 
-    <div v-if="loading" class="state">加载中...</div>
-    <div v-else-if="posts.length === 0" class="state">暂无数据</div>
+    <div v-if="loading" class="state">正在加载帖子列表...</div>
+    <div v-else-if="posts.length === 0" class="state">还没有帖子</div>
 
     <table v-else class="table">
       <thead>

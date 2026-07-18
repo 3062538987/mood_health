@@ -39,7 +39,7 @@
               <span class="emotion-count">{{ count }}次</span>
             </div>
           </div>
-          <p v-else class="empty-text">暂无情绪记录</p>
+          <p v-else class="empty-text">还没有情绪记录，记录你的第一个情绪吧</p>
         </div>
 
         <!-- 参与记录与收藏 -->

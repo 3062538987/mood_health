@@ -39,12 +39,12 @@
     <!-- 加载状态 -->
     <div v-if="loading" class="loading">
       <div class="loading-spinner"></div>
-      <p>加载中...</p>
+      <p>正在整理课程列表...</p>
     </div>
 
     <!-- 空状态 -->
     <div v-if="!loading && courses.length === 0" class="empty-state">
-      <p>暂无课程</p>
+      <p>还没有课程</p>
     </div>
   </div>
 </template>

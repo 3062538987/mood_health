@@ -5,8 +5,8 @@
       <button class="refresh-btn" :disabled="loading" @click="loadCases">刷新</button>
     </div>
 
-    <div v-if="loading" class="state-block">加载中...</div>
-    <div v-else-if="cases.length === 0" class="state-block">暂无个案数据</div>
+    <div v-if="loading" class="state-block">正在加载个案列表...</div>
+    <div v-else-if="cases.length === 0" class="state-block">还没有风险个案记录</div>
 
     <div v-else class="table-wrap">
       <table class="cases-table">
