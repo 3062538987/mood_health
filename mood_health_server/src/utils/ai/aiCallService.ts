@@ -45,8 +45,20 @@ export const callWithTemplate = async (
     throw new Error('AI 服务未启用，请设置 AI_ENABLED=true')
   }
 
-  // 从数据库加载模板（带缓存）
-  const allTemplates = await loadAllTemplates()
+  // 从数据库加载模板（带缓存+降级）
+  let allTemplates: PromptTemplate[] = [];
+  try {
+    allTemplates = await loadAllTemplates();
+  } catch (error) {
+    logger.error("加载 AI 模板失败，使用空模板列表:", error);
+    // 如果模板加载失败，尝试直接调用（适用于 callDirect）
+    if (templateName === 'direct') {
+      logger.warn("模板加载失败，回退到直接调用模式");
+      allTemplates = [];
+    } else {
+      throw new Error("AI 模板加载失败，服务暂时不可用");
+    }
+  }
   const template = allTemplates.find((t) => t.name === templateName)
 
   if (!template) {

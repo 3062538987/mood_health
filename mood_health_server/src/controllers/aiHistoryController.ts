@@ -6,6 +6,7 @@
 import { Request, Response } from 'express'
 import { createAiHistoryRepository } from '../repositories/aiHistoryRepository'
 import logger from '../utils/logger'
+import { apiFailure, API_ERROR_CODES } from '../utils/apiResponse'
 
 interface AuthRequest extends Request {
   user?: { userId: number; username: string; role: string }
@@ -94,12 +95,12 @@ export const getHistoryDetail = async (req: AuthRequest, res: Response) => {
 
     const record = await aiHistoryRepo.getHistoryDetail(id)
     if (!record) {
-      return res.status(404).json({ code: 404, message: '记录不存在' })
+      return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '记录不存在'))
     }
 
     // 所有权校验
     if (record.userId !== req.user.userId) {
-      return res.status(404).json({ code: 404, message: '记录不存在' })
+      return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '记录不存在'))
     }
 
     const parseJson = (val: unknown) => {

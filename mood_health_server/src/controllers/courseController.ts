@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { createCourseRepository } from "../repositories/courseRepository";
+import { apiFailure, API_ERROR_CODES } from "../utils/apiResponse";
 
 const courseRepo = createCourseRepository();
 
@@ -29,7 +30,7 @@ export const getCourseById = async (
     const course = await courseRepo.findById(parseInt(id as string));
 
     if (!course) {
-      res.status(404).json({ error: "Course not found" });
+      res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '课程不存在'));
       return;
     }
 
@@ -86,7 +87,7 @@ export const updateCourse = async (
     });
 
     if (!updated) {
-      res.status(404).json({ error: "Course not found" });
+      res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '课程不存在'));
       return;
     }
 
@@ -108,7 +109,7 @@ export const deleteCourse = async (
     const deleted = await courseRepo.remove(parseInt(id as string));
 
     if (!deleted) {
-      res.status(404).json({ error: "Course not found" });
+      res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '课程不存在'));
       return;
     }
 

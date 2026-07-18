@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { createMusicRepository } from "../repositories/musicRepository";
+import { apiFailure, API_ERROR_CODES } from "../utils/apiResponse";
 
 const musicRepo = createMusicRepository();
 
@@ -36,10 +37,7 @@ export const getMusicById = async (
     const music = await musicRepo.findById(parseInt(id as string));
 
     if (!music) {
-      res.status(404).json({
-        success: false,
-        message: "音乐不存在",
-      });
+      res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '音乐不存在'));
       return;
     }
 
@@ -105,10 +103,7 @@ export const updateMusic = async (
     });
 
     if (!music) {
-      res.status(404).json({
-        success: false,
-        message: "音乐不存在",
-      });
+      res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '音乐不存在'));
       return;
     }
 
@@ -136,10 +131,7 @@ export const deleteMusic = async (
     const success = await musicRepo.remove(parseInt(id as string));
 
     if (!success) {
-      res.status(404).json({
-        success: false,
-        message: "音乐不存在",
-      });
+      res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '音乐不存在'));
       return;
     }
 

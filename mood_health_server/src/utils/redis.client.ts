@@ -9,6 +9,7 @@ class RedisClient {
   private maxReconnectAttempts: number = 10;
   private reconnectDelay: number = 2000;
   private fallbackEnabled: boolean = true;
+  public lastError: Error | null = null;
 
   constructor() {
     this.client = this.createClient();
@@ -94,13 +95,17 @@ class RedisClient {
       if (!this.isConnected) {
         if (this.fallbackEnabled) {
           logger.warn("Redis 未连接，返回 null");
+          this.lastError = new Error("Redis 未连接");
           return null;
         }
         throw new RedisError("Redis 未连接", new Error("Redis 未连接"));
       }
-      return await command.apply(this.client, args);
+      const result = await command.apply(this.client, args);
+      this.lastError = null;
+      return result;
     } catch (error) {
       logger.error("Redis 命令执行失败:", error);
+      this.lastError = error instanceof Error ? error : new Error(String(error));
       if (this.fallbackEnabled) {
         return null;
       }

@@ -2,6 +2,7 @@ import { Response } from "express";
 import { AuthRequest } from "../middleware/auth";
 import { createRelaxRepository } from "../repositories/relaxRepository";
 import logger from "../utils/logger";
+import { apiFailure, API_ERROR_CODES } from "../utils/apiResponse";
 
 const relaxRepo = createRelaxRepository();
 
@@ -87,7 +88,7 @@ export const getRelaxRecordDetailHandler = async (
 
     const record = await relaxRepo.findById(userId, id);
     if (!record) {
-      return res.status(404).json({ code: 404, message: "放松记录不存在" });
+      return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, "放松记录不存在"));
     }
 
     res.json({ code: 0, data: record });

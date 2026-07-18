@@ -5,6 +5,7 @@ import { createAuditService } from '../services/auditService'
 import logger from '../utils/logger'
 import { filterContent, shouldAutoReject, shouldMarkForReview } from '../utils/contentFilter'
 import contentAuditService from '../utils/ai/contentAuditService'
+import { apiFailure, API_ERROR_CODES } from '../utils/apiResponse'
 
 const postRepo = createPostRepository()
 const auditService = createAuditService()
@@ -115,7 +116,7 @@ export const getPostByIdHandler = async (req: Request, res: Response) => {
 
     const post = await postRepo.findPostById(id)
     if (!post) {
-      return res.status(404).json({ code: 404, message: '帖子不存在' })
+      return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '帖子不存在'))
     }
 
     const comments = await postRepo.findCommentsByPostId(id)
@@ -156,7 +157,7 @@ export const likePostHandler = async (req: AuthRequest, res: Response) => {
 
     const post = await postRepo.likePost(id, userId)
     if (!post) {
-      return res.status(404).json({ code: 404, message: '帖子不存在' })
+      return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '帖子不存在'))
     }
 
     res.status(200).json({ code: 0, data: post })
@@ -185,7 +186,7 @@ export const createCommentHandler = async (req: AuthRequest, res: Response) => {
 
     const post = await postRepo.findPostById(postId)
     if (!post) {
-      return res.status(404).json({ code: 404, message: '帖子不存在' })
+      return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '帖子不存在'))
     }
 
     const comment = await postRepo.createComment({
@@ -215,7 +216,7 @@ export const likeCommentHandler = async (req: AuthRequest, res: Response) => {
 
     const comment = await postRepo.likeComment(id, userId)
     if (!comment) {
-      return res.status(404).json({ code: 404, message: '评论不存在' })
+      return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '评论不存在'))
     }
 
     res.status(200).json({ code: 0, data: comment })
@@ -274,12 +275,12 @@ export const auditPostHandler = async (req: AuthRequest, res: Response) => {
 
     const existingPost = await postRepo.findPostById(id)
     if (!existingPost) {
-      return res.status(404).json({ code: 404, message: '帖子不存在' })
+      return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '帖子不存在'))
     }
 
     const post = await postRepo.auditPost(id, { status, auditRemark: audit_remark })
     if (!post) {
-      return res.status(404).json({ code: 404, message: '帖子不存在' })
+      return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '帖子不存在'))
     }
 
     // 记录审核操作日志

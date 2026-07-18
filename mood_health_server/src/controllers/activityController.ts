@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth'
 import { RowDataPacket } from 'mysql2'
 import { getMysqlPool } from '../config/mysql'
 import { setCache, getCache, clearActivityCache } from '../utils/cache'
+import { apiFailure, API_ERROR_CODES } from '../utils/apiResponse'
 import {
   createActivityRepository,
   type ActivityFilter,
@@ -83,7 +84,7 @@ export const getActivityDetail = async (req: Request, res: Response) => {
     const id = parseInt(req.params.id as string)
     const activity = await activityRepo.findById(id)
     if (!activity) {
-      return res.status(404).json({ code: 404, message: '活动不存在' })
+      return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '活动不存在'))
     }
     res.json({ code: 0, data: activity })
   } catch (error) {
@@ -99,7 +100,7 @@ export const joinActivityHandler = async (req: AuthRequest, res: Response) => {
 
     const activity = await activityRepo.findById(activityId)
     if (!activity) {
-      return res.status(404).json({ code: 404, message: '活动不存在' })
+      return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '活动不存在'))
     }
 
     await activityRepo.join(activityId, userId)
@@ -129,7 +130,7 @@ export const cancelJoinActivityHandler = async (req: AuthRequest, res: Response)
 
     const activity = await activityRepo.findById(activityId)
     if (!activity) {
-      return res.status(404).json({ code: 404, message: '活动不存在' })
+      return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '活动不存在'))
     }
 
     await activityRepo.cancelJoin(activityId, userId)
@@ -195,7 +196,7 @@ export const updateActivityHandler = async (req: AuthRequest, res: Response) => 
 
     const activity = await activityRepo.findById(id)
     if (!activity) {
-      return res.status(404).json({ code: 404, message: '活动不存在' })
+      return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '活动不存在'))
     }
 
     await activityRepo.update(id, {
@@ -223,7 +224,7 @@ export const deleteActivityHandler = async (req: AuthRequest, res: Response) => 
 
     const activity = await activityRepo.findById(id)
     if (!activity) {
-      return res.status(404).json({ code: 404, message: '活动不存在' })
+      return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '活动不存在'))
     }
 
     await activityRepo.remove(id)
@@ -243,7 +244,7 @@ export const setReminderHandler = async (req: AuthRequest, res: Response) => {
 
     const activity = await activityRepo.findById(activityId)
     if (!activity) {
-      return res.status(404).json({ code: 404, message: '活动不存在' })
+      return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '活动不存在'))
     }
 
     const joined = await activityRepo.hasUserJoined(activityId, userId)
@@ -278,7 +279,7 @@ export const cancelReminderHandler = async (req: AuthRequest, res: Response) => 
 
     const cancelled = await activityRepo.cancelReminder(activityId, userId)
     if (!cancelled) {
-      return res.status(404).json({ code: 404, message: '未找到提醒记录' })
+      return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '未找到提醒记录'))
     }
 
     res.json({ code: 0, message: '已取消提醒' })
@@ -307,7 +308,7 @@ export const getActivityDetailWithParticipants = async (req: Request, res: Respo
 
     const activity = await activityRepo.findById(id)
     if (!activity) {
-      return res.status(404).json({ code: 404, message: '活动不存在' })
+      return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '活动不存在'))
     }
 
     const participants = await activityRepo.getParticipants(id)
@@ -338,7 +339,7 @@ export const submitFeedbackHandler = async (req: AuthRequest, res: Response) => 
 
     const activity = await activityRepo.findById(activityId)
     if (!activity) {
-      return res.status(404).json({ code: 404, message: '活动不存在' })
+      return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '活动不存在'))
     }
 
     const joined = await activityRepo.hasUserJoined(activityId, userId)

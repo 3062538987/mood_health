@@ -91,10 +91,18 @@ export const clearMoodCache = async (userId: number): Promise<void> => {
 
   try {
     for (const pattern of patterns) {
-      const keys = await redisClient.keys(pattern);
-      if (keys && keys.length > 0) {
-        await redisClient.del(...keys);
-        console.log(`已清除用户 ${userId} 的情绪缓存: ${keys.length} 个键`);
+      // 使用 SCAN 替代 KEYS 避免阻塞 Redis
+      let cursor = '0';
+      const keysToDelete: string[] = [];
+      do {
+        const [newCursor, keys] = await redisClient.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+        cursor = newCursor;
+        keysToDelete.push(...keys);
+      } while (cursor !== '0');
+
+      if (keysToDelete.length > 0) {
+        await redisClient.del(...keysToDelete);
+        console.log(`已清除用户 ${userId} 的情绪缓存: ${keysToDelete.length} 个键`);
       }
     }
   } catch (error) {
