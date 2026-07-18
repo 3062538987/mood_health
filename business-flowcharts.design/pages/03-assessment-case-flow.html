@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心理测评与风险个案管理业务流程图</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 48px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .page-subtitle {
+            font-size: 16px;
+            color: #64748b;
+            font-weight: 400;
+        }
+
+        .legend-bar {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #475569;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.risk { background-color: #EF4444; }
+        .legend-dot.assessment { background-color: #8B5CF6; }
+        .legend-dot.warning { background-color: #F59E0B; }
+
+        .flow-section {
+            margin-bottom: 48px;
+        }
+
+        .flow-card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+            padding: 32px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 28px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .section-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            flex-shrink: 0;
+        }
+
+        .section-number.assessment { background-color: #8B5CF6; }
+        .section-number.risk { background-color: #EF4444; }
+        .section-number.warning { background-color: #F59E0B; }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .section-desc {
+            font-size: 14px;
+            color: #64748b;
+            margin-top: -4px;
+            margin-left: 44px;
+            margin-bottom: 24px;
+        }
+
+        .mermaid-container {
+            width: 100%;
+            overflow-x: auto;
+            padding: 20px 0;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+
+        .flow-note {
+            margin-top: 20px;
+            padding: 12px 16px;
+            background-color: #f8fafc;
+            border-left: 3px solid #8B5CF6;
+            border-radius: 0 6px 6px 0;
+            font-size: 13px;
+            color: #475569;
+        }
+
+        .flow-note.risk { border-left-color: #EF4444; }
+        .flow-note.warning { border-left-color: #F59E0B; }
+
+        .flow-note strong {
+            color: #1e293b;
+        }
+
+        .page-footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 20px 12px; }
+            .page-title { font-size: 24px; }
+            .flow-card { padding: 20px; }
+            .section-title { font-size: 17px; }
+            .legend-bar { gap: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="page-header">
+            <h1 class="page-title">心理测评与风险个案管理业务流程图</h1>
+            <p class="page-subtitle">筛查-干预-结案全链路 · 风险分级管理</p>
+            <div class="legend-bar">
+                <div class="legend-item">
+                    <span class="legend-dot assessment"></span>
+                    <span>测评流程</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot risk"></span>
+                    <span>风险个案</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot warning"></span>
+                    <span>预警判定</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Section 1: 心理测评提交流程 -->
+        <section class="flow-section">
+            <div class="flow-card">
+                <div class="section-header">
+                    <span class="section-number assessment">1</span>
+                    <h2 class="section-title">心理测评提交流程</h2>
+                </div>
+                <p class="section-desc">用户从浏览量表到提交测评、生成结果及自动触发风险个案的完整流程</p>
+                <div class="mermaid-container">
+                    <div class="mermaid">
+flowchart TD
+    A([用户进入测评中心]):::start --> B[浏览量表列表<br/>仅显示已批准的量表]:::assessment
+    B --> C[选择目标量表]:::assessment
+    C --> D[加载量表题目]:::assessment
+    D --> E[逐题作答]:::assessment
+    E --> F[提交答案]:::assessment
+
+    F --> G{服务端验证<br/>量表状态为approved?}:::decision
+    G -->|否| H[返回错误<br/>量表未授权]:::error
+    G -->|是| I[读取计分规则<br/>scoring_rule_json]:::assessment
+
+    I --> J[调用计分引擎<br/>计算原始分数]:::assessment
+    J --> K[风险分层判定]:::warning
+
+    K --> L{风险等级?}:::decision
+    L -->|低风险| M[生成健康建议文本]:::assessment
+    L -->|中风险| N[生成关注建议文本]:::warning
+    L -->|高风险| O[生成紧急干预建议]:::risk
+
+    M --> P[创建测评会话记录]:::assessment
+    N --> P
+    O --> P
+
+    P --> Q{是否高风险?}:::decision
+    Q -->|否| R[返回测评结果]:::end
+    Q -->|是| S[同一事务内<br/>自动创建风险个案]:::risk
+    S --> R
+
+    classDef start fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e40af
+    classDef end fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#166534
+    classDef assessment fill:#ede9fe,stroke:#8B5CF6,stroke-width:2px,color:#5b21b6
+    classDef warning fill:#fef3c7,stroke:#F59E0B,stroke-width:2px,color:#92400e
+    classDef risk fill:#fee2e2,stroke:#EF4444,stroke-width:2px,color:#991b1b
+    classDef decision fill:#f1f5f9,stroke:#64748b,stroke-width:2px,color:#334155
+    classDef error fill:#fee2e2,stroke:#ef4444,stroke-width:2px,stroke-dasharray:5 5,color:#991b1b
+                    </div>
+                </div>
+                <div class="flow-note">
+                    <strong>关键说明：</strong>服务端必须验证量表状态为 approved 后方可计分；高风险测评在同一事务中自动创建风险个案，确保数据一致性。
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: 风险个案生命周期流程 -->
+        <section class="flow-section">
+            <div class="flow-card">
+                <div class="section-header">
+                    <span class="section-number risk">2</span>
+                    <h2 class="section-title">风险个案生命周期流程</h2>
+                </div>
+                <p class="section-desc">风险个案从创建到结案的全生命周期状态流转与干预过程</p>
+                <div class="mermaid-container">
+                    <div class="mermaid">
+flowchart LR
+    subgraph 个案创建
+        A1[自动触发创建<br/>高风险测评]:::riskAuto
+        A2[手动创建个案<br/>super_admin]:::manual
+    end
+
+    subgraph 待处理阶段
+        B[open<br/>待处理]:::stateOpen
+    end
+
+    subgraph 分配阶段
+        C[assigned<br/>已分配]:::stateAssigned
+    end
+
+    subgraph 干预阶段
+        D[in_progress<br/>干预中]:::stateProgress
+        D1[记录干预记录<br/>note / interview类型]:::note
+    end
+
+    subgraph 结案阶段
+        E[referred<br/>已转介]:::stateReferred
+        F[closed<br/>已结案]:::stateClosed
+    end
+
+    A1 --> B
+    A2 --> B
+
+    B -->|super_admin分配咨询师| C
+    C -->|咨询师开始干预| D
+
+    D --> D1
+    D1 --> D
+
+    D -->|需要转介| G{判定转介?}:::decision
+    G -->|是| H[填写转介原因<br/>及目标机构]:::referral
+    H --> E
+
+    D -->|干预完成| I{判定结案?}:::decision
+    I -->|是| J[填写结案摘要<br/>与结案说明]:::closeSummary
+    J --> F
+
+    B -.->|状态变更写入审计日志| AUDIT[(审计日志)]:::audit
+    C -.->|状态变更写入审计日志| AUDIT
+    D -.->|状态变更写入审计日志| AUDIT
+    E -.->|状态变更写入审计日志| AUDIT
+    F -.->|状态变更写入审计日志| AUDIT
+
+    classDef riskAuto fill:#fee2e2,stroke:#EF4444,stroke-width:2px,color:#991b1b
+    classDef manual fill:#f1f5f9,stroke:#64748b,stroke-width:2px,color:#334155
+    classDef stateOpen fill:#fef3c7,stroke:#F59E0B,stroke-width:2px,color:#92400e
+    classDef stateAssigned fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e40af
+    classDef stateProgress fill:#ede9fe,stroke:#8B5CF6,stroke-width:2px,color:#5b21b6
+    classDef stateReferred fill:#f1f5f9,stroke:#64748b,stroke-width:2px,color:#334155,stroke-dasharray:5 5
+    classDef stateClosed fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#166534
+    classDef note fill:#f8fafc,stroke:#94a3b8,stroke-width:1px,color:#475569
+    classDef decision fill:#f1f5f9,stroke:#64748b,stroke-width:2px,color:#334155
+    classDef referral fill:#f1f5f9,stroke:#64748b,stroke-width:2px,color:#334155
+    classDef closeSummary fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#166534
+    classDef audit fill:#f8fafc,stroke:#94a3b8,stroke-width:1px,color:#475569,stroke-dasharray:3 3
+                    </div>
+                </div>
+                <div class="flow-note risk">
+                    <strong>状态说明：</strong>所有状态变更均自动写入审计日志，确保个案管理可追溯；干预过程中支持多条干预记录（备注、访谈），咨询师可随时更新。
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: 个案自动创建判定逻辑 -->
+        <section class="flow-section">
+            <div class="flow-card">
+                <div class="section-header">
+                    <span class="section-number warning">3</span>
+                    <h2 class="section-title">个案自动创建判定逻辑</h2>
+                </div>
+                <p class="section-desc">测评完成后系统自动判定是否需要创建风险个案的决策树</p>
+                <div class="mermaid-container">
+                    <div class="mermaid">
+flowchart TD
+    A([测评提交完成]):::start --> B[获取本次测评<br/>风险等级]:::assessment
+
+    B --> C{风险等级 == 高风险?}:::decision
+
+    C -->|否| D[跳过自动创建<br/>不生成个案]:::skip
+    D --> E([返回测评结果]):::end
+
+    C -->|是| F{该学生是否存在<br/>未结案个案?}:::decision
+
+    F -->|有| G[返回现有个案<br/>不重复创建]:::existing
+    G --> H([关联已有个案]):::end
+
+    F -->|无| I[创建新风险个案]:::risk
+    I --> J[记录风险等级快照<br/>关联测评会话ID]:::risk
+    J --> K([返回新创建个案]):::end
+
+    classDef start fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e40af
+    classDef end fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#166534
+    classDef assessment fill:#ede9fe,stroke:#8B5CF6,stroke-width:2px,color:#5b21b6
+    classDef decision fill:#f1f5f9,stroke:#64748b,stroke-width:2px,color:#334155
+    classDef risk fill:#fee2e2,stroke:#EF4444,stroke-width:2px,color:#991b1b
+    classDef skip fill:#f1f5f9,stroke:#94a3b8,stroke-width:1px,color:#64748b
+    classDef existing fill:#fef3c7,stroke:#F59E0B,stroke-width:2px,color:#92400e
+                    </div>
+                </div>
+                <div class="flow-note warning">
+                    <strong>防重机制：</strong>系统自动检查学生是否存在未结案（open / assigned / in_progress）的风险个案，避免高风险测评重复创建个案，确保每位学生同时只有一个活跃个案。
+                </div>
+            </div>
+        </section>
+
+        <footer class="page-footer">
+            <p>大学生心理健康平台 · 心理测评与风险个案管理业务流程文档</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#ede9fe',
+                primaryTextColor: '#5b21b6',
+                primaryBorderColor: '#8B5CF6',
+                lineColor: '#64748b',
+                secondaryColor: '#fee2e2',
+                tertiaryColor: '#fef3c7',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif',
+                fontSize: '14px'
+            },
+            flowchart: {
+                curve: 'basis',
+                padding: 20,
+                nodeSpacing: 50,
+                rankSpacing: 60,
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+    </script>
+</body>
+</html>
