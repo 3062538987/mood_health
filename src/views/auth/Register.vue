@@ -22,22 +22,47 @@
         </div>
         <div class="form-group">
           <label for="password">密码</label>
-          <input
-            id="password"
-            v-model="form.password"
-            type="password"
-            placeholder="请输入密码（6-128位）"
-            required
-            minlength="6"
-            maxlength="128"
-            :aria-invalid="Boolean(fieldErrors.password)"
-            :aria-describedby="fieldErrors.password ? 'password-error' : undefined"
-            @blur="validateField('password')"
-            @input="handleFieldInput('password')"
-          />
+          <div class="input-wrapper">
+            <input
+              id="password"
+              v-model="form.password"
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="请输入密码（6-128位）"
+              required
+              minlength="6"
+              maxlength="128"
+              :aria-invalid="Boolean(fieldErrors.password)"
+              :aria-describedby="fieldErrors.password ? 'password-error' : undefined"
+              @blur="validateField('password')"
+              @input="handleFieldInput('password')"
+            />
+            <button
+              type="button"
+              class="toggle-password"
+              :aria-label="showPassword ? '隐藏密码' : '显示密码'"
+              @click="showPassword = !showPassword"
+            >
+              <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+            </button>
+          </div>
           <p v-if="fieldErrors.password" id="password-error" class="field-error">
             {{ fieldErrors.password }}
           </p>
+          <div v-if="form.password && !fieldErrors.password" class="password-strength">
+            <div class="strength-label">密码强度：{{ passwordStrengthText }}</div>
+            <div class="strength-bar">
+              <div
+                v-for="level in 3"
+                :key="level"
+                class="strength-segment"
+                :class="[`strength-${passwordStrength}`, { active: level <= strengthLevel }]"
+              ></div>
+            </div>
+            <div v-if="passwordStrength === 'weak'" class="strength-hint">
+              <i class="fas fa-lightbulb"></i>
+              <span>建议使用字母、数字和特殊字符组合</span>
+            </div>
+          </div>
         </div>
         <div class="form-group">
           <label for="confirmPassword">确认密码</label>
@@ -98,18 +123,31 @@ import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
-import { isValidUsername } from '@/utils/validation'
+import { getPasswordStrength, isValidUsername } from '@/utils/validation'
 
 const router = useRouter()
 const userStore = useUserStore()
 const error = ref('')
 const displayError = computed(() => error.value || userStore.error)
+const showPassword = ref(false)
 
 const form = reactive({
   username: '',
   password: '',
   confirmPassword: '',
   email: '',
+})
+
+const passwordStrength = computed(() => getPasswordStrength(form.password))
+
+const passwordStrengthText = computed(() => {
+  const map = { weak: '弱', medium: '中', strong: '强' }
+  return map[passwordStrength.value]
+})
+
+const strengthLevel = computed(() => {
+  const map = { weak: 1, medium: 2, strong: 3 }
+  return map[passwordStrength.value]
 })
 
 const qqEmailPattern = /^[a-zA-Z0-9._%+-]+@qq\.com$/
@@ -237,6 +275,10 @@ label {
   font-size: 14px;
 }
 
+.input-wrapper {
+  position: relative;
+}
+
 input {
   width: 100%;
   padding: 12px 16px;
@@ -257,6 +299,69 @@ input:focus {
   border-color: var(--primary-color);
   box-shadow: 0 0 0 4px var(--focus-ring);
   background: var(--surface);
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  font-size: 16px;
+
+  &:hover {
+    color: var(--primary-color);
+    background: var(--primary-soft);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+}
+
+.password-strength {
+  margin-top: 8px;
+}
+
+.strength-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.strength-bar {
+  display: flex;
+  gap: 4px;
+  height: 6px;
+}
+
+.strength-segment {
+  flex: 1;
+  border-radius: 3px;
+  background: var(--border-color);
+  transition: all 0.25s ease;
+
+  &.active {
+    &.strength-weak { background: var(--danger-color); }
+    &.strength-medium { background: var(--warning-color); }
+    &.strength-strong { background: var(--success-color); }
+  }
+}
+
+.strength-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--warning-color);
 }
 
 .error-message {

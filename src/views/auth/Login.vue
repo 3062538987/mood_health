@@ -22,17 +22,27 @@
         </div>
         <div class="form-group">
           <label for="password">密码</label>
-          <input
-            id="password"
-            v-model="form.password"
-            type="password"
-            placeholder="请输入密码"
-            required
-            :aria-invalid="Boolean(fieldErrors.password)"
-            :aria-describedby="fieldErrors.password ? 'password-error' : undefined"
-            @blur="validateField('password')"
-            @input="handleFieldInput('password')"
-          />
+          <div class="input-wrapper">
+            <input
+              id="password"
+              v-model="form.password"
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="请输入密码"
+              required
+              :aria-invalid="Boolean(fieldErrors.password)"
+              :aria-describedby="fieldErrors.password ? 'password-error' : undefined"
+              @blur="validateField('password')"
+              @input="handleFieldInput('password')"
+            />
+            <button
+              type="button"
+              class="toggle-password"
+              :aria-label="showPassword ? '隐藏密码' : '显示密码'"
+              @click="showPassword = !showPassword"
+            >
+              <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+            </button>
+          </div>
           <p v-if="fieldErrors.password" id="password-error" class="field-error">
             {{ fieldErrors.password }}
           </p>
@@ -53,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, onMounted } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
@@ -62,6 +72,7 @@ import { isValidUsername } from '@/utils/validation'
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const showPassword = ref(false)
 
 const form = reactive({
   username: '',
@@ -199,6 +210,10 @@ label {
   font-size: 14px;
 }
 
+.input-wrapper {
+  position: relative;
+}
+
 input {
   width: 100%;
   padding: 12px 16px;
@@ -219,6 +234,31 @@ input:focus {
   border-color: var(--primary-color);
   box-shadow: 0 0 0 4px var(--focus-ring);
   background: var(--surface);
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  font-size: 16px;
+
+  &:hover {
+    color: var(--primary-color);
+    background: var(--primary-soft);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
 }
 
 .error-message {
