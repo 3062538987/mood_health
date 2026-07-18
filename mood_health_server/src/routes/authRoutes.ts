@@ -39,7 +39,7 @@ router.post(
     body('password').isLength({ min: 6, max: 128 }).withMessage('密码长度需在6-128个字符之间'),
     body('email')
       .optional({ values: 'null' })
-      .matches(/^\d{5,11}@qq\.com$/)
+      .matches(/^[a-zA-Z0-9._%+-]+@qq\.com$/)
       .withMessage('请输入正确的QQ邮箱（例如：123456789@qq.com）'),
   ],
   validateRequest,
