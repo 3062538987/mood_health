@@ -1,6 +1,6 @@
 <template>
   <div class="login-container">
-    <div class="login-box">
+    <div class="login-box" role="form" aria-label="用户登录表单">
       <h2>用户登录</h2>
       <form @submit.prevent="handleLogin">
         <div class="form-group">
@@ -11,10 +11,12 @@
             type="text"
             placeholder="请输入用户名"
             required
+            autocomplete="username"
             :aria-invalid="Boolean(fieldErrors.username)"
             :aria-describedby="fieldErrors.username ? 'username-error' : undefined"
             @blur="validateField('username')"
             @input="handleFieldInput('username')"
+            @keydown.enter="focusPassword"
           />
           <p v-if="fieldErrors.username" id="username-error" class="field-error">
             {{ fieldErrors.username }}
@@ -25,20 +27,24 @@
           <div class="input-wrapper">
             <input
               id="password"
+              ref="passwordInput"
               v-model="form.password"
               :type="showPassword ? 'text' : 'password'"
               placeholder="请输入密码"
               required
+              autocomplete="current-password"
               :aria-invalid="Boolean(fieldErrors.password)"
               :aria-describedby="fieldErrors.password ? 'password-error' : undefined"
               @blur="validateField('password')"
               @input="handleFieldInput('password')"
+              @keydown.enter="handleLogin"
             />
             <button
               type="button"
               class="toggle-password"
               :aria-label="showPassword ? '隐藏密码' : '显示密码'"
               @click="showPassword = !showPassword"
+              @keydown.enter="showPassword = !showPassword"
             >
               <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
             </button>
@@ -47,10 +53,10 @@
             {{ fieldErrors.password }}
           </p>
         </div>
-        <div v-if="userStore.error" class="error-message">
+        <div v-if="userStore.error" class="error-message" role="alert" aria-live="polite">
           {{ userStore.error }}
         </div>
-        <button type="submit" :disabled="userStore.loading" class="btn-login">
+        <button type="submit" :disabled="userStore.loading" class="btn-login" id="login-button">
           {{ userStore.loading ? '登录中...' : '登录' }}
         </button>
       </form>
@@ -73,6 +79,11 @@ const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 const showPassword = ref(false)
+const passwordInput = ref<HTMLInputElement | null>(null)
+
+const focusPassword = () => {
+  passwordInput.value?.focus()
+}
 
 const form = reactive({
   username: '',

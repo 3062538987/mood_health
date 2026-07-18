@@ -1,6 +1,6 @@
 <template>
   <div class="register-container">
-    <div class="register-box">
+    <div class="register-box" role="form" aria-label="用户注册表单">
       <h2>用户注册</h2>
       <form @submit.prevent="handleRegister">
         <div class="form-group">
@@ -11,10 +11,12 @@
             type="text"
             placeholder="请输入用户名"
             required
+            autocomplete="username"
             :aria-invalid="Boolean(fieldErrors.username)"
             :aria-describedby="fieldErrors.username ? 'username-error' : undefined"
             @blur="validateField('username')"
             @input="handleFieldInput('username')"
+            @keydown.enter="focusPassword"
           />
           <p v-if="fieldErrors.username" id="username-error" class="field-error">
             {{ fieldErrors.username }}
@@ -25,22 +27,26 @@
           <div class="input-wrapper">
             <input
               id="password"
+              ref="passwordInput"
               v-model="form.password"
               :type="showPassword ? 'text' : 'password'"
               placeholder="请输入密码（6-128位）"
               required
               minlength="6"
               maxlength="128"
+              autocomplete="new-password"
               :aria-invalid="Boolean(fieldErrors.password)"
               :aria-describedby="fieldErrors.password ? 'password-error' : undefined"
               @blur="validateField('password')"
               @input="handleFieldInput('password')"
+              @keydown.enter="focusConfirmPassword"
             />
             <button
               type="button"
               class="toggle-password"
               :aria-label="showPassword ? '隐藏密码' : '显示密码'"
               @click="showPassword = !showPassword"
+              @keydown.enter="showPassword = !showPassword"
             >
               <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
             </button>
@@ -48,7 +54,7 @@
           <p v-if="fieldErrors.password" id="password-error" class="field-error">
             {{ fieldErrors.password }}
           </p>
-          <div v-if="form.password && !fieldErrors.password" class="password-strength">
+          <div v-if="form.password && !fieldErrors.password" class="password-strength" role="status">
             <div class="strength-label">密码强度：{{ passwordStrengthText }}</div>
             <div class="strength-bar">
               <div
@@ -56,6 +62,7 @@
                 :key="level"
                 class="strength-segment"
                 :class="[`strength-${passwordStrength}`, { active: level <= strengthLevel }]"
+                :aria-hidden="true"
               ></div>
             </div>
             <div v-if="passwordStrength === 'weak'" class="strength-hint">
@@ -68,14 +75,17 @@
           <label for="confirmPassword">确认密码</label>
           <input
             id="confirmPassword"
+            ref="confirmPasswordInput"
             v-model="form.confirmPassword"
             type="password"
             placeholder="请再次输入密码"
             required
+            autocomplete="new-password"
             :aria-invalid="Boolean(fieldErrors.confirmPassword)"
             :aria-describedby="fieldErrors.confirmPassword ? 'confirmPassword-error' : undefined"
             @blur="validateField('confirmPassword')"
             @input="handleFieldInput('confirmPassword')"
+            @keydown.enter="focusEmail"
           />
           <p
             v-if="fieldErrors.confirmPassword"
@@ -98,15 +108,16 @@
             :aria-describedby="fieldErrors.email ? 'email-error' : undefined"
             @blur="validateField('email')"
             @input="handleFieldInput('email')"
+            @keydown.enter="handleRegister"
           />
           <p v-if="fieldErrors.email" id="email-error" class="field-error">
             {{ fieldErrors.email }}
           </p>
         </div>
-        <div v-if="displayError" class="error-message form-error-message" role="alert">
+        <div v-if="displayError" class="error-message form-error-message" role="alert" aria-live="polite">
           {{ displayError }}
         </div>
-        <button type="submit" :disabled="userStore.loading" class="btn-register">
+        <button type="submit" :disabled="userStore.loading" class="btn-register" id="register-button">
           {{ userStore.loading ? '注册中...' : '注册' }}
         </button>
       </form>
@@ -130,6 +141,21 @@ const userStore = useUserStore()
 const error = ref('')
 const displayError = computed(() => error.value || userStore.error)
 const showPassword = ref(false)
+const passwordInput = ref<HTMLInputElement | null>(null)
+const confirmPasswordInput = ref<HTMLInputElement | null>(null)
+
+const focusPassword = () => {
+  passwordInput.value?.focus()
+}
+
+const focusConfirmPassword = () => {
+  confirmPasswordInput.value?.focus()
+}
+
+const focusEmail = () => {
+  const emailInput = document.getElementById('email') as HTMLInputElement
+  emailInput?.focus()
+}
 
 const form = reactive({
   username: '',
