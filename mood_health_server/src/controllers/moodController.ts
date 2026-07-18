@@ -87,6 +87,9 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
     const tagNames = (Array.isArray(tags) ? tags : String(tags || '').split(/[,，、]/))
       .map((item) => String(item).trim())
       .filter(Boolean)
+    if (tagNames.length > 20) {
+      return res.status(400).json(apiFailure(400, '标签数量不能超过20个'))
+    }
     const resolvedTags = await Promise.all(tagNames.map((name) => moodService.createOrGetTag(name, userId)))
 
     await moodService.recordMood({
@@ -112,8 +115,8 @@ export const getMoodList = async (req: AuthRequest, res: Response) => {
   try {
     const userId = guardUserId(req, res)
     if (userId === null) return
-    const page = parseInt(req.query.page as string) || 1
-    const limit = parseInt(req.query.size as string) || parseInt(req.query.limit as string) || 20
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.size as string) || parseInt(req.query.limit as string) || 20))
     const emotionTypeId = req.query.emotionTypeId
       ? parseInt(req.query.emotionTypeId as string)
       : null
@@ -204,6 +207,9 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
     const tagNames = (Array.isArray(tags) ? tags : String(tags || '').split(/[,，、]/))
       .map((item) => String(item).trim())
       .filter(Boolean)
+    if (tagNames.length > 20) {
+      return res.status(400).json(apiFailure(400, '标签数量不能超过20个'))
+    }
     const resolvedTags = await Promise.all(tagNames.map((name) => moodService.createOrGetTag(name, userId)))
 
     const updated = await moodService.updateMood({
@@ -310,6 +316,10 @@ export const createTagHandler = async (req: AuthRequest, res: Response) => {
 
     if (!name || typeof name !== 'string') {
       return res.status(400).json(apiFailure(400, '标签名称不能为空'))
+    }
+
+    if (name.trim().length > 50) {
+      return res.status(400).json(apiFailure(400, '标签名称不能超过50个字符'))
     }
 
     const tag = await moodService.createOrGetTag(name.trim(), userId)

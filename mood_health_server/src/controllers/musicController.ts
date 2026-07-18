@@ -62,6 +62,12 @@ export const createMusic = async (
 ): Promise<void> => {
   try {
     const { title, artist, url, duration, category, cover } = req.body;
+
+    if (duration != null && (duration < 1 || duration > 36000)) {
+      res.status(400).json({ success: false, message: '音乐时长必须在1-36000秒之间' });
+      return;
+    }
+
     const music = await musicRepo.create({
       title,
       artist,

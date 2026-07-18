@@ -15,8 +15,8 @@ const feedbackService = createActivityFeedbackService()
 
 export const getActivityList = async (req: Request, res: Response) => {
   try {
-    const page = parseInt(req.query.page as string) || 1
-    const limit = parseInt(req.query.limit as string) || 10
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 10))
 
     const filter: ActivityFilter = {}
 
@@ -168,6 +168,11 @@ export const createActivityHandler = async (req: AuthRequest, res: Response) => 
 
     if (!title || !startTime || !endTime || !maxParticipants || !location) {
       return res.status(400).json({ code: 400, message: '请提供完整的活动信息' })
+    }
+
+    // 校验开始时间必须早于结束时间
+    if (new Date(startTime) >= new Date(endTime)) {
+      return res.status(400).json({ code: 400, message: '开始时间必须早于结束时间' })
     }
 
     const activityId = await activityRepo.create({
@@ -333,7 +338,7 @@ export const submitFeedbackHandler = async (req: AuthRequest, res: Response) => 
     const activityId = parseInt(req.params.id as string)
     const { rating, comment } = req.body
 
-    if (!rating || rating < 1 || rating > 5) {
+    if (rating == null || !Number.isInteger(rating) || rating < 1 || rating > 5) {
       return res.status(400).json({ code: 400, message: '请提供 1-5 的评分' })
     }
 
@@ -398,6 +403,15 @@ export const getActivityStatsHandler = async (req: AuthRequest, res: Response) =
   try {
     const pool = getMysqlPool()
     const { startDate, endDate } = req.query as Record<string, string>
+
+    // 日期格式校验
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+    if (startDate && !dateRegex.test(startDate)) {
+      return res.status(400).json({ code: 400, message: 'startDate 格式无效，请使用 YYYY-MM-DD 格式' })
+    }
+    if (endDate && !dateRegex.test(endDate)) {
+      return res.status(400).json({ code: 400, message: 'endDate 格式无效，请使用 YYYY-MM-DD 格式' })
+    }
 
     let dateFilter = ''
     const params: unknown[] = []

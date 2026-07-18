@@ -26,6 +26,10 @@ export const createPostHandler = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ code: 400, message: '标题不能为空' })
     }
 
+    if (title.length > 200) {
+      return res.status(400).json({ code: 400, message: '标题不能超过200字' })
+    }
+
     // 基础敏感词过滤
     const filterResult = filterContent(content)
     if (shouldAutoReject(content)) {
@@ -92,8 +96,8 @@ export const createPostHandler = async (req: AuthRequest, res: Response) => {
  */
 export const getPostsHandler = async (req: Request, res: Response) => {
   try {
-    const page = parseInt(req.query.page as string) || 1
-    const pageSize = parseInt(req.query.pageSize as string) || 10
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize as string) || 10))
 
     const posts = await postRepo.findPosts(page, pageSize)
     res.status(200).json({ code: 0, data: posts })
@@ -184,6 +188,10 @@ export const createCommentHandler = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ code: 400, message: '评论内容不能为空' })
     }
 
+    if (content.length > 5000) {
+      return res.status(400).json({ code: 400, message: '评论内容不能超过5000字' })
+    }
+
     const post = await postRepo.findPostById(postId)
     if (!post) {
       return res.status(404).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '帖子不存在'))
@@ -231,8 +239,8 @@ export const likeCommentHandler = async (req: AuthRequest, res: Response) => {
  */
 export const getPendingPostsHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const page = parseInt(req.query.page as string) || 1
-    const pageSize = parseInt(req.query.pageSize as string) || 10
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize as string) || 10))
     const status = parseInt(req.query.status as string)
 
     const posts = await postRepo.findPendingPosts(page, pageSize, Number.isNaN(status) ? 0 : status)

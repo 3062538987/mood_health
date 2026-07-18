@@ -18,6 +18,18 @@ export const saveRelaxRecordHandler = async (
       return res.status(400).json({ code: 400, message: "放松记录参数不完整" });
     }
 
+    // 时长上限校验
+    const start = new Date(startTime).getTime()
+    const end = new Date(endTime).getTime()
+    if (isNaN(start) || isNaN(end) || end <= start) {
+      return res.status(400).json({ code: 400, message: "时间参数无效" });
+    }
+    const durationMs = end - start
+    const maxDurationMs = 4 * 60 * 60 * 1000 // 4小时上限
+    if (durationMs > maxDurationMs) {
+      return res.status(400).json({ code: 400, message: "放松时长不能超过4小时" });
+    }
+
     const record = await relaxRepo.create(userId, {
       activityType,
       startTime,

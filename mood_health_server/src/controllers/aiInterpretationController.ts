@@ -8,9 +8,9 @@ import aiMoodReportService from '../services/aiMoodReportService'
 export const validateInterpretation = [
   body('scaleName').isString().notEmpty().withMessage('量表名称不能为空'),
   body('scaleType').isString().notEmpty().withMessage('量表类型不能为空'),
-  body('totalScore').isInt({ min: 0 }).withMessage('总分必须是非负整数'),
-  body('maxScore').isInt({ min: 0 }).withMessage('满分必须是非负整数'),
-  body('itemScores').isArray({ min: 1 }).withMessage('题目得分不能为空'),
+  body('totalScore').isInt({ min: 0, max: 10000 }).withMessage('总分必须是 0-10000 的整数'),
+  body('maxScore').isInt({ min: 0, max: 10000 }).withMessage('满分必须是 0-10000 的整数'),
+  body('itemScores').isArray({ min: 1, max: 500 }).withMessage('题目得分数组长度必须在1-500之间'),
   body('itemScores.*.label').isString().notEmpty().withMessage('题目标签不能为空'),
   body('itemScores.*.score').isInt({ min: 0 }).withMessage('题目得分必须是非负整数'),
   body('riskLevel').isString().notEmpty().withMessage('风险等级不能为空'),

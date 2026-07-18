@@ -36,7 +36,7 @@ router.post(
     body('username')
       .matches(/^[\u4e00-\u9fa5a-zA-Z0-9_]{3,20}$/)
       .withMessage('用户名需为3-20位，可包含中文、字母、数字或下划线'),
-    body('password').isLength({ min: 6 }).withMessage('密码至少6个字符'),
+    body('password').isLength({ min: 6, max: 128 }).withMessage('密码长度需在6-128个字符之间'),
     body('email')
       .optional({ values: 'null' })
       .matches(/^\d{5,11}@qq\.com$/)

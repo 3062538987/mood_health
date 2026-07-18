@@ -26,9 +26,10 @@
             id="password"
             v-model="form.password"
             type="password"
-            placeholder="请输入密码（至少6位）"
+            placeholder="请输入密码（6-128位）"
             required
             minlength="6"
+            maxlength="128"
             :aria-invalid="Boolean(fieldErrors.password)"
             :aria-describedby="fieldErrors.password ? 'password-error' : undefined"
             @blur="validateField('password')"
@@ -126,7 +127,11 @@ const registerValidators: Record<RegisterField, () => string> = {
     isValidUsername(form.username)
       ? ''
       : '用户名需为3-20位，可包含中文、字母、数字或下划线',
-  password: () => (form.password.length >= 6 ? '' : '密码长度至少6位'),
+  password: () => {
+    if (form.password.length < 6) return '密码长度至少6位'
+    if (form.password.length > 128) return '密码长度不能超过128位'
+    return ''
+  },
   confirmPassword: () =>
     form.password === form.confirmPassword ? '' : '两次输入的密码不一致',
   email: () => {
