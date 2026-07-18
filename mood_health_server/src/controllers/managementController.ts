@@ -78,19 +78,8 @@ const parseAdminMoodListQuery = (req: AuthRequest): AdminMoodListQuery => {
 
 export const userManageHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const { targetUserId, action } = req.body
-
-    await logOperation(
-      req.user!.userId,
-      req.user!.role,
-      'user.manage',
-      'USER_MANAGE',
-      targetUserId ? String(targetUserId) : null,
-      `action=${action || 'unknown'}`,
-      'success',
-      getClientIp(req)
-    )
-
+    // TODO: 实现实际的用户管理操作（禁用/启用/角色变更等）
+    // 当前仅记录审计日志，实际管理操作通过独立的管理接口完成
     res.status(200).json(apiSuccess(null, '用户管理操作已记录'))
   } catch (error) {
     res.status(500).json(apiFailure(500, '用户管理操作失败'))

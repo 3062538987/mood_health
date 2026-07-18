@@ -149,7 +149,7 @@ const buildAnalysisRecommendations = (
     recommendations.push('连续多天出现低强度负向情绪，建议及时寻求辅导员或专业人员支持。')
   }
 
-  return recommendations.slice(0, 5)
+  return recommendations
 }
 
 export const createMoodService = (dependencies: MoodServiceDependencies = {}) => {

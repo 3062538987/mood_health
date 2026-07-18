@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken'
+import crypto from 'crypto'
 import { createUserRepository, DuplicateUserError, PublicUser, UserRepository } from '../repositories/userRepository'
 import { comparePassword as comparePasswordUtil, hashPassword as hashPasswordUtil } from '../utils/password'
 import { BusinessError, HttpException } from '../utils/errors'
@@ -39,7 +40,7 @@ interface LoginResult {
 const buildDefaultEmail = (
   username: string,
   now: () => Date = () => new Date(),
-  randomSuffix: () => string = () => Math.random().toString(36).slice(2, 8)
+  randomSuffix: () => string = () => crypto.randomBytes(3).toString('hex')
 ): string => {
   const sanitized = username
     .toLowerCase()
