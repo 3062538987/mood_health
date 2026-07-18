@@ -608,6 +608,54 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
     return Number(result.insertId)
   }
 
+  // 批量获取或创建标签（避免 N+1 查询）
+  const createOrGetTagsBatch = async (names: string[], userId: number): Promise<Map<string, number>> => {
+    const result = new Map<string, number>()
+    if (names.length === 0) return result
+
+    // 1. 批量查询已存在的标签
+    const placeholders = names.map(() => '?').join(',')
+    const [existingRows] = await db.query<(IdRow & { name: string })[]>(
+      `
+      SELECT id, name
+      FROM tags
+      WHERE name IN (${placeholders}) AND (is_system = 1 OR owner_user_id = ?)
+      `,
+      [...names, userId]
+    )
+
+    for (const row of existingRows) {
+      result.set(row.name, Number(row.id))
+    }
+
+    // 2. 批量插入不存在的标签
+    const missingNames = names.filter((name) => !result.has(name))
+    if (missingNames.length > 0) {
+      const valuePlaceholders = missingNames.map(() => '(?, ?, ?, 0, UTC_TIMESTAMP(3))').join(', ')
+      const values: unknown[] = []
+      for (const name of missingNames) {
+        values.push(null, userId, name)
+      }
+
+      const [insertResult] = await db.query<ResultSetHeader>(
+        `
+        INSERT INTO tags (code, owner_user_id, name, is_system, created_at)
+        VALUES ${valuePlaceholders}
+        `,
+        values
+      )
+
+      // 为批量插入的标签分配 ID
+      let insertedId = Number(insertResult.insertId)
+      for (const name of missingNames) {
+        result.set(name, insertedId)
+        insertedId++
+      }
+    }
+
+    return result
+  }
+
   const listTrendRows = async (
     userId: number,
     startDate: string,
@@ -790,6 +838,7 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
     listEmotionTypes,
     listTags,
     createOrGetTag,
+    createOrGetTagsBatch,
     listTrendRows,
     listWeeklyRows,
     listAnalysisRows,

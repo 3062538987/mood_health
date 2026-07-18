@@ -1,6 +1,6 @@
 <template>
   <div class="post-list">
-    <div v-for="post in posts" :key="post.id" class="post-card card">
+    <div v-for="post in displayedPosts" :key="post.id" class="post-card card">
       <div class="post-content" @click="goToDetail(post.id)">
         <h3>{{ post.title }}</h3>
         <p>{{ post.content.slice(0, 100) }}...</p>
@@ -23,16 +23,32 @@
         </button>
       </div>
     </div>
+    <div v-if="hasMore" class="load-more">
+      <button class="load-more-btn" @click="showMore">加载更多 ({{ remainingCount }} 条)</button>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { Post } from '@/types/post'
 import { likePost } from '@/api/post'
+import { ref, computed } from 'vue'
 
 const props = defineProps<{
   posts: Post[]
 }>()
+
+const INITIAL_DISPLAY = 20
+const LOAD_MORE_STEP = 20
+const displayCount = ref(INITIAL_DISPLAY)
+
+const displayedPosts = computed(() => props.posts.slice(0, displayCount.value))
+const hasMore = computed(() => displayCount.value < props.posts.length)
+const remainingCount = computed(() => props.posts.length - displayCount.value)
+
+const showMore = () => {
+  displayCount.value = Math.min(displayCount.value + LOAD_MORE_STEP, props.posts.length)
+}
 
 const emit = defineEmits<{
   (e: 'view-detail', postId: number): void
@@ -131,6 +147,24 @@ const formatDate = (dateStr: string) => {
         background: #fff0f0;
         color: #e74c3c;
       }
+    }
+  }
+}
+
+.load-more {
+  text-align: center;
+  margin: 16px 0;
+  .load-more-btn {
+    background: $primary-color;
+    color: $white;
+    border: none;
+    padding: 8px 24px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: $font-size-sm;
+    transition: all 0.3s;
+    &:hover {
+      opacity: 0.9;
     }
   }
 }

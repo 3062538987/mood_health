@@ -55,7 +55,7 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
         emotions,
         tagIds: resolvedTagIds,
       })
-      await clearMoodCache(userId)
+      clearMoodCache(userId).catch((err) => console.error('清除缓存失败(非阻塞):', err.message))
       return res.status(201).json(apiSuccess(null, '记录成功'))
     }
 
@@ -90,7 +90,9 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
     if (tagNames.length > 20) {
       return res.status(400).json(apiFailure(400, '标签数量不能超过20个'))
     }
-    const resolvedTags = await Promise.all(tagNames.map((name) => moodService.createOrGetTag(name, userId)))
+    const tagIdMap = await moodService.createOrGetTagsBatch(tagNames, userId)
+    const tagIds = tagNames.map((name) => tagIdMap.get(name)!).filter(Boolean)
+    const resolvedTags = tagIds.map((id) => ({ id }))
 
     await moodService.recordMood({
       userId,
@@ -104,7 +106,7 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
       })),
       tagIds: resolvedTags.map((tag) => tag.id),
     })
-    await clearMoodCache(userId)
+    clearMoodCache(userId).catch((err) => console.error('清除缓存失败(非阻塞):', err.message))
     res.status(201).json(apiSuccess(null, '记录成功'))
   } catch (error) {
     console.error(error)
@@ -179,7 +181,7 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
         return res.status(404).json(apiFailure(404, '记录不存在'))
       }
 
-      await clearMoodCache(userId)
+      clearMoodCache(userId).catch((err) => console.error('清除缓存失败(非阻塞):', err.message))
       return res.json(apiSuccess(null, '更新成功'))
     }
 
@@ -210,7 +212,9 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
     if (tagNames.length > 20) {
       return res.status(400).json(apiFailure(400, '标签数量不能超过20个'))
     }
-    const resolvedTags = await Promise.all(tagNames.map((name) => moodService.createOrGetTag(name, userId)))
+    const tagIdMap = await moodService.createOrGetTagsBatch(tagNames, userId)
+    const tagIds = tagNames.map((name) => tagIdMap.get(name)!).filter(Boolean)
+    const resolvedTags = tagIds.map((id) => ({ id }))
 
     const updated = await moodService.updateMood({
       id: moodId,
@@ -230,7 +234,7 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
       return res.status(404).json(apiFailure(404, '记录不存在'))
     }
 
-    await clearMoodCache(userId)
+    clearMoodCache(userId).catch((err) => console.error('清除缓存失败(非阻塞):', err.message))
     res.json(apiSuccess(null, '更新成功'))
   } catch (error) {
     console.error(error)
@@ -254,7 +258,7 @@ export const deleteMoodHandler = async (req: AuthRequest, res: Response) => {
       return res.status(404).json(apiFailure(404, '记录不存在'))
     }
 
-    await clearMoodCache(userId)
+    clearMoodCache(userId).catch((err) => console.error('清除缓存失败(非阻塞):', err.message))
     res.json(apiSuccess(null, '删除成功'))
   } catch (error) {
     console.error(error)

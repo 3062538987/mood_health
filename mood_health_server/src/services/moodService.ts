@@ -2,6 +2,10 @@ import { createMoodRepository, MoodEmotionInput, MoodRepository } from '../repos
 import { BusinessError } from '../utils/errors'
 import { encryptField as encryptFieldUtil, decryptField as decryptFieldUtil } from '../utils/encryption'
 
+// 情绪类型内存缓存（几乎不变的数据）
+let emotionTypesCache: { data: Array<{ id: number; name: string; code: string; category: string }>; timestamp: number } | null = null
+const EMOTION_TYPES_CACHE_TTL = 10 * 60 * 1000 // 10 分钟
+
 type EncryptField = (value: string | null | undefined) => string | null
 type DecryptField = (value: string | null | undefined) => string | null
 type NowProvider = () => Date
@@ -229,15 +233,24 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
   }
 
   const listEmotionTypes = async () => {
+    // 使用内存缓存减少数据库查询
+    const now = Date.now()
+    if (emotionTypesCache && (now - emotionTypesCache.timestamp) < EMOTION_TYPES_CACHE_TTL) {
+      return emotionTypesCache.data
+    }
+
     const emotionTypes = await repository.listEmotionTypes()
 
-    return emotionTypes.map((type) => ({
+    const data = emotionTypes.map((type) => ({
       id: type.id,
       code: type.code,
       name: type.name,
       icon: type.icon,
       category: type.category,
     }))
+
+    emotionTypesCache = { data, timestamp: now }
+    return data
   }
 
   const listTags = async (userId: number) => {
@@ -256,6 +269,10 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
     const id = await repository.createOrGetTag(trimmedName, userId)
 
     return { id, name: trimmedName }
+  }
+
+  const createOrGetTagsBatch = async (names: string[], userId: number) => {
+    return repository.createOrGetTagsBatch(names, userId)
   }
 
   const getMoodTrend = async (userId: number, range: MoodTrendRange) => {
@@ -405,6 +422,8 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
       ['neutral', 0],
     ])
     const triggerStats: Record<string, Record<string, number>> = {}
+    // 合并每日聚合到主循环，避免额外遍历
+    const dailyValues = new Map<string, { intensitySum: number; count: number; hasNegative: boolean }>()
 
     for (const row of rows) {
       const mood = moods.get(row.moodId) ?? {
@@ -417,6 +436,13 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
       moods.set(row.moodId, mood)
       emotionCounts.set(row.emotionName, (emotionCounts.get(row.emotionName) ?? 0) + 1)
       categoryCounts.set(row.emotionCategory, (categoryCounts.get(row.emotionCategory) ?? 0) + 1)
+
+      // 每日聚合（合并到主循环，避免额外的 moodValues 遍历）
+      const daily = dailyValues.get(row.date) ?? { intensitySum: 0, count: 0, hasNegative: false }
+      daily.intensitySum += row.intensity
+      daily.count += 1
+      daily.hasNegative = daily.hasNegative || row.emotionCategory === 'negative'
+      dailyValues.set(row.date, daily)
 
       const trigger = decryptField(row.triggerCiphertext)
       if (trigger) {
@@ -450,16 +476,8 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
         percentage: roundTwoDecimals(count / totalEmotions),
       }))
     const dominantEmotion = emotionDistribution[0]?.name ?? null
-    const dailyValues = new Map<string, { intensitySum: number; count: number; hasNegative: boolean }>()
 
-    for (const mood of moodValues) {
-      const daily = dailyValues.get(mood.date) ?? { intensitySum: 0, count: 0, hasNegative: false }
-      daily.intensitySum += mood.intensity
-      daily.count += 1
-      daily.hasNegative = daily.hasNegative || mood.hasNegative
-      dailyValues.set(mood.date, daily)
-    }
-
+    // dailyValues 已在主循环中构建，无需额外遍历
     const sortedDatesDesc = Array.from(dailyValues.entries()).sort(([left], [right]) =>
       right.localeCompare(left)
     )
@@ -522,21 +540,50 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
       }
     }
 
-    // 计算概览
-    const dateSet = new Set(rows.map((r) => r.date))
-    const totalRecords = rows.reduce((sum, r) => sum + r.recordCount, 0)
-    const totalIntensity = rows.reduce((sum, r) => sum + r.avgIntensity * r.recordCount, 0)
-    const avgIntensity = roundOneDecimal(totalIntensity / totalRecords)
-
-    // 按情绪聚合
+    // 合并单次遍历：同时计算概览、情绪分布、趋势、极性、周期对比
+    let totalRecords = 0
+    let totalIntensity = 0
+    const dateSet = new Set<string>()
     const emotionMap = new Map<string, { name: string; code: string; icon: string; category: string; count: number; totalIntensity: number }>()
+    const dateMap = new Map<string, { intensities: number[]; emotions: string[]; count: number }>()
+    let positive = 0, neutral = 0, negative = 0
+    const weekMap = new Map<string, { positive: number; neutral: number; negative: number }>()
+
     for (const row of rows) {
-      const key = row.emotionName
-      const existing = emotionMap.get(key) || { name: row.emotionName, code: row.emotionCode, icon: row.emotionIcon, category: row.emotionCategory, count: 0, totalIntensity: 0 }
+      totalRecords += row.recordCount
+      totalIntensity += row.avgIntensity * row.recordCount
+      dateSet.add(row.date)
+
+      // 情绪分布
+      const emotionKey = row.emotionName
+      const existing = emotionMap.get(emotionKey) || { name: row.emotionName, code: row.emotionCode, icon: row.emotionIcon, category: row.emotionCategory, count: 0, totalIntensity: 0 }
       existing.count += row.recordCount
       existing.totalIntensity += row.avgIntensity * row.recordCount
-      emotionMap.set(key, existing)
+      emotionMap.set(emotionKey, existing)
+
+      // 趋势
+      const d = dateMap.get(row.date) || { intensities: [], emotions: [], count: 0 }
+      d.intensities.push(row.avgIntensity)
+      d.emotions.push(row.emotionName)
+      d.count += row.recordCount
+      dateMap.set(row.date, d)
+
+      // 极性
+      if (row.emotionCategory === 'positive') positive += row.recordCount
+      else if (row.emotionCategory === 'negative') negative += row.recordCount
+      else neutral += row.recordCount
+
+      // 周期对比
+      const dObj = new Date(row.date)
+      const weekLabel = `第${Math.ceil((dObj.getDate()) / 7)}周`
+      const w = weekMap.get(weekLabel) || { positive: 0, neutral: 0, negative: 0 }
+      if (row.emotionCategory === 'positive') w.positive += row.recordCount
+      else if (row.emotionCategory === 'negative') w.negative += row.recordCount
+      else w.neutral += row.recordCount
+      weekMap.set(weekLabel, w)
     }
+
+    const avgIntensity = roundOneDecimal(totalIntensity / totalRecords)
 
     const emotionList = Array.from(emotionMap.values()).sort((a, b) => b.count - a.count)
     const mainEmotion = emotionList[0]
@@ -548,16 +595,6 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
       percent: roundTwoDecimals(e.count / totalRecords * 100),
       color: EMOTION_COLORS[e.category] || EMOTION_COLOR_LIST[i % EMOTION_COLOR_LIST.length],
     }))
-
-    // 趋势数据
-    const dateMap = new Map<string, { intensities: number[]; emotions: string[]; count: number }>()
-    for (const row of rows) {
-      const d = dateMap.get(row.date) || { intensities: [], emotions: [], count: 0 }
-      d.intensities.push(row.avgIntensity)
-      d.emotions.push(row.emotionName)
-      d.count += row.recordCount
-      dateMap.set(row.date, d)
-    }
 
     const trend = Array.from(dateMap.entries())
       .sort(([a], [b]) => a.localeCompare(b))
@@ -573,14 +610,6 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
         return { date, avgIntensity: dayAvg, dominantEmotion, recordCount: val.count }
       })
 
-    // 极性分布
-    let positive = 0, neutral = 0, negative = 0
-    for (const row of rows) {
-      const count = row.recordCount
-      if (row.emotionCategory === 'positive') positive += count
-      else if (row.emotionCategory === 'negative') negative += count
-      else neutral += count
-    }
     const total = positive + neutral + negative
     const polarity = {
       positive: total > 0 ? Math.round((positive / total) * 100) : 0,
@@ -588,17 +617,6 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
       negative: total > 0 ? Math.round((negative / total) * 100) : 0,
     }
 
-    // 周期对比
-    const weekMap = new Map<string, { positive: number; neutral: number; negative: number }>()
-    for (const row of rows) {
-      const d = new Date(row.date)
-      const weekLabel = `第${Math.ceil((d.getDate()) / 7)}周`
-      const w = weekMap.get(weekLabel) || { positive: 0, neutral: 0, negative: 0 }
-      if (row.emotionCategory === 'positive') w.positive += row.recordCount
-      else if (row.emotionCategory === 'negative') w.negative += row.recordCount
-      else w.neutral += row.recordCount
-      weekMap.set(weekLabel, w)
-    }
     const periodComparison = Array.from(weekMap.entries()).map(([label, val]) => ({ label, ...val }))
 
     return {
@@ -624,6 +642,7 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
     listEmotionTypes,
     listTags,
     createOrGetTag,
+    createOrGetTagsBatch,
     getMoodTrend,
     getWeeklyReport,
     getMoodAnalysis,

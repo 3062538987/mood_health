@@ -1,7 +1,8 @@
 import redisClient from "./redis.client";
 import logger from "./logger";
 
-const activityCacheKeys = new Set<string>();
+const activityCacheKeys = new Set<string>()
+const MAX_ACTIVITY_CACHE_KEYS = 5000
 
 export const setCache = async (
   key: string,
@@ -10,6 +11,11 @@ export const setCache = async (
 ): Promise<void> => {
   try {
     await redisClient.set(key, JSON.stringify(value), ttl);
+    // 缓存 key 有上限，防止 Set 无限增长
+    if (activityCacheKeys.size >= MAX_ACTIVITY_CACHE_KEYS) {
+      activityCacheKeys.clear()
+      logger.warn('活动缓存 key 集合达到上限，已清空')
+    }
     activityCacheKeys.add(key);
   } catch (error) {
     logger.warn("Redis缓存设置失败:", { error: (error as Error).message, key });
