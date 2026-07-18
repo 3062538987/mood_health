@@ -1,0 +1,101 @@
+{
+  "project": {
+    "name": "情绪健康平台 · UI原型",
+    "operation": "create",
+    "deviceType": "mobile",
+    "designRead": "mood health app / college students / warm healing / medium density / avoid cold clinical feel",
+    "designDials": {
+      "layoutVariance": 3,
+      "motionIntensity": 2,
+      "visualDensity": 3
+    },
+    "styleContinuityAnchors": {
+      "colorSystem": "warm sunset garden theme with caramel orange primary, sage green secondary, sunset gold accent",
+      "typographySystem": "Noto Serif SC display + PingFang SC/System sans body",
+      "shapeSystem": "rounded-xl cards (16-24px), pill-shaped buttons",
+      "surfaceDepthModel": "soft warm shadows, border + subtle elevation",
+      "mobileNavigation": {
+        "applies": true,
+        "type": "bottom-tab",
+        "items": [
+          { "key": "home", "label": "首页" },
+          { "key": "mood", "label": "情绪" },
+          { "key": "relax", "label": "放松" },
+          { "key": "treehole", "label": "树洞" },
+          { "key": "profile", "label": "我的" }
+        ],
+        "heightPx": 60,
+        "position": "flow-bottom",
+        "activeState": "primary icon+label color only; geometry stays identical"
+      }
+    },
+    "sharedProjectShellContract": {
+      "mobileNavigation": {
+        "applies": true,
+        "type": "bottom-tab",
+        "items": [
+          { "key": "home", "label": "首页", "icon": "home" },
+          { "key": "mood", "label": "情绪", "icon": "heart" },
+          { "key": "relax", "label": "放松", "icon": "leaf" },
+          { "key": "treehole", "label": "树洞", "icon": "trees" },
+          { "key": "profile", "label": "我的", "icon": "user" }
+        ],
+        "heightPx": 60,
+        "position": "flow-bottom",
+        "activeState": "primary icon+label color only; geometry stays identical",
+        "structure": {
+          "navTag": "nav",
+          "navClass": "fixed bottom-0 left-0 right-0 h-[60px] bg-[var(--mh-card)] border-t border-[var(--mh-border)] z-30 pb-[env(safe-area-inset-bottom)]",
+          "innerClass": "w-full max-w-md mx-auto grid grid-cols-5 h-full",
+          "itemTag": "button",
+          "itemClass": "min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-text-light)]",
+          "iconClass": "w-5 h-5 shrink-0",
+          "labelClass": "text-[11px] leading-none whitespace-nowrap max-w-full truncate",
+          "activeRule": "only color/font-weight/data-active may change; no class changes that affect layout",
+          "markerAttr": "data-mobile-nav=\"global\"",
+          "canonicalHtmlByKey": {}
+        }
+      },
+      "radiusScale": {
+        "sm": "6px",
+        "md": "10px",
+        "lg": "16px",
+        "full": "9999px"
+      }
+    }
+  },
+  "designSource": {
+    "operatingMode": "free-explore",
+    "libraryIdentity": null,
+    "styleConstraints": {
+      "radiusMax": 24,
+      "staticShadowAlphaMax": 0.14
+    }
+  },
+  "pages": [
+    { "nodeId": "page-home", "title": "首页", "htmlSrc": "pages/home.html", "pageIndex": 1, "mobileNavigationActiveKey": "home" },
+    { "nodeId": "page-mood-record", "title": "情绪记录", "htmlSrc": "pages/mood-record.html", "pageIndex": 2, "mobileNavigationActiveKey": "mood" },
+    { "nodeId": "page-mood-insight", "title": "情绪洞察", "htmlSrc": "pages/mood-insight.html", "pageIndex": 3, "mobileNavigationActiveKey": "mood" },
+    { "nodeId": "page-ai-counseling", "title": "AI咨询", "htmlSrc": "pages/ai-counseling.html", "pageIndex": 4, "mobileNavigationActiveKey": null },
+    { "nodeId": "page-relax", "title": "放松中心", "htmlSrc": "pages/relax.html", "pageIndex": 5, "mobileNavigationActiveKey": "relax" },
+    { "nodeId": "page-treehole", "title": "树洞", "htmlSrc": "pages/treehole.html", "pageIndex": 6, "mobileNavigationActiveKey": "treehole" },
+    { "nodeId": "page-improve", "title": "提升计划", "htmlSrc": "pages/improve.html", "pageIndex": 7, "mobileNavigationActiveKey": "profile" },
+    { "nodeId": "page-profile", "title": "个人中心", "htmlSrc": "pages/profile.html", "pageIndex": 8, "mobileNavigationActiveKey": "profile" }
+  ],
+  "assets": [
+    { "filename": "hero-sunset-garden.jpg", "role": "critical-hero", "sectionType": "hero", "owningPage": "page-home", "status": "generated" },
+    { "filename": "mood-spectrum.jpg", "role": "supporting-content", "sectionType": "detail", "owningPage": "page-mood-record", "status": "generated" },
+    { "filename": "relax-zen-garden.jpg", "role": "critical-hero", "sectionType": "hero", "owningPage": "page-relax", "status": "generated" },
+    { "filename": "ai-companion.jpg", "role": "supporting-content", "sectionType": "detail", "owningPage": "page-ai-counseling", "status": "generated" }
+  ],
+  "wiringPlan": [
+    { "from": "page-home", "to": "page-mood-record", "label": "记录情绪", "domId": "btn-record-mood" },
+    { "from": "page-mood-record", "to": "page-mood-insight", "label": "保存后查看洞察", "domId": "btn-save-mood" },
+    { "from": "page-mood-insight", "to": "page-ai-counseling", "label": "AI深度解读", "domId": "card-ai-insight-detail" },
+    { "from": "page-ai-counseling", "to": "page-relax", "label": "去放松一下", "domId": "quick-relax" },
+    { "from": "page-relax", "to": "page-treehole", "label": "呼吸完去树洞", "domId": "btn-breathing-play" },
+    { "from": "page-treehole", "to": "page-improve", "label": "分享后去成长", "domId": "fab-create-post" },
+    { "from": "page-improve", "to": "page-profile", "label": "查看学习进度", "domId": "course-featured" }
+  ],
+  "hiddenInteractionPlan": []
+}

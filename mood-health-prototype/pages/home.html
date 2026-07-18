@@ -345,7 +345,7 @@ img {
     </style>
 </head>
 <body class="min-h-screen font-sans antialiased">
-    <main class="relative mx-auto w-full max-w-[430px] min-h-screen bg-[var(--mh-background)] pb-28">
+    <main class="relative mx-auto w-full max-w-[430px] min-h-screen bg-[var(--mh-background)] pb-[calc(60px+env(safe-area-inset-bottom,16px))]">
 
       <!-- Status Bar -->
       <div class="flex items-center justify-between px-6 pt-3 pb-1 text-[13px] font-semibold text-[var(--mh-text)]">
@@ -567,27 +567,27 @@ img {
       </section>
 
       <!-- Bottom Tab Navigation -->
-      <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-[var(--mh-card)]/95 backdrop-blur-md border-t border-[var(--mh-border)]/60 z-50">
-        <div class="flex items-center justify-around px-2 pt-2 pb-[env(safe-area-inset-bottom,16px)]">
-          <button data-dom-id="nav-home" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-[var(--mh-primary)]">
-            <i data-lucide="home" class="w-5 h-5 fill-current"></i>
-            <span class="text-[10px] font-medium">首页</span>
+      <nav data-mobile-nav="global" class="fixed bottom-0 left-0 right-0 h-[60px] bg-[var(--mh-card)] border-t border-[var(--mh-border)] z-30 pb-[env(safe-area-inset-bottom)]">
+        <div class="w-full max-w-md mx-auto grid grid-cols-5 h-full">
+          <button data-dom-id="nav-home" data-nav-key="home" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-primary)]">
+            <i data-lucide="home" class="w-5 h-5 shrink-0 fill-current"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate font-medium">首页</span>
           </button>
-          <button data-dom-id="nav-mood" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-[var(--mh-text-muted)] transition-colors hover:text-[var(--mh-text-light)]">
-            <i data-lucide="heart" class="w-5 h-5"></i>
-            <span class="text-[10px]">情绪</span>
+          <button data-dom-id="nav-mood" data-nav-key="mood" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-text-light)]">
+            <i data-lucide="heart" class="w-5 h-5 shrink-0"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">情绪</span>
           </button>
-          <button data-dom-id="nav-relax" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-[var(--mh-text-muted)] transition-colors hover:text-[var(--mh-text-light)]">
-            <i data-lucide="moon" class="w-5 h-5"></i>
-            <span class="text-[10px]">放松</span>
+          <button data-dom-id="nav-relax" data-nav-key="relax" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-text-light)]">
+            <i data-lucide="leaf" class="w-5 h-5 shrink-0"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">放松</span>
           </button>
-          <button data-dom-id="nav-treehole" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-[var(--mh-text-muted)] transition-colors hover:text-[var(--mh-text-light)]">
-            <i data-lucide="trees" class="w-5 h-5"></i>
-            <span class="text-[10px]">树洞</span>
+          <button data-dom-id="nav-treehole" data-nav-key="treehole" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-text-light)]">
+            <i data-lucide="trees" class="w-5 h-5 shrink-0"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">树洞</span>
           </button>
-          <button data-dom-id="nav-profile" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-[var(--mh-text-muted)] transition-colors hover:text-[var(--mh-text-light)]">
-            <i data-lucide="user" class="w-5 h-5"></i>
-            <span class="text-[10px]">我的</span>
+          <button data-dom-id="nav-profile" data-nav-key="profile" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-text-light)]">
+            <i data-lucide="user" class="w-5 h-5 shrink-0"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">我的</span>
           </button>
         </div>
       </nav>

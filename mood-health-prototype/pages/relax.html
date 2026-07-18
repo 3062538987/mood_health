@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>放松中心</title>
+    <style id="theme-vars">
+/* ============================================
+   日落花园 · 暖光治愈 — 情绪健康平台主题
+   ============================================ */
+
+:root {
+  /* Brand prefix: mh (mood health) */
+  --mh-primary: #e8834a;
+  --mh-primary-foreground: #ffffff;
+  --mh-primary-light: #f5c5a3;
+  --mh-primary-hover: #d4723a;
+  --mh-primary-soft: #fdf0e6;
+
+  --mh-secondary: #8aab7c;
+  --mh-secondary-foreground: #ffffff;
+  --mh-secondary-light: #b8d0a8;
+  --mh-secondary-hover: #7a9b6c;
+
+  --mh-accent: #f0b860;
+  --mh-accent-foreground: #4a3f38;
+  --mh-accent-light: #f8d898;
+  --mh-accent-hover: #e0a848;
+
+  /* Background & Surface */
+  --mh-background: #fef8f2;
+  --mh-foreground: #4a3f38;
+  --mh-warm: #fdf2e8;
+  --mh-card: #fffdf9;
+  --mh-card-foreground: #4a3f38;
+  --mh-popover: #fffdf9;
+  --mh-popover-foreground: #4a3f38;
+  --mh-surface-muted: #faf5ee;
+
+  /* Text */
+  --mh-text: #4a3f38;
+  --mh-text-light: #8c8078;
+  --mh-text-muted: #b0a69c;
+  --mh-muted: #faf5ee;
+  --mh-muted-foreground: #8c8078;
+
+  /* Border & Input */
+  --mh-border: #e8ddd0;
+  --mh-input: #e8ddd0;
+  --mh-ring: #e8834a;
+
+  /* Radius */
+  --mh-radius-sm: 6px;
+  --mh-radius-md: 10px;
+  --mh-radius-lg: 16px;
+  --mh-radius-xl: 24px;
+  --mh-radius-full: 9999px;
+
+  /* Status Colors */
+  --mh-success: #7cb89a;
+  --mh-success-foreground: #ffffff;
+  --mh-warning: #f0b860;
+  --mh-warning-foreground: #4a3f38;
+  --mh-error: #e0556a;
+  --mh-error-foreground: #ffffff;
+  --mh-info: #7ba5c4;
+  --mh-info-foreground: #ffffff;
+
+  /* Risk Levels */
+  --mh-risk-low: #8aab7c;
+  --mh-risk-low-soft: rgba(138, 171, 124, 0.12);
+  --mh-risk-medium: #d2a35f;
+  --mh-risk-medium-soft: rgba(210, 163, 95, 0.12);
+  --mh-risk-high: #cf6b7f;
+  --mh-risk-high-soft: rgba(207, 107, 127, 0.12);
+
+  /* Mental States */
+  --mh-mental-calm: #8aab7c;
+  --mh-mental-neutral: #b0a69c;
+  --mh-mental-anxious: #c090d0;
+  --mh-mental-stressed: #d2a35f;
+  --mh-mental-distressed: #cf6b7f;
+
+  /* Mood Colors */
+  --mh-mood-happy: #f0b860;
+  --mh-mood-sad: #7ba5c4;
+  --mh-mood-angry: #e0556a;
+  --mh-mood-anxious: #c090d0;
+  --mh-mood-calm: #8aab7c;
+  --mh-mood-neutral: #b0a69c;
+
+  /* Shadow */
+  --mh-shadow-sm: 0 2px 8px rgba(180, 140, 100, 0.08);
+  --mh-shadow-md: 0 4px 16px rgba(180, 140, 100, 0.10);
+  --mh-shadow-lg: 0 8px 32px rgba(180, 140, 100, 0.14);
+  --mh-shadow-glow: 0 0 40px rgba(240, 184, 96, 0.12);
+
+  /* Typography */
+  --mh-font-display: 'Noto Serif SC', 'Georgia', 'Songti SC', serif;
+  --mh-font-body: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+
+  /* Semantic aliases for Tailwind compatibility */
+  --background: var(--mh-background);
+  --foreground: var(--mh-foreground);
+  --card: var(--mh-card);
+  --card-foreground: var(--mh-card-foreground);
+  --popover: var(--mh-popover);
+  --popover-foreground: var(--mh-popover-foreground);
+  --primary: var(--mh-primary);
+  --primary-foreground: var(--mh-primary-foreground);
+  --secondary: var(--mh-secondary);
+  --secondary-foreground: var(--mh-secondary-foreground);
+  --accent: var(--mh-accent);
+  --accent-foreground: var(--mh-accent-foreground);
+  --muted: var(--mh-muted);
+  --muted-foreground: var(--mh-muted-foreground);
+  --destructive: var(--mh-error);
+  --destructive-foreground: var(--mh-error-foreground);
+  --border: var(--mh-border);
+  --input: var(--mh-input);
+  --ring: var(--mh-ring);
+  --radius: var(--mh-radius-lg);
+  --radius-sm: var(--mh-radius-sm);
+  --radius-md: var(--mh-radius-md);
+  --radius-lg: var(--mh-radius-lg);
+  --radius-xl: var(--mh-radius-xl);
+  --radius-full: var(--mh-radius-full);
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --mh-background: #1e1b18;
+    --mh-foreground: #e8ddd0;
+    --mh-warm: #25211d;
+    --mh-card: #2a2520;
+    --mh-card-foreground: #e8ddd0;
+    --mh-popover: #2a2520;
+    --mh-popover-foreground: #e8ddd0;
+    --mh-surface-muted: #2f2a24;
+    --mh-text: #e8ddd0;
+    --mh-text-light: #b0a69c;
+    --mh-text-muted: #8c8078;
+    --mh-muted: #2f2a24;
+    --mh-muted-foreground: #b0a69c;
+    --mh-border: #3d3630;
+    --mh-input: #3d3630;
+    --mh-primary: #f0a070;
+    --mh-primary-hover: #f5b890;
+    --mh-primary-soft: rgba(240, 160, 112, 0.12);
+    --mh-secondary: #a8c898;
+    --mh-accent: #f8c878;
+    --mh-ring: #f5b890;
+
+    --background: var(--mh-background);
+    --foreground: var(--mh-foreground);
+    --card: var(--mh-card);
+    --card-foreground: var(--mh-card-foreground);
+    --popover: var(--mh-popover);
+    --popover-foreground: var(--mh-popover-foreground);
+    --primary: var(--mh-primary);
+    --secondary: var(--mh-secondary);
+    --accent: var(--mh-accent);
+    --muted: var(--mh-muted);
+    --muted-foreground: var(--mh-muted-foreground);
+    --destructive: var(--mh-error);
+    --border: var(--mh-border);
+    --input: var(--mh-input);
+    --ring: var(--mh-ring);
+  }
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--mh-font-body);
+  background: var(--mh-background);
+  color: var(--mh-text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--mh-font-display);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--mh-background);
+    --color-foreground: var(--mh-foreground);
+    --color-card: var(--mh-card);
+    --color-card-foreground: var(--mh-card-foreground);
+    --color-popover: var(--mh-popover);
+    --color-popover-foreground: var(--mh-popover-foreground);
+    --color-primary: var(--mh-primary);
+    --color-primary-foreground: var(--mh-primary-foreground);
+    --color-secondary: var(--mh-secondary);
+    --color-secondary-foreground: var(--mh-secondary-foreground);
+    --color-muted: var(--mh-muted);
+    --color-muted-foreground: var(--mh-muted-foreground);
+    --color-accent: var(--mh-accent);
+    --color-accent-foreground: var(--mh-accent-foreground);
+    --color-border: var(--mh-border);
+    --color-input: var(--mh-input);
+    --color-ring: var(--mh-ring);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --radius-sm: var(--mh-radius-sm);
+    --radius-md: var(--mh-radius-md);
+    --radius-lg: var(--mh-radius-lg);
+    --radius-xl: var(--mh-radius-xl);
+  }
+  @layer base {
+    body { background: var(--mh-background); color: var(--mh-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--mh-background); }
+      .text-background { color: var(--mh-background); }
+      .border-background { border-color: var(--mh-background); }
+      .ring-background { --tw-ring-color: var(--mh-background); }
+      .bg-foreground { background-color: var(--mh-foreground); }
+      .text-foreground { color: var(--mh-foreground); }
+      .border-foreground { border-color: var(--mh-foreground); }
+      .ring-foreground { --tw-ring-color: var(--mh-foreground); }
+      .bg-card { background-color: var(--mh-card); }
+      .text-card { color: var(--mh-card); }
+      .border-card { border-color: var(--mh-card); }
+      .ring-card { --tw-ring-color: var(--mh-card); }
+      .bg-card-foreground { background-color: var(--mh-card-foreground); }
+      .text-card-foreground { color: var(--mh-card-foreground); }
+      .border-card-foreground { border-color: var(--mh-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--mh-card-foreground); }
+      .bg-popover { background-color: var(--mh-popover); }
+      .text-popover { color: var(--mh-popover); }
+      .border-popover { border-color: var(--mh-popover); }
+      .ring-popover { --tw-ring-color: var(--mh-popover); }
+      .bg-popover-foreground { background-color: var(--mh-popover-foreground); }
+      .text-popover-foreground { color: var(--mh-popover-foreground); }
+      .border-popover-foreground { border-color: var(--mh-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--mh-popover-foreground); }
+      .bg-primary { background-color: var(--mh-primary); }
+      .text-primary { color: var(--mh-primary); }
+      .border-primary { border-color: var(--mh-primary); }
+      .ring-primary { --tw-ring-color: var(--mh-primary); }
+      .bg-primary-foreground { background-color: var(--mh-primary-foreground); }
+      .text-primary-foreground { color: var(--mh-primary-foreground); }
+      .border-primary-foreground { border-color: var(--mh-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--mh-primary-foreground); }
+      .bg-secondary { background-color: var(--mh-secondary); }
+      .text-secondary { color: var(--mh-secondary); }
+      .border-secondary { border-color: var(--mh-secondary); }
+      .ring-secondary { --tw-ring-color: var(--mh-secondary); }
+      .bg-secondary-foreground { background-color: var(--mh-secondary-foreground); }
+      .text-secondary-foreground { color: var(--mh-secondary-foreground); }
+      .border-secondary-foreground { border-color: var(--mh-secondary-foreground); }
+      .ring-secondary-foreground { --tw-ring-color: var(--mh-secondary-foreground); }
+      .bg-muted { background-color: var(--mh-muted); }
+      .text-muted { color: var(--mh-muted); }
+      .border-muted { border-color: var(--mh-muted); }
+      .ring-muted { --tw-ring-color: var(--mh-muted); }
+      .bg-muted-foreground { background-color: var(--mh-muted-foreground); }
+      .text-muted-foreground { color: var(--mh-muted-foreground); }
+      .border-muted-foreground { border-color: var(--mh-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--mh-muted-foreground); }
+      .bg-accent { background-color: var(--mh-accent); }
+      .text-accent { color: var(--mh-accent); }
+      .border-accent { border-color: var(--mh-accent); }
+      .ring-accent { --tw-ring-color: var(--mh-accent); }
+      .bg-accent-foreground { background-color: var(--mh-accent-foreground); }
+      .text-accent-foreground { color: var(--mh-accent-foreground); }
+      .border-accent-foreground { border-color: var(--mh-accent-foreground); }
+      .ring-accent-foreground { --tw-ring-color: var(--mh-accent-foreground); }
+      .bg-border { background-color: var(--mh-border); }
+      .text-border { color: var(--mh-border); }
+      .border-border { border-color: var(--mh-border); }
+      .ring-border { --tw-ring-color: var(--mh-border); }
+      .bg-input { background-color: var(--mh-input); }
+      .text-input { color: var(--mh-input); }
+      .border-input { border-color: var(--mh-input); }
+      .ring-input { --tw-ring-color: var(--mh-input); }
+      .bg-ring { background-color: var(--mh-ring); }
+      .text-ring { color: var(--mh-ring); }
+      .border-ring { border-color: var(--mh-ring); }
+      .ring-ring { --tw-ring-color: var(--mh-ring); }
+      .bg-destructive { background-color: var(--destructive); }
+      .text-destructive { color: var(--destructive); }
+      .border-destructive { border-color: var(--destructive); }
+      .ring-destructive { --tw-ring-color: var(--destructive); }
+      .bg-destructive-foreground { background-color: var(--destructive-foreground); }
+      .text-destructive-foreground { color: var(--destructive-foreground); }
+      .border-destructive-foreground { border-color: var(--destructive-foreground); }
+      .ring-destructive-foreground { --tw-ring-color: var(--destructive-foreground); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <main class="relative mx-auto w-full max-w-[430px] min-h-screen bg-[var(--mh-background)] pb-[calc(60px+env(safe-area-inset-bottom,16px))]">
+
+      <!-- Status Bar -->
+      <div class="flex items-center justify-between px-6 pt-3 pb-1 text-[13px] font-semibold text-[var(--mh-text)]">
+        <span>9:41</span>
+        <div class="flex items-center gap-1.5">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="0.5"/><rect x="4.5" y="5" width="3" height="6" rx="0.5"/><rect x="9" y="2.5" width="3" height="8.5" rx="0.5"/><rect x="13.5" y="0" width="3" height="11" rx="0.5"/></svg>
+          <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><path d="M8 2.5c2.2 0 4.2.9 5.7 2.3l1.1-1.1C13.1 2.1 10.7 1 8 1S2.9 2.1 1.2 3.7l1.1 1.1C3.8 3.4 5.8 2.5 8 2.5zm0 3c1.4 0 2.7.5 3.7 1.4l1.1-1.1C11.5 4.4 9.8 3.8 8 3.8s-3.5.6-4.8 2l1.1 1.1C5.3 6 6.6 5.5 8 5.5zm0 3c.7 0 1.3.2 1.8.7L8 11l-1.8-1.8c.5-.5 1.1-.7 1.8-.7z"/></svg>
+          <svg width="25" height="12" viewBox="0 0 25 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5"/><rect x="2" y="2" width="16" height="8" rx="1" fill="currentColor"/><rect x="22.5" y="4" width="1.5" height="4" rx="0.5" fill="currentColor" stroke="none"/></svg>
+        </div>
+      </div>
+
+      <!-- Page Header -->
+      <section class="px-5 pt-4 pb-5">
+        <h1 class="text-[28px] font-semibold text-[var(--mh-text)] leading-tight" style="font-family: var(--mh-font-display); text-wrap: balance; word-break: keep-all;">
+          放松中心
+        </h1>
+        <p class="mt-1.5 text-[14px] text-[var(--mh-text-light)]">
+          让身心得到舒缓
+        </p>
+      </section>
+
+      <!-- Featured Breathing Card -->
+      <section class="px-5 pb-5">
+        <div class="relative overflow-hidden rounded-[24px] h-52 group">
+          <img src="../assets/relax-zen-garden.jpg" alt="禅意花园" class="w-full h-full object-cover" />
+          <!-- Gradient overlay -->
+          <div class="absolute inset-0 bg-gradient-to-t from-[rgba(74,63,56,0.75)] via-[rgba(74,63,56,0.25)] to-transparent"></div>
+          <!-- Pulsing breathing ring -->
+          <div class="absolute top-5 right-5">
+            <div class="relative">
+              <div class="absolute inset-0 rounded-full bg-[var(--mh-secondary-light)]/30 animate-ping" style="animation-duration: 4s;"></div>
+              <div class="relative w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+                <span class="w-4 h-4 rounded-full bg-[var(--mh-secondary-light)]/60"></span>
+              </div>
+            </div>
+          </div>
+          <!-- Content -->
+          <div class="absolute bottom-0 left-0 right-0 p-5">
+            <p class="text-[12px] text-white/70 font-medium tracking-wide mb-1">推荐练习</p>
+            <h2 class="text-[22px] font-semibold text-white mb-0.5" style="font-family: var(--mh-font-display);">呼吸练习</h2>
+            <p class="text-[13px] text-white/80 mb-4">4-7-8 呼吸法</p>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5 text-white/70 text-[12px]">
+                <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                <span>5 分钟</span>
+              </div>
+              <button data-dom-id="btn-breathing-play" class="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white text-[var(--mh-text)] text-[13px] font-medium shadow-lg transition-transform active:scale-95 hover:bg-white/90">
+                <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+                <span>开始</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Category Section -->
+      <section class="px-5 pb-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-[17px] font-semibold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">放松方式</h2>
+          <button class="text-[12px] text-[var(--mh-text-light)] flex items-center gap-0.5">
+            <span>全部</span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Music Therapy -->
+          <button data-dom-id="cat-music-therapy" class="relative overflow-hidden rounded-2xl p-4 text-left transition-transform active:scale-[0.97]" style="background: linear-gradient(135deg, var(--mh-primary-soft) 0%, var(--mh-warm) 100%);">
+            <div class="absolute -right-3 -bottom-3 w-20 h-20 rounded-full bg-[var(--mh-primary)]/10 blur-xl"></div>
+            <div class="relative">
+              <div class="w-10 h-10 rounded-xl bg-white/70 backdrop-blur-sm flex items-center justify-center text-[var(--mh-primary)] mb-3">
+                <i data-lucide="music" class="w-5 h-5"></i>
+              </div>
+              <h3 class="text-[15px] font-semibold text-[var(--mh-text)] mb-0.5" style="font-family: var(--mh-font-display);">音乐疗愈</h3>
+              <p class="text-[11px] text-[var(--mh-text-light)]">舒缓旋律，抚平心绪</p>
+            </div>
+          </button>
+          <!-- Meditation Guide -->
+          <button class="relative overflow-hidden rounded-2xl p-4 text-left transition-transform active:scale-[0.97]" style="background: linear-gradient(135deg, rgba(138,171,124,0.15) 0%, rgba(184,208,168,0.1) 100%);">
+            <div class="absolute -right-3 -bottom-3 w-20 h-20 rounded-full bg-[var(--mh-secondary)]/10 blur-xl"></div>
+            <div class="relative">
+              <div class="w-10 h-10 rounded-xl bg-white/70 backdrop-blur-sm flex items-center justify-center text-[var(--mh-secondary)] mb-3">
+                <i data-lucide="wind" class="w-5 h-5"></i>
+              </div>
+              <h3 class="text-[15px] font-semibold text-[var(--mh-text)] mb-0.5" style="font-family: var(--mh-font-display);">冥想引导</h3>
+              <p class="text-[11px] text-[var(--mh-text-light)]">静心专注，回归当下</p>
+            </div>
+          </button>
+          <!-- White Noise -->
+          <button class="relative overflow-hidden rounded-2xl p-4 text-left transition-transform active:scale-[0.97]" style="background: linear-gradient(135deg, rgba(240,184,96,0.18) 0%, rgba(248,216,152,0.1) 100%);">
+            <div class="absolute -right-3 -bottom-3 w-20 h-20 rounded-full bg-[var(--mh-accent)]/10 blur-xl"></div>
+            <div class="relative">
+              <div class="w-10 h-10 rounded-xl bg-white/70 backdrop-blur-sm flex items-center justify-center text-[var(--mh-accent-foreground)] mb-3">
+                <i data-lucide="waves" class="w-5 h-5"></i>
+              </div>
+              <h3 class="text-[15px] font-semibold text-[var(--mh-text)] mb-0.5" style="font-family: var(--mh-font-display);">白噪音</h3>
+              <p class="text-[11px] text-[var(--mh-text-light)]">自然之声，沉浸专注</p>
+            </div>
+          </button>
+          <!-- Bedtime Stories -->
+          <button class="relative overflow-hidden rounded-2xl p-4 text-left transition-transform active:scale-[0.97]" style="background: linear-gradient(135deg, rgba(123,165,196,0.15) 0%, rgba(180,200,220,0.08) 100%);">
+            <div class="absolute -right-3 -bottom-3 w-20 h-20 rounded-full bg-[var(--mh-info)]/10 blur-xl"></div>
+            <div class="relative">
+              <div class="w-10 h-10 rounded-xl bg-white/70 backdrop-blur-sm flex items-center justify-center text-[var(--mh-info)] mb-3">
+                <i data-lucide="book-open" class="w-5 h-5"></i>
+              </div>
+              <h3 class="text-[15px] font-semibold text-[var(--mh-text)] mb-0.5" style="font-family: var(--mh-font-display);">睡前故事</h3>
+              <p class="text-[11px] text-[var(--mh-text-light)]">温柔陪伴，安然入眠</p>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      <!-- Music Therapy Section -->
+      <section class="pb-5">
+        <div class="flex items-center justify-between px-5 mb-3">
+          <h2 class="text-[17px] font-semibold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">音乐疗愈</h2>
+          <button class="text-[12px] text-[var(--mh-text-light)] flex items-center gap-0.5">
+            <span>更多</span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+        <div class="flex gap-3 overflow-x-auto no-scrollbar px-5 pb-1">
+          <!-- Music Card 1 -->
+          <div class="flex-shrink-0 w-36">
+            <div class="relative w-36 h-36 rounded-2xl overflow-hidden mb-2.5 shadow-[var(--mh-shadow-sm)]">
+              <img src="../assets/relax-zen-garden.jpg" alt="日落钢琴曲" class="w-full h-full object-cover" />
+              <div class="absolute inset-0 bg-gradient-to-t from-[rgba(74,63,56,0.4)] to-transparent"></div>
+              <button class="absolute bottom-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-[var(--mh-primary)] shadow-md transition-transform active:scale-90">
+                <i data-lucide="play" class="w-4 h-4 fill-current ml-0.5"></i>
+              </button>
+            </div>
+            <h3 class="text-[13px] font-medium text-[var(--mh-text)] truncate">日落钢琴曲</h3>
+            <p class="text-[11px] text-[var(--mh-text-muted)] mt-0.5">3:42</p>
+          </div>
+          <!-- Music Card 2 -->
+          <div class="flex-shrink-0 w-36">
+            <div class="relative w-36 h-36 rounded-2xl overflow-hidden mb-2.5 shadow-[var(--mh-shadow-sm)]">
+              <div class="w-full h-full" style="background: linear-gradient(135deg, var(--mh-secondary-light) 0%, var(--mh-secondary) 100%);"></div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <i data-lucide="cloud-rain" class="w-12 h-12 text-white/50"></i>
+              </div>
+              <button class="absolute bottom-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-[var(--mh-secondary)] shadow-md transition-transform active:scale-90">
+                <i data-lucide="play" class="w-4 h-4 fill-current ml-0.5"></i>
+              </button>
+            </div>
+            <h3 class="text-[13px] font-medium text-[var(--mh-text)] truncate">雨声森林</h3>
+            <p class="text-[11px] text-[var(--mh-text-muted)] mt-0.5">5:18</p>
+          </div>
+          <!-- Music Card 3 -->
+          <div class="flex-shrink-0 w-36">
+            <div class="relative w-36 h-36 rounded-2xl overflow-hidden mb-2.5 shadow-[var(--mh-shadow-sm)]">
+              <div class="w-full h-full" style="background: linear-gradient(135deg, var(--mh-accent-light) 0%, var(--mh-accent) 100%);"></div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <i data-lucide="sun" class="w-12 h-12 text-white/40"></i>
+              </div>
+              <button class="absolute bottom-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-[var(--mh-accent-foreground)] shadow-md transition-transform active:scale-90">
+                <i data-lucide="play" class="w-4 h-4 fill-current ml-0.5"></i>
+              </button>
+            </div>
+            <h3 class="text-[13px] font-medium text-[var(--mh-text)] truncate">晨曦鸟鸣</h3>
+            <p class="text-[11px] text-[var(--mh-text-muted)] mt-0.5">4:26</p>
+          </div>
+          <!-- Music Card 4 -->
+          <div class="flex-shrink-0 w-36">
+            <div class="relative w-36 h-36 rounded-2xl overflow-hidden mb-2.5 shadow-[var(--mh-shadow-sm)]">
+              <div class="w-full h-full" style="background: linear-gradient(135deg, var(--mh-primary-light) 0%, var(--mh-primary) 100%);"></div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <i data-lucide="guitar" class="w-12 h-12 text-white/40"></i>
+              </div>
+              <button class="absolute bottom-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-[var(--mh-primary)] shadow-md transition-transform active:scale-90">
+                <i data-lucide="play" class="w-4 h-4 fill-current ml-0.5"></i>
+              </button>
+            </div>
+            <h3 class="text-[13px] font-medium text-[var(--mh-text)] truncate">木吉他轻弹</h3>
+            <p class="text-[11px] text-[var(--mh-text-muted)] mt-0.5">6:05</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Mini Games Section -->
+      <section class="px-5 pb-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-[17px] font-semibold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">趣味放松</h2>
+          <button class="text-[12px] text-[var(--mh-text-light)] flex items-center gap-0.5">
+            <span>更多</span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+        <div class="space-y-3">
+          <!-- Game 1: Wooden Fish -->
+          <div class="rounded-2xl bg-[var(--mh-card)] p-4 shadow-[var(--mh-shadow-sm)] flex items-center gap-4 transition-transform active:scale-[0.99]">
+            <div class="flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center" style="background: linear-gradient(135deg, var(--mh-accent-light) 0%, var(--mh-accent) 100%);">
+              <i data-lucide="drum" class="w-7 h-7 text-white"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3 class="text-[15px] font-semibold text-[var(--mh-text)] truncate" style="font-family: var(--mh-font-display);">木鱼</h3>
+              <p class="text-[12px] text-[var(--mh-text-light)] mt-0.5 line-clamp-1">轻敲木鱼，在节奏中释放压力</p>
+            </div>
+            <button class="flex-shrink-0 w-9 h-9 rounded-full bg-[var(--mh-muted)] flex items-center justify-center text-[var(--mh-text-light)] transition-colors hover:bg-[var(--mh-border)]">
+              <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <!-- Game 2: Tetris -->
+          <div class="rounded-2xl bg-[var(--mh-card)] p-4 shadow-[var(--mh-shadow-sm)] flex items-center gap-4 transition-transform active:scale-[0.99]">
+            <div class="flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center" style="background: linear-gradient(135deg, var(--mh-secondary-light) 0%, var(--mh-secondary) 100%);">
+              <i data-lucide="grid-3x3" class="w-7 h-7 text-white"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3 class="text-[15px] font-semibold text-[var(--mh-text)] truncate" style="font-family: var(--mh-font-display);">俄罗斯方块</h3>
+              <p class="text-[12px] text-[var(--mh-text-light)] mt-0.5 line-clamp-1">经典休闲游戏，轻松打发碎片时间</p>
+            </div>
+            <button class="flex-shrink-0 w-9 h-9 rounded-full bg-[var(--mh-muted)] flex items-center justify-center text-[var(--mh-text-light)] transition-colors hover:bg-[var(--mh-border)]">
+              <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <!-- Game 3: Pinball -->
+          <div class="rounded-2xl bg-[var(--mh-card)] p-4 shadow-[var(--mh-shadow-sm)] flex items-center gap-4 transition-transform active:scale-[0.99]">
+            <div class="flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center" style="background: linear-gradient(135deg, var(--mh-primary-light) 0%, var(--mh-primary) 100%);">
+              <i data-lucide="target" class="w-7 h-7 text-white"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3 class="text-[15px] font-semibold text-[var(--mh-text)] truncate" style="font-family: var(--mh-font-display);">弹珠台</h3>
+              <p class="text-[12px] text-[var(--mh-text-light)] mt-0.5 line-clamp-1">指尖弹射，享受简单的快乐</p>
+            </div>
+            <button class="flex-shrink-0 w-9 h-9 rounded-full bg-[var(--mh-muted)] flex items-center justify-center text-[var(--mh-text-light)] transition-colors hover:bg-[var(--mh-border)]">
+              <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sleep Section -->
+      <section class="px-5 pb-6">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-[17px] font-semibold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">助眠专区</h2>
+          <button class="text-[12px] text-[var(--mh-text-light)] flex items-center gap-0.5">
+            <span>更多</span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+        <div class="relative overflow-hidden rounded-2xl h-40" style="background: linear-gradient(135deg, rgba(74,63,56,0.9) 0%, rgba(123,165,196,0.5) 100%);">
+          <!-- Decorative stars -->
+          <div class="absolute top-4 right-6 w-1.5 h-1.5 rounded-full bg-white/60"></div>
+          <div class="absolute top-8 right-14 w-1 h-1 rounded-full bg-white/40"></div>
+          <div class="absolute top-5 right-20 w-1.5 h-1.5 rounded-full bg-white/50"></div>
+          <div class="absolute top-12 right-8 w-1 h-1 rounded-full bg-white/30"></div>
+          <!-- Moon -->
+          <div class="absolute top-4 right-4 w-14 h-14">
+            <div class="w-full h-full rounded-full bg-gradient-to-br from-[var(--mh-accent-light)] to-[var(--mh-accent)] opacity-80"></div>
+          </div>
+          <!-- Content -->
+          <div class="absolute bottom-0 left-0 right-0 p-5">
+            <div class="flex items-center gap-1.5 mb-2">
+              <i data-lucide="moon" class="w-4 h-4 text-[var(--mh-accent-light)]"></i>
+              <span class="text-[12px] text-white/70 font-medium">深度助眠</span>
+            </div>
+            <h3 class="text-[18px] font-semibold text-white mb-1" style="font-family: var(--mh-font-display);">星空夜语</h3>
+            <div class="flex items-center justify-between">
+              <p class="text-[12px] text-white/60">温柔女声 · 45 分钟</p>
+              <button class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white transition-transform active:scale-90 hover:bg-white/30">
+                <i data-lucide="play" class="w-4 h-4 fill-current ml-0.5"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Tab Navigation -->
+      <nav data-mobile-nav="global" class="fixed bottom-0 left-0 right-0 h-[60px] bg-[var(--mh-card)] border-t border-[var(--mh-border)] z-30 pb-[env(safe-area-inset-bottom)]">
+        <div class="w-full max-w-md mx-auto grid grid-cols-5 h-full">
+          <button data-dom-id="nav-home" data-nav-key="home" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-text-light)]">
+            <i data-lucide="home" class="w-5 h-5 shrink-0"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">首页</span>
+          </button>
+          <button data-dom-id="nav-mood" data-nav-key="mood" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-text-light)]">
+            <i data-lucide="heart" class="w-5 h-5 shrink-0"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">情绪</span>
+          </button>
+          <button data-dom-id="nav-relax" data-nav-key="relax" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-primary)]">
+            <i data-lucide="leaf" class="w-5 h-5 shrink-0 fill-current"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate font-medium">放松</span>
+          </button>
+          <button data-dom-id="nav-treehole" data-nav-key="treehole" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-text-light)]">
+            <i data-lucide="trees" class="w-5 h-5 shrink-0"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">树洞</span>
+          </button>
+          <button data-dom-id="nav-profile" data-nav-key="profile" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-text-light)]">
+            <i data-lucide="user" class="w-5 h-5 shrink-0"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">我的</span>
+          </button>
+        </div>
+      </nav>
+
+    </main>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

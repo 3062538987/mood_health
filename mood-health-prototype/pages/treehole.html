@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>树洞</title>
+    <style id="theme-vars">
+/* ============================================
+   日落花园 · 暖光治愈 — 情绪健康平台主题
+   ============================================ */
+
+:root {
+  /* Brand prefix: mh (mood health) */
+  --mh-primary: #e8834a;
+  --mh-primary-foreground: #ffffff;
+  --mh-primary-light: #f5c5a3;
+  --mh-primary-hover: #d4723a;
+  --mh-primary-soft: #fdf0e6;
+
+  --mh-secondary: #8aab7c;
+  --mh-secondary-foreground: #ffffff;
+  --mh-secondary-light: #b8d0a8;
+  --mh-secondary-hover: #7a9b6c;
+
+  --mh-accent: #f0b860;
+  --mh-accent-foreground: #4a3f38;
+  --mh-accent-light: #f8d898;
+  --mh-accent-hover: #e0a848;
+
+  /* Background & Surface */
+  --mh-background: #fef8f2;
+  --mh-foreground: #4a3f38;
+  --mh-warm: #fdf2e8;
+  --mh-card: #fffdf9;
+  --mh-card-foreground: #4a3f38;
+  --mh-popover: #fffdf9;
+  --mh-popover-foreground: #4a3f38;
+  --mh-surface-muted: #faf5ee;
+
+  /* Text */
+  --mh-text: #4a3f38;
+  --mh-text-light: #8c8078;
+  --mh-text-muted: #b0a69c;
+  --mh-muted: #faf5ee;
+  --mh-muted-foreground: #8c8078;
+
+  /* Border & Input */
+  --mh-border: #e8ddd0;
+  --mh-input: #e8ddd0;
+  --mh-ring: #e8834a;
+
+  /* Radius */
+  --mh-radius-sm: 6px;
+  --mh-radius-md: 10px;
+  --mh-radius-lg: 16px;
+  --mh-radius-xl: 24px;
+  --mh-radius-full: 9999px;
+
+  /* Status Colors */
+  --mh-success: #7cb89a;
+  --mh-success-foreground: #ffffff;
+  --mh-warning: #f0b860;
+  --mh-warning-foreground: #4a3f38;
+  --mh-error: #e0556a;
+  --mh-error-foreground: #ffffff;
+  --mh-info: #7ba5c4;
+  --mh-info-foreground: #ffffff;
+
+  /* Risk Levels */
+  --mh-risk-low: #8aab7c;
+  --mh-risk-low-soft: rgba(138, 171, 124, 0.12);
+  --mh-risk-medium: #d2a35f;
+  --mh-risk-medium-soft: rgba(210, 163, 95, 0.12);
+  --mh-risk-high: #cf6b7f;
+  --mh-risk-high-soft: rgba(207, 107, 127, 0.12);
+
+  /* Mental States */
+  --mh-mental-calm: #8aab7c;
+  --mh-mental-neutral: #b0a69c;
+  --mh-mental-anxious: #c090d0;
+  --mh-mental-stressed: #d2a35f;
+  --mh-mental-distressed: #cf6b7f;
+
+  /* Mood Colors */
+  --mh-mood-happy: #f0b860;
+  --mh-mood-sad: #7ba5c4;
+  --mh-mood-angry: #e0556a;
+  --mh-mood-anxious: #c090d0;
+  --mh-mood-calm: #8aab7c;
+  --mh-mood-neutral: #b0a69c;
+
+  /* Shadow */
+  --mh-shadow-sm: 0 2px 8px rgba(180, 140, 100, 0.08);
+  --mh-shadow-md: 0 4px 16px rgba(180, 140, 100, 0.10);
+  --mh-shadow-lg: 0 8px 32px rgba(180, 140, 100, 0.14);
+  --mh-shadow-glow: 0 0 40px rgba(240, 184, 96, 0.12);
+
+  /* Typography */
+  --mh-font-display: 'Noto Serif SC', 'Georgia', 'Songti SC', serif;
+  --mh-font-body: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+
+  /* Semantic aliases for Tailwind compatibility */
+  --background: var(--mh-background);
+  --foreground: var(--mh-foreground);
+  --card: var(--mh-card);
+  --card-foreground: var(--mh-card-foreground);
+  --popover: var(--mh-popover);
+  --popover-foreground: var(--mh-popover-foreground);
+  --primary: var(--mh-primary);
+  --primary-foreground: var(--mh-primary-foreground);
+  --secondary: var(--mh-secondary);
+  --secondary-foreground: var(--mh-secondary-foreground);
+  --accent: var(--mh-accent);
+  --accent-foreground: var(--mh-accent-foreground);
+  --muted: var(--mh-muted);
+  --muted-foreground: var(--mh-muted-foreground);
+  --destructive: var(--mh-error);
+  --destructive-foreground: var(--mh-error-foreground);
+  --border: var(--mh-border);
+  --input: var(--mh-input);
+  --ring: var(--mh-ring);
+  --radius: var(--mh-radius-lg);
+  --radius-sm: var(--mh-radius-sm);
+  --radius-md: var(--mh-radius-md);
+  --radius-lg: var(--mh-radius-lg);
+  --radius-xl: var(--mh-radius-xl);
+  --radius-full: var(--mh-radius-full);
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --mh-background: #1e1b18;
+    --mh-foreground: #e8ddd0;
+    --mh-warm: #25211d;
+    --mh-card: #2a2520;
+    --mh-card-foreground: #e8ddd0;
+    --mh-popover: #2a2520;
+    --mh-popover-foreground: #e8ddd0;
+    --mh-surface-muted: #2f2a24;
+    --mh-text: #e8ddd0;
+    --mh-text-light: #b0a69c;
+    --mh-text-muted: #8c8078;
+    --mh-muted: #2f2a24;
+    --mh-muted-foreground: #b0a69c;
+    --mh-border: #3d3630;
+    --mh-input: #3d3630;
+    --mh-primary: #f0a070;
+    --mh-primary-hover: #f5b890;
+    --mh-primary-soft: rgba(240, 160, 112, 0.12);
+    --mh-secondary: #a8c898;
+    --mh-accent: #f8c878;
+    --mh-ring: #f5b890;
+
+    --background: var(--mh-background);
+    --foreground: var(--mh-foreground);
+    --card: var(--mh-card);
+    --card-foreground: var(--mh-card-foreground);
+    --popover: var(--mh-popover);
+    --popover-foreground: var(--mh-popover-foreground);
+    --primary: var(--mh-primary);
+    --secondary: var(--mh-secondary);
+    --accent: var(--mh-accent);
+    --muted: var(--mh-muted);
+    --muted-foreground: var(--mh-muted-foreground);
+    --destructive: var(--mh-error);
+    --border: var(--mh-border);
+    --input: var(--mh-input);
+    --ring: var(--mh-ring);
+  }
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--mh-font-body);
+  background: var(--mh-background);
+  color: var(--mh-text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--mh-font-display);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--mh-background);
+    --color-foreground: var(--mh-foreground);
+    --color-card: var(--mh-card);
+    --color-card-foreground: var(--mh-card-foreground);
+    --color-popover: var(--mh-popover);
+    --color-popover-foreground: var(--mh-popover-foreground);
+    --color-primary: var(--mh-primary);
+    --color-primary-foreground: var(--mh-primary-foreground);
+    --color-secondary: var(--mh-secondary);
+    --color-secondary-foreground: var(--mh-secondary-foreground);
+    --color-muted: var(--mh-muted);
+    --color-muted-foreground: var(--mh-muted-foreground);
+    --color-accent: var(--mh-accent);
+    --color-accent-foreground: var(--mh-accent-foreground);
+    --color-border: var(--mh-border);
+    --color-input: var(--mh-input);
+    --color-ring: var(--mh-ring);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --radius-sm: var(--mh-radius-sm);
+    --radius-md: var(--mh-radius-md);
+    --radius-lg: var(--mh-radius-lg);
+    --radius-xl: var(--mh-radius-xl);
+  }
+  @layer base {
+    body { background: var(--mh-background); color: var(--mh-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--mh-background); }
+      .text-background { color: var(--mh-background); }
+      .border-background { border-color: var(--mh-background); }
+      .ring-background { --tw-ring-color: var(--mh-background); }
+      .bg-foreground { background-color: var(--mh-foreground); }
+      .text-foreground { color: var(--mh-foreground); }
+      .border-foreground { border-color: var(--mh-foreground); }
+      .ring-foreground { --tw-ring-color: var(--mh-foreground); }
+      .bg-card { background-color: var(--mh-card); }
+      .text-card { color: var(--mh-card); }
+      .border-card { border-color: var(--mh-card); }
+      .ring-card { --tw-ring-color: var(--mh-card); }
+      .bg-card-foreground { background-color: var(--mh-card-foreground); }
+      .text-card-foreground { color: var(--mh-card-foreground); }
+      .border-card-foreground { border-color: var(--mh-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--mh-card-foreground); }
+      .bg-popover { background-color: var(--mh-popover); }
+      .text-popover { color: var(--mh-popover); }
+      .border-popover { border-color: var(--mh-popover); }
+      .ring-popover { --tw-ring-color: var(--mh-popover); }
+      .bg-popover-foreground { background-color: var(--mh-popover-foreground); }
+      .text-popover-foreground { color: var(--mh-popover-foreground); }
+      .border-popover-foreground { border-color: var(--mh-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--mh-popover-foreground); }
+      .bg-primary { background-color: var(--mh-primary); }
+      .text-primary { color: var(--mh-primary); }
+      .border-primary { border-color: var(--mh-primary); }
+      .ring-primary { --tw-ring-color: var(--mh-primary); }
+      .bg-primary-foreground { background-color: var(--mh-primary-foreground); }
+      .text-primary-foreground { color: var(--mh-primary-foreground); }
+      .border-primary-foreground { border-color: var(--mh-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--mh-primary-foreground); }
+      .bg-secondary { background-color: var(--mh-secondary); }
+      .text-secondary { color: var(--mh-secondary); }
+      .border-secondary { border-color: var(--mh-secondary); }
+      .ring-secondary { --tw-ring-color: var(--mh-secondary); }
+      .bg-secondary-foreground { background-color: var(--mh-secondary-foreground); }
+      .text-secondary-foreground { color: var(--mh-secondary-foreground); }
+      .border-secondary-foreground { border-color: var(--mh-secondary-foreground); }
+      .ring-secondary-foreground { --tw-ring-color: var(--mh-secondary-foreground); }
+      .bg-muted { background-color: var(--mh-muted); }
+      .text-muted { color: var(--mh-muted); }
+      .border-muted { border-color: var(--mh-muted); }
+      .ring-muted { --tw-ring-color: var(--mh-muted); }
+      .bg-muted-foreground { background-color: var(--mh-muted-foreground); }
+      .text-muted-foreground { color: var(--mh-muted-foreground); }
+      .border-muted-foreground { border-color: var(--mh-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--mh-muted-foreground); }
+      .bg-accent { background-color: var(--mh-accent); }
+      .text-accent { color: var(--mh-accent); }
+      .border-accent { border-color: var(--mh-accent); }
+      .ring-accent { --tw-ring-color: var(--mh-accent); }
+      .bg-accent-foreground { background-color: var(--mh-accent-foreground); }
+      .text-accent-foreground { color: var(--mh-accent-foreground); }
+      .border-accent-foreground { border-color: var(--mh-accent-foreground); }
+      .ring-accent-foreground { --tw-ring-color: var(--mh-accent-foreground); }
+      .bg-border { background-color: var(--mh-border); }
+      .text-border { color: var(--mh-border); }
+      .border-border { border-color: var(--mh-border); }
+      .ring-border { --tw-ring-color: var(--mh-border); }
+      .bg-input { background-color: var(--mh-input); }
+      .text-input { color: var(--mh-input); }
+      .border-input { border-color: var(--mh-input); }
+      .ring-input { --tw-ring-color: var(--mh-input); }
+      .bg-ring { background-color: var(--mh-ring); }
+      .text-ring { color: var(--mh-ring); }
+      .border-ring { border-color: var(--mh-ring); }
+      .ring-ring { --tw-ring-color: var(--mh-ring); }
+      .bg-destructive { background-color: var(--destructive); }
+      .text-destructive { color: var(--destructive); }
+      .border-destructive { border-color: var(--destructive); }
+      .ring-destructive { --tw-ring-color: var(--destructive); }
+      .bg-destructive-foreground { background-color: var(--destructive-foreground); }
+      .text-destructive-foreground { color: var(--destructive-foreground); }
+      .border-destructive-foreground { border-color: var(--destructive-foreground); }
+      .ring-destructive-foreground { --tw-ring-color: var(--destructive-foreground); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <main class="relative mx-auto w-full max-w-[430px] min-h-screen bg-[var(--mh-background)] pb-[calc(60px+env(safe-area-inset-bottom,16px))]">
+
+      <!-- Status Bar -->
+      <div class="flex items-center justify-between px-6 pt-3 pb-1 text-[13px] font-semibold text-[var(--mh-text)]">
+        <span>9:41</span>
+        <div class="flex items-center gap-1.5">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="0.5"/><rect x="4.5" y="5" width="3" height="6" rx="0.5"/><rect x="9" y="2.5" width="3" height="8.5" rx="0.5"/><rect x="13.5" y="0" width="3" height="11" rx="0.5"/></svg>
+          <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><path d="M8 2.5c2.2 0 4.2.9 5.7 2.3l1.1-1.1C13.1 2.1 10.7 1 8 1S2.9 2.1 1.2 3.7l1.1 1.1C3.8 3.4 5.8 2.5 8 2.5zm0 3c1.4 0 2.7.5 3.7 1.4l1.1-1.1C11.5 4.4 9.8 3.8 8 3.8s-3.5.6-4.8 2l1.1 1.1C5.3 6 6.6 5.5 8 5.5zm0 3c.7 0 1.3.2 1.8.7L8 11l-1.8-1.8c.5-.5 1.1-.7 1.8-.7z"/></svg>
+          <svg width="25" height="12" viewBox="0 0 25 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5"/><rect x="2" y="2" width="16" height="8" rx="1" fill="currentColor"/><rect x="22.5" y="4" width="1.5" height="4" rx="0.5" fill="currentColor" stroke="none"/></svg>
+        </div>
+      </div>
+
+      <!-- Page Header -->
+      <section class="px-5 pt-4 pb-3">
+        <div class="flex items-end justify-between">
+          <div>
+            <h1 class="text-[28px] font-semibold text-[var(--mh-text)] leading-tight" style="font-family: var(--mh-font-display); text-wrap: balance; word-break: keep-all;">
+              树洞
+            </h1>
+            <p class="mt-1 text-[13px] text-[var(--mh-text-light)]">
+              匿名倾诉，温暖相伴
+            </p>
+          </div>
+          <button class="flex-shrink-0 w-9 h-9 rounded-xl bg-[var(--mh-card)] flex items-center justify-center text-[var(--mh-text-light)] shadow-[var(--mh-shadow-sm)] transition-transform active:scale-95">
+            <i data-lucide="search" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- Filter Tabs -->
+      <section class="px-5 pb-3">
+        <div class="flex items-center gap-1.5">
+          <button class="px-4 py-1.5 rounded-full bg-[var(--mh-primary)] text-white text-[13px] font-medium transition-transform active:scale-95">
+            最新
+          </button>
+          <button class="px-4 py-1.5 rounded-full bg-[var(--mh-card)] text-[var(--mh-text-light)] text-[13px] transition-colors active:bg-[var(--mh-muted)]">
+            热门
+          </button>
+          <button class="px-4 py-1.5 rounded-full bg-[var(--mh-card)] text-[var(--mh-text-light)] text-[13px] transition-colors active:bg-[var(--mh-muted)]">
+            关注
+          </button>
+        </div>
+      </section>
+
+      <!-- Warm Reminder Banner -->
+      <section class="px-5 pb-4">
+        <div class="flex items-start gap-3 rounded-2xl bg-gradient-to-r from-[var(--mh-primary-soft)] to-[var(--mh-accent)]/15 p-3.5">
+          <div class="flex-shrink-0 w-7 h-7 rounded-full bg-[var(--mh-accent)]/25 flex items-center justify-center text-[var(--mh-accent-foreground)]">
+            <i data-lucide="shield-heart" class="w-4 h-4"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-[13px] text-[var(--mh-text)] font-medium leading-snug">
+              树洞是安全的匿名空间，请友善发言
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Post Feed -->
+      <section class="px-5 space-y-3 pb-6">
+
+        <!-- Post 1 -->
+        <article data-dom-id="post-1" class="rounded-2xl bg-[var(--mh-card)] p-4 shadow-[var(--mh-shadow-sm)] transition-transform active:scale-[0.99]">
+          <div class="flex items-start gap-3 mb-3">
+            <!-- Anonymous Avatar -->
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-[var(--mh-mood-anxious)] to-[var(--mh-primary)] flex items-center justify-center text-white text-[13px] font-medium">
+              #28
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-[14px] font-medium text-[var(--mh-text)] truncate">树洞小伙伴 #2847</span>
+              </div>
+              <div class="flex items-center gap-2 mt-0.5">
+                <span class="text-[11px] text-[var(--mh-text-muted)]">2小时前</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium" style="background: rgba(192, 144, 208, 0.15); color: #9a6fb0;">
+                  焦虑
+                </span>
+              </div>
+            </div>
+            <button class="flex-shrink-0 text-[var(--mh-text-muted)] transition-colors active:text-[var(--mh-text-light)]">
+              <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <p class="text-[14px] text-[var(--mh-text)] leading-relaxed mb-3">
+            明天就要答辩了，紧张得睡不着...有人和我一样吗？
+          </p>
+          <div class="flex items-center justify-between pt-2 border-t border-[var(--mh-border)]/40">
+            <button class="flex items-center gap-1.5 text-[var(--mh-text-light)] transition-colors active:text-[var(--mh-primary)] group">
+              <span class="w-7 h-7 rounded-full flex items-center justify-center group-active:bg-[var(--mh-primary)]/10">
+                <i data-lucide="heart-handshake" class="w-4 h-4"></i>
+              </span>
+              <span class="text-[12px]">56</span>
+            </button>
+            <button class="flex items-center gap-1.5 text-[var(--mh-text-light)] transition-colors active:text-[var(--mh-primary)] group">
+              <span class="w-7 h-7 rounded-full flex items-center justify-center group-active:bg-[var(--mh-primary)]/10">
+                <i data-lucide="heart" class="w-4 h-4"></i>
+              </span>
+              <span class="text-[12px]">42</span>
+            </button>
+            <button class="flex items-center gap-1.5 text-[var(--mh-text-light)] transition-colors active:text-[var(--mh-primary)] group">
+              <span class="w-7 h-7 rounded-full flex items-center justify-center group-active:bg-[var(--mh-primary)]/10">
+                <i data-lucide="message-circle" class="w-4 h-4"></i>
+              </span>
+              <span class="text-[12px]">18</span>
+            </button>
+            <button class="flex items-center gap-1.5 text-[var(--mh-text-light)] transition-colors active:text-[var(--mh-primary)] group">
+              <span class="w-7 h-7 rounded-full flex items-center justify-center group-active:bg-[var(--mh-primary)]/10">
+                <i data-lucide="share-2" class="w-4 h-4"></i>
+              </span>
+            </button>
+          </div>
+        </article>
+
+        <!-- Post 2 -->
+        <article data-dom-id="post-2" class="rounded-2xl bg-[var(--mh-card)] p-4 shadow-[var(--mh-shadow-sm)] transition-transform active:scale-[0.99]">
+          <div class="flex items-start gap-3 mb-3">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-[var(--mh-mood-sad)] to-[var(--mh-secondary)] flex items-center justify-center text-white text-[13px] font-medium">
+              #10
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-[14px] font-medium text-[var(--mh-text)] truncate">树洞小伙伴 #1024</span>
+              </div>
+              <div class="flex items-center gap-2 mt-0.5">
+                <span class="text-[11px] text-[var(--mh-text-muted)]">5小时前</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium" style="background: rgba(123, 165, 196, 0.15); color: #5a88a8;">
+                  难过
+                </span>
+              </div>
+            </div>
+            <button class="flex-shrink-0 text-[var(--mh-text-muted)] transition-colors active:text-[var(--mh-text-light)]">
+              <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <p class="text-[14px] text-[var(--mh-text)] leading-relaxed mb-3">
+            今天和最好的朋友吵架了，明明是小事却很难过...
+          </p>
+          <div class="flex items-center justify-between pt-2 border-t border-[var(--mh-border)]/40">
+            <button class="flex items-center gap-1.5 text-[var(--mh-text-light)] transition-colors active:text-[var(--mh-primary)] group">
+              <span class="w-7 h-7 rounded-full flex items-center justify-center group-active:bg-[var(--mh-primary)]/10">
+                <i data-lucide="heart-handshake" class="w-4 h-4"></i>
+              </span>
+              <span class="text-[12px]">89</span>
+            </button>
+            <button class="flex items-center gap-1.5 text-[var(--mh-text-light)] transition-colors active:text-[var(--mh-primary)] group">
+              <span class="w-7 h-7 rounded-full flex items-center justify-center group-active:bg-[var(--mh-primary)]/10">
+                <i data-lucide="heart" class="w-4 h-4"></i>
+              </span>
+              <span class="text-[12px]">28</span>
+            </button>
+            <button class="flex items-center gap-1.5 text-[var(--mh-text-light)] transition-colors active:text-[var(--mh-primary)] group">
+              <span class="w-7 h-7 rounded-full flex items-center justify-center group-active:bg-[var(--mh-primary)]/10">
+                <i data-lucide="message-circle" class="w-4 h-4"></i>
+              </span>
+              <span class="text-[12px]">35</span>
+            </button>
+            <button class="flex items-center gap-1.5 text-[var(--mh-text-light)] transition-colors active:text-[var(--mh-primary)] group">
+              <span class="w-7 h-7 rounded-full flex items-center justify-center group-active:bg-[var(--mh-primary)]/10">
+                <i data-lucide="share-2" class="w-4 h-4"></i>
+              </span>
+            </button>
+          </div>
+        </article>
+
+        <!-- Post 3 -->
+        <article class="rounded-2xl bg-[var(--mh-card)] p-4 shadow-[var(--mh-shadow-sm)] transition-transform active:scale-[0.99]">
+          <div class="flex items-start gap-3 mb-3">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-[var(--mh-mood-happy)] to-[var(--mh-accent)] flex items-center justify-center text-white text-[13px] font-medium">
+              #76
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-[14px] font-medium text-[var(--mh-text)] truncate">树洞小伙伴 #7632</span>
+              </div>
+              <div class="flex items-center gap-2 mt-0.5">
+                <span class="text-[11px] text-[var(--mh-text-muted)]">今天</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium" style="background: rgba(240, 184, 96, 0.2); color: #c89230;">
+                  开心
+                </span>
+              </div>
+            </div>
+            <button class="flex-shrink-0 text-[var(--mh-text-muted)] transition-colors active:text-[var(--mh-text-light)]">
+              <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <p class="text-[14px] text-[var(--mh-text)] leading-relaxed mb-3">
+            终于通过了考试！想找个人分享这份喜悦✨
+          </p>
+          <div class="flex items-center justify-between pt-2 border-t border-[var(--mh-border)]/40">
+            <button class="flex items-center gap-1.5 text-[var(--mh-text-light)] transition-colors active:text-[var(--mh-primary)] group">
+              <span class="w-7 h-7 rounded-full flex items-center justify-center group-active:bg-[var(--mh-primary)]/10">
+                <i data-lucide="heart-handshake" class="w-4 h-4"></i>
+              </span>
+              <span class="text-[12px]">128</span>
+            </button>
+            <button class="flex items-center gap-1.5 text-[var(--mh-text-light)] transition-colors active:text-[var(--mh-primary)] group">
+              <span class="w-7 h-7 rounded-full flex items-center justify-center group-active:bg-[var(--mh-primary)]/10">
+                <i data-lucide="heart" class="w-4 h-4"></i>
+              </span>
+              <span class="text-[12px]">156</span>
+            </button>
+            <button class="flex items-center gap-1.5 text-[var(--mh-text-light)] transition-colors active:text-[var(--mh-primary)] group">
+              <span class="w-7 h-7 rounded-full flex items-center justify-center group-active:bg-[var(--mh-primary)]/10">
+                <i data-lucide="message-circle" class="w-4 h-4"></i>
+              </span>
+              <span class="text-[12px]">42</span>
+            </button>
+            <button class="flex items-center gap-1.5 text-[var(--mh-text-light)] transition-colors active:text-[var(--mh-primary)] group">
+              <span class="w-7 h-7 rounded-full flex items-center justify-center group-active:bg-[var(--mh-primary)]/10">
+                <i data-lucide="share-2" class="w-4 h-4"></i>
+              </span>
+            </button>
+          </div>
+        </article>
+
+        <!-- Post 4 -->
+        <article class="rounded-2xl bg-[var(--mh-card)] p-4 shadow-[var(--mh-shadow-sm)] transition-transform active:scale-[0.99]">
+          <div class="flex items-start gap-3 mb-3">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-[var(--mh-mental-stressed)] to-[var(--mh-error)] flex items-center justify-center text-white text-[13px] font-medium">
+              #31
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-[14px] font-medium text-[var(--mh-text)] truncate">树洞小伙伴 #3156</span>
+              </div>
+              <div class="flex items-center gap-2 mt-0.5">
+                <span class="text-[11px] text-[var(--mh-text-muted)]">昨天</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium" style="background: rgba(210, 163, 95, 0.15); color: #a8783f;">
+                  压力大
+                </span>
+              </div>
+            </div>
+            <button class="flex-shrink-0 text-[var(--mh-text-muted)] transition-colors active:text-[var(--mh-text-light)]">
+              <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <p class="text-[14px] text-[var(--mh-text)] leading-relaxed mb-3">
+            工作压力好大，感觉喘不过气来...
+          </p>
+          <div class="flex items-center justify-between pt-2 border-t border-[var(--mh-border)]/40">
+            <button class="flex items-center gap-1.5 text-[var(--mh-text-light)] transition-colors active:text-[var(--mh-primary)] group">
+              <span class="w-7 h-7 rounded-full flex items-center justify-center group-active:bg-[var(--mh-primary)]/10">
+                <i data-lucide="heart-handshake" class="w-4 h-4"></i>
+              </span>
+              <span class="text-[12px]">94</span>
+            </button>
+            <button class="flex items-center gap-1.5 text-[var(--mh-text-light)] transition-colors active:text-[var(--mh-primary)] group">
+              <span class="w-7 h-7 rounded-full flex items-center justify-center group-active:bg-[var(--mh-primary)]/10">
+                <i data-lucide="heart" class="w-4 h-4"></i>
+              </span>
+              <span class="text-[12px]">67</span>
+            </button>
+            <button class="flex items-center gap-1.5 text-[var(--mh-text-light)] transition-colors active:text-[var(--mh-primary)] group">
+              <span class="w-7 h-7 rounded-full flex items-center justify-center group-active:bg-[var(--mh-primary)]/10">
+                <i data-lucide="message-circle" class="w-4 h-4"></i>
+              </span>
+              <span class="text-[12px]">23</span>
+            </button>
+            <button class="flex items-center gap-1.5 text-[var(--mh-text-light)] transition-colors active:text-[var(--mh-primary)] group">
+              <span class="w-7 h-7 rounded-full flex items-center justify-center group-active:bg-[var(--mh-primary)]/10">
+                <i data-lucide="share-2" class="w-4 h-4"></i>
+              </span>
+            </button>
+          </div>
+        </article>
+
+      </section>
+
+      <!-- Floating Action Button -->
+      <button data-dom-id="fab-create-post" class="fixed bottom-24 right-5 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-[var(--mh-shadow-lg)] z-40 transition-transform active:scale-90" style="background: linear-gradient(135deg, var(--mh-primary) 0%, var(--mh-accent) 100%);">
+        <i data-lucide="plus" class="w-6 h-6"></i>
+      </button>
+
+      <!-- Bottom Tab Navigation -->
+      <nav data-mobile-nav="global" class="fixed bottom-0 left-0 right-0 h-[60px] bg-[var(--mh-card)] border-t border-[var(--mh-border)] z-30 pb-[env(safe-area-inset-bottom)]">
+        <div class="w-full max-w-md mx-auto grid grid-cols-5 h-full">
+          <button data-dom-id="nav-home" data-nav-key="home" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-text-light)]">
+            <i data-lucide="home" class="w-5 h-5 shrink-0"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">首页</span>
+          </button>
+          <button data-dom-id="nav-mood" data-nav-key="mood" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-text-light)]">
+            <i data-lucide="heart" class="w-5 h-5 shrink-0"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">情绪</span>
+          </button>
+          <button data-dom-id="nav-relax" data-nav-key="relax" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-text-light)]">
+            <i data-lucide="leaf" class="w-5 h-5 shrink-0"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">放松</span>
+          </button>
+          <button data-dom-id="nav-treehole" data-nav-key="treehole" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-primary)]">
+            <i data-lucide="trees" class="w-5 h-5 shrink-0 fill-current"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate font-medium">树洞</span>
+          </button>
+          <button data-dom-id="nav-profile" data-nav-key="profile" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-text-light)]">
+            <i data-lucide="user" class="w-5 h-5 shrink-0"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">我的</span>
+          </button>
+        </div>
+      </nav>
+
+    </main>
+    <script>lucide.createIcons();</script>
+</body>
+</html>
