@@ -33,6 +33,7 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
       recordDate,
       emotions,
       tagIds,
+      includeNote,
     } = req.body
 
     if (emotions && Array.isArray(emotions) && emotions.length > 0) {
@@ -48,16 +49,17 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
       const date = recordDate || new Date().toISOString().split('T')[0]
       const resolvedTagIds = tagIds || []
 
-      await moodService.recordMood({
+      const result = await moodService.recordMood({
         userId,
         note: event || '',
         trigger: trigger || '',
+        includeNote: includeNote === true,
         recordedAt: new Date(`${date}T00:00:00.000Z`),
         emotions,
         tagIds: resolvedTagIds,
       })
       clearMoodCache(userId).catch((err) => logger.warn('清除缓存失败(非阻塞)', { error: (err as Error).message }))
-      return res.status(201).json(apiSuccess(null, '记录成功'))
+      return res.status(201).json(apiSuccess(result, '记录成功'))
     }
 
     const rawIntensity = Array.isArray(moodRatio)
@@ -95,10 +97,11 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
     const mappedTagIds = tagNames.map((name: string) => tagIdMap.get(name)!).filter(Boolean)
     const resolvedTags = mappedTagIds.map((id: number) => ({ id }))
 
-    await moodService.recordMood({
+    const result = await moodService.recordMood({
       userId,
       note: event || '',
       trigger: trigger || '',
+      includeNote: includeNote === true,
       recordedAt: new Date(`${date}T00:00:00.000Z`),
       emotions: matchedEmotions.map((emotion, index) => ({
         emotionTypeId: emotion!.id,
@@ -108,7 +111,7 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
       tagIds: resolvedTags.map((tag) => tag.id),
     })
     clearMoodCache(userId).catch((err) => logger.warn('清除缓存失败(非阻塞)', { error: (err as Error).message }))
-    res.status(201).json(apiSuccess(null, '记录成功'))
+    res.status(201).json(apiSuccess(result, '记录成功'))
   } catch (error) {
     logger.error('请求处理异常', { error: (error as Error).message })
     res.status(500).json(apiFailure(500, '服务器错误'))
@@ -153,7 +156,7 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
     const userId = guardUserId(req, res)
     if (userId === null) return
     const moodId = parseInt(req.params.id as string)
-    const { moodType, intensity, note, event, tags, trigger, emotions, tagIds, recordDate } = req.body
+    const { moodType, intensity, note, event, tags, trigger, emotions, tagIds, recordDate, includeNote } = req.body
 
     if (!Number.isInteger(moodId) || moodId <= 0) {
       return res.status(400).json(apiFailure(400, '无效的记录 ID'))
@@ -173,6 +176,7 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
         userId,
         note: event ?? note ?? '',
         trigger: trigger || '',
+        includeNote: includeNote === true,
         recordedAt: new Date(`${date}T00:00:00.000Z`),
         emotions,
         tagIds: tagIds || [],
@@ -222,6 +226,7 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
       userId,
       note: event ?? note ?? '',
       trigger: trigger || '',
+      includeNote: includeNote === true,
       recordedAt: new Date(`${date}T00:00:00.000Z`),
       emotions: matchedEmotions.map((emotion, index) => ({
         emotionTypeId: emotion!.id,

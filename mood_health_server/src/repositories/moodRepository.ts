@@ -25,6 +25,7 @@ export interface CreateMoodInput {
   userId: number
   noteCiphertext: string | null
   triggerCiphertext: string | null
+  includeNote: boolean
   recordedAt: Date
   emotions: MoodEmotionInput[]
   tagIds: number[]
@@ -32,6 +33,7 @@ export interface CreateMoodInput {
 
 export interface UpdateMoodInput extends CreateMoodInput {
   id: number
+  includeNote: boolean
 }
 
 export interface MoodPageOptions {
@@ -212,7 +214,7 @@ const asMoodDatabase = (): MoodDatabase => ({
 })
 
 export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
-  const createMood = async (input: CreateMoodInput): Promise<number> => {
+  const createMood = async (input: CreateMoodInput): Promise<{ moodId: number; jobId: number | null }> => {
     const connection = await db.getConnection()
 
     try {
@@ -224,13 +226,14 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
           user_id,
           note_ciphertext,
           trigger_ciphertext,
+          include_note,
           recorded_at,
           created_at,
           updated_at
         )
-        VALUES (?, ?, ?, ?, UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))
+        VALUES (?, ?, ?, ?, ?, UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))
         `,
-        [input.userId, input.noteCiphertext, input.triggerCiphertext, input.recordedAt]
+        [input.userId, input.noteCiphertext, input.triggerCiphertext, input.includeNote ? 1 : 0, input.recordedAt]
       )
       const moodId = Number(result.insertId)
 
@@ -254,8 +257,28 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
         )
       }
 
+      // 在同一事务中创建 7 天分析任务 (防重复)
+      let jobId: number | null = null
+      try {
+        const [jobResult] = await connection.query<ResultSetHeader>(
+          `INSERT INTO analysis_jobs (user_id, mood_record_id, period, include_note, status)
+           SELECT ?, ?, '7d', ?, 'pending'
+           WHERE NOT EXISTS (
+             SELECT 1 FROM analysis_jobs
+             WHERE user_id = ? AND mood_record_id = ? AND period = '7d'
+           )`,
+          [input.userId, moodId, input.includeNote ? 1 : 0, input.userId, moodId]
+        )
+        if (Number(jobResult.affectedRows) > 0) {
+          jobId = Number(jobResult.insertId)
+        }
+      } catch (jobError) {
+        // 分析任务表可能不存在（首次迁移未执行），不阻塞记录创建
+        // 静默处理，不影响主流程
+      }
+
       await connection.commit()
-      return moodId
+      return { moodId, jobId }
     } catch (error) {
       await connection.rollback()
       throw error
@@ -441,6 +464,7 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
         SET
           note_ciphertext = ?,
           trigger_ciphertext = ?,
+          include_note = ?,
           recorded_at = ?,
           updated_at = UTC_TIMESTAMP(3)
         WHERE id = ? AND user_id = ?
@@ -448,6 +472,7 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
         [
           input.noteCiphertext,
           input.triggerCiphertext,
+          input.includeNote ? 1 : 0,
           input.recordedAt,
           input.id,
           input.userId,

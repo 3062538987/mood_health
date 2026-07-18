@@ -20,6 +20,7 @@ export interface RecordMoodInput {
   userId: number
   note: string | null
   trigger: string | null
+  includeNote: boolean
   recordedAt: Date
   emotions: RecordMoodEmotionInput[]
   tagIds: number[]
@@ -164,17 +165,23 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
   const decryptField =
     dependencies.decryptField ?? decryptFieldUtil
 
-  const recordMood = async (input: RecordMoodInput): Promise<number> => {
+  const recordMood = async (input: RecordMoodInput): Promise<{ recordId: number; analysisJob: { id: number; status: string } | null }> => {
     const emotions = normalizeEmotions(input.emotions)
 
-    return repository.createMood({
+    const result = await repository.createMood({
       userId: input.userId,
       noteCiphertext: encryptField(input.note),
       triggerCiphertext: encryptField(input.trigger),
+      includeNote: input.includeNote,
       recordedAt: input.recordedAt,
       emotions,
       tagIds: input.tagIds,
     })
+
+    return {
+      recordId: result.moodId,
+      analysisJob: result.jobId ? { id: result.jobId, status: 'pending' } : null,
+    }
   }
 
   const listMoods = async (userId: number, options: ListMoodOptions) => {
@@ -222,6 +229,7 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
       userId: input.userId,
       noteCiphertext: encryptField(input.note),
       triggerCiphertext: encryptField(input.trigger),
+      includeNote: input.includeNote,
       recordedAt: input.recordedAt,
       emotions,
       tagIds: input.tagIds,

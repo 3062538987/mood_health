@@ -811,15 +811,20 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
         tags: Array.from(new Set([...selectedTags.value, ...selectedTriggers.value])),
         trigger: selectedTriggers.value.join(','),
         intensity: safeIntensity,
+        includeNote: true,
       }
 
       if (import.meta.env.DEV) {
         console.log('提交情绪记录 payload:', payload)
       }
 
-      await submitMoodRecord(payload)
+      const response = await submitMoodRecord(payload)
+      const { recordId, analysisJob } = response as { recordId: number; analysisJob: { id: number; status: string } | null }
 
       ElMessage.success('这次心情已经好好存下来了')
+      if (analysisJob) {
+        ElMessage.info('7 天分析任务已创建，完成后将自动通知你')
+      }
       isSubmittingSuccess.value = true
       setTimeout(() => {
         isSubmittingSuccess.value = false
