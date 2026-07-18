@@ -91,12 +91,23 @@ export const getMysqlPool = (): Pool => {
   return pool
 }
 
-export const connectMysql = async (): Promise<void> => {
-  const connection = await getMysqlPool().getConnection()
-  try {
-    await connection.ping()
-  } finally {
-    connection.release()
+export const connectMysql = async (retries = 3, delayMs = 2000): Promise<void> => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const connection = await getMysqlPool().getConnection()
+      try {
+        await connection.ping()
+      } finally {
+        connection.release()
+      }
+      return
+    } catch (error) {
+      if (attempt === retries) {
+        throw new Error(`MySQL 连接失败（已重试 ${retries} 次）: ${(error as Error).message}`)
+      }
+      console.warn(`MySQL 连接失败，${delayMs / 1000}s 后重试 (${attempt}/${retries})...`)
+      await new Promise((resolve) => setTimeout(resolve, delayMs))
+    }
   }
 }
 

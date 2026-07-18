@@ -14,6 +14,9 @@ import { filterContent } from '../contentFilter';
  * 内容审核服务类
  */
 export class ContentAuditService {
+  // 审核缓存版本号，更新敏感词列表后需递增以失效旧缓存
+  private static readonly AUDIT_CACHE_VERSION = 1
+
   /**
    * 审核内容
    * @param request 内容审核请求
@@ -21,7 +24,7 @@ export class ContentAuditService {
    */
   async auditContent(request: ContentAuditRequest): Promise<ContentAuditResult> {
     const startTime = Date.now();
-    const cacheKey = request.userId ? getAICacheKey('content', request.userId, request.content) : null;
+    const cacheKey = request.userId ? getAICacheKey('content', request.userId, `${ContentAuditService.AUDIT_CACHE_VERSION}:${request.content}`) : null;
 
     // 尝试从缓存获取
     if (aiConfig.enableCache && cacheKey) {

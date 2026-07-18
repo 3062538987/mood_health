@@ -139,7 +139,9 @@ export const createAuthService = (dependencies: AuthServiceDependencies = {}) =>
       { expiresIn: '7d' }
     )
 
-    await repository.updateLastLoginAt(user.id)
+    await repository.updateLastLoginAt(user.id).catch((err) => {
+        console.error('[authService] updateLastLoginAt failed:', (err as Error).message)
+      })
 
     return {
       token,

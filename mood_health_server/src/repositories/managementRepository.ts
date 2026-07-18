@@ -259,13 +259,12 @@ export const createManagementRepository = (db: ManagementDatabase = getMysqlPool
       ? 'WHERE joined_at >= ? AND joined_at <= ?'
       : ''
 
+    // 分批查询避免连接池耗尽（13个查询分2批执行）
     const [
       totalUsers, newUsers, totalMoodRecords, moodRecordUsers,
       totalAssessments, assessmentUsers, totalPosts, pendingPosts,
-      totalActivities, activityParticipants, totalAiCalls, aiUsers,
-      totalRelaxSessions,
     ] = await Promise.all([
-      safeCount(`SELECT COUNT(*) as total FROM users ${dateFilter}`, dateParams),
+      safeCount('SELECT COUNT(*) as total FROM users', []),
       safeCount(`SELECT COUNT(*) as total FROM users ${dateFilter}`, dateParams),
       safeCount(`SELECT COUNT(*) as total FROM moods ${dateFilter}`, dateParams),
       safeCount(`SELECT COUNT(DISTINCT user_id) as total FROM moods ${dateFilter}`, dateParams),
@@ -273,6 +272,12 @@ export const createManagementRepository = (db: ManagementDatabase = getMysqlPool
       safeCount(`SELECT COUNT(DISTINCT user_id) as total FROM assessment_sessions ${dateFilter}`, dateParams),
       safeCount(`SELECT COUNT(*) as total FROM posts ${dateFilter}`, dateParams),
       safeCount(`SELECT COUNT(*) as total FROM posts WHERE status = 0 ${startDate && endDate ? 'AND created_at >= ? AND created_at <= ?' : ''}`, dateParams),
+    ])
+
+    const [
+      totalActivities, activityParticipants, totalAiCalls, aiUsers,
+      totalRelaxSessions,
+    ] = await Promise.all([
       safeCount(`SELECT COUNT(*) as total FROM activities ${dateFilter}`, dateParams),
       safeCount(`SELECT COUNT(DISTINCT user_id) as total FROM activity_participants ${apDateFilter}`, dateParams),
       safeCount(`SELECT COUNT(*) as total FROM ai_analysis_history ${dateFilter}`, dateParams),
