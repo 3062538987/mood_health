@@ -21,7 +21,7 @@ export const useUserStore = defineStore('user', () => {
   const error = ref<string>('')
   const authInitialized = ref(false)
 
-  const isLoggedIn = computed(() => !!token.value && !!user.value)
+  const isLoggedIn = computed(() => !!user.value)
   const username = computed(() => user.value?.username || '')
   const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'super_admin')
 
@@ -112,7 +112,7 @@ export const useUserStore = defineStore('user', () => {
       // 从 cookie 恢复会话时，token 可能为空，但后端已认证
       // 使用一个占位 token 让 isLoggedIn 生效
       if (!token.value) {
-        token.value = 'session'
+        token.value = ''
       }
       authInitialized.value = true
       return true

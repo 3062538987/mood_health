@@ -283,10 +283,10 @@ export const getMoodTypes = async (req: AuthRequest, res: Response) => {
       icon: type.icon,
       category: type.category,
     }))
-    res.json({ code: 0, data: formattedTypes, message: '获取成功' })
+    res.json(apiSuccess(formattedTypes, '获取成功'))
   } catch (error) {
     console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -295,10 +295,10 @@ export const getTagsHandler = async (req: AuthRequest, res: Response) => {
     const userId = guardUserId(req, res)
     if (userId === null) return
     const tags = await moodService.listTags(userId)
-    res.json({ code: 0, data: tags, message: '获取成功' })
+    res.json(apiSuccess(tags, '获取成功'))
   } catch (error) {
     console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 
@@ -309,18 +309,14 @@ export const createTagHandler = async (req: AuthRequest, res: Response) => {
     const { name } = req.body
 
     if (!name || typeof name !== 'string') {
-      return res.status(400).json({ code: 400, message: '标签名称不能为空' })
+      return res.status(400).json(apiFailure(400, '标签名称不能为空'))
     }
 
     const tag = await moodService.createOrGetTag(name.trim(), userId)
-    res.status(201).json({
-      code: 0,
-      data: tag,
-      message: '创建成功',
-    })
+    res.status(201).json(apiSuccess(tag, '创建成功'))
   } catch (error) {
     console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(500).json(apiFailure(500, '服务器错误'))
   }
 }
 

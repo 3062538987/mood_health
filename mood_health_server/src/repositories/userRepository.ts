@@ -1,5 +1,6 @@
 import { ResultSetHeader, RowDataPacket } from 'mysql2'
 import { getMysqlPool } from '../config/mysql'
+import logger from '../utils/logger'
 
 export type UserRoleCode = 'student' | 'counselor' | 'super_admin'
 export type UserStatus = 'active' | 'disabled'
@@ -216,6 +217,9 @@ export const createUserRepository = (db: MysqlExecutor = getMysqlPool()) => {
       return { deleted: false, username: null }
     }
     const username = rows[0].username
+
+    // 审计日志：记录删除操作
+    logger.warn('删除用户及关联数据', { userId: id, username })
 
     await db.query<ResultSetHeader>('DELETE FROM mood_records WHERE user_id = ?', [id])
     await db.query<ResultSetHeader>('DELETE FROM assessment_sessions WHERE user_id = ?', [id])

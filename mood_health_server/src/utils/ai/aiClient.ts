@@ -206,39 +206,60 @@ export const callChatCompletion = async (
     max_tokens: options.maxTokens ?? 2048,
   }
 
-  try {
-    const response = await axios.post<{
-      choices: Array<{ message: { content: string } }>
-    }>(url, body, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      timeout: aiConfig.timeout,
-    })
+  let retryCount = 0
+  const maxRetries = aiConfig.maxRetries || 3
 
-    const content = response.data?.choices?.[0]?.message?.content
-    if (!content) {
-      throw new AiServiceError('AI 返回空内容', null, 'chat', 'chat/completions')
-    }
-    return content.trim()
-  } catch (error: any) {
-    if (error instanceof AiServiceError) throw error
+  const doRequest = async (): Promise<string> => {
+    try {
+      const response = await axios.post<{
+        choices: Array<{ message: { content: string } }>
+      }>(url, body, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        timeout: aiConfig.timeout,
+      })
 
-    const status = error?.response?.status
-    if (status === 401) {
-      throw new AiServiceError('AI API Key 无效', error, 'chat', 'chat/completions')
+      const content = response.data?.choices?.[0]?.message?.content
+      if (!content) {
+        throw new AiServiceError('AI 返回空内容', null, 'chat', 'chat/completions')
+      }
+      return content.trim()
+    } catch (error: any) {
+      if (error instanceof AiServiceError && error.message === 'AI 返回空内容') throw error
+
+      const status = error?.response?.status
+      // 不可重试的错误
+      if (status === 401) {
+        throw new AiServiceError('AI API Key 无效', error, 'chat', 'chat/completions')
+      }
+      if (status === 400) {
+        throw new AiServiceError('AI 请求参数错误', error, 'chat', 'chat/completions')
+      }
+
+      // 可重试的错误：429、5xx、网络错误
+      if (retryCount < maxRetries) {
+        retryCount++
+        const delay = Math.pow(2, retryCount) * 1000
+        logger.info(`AI 调用重试 (${retryCount}/${maxRetries})，等待 ${delay}ms`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+        return doRequest()
+      }
+
+      if (status === 429) {
+        throw new AiServiceError('AI API 请求频率超限', error, 'chat', 'chat/completions')
+      }
+      throw new AiServiceError(
+        `AI 调用失败: ${error?.message || '未知错误'}`,
+        error,
+        'chat',
+        'chat/completions'
+      )
     }
-    if (status === 429) {
-      throw new AiServiceError('AI API 请求频率超限', error, 'chat', 'chat/completions')
-    }
-    throw new AiServiceError(
-      `AI 调用失败: ${error?.message || '未知错误'}`,
-      error,
-      'chat',
-      'chat/completions'
-    )
   }
+
+  return doRequest()
 }
 
 export default aiClient;

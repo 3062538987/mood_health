@@ -1,5 +1,6 @@
 import { createMoodRepository, MoodEmotionInput, MoodRepository } from '../repositories/moodRepository'
 import { BusinessError } from '../utils/errors'
+import { encryptField as encryptFieldUtil, decryptField as decryptFieldUtil } from '../utils/encryption'
 
 type EncryptField = (value: string | null | undefined) => string | null
 type DecryptField = (value: string | null | undefined) => string | null
@@ -155,21 +156,9 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
   const repository = dependencies.repository ?? createMoodRepository()
   const now = dependencies.now ?? (() => new Date())
   const encryptField =
-    dependencies.encryptField ??
-    ((value: string | null | undefined) => {
-      const { encryptField: encryptFieldUtil } = require('../utils/encryption') as {
-        encryptField: EncryptField
-      }
-      return encryptFieldUtil(value)
-    })
+    dependencies.encryptField ?? encryptFieldUtil
   const decryptField =
-    dependencies.decryptField ??
-    ((value: string | null | undefined) => {
-      const { decryptField: decryptFieldUtil } = require('../utils/encryption') as {
-        decryptField: DecryptField
-      }
-      return decryptFieldUtil(value)
-    })
+    dependencies.decryptField ?? decryptFieldUtil
 
   const recordMood = async (input: RecordMoodInput): Promise<number> => {
     const emotions = normalizeEmotions(input.emotions)

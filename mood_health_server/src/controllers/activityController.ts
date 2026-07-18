@@ -102,11 +102,6 @@ export const joinActivityHandler = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ code: 404, message: '活动不存在' })
     }
 
-    const alreadyJoined = await activityRepo.hasUserJoined(activityId, userId)
-    if (alreadyJoined) {
-      return res.status(400).json({ code: 400, message: '您已经报名过该活动' })
-    }
-
     await activityRepo.join(activityId, userId)
     await clearActivityCache()
 
@@ -135,11 +130,6 @@ export const cancelJoinActivityHandler = async (req: AuthRequest, res: Response)
     const activity = await activityRepo.findById(activityId)
     if (!activity) {
       return res.status(404).json({ code: 404, message: '活动不存在' })
-    }
-
-    const alreadyJoined = await activityRepo.hasUserJoined(activityId, userId)
-    if (!alreadyJoined) {
-      return res.status(400).json({ code: 400, message: '您尚未报名该活动' })
     }
 
     await activityRepo.cancelJoin(activityId, userId)
