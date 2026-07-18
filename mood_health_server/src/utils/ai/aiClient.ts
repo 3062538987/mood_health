@@ -13,7 +13,6 @@ import aiConfig from '../../config/aiConfig';
  */
 export class AIClient {
   private axiosInstance: AxiosInstance;
-  private retryCount: number = 0;
 
   constructor() {
     this.axiosInstance = axios.create({
@@ -58,40 +57,42 @@ export class AIClient {
    */
   async callAI<T>(api: string, params: any, options: { model?: string; timeout?: number } = {}): Promise<T> {
     const startTime = Date.now();
-    this.retryCount = 0;
+    let retryCount = 0;
 
-    try {
-      const response = await this.axiosInstance.post<T>(api, params, {
-        timeout: options.timeout || aiConfig.timeout,
-        headers: {
-          'X-AI-Model': options.model || aiConfig.models.moodAnalysis
+    const doCall = async (): Promise<T> => {
+      try {
+        const response = await this.axiosInstance.post<T>(api, params, {
+          timeout: options.timeout || aiConfig.timeout,
+          headers: {
+            'X-AI-Model': options.model || aiConfig.models.moodAnalysis
+          }
+        });
+
+        const endTime = Date.now();
+        logger.info(`AI API Call Success: ${api} - ${endTime - startTime}ms`);
+        return response.data;
+      } catch (error) {
+        const endTime = Date.now();
+        logger.error(`AI API Call Failed: ${api} - ${endTime - startTime}ms - ${error instanceof Error ? error.message : 'Unknown error'}`);
+
+        if (retryCount < aiConfig.maxRetries) {
+          retryCount++;
+          const delay = Math.pow(2, retryCount) * 1000;
+          logger.info(`Retrying AI API call (${retryCount}/${aiConfig.maxRetries}) after ${delay}ms`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return doCall();
         }
-      });
 
-      const endTime = Date.now();
-      logger.info(`AI API Call Success: ${api} - ${endTime - startTime}ms`);
-      return response.data;
-    } catch (error) {
-      const endTime = Date.now();
-      logger.error(`AI API Call Failed: ${api} - ${endTime - startTime}ms - ${error instanceof Error ? error.message : 'Unknown error'}`);
-
-      // 重试机制
-      if (this.retryCount < aiConfig.maxRetries) {
-        this.retryCount++;
-        const delay = Math.pow(2, this.retryCount) * 1000; // 指数退避
-        logger.info(`Retrying AI API call (${this.retryCount}/${aiConfig.maxRetries}) after ${delay}ms`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        return this.callAI(api, params, options);
+        throw new AiServiceError(
+          `AI API调用失败: ${api}`,
+          error,
+          aiConfig.modelType,
+          api
+        );
       }
+    };
 
-      // 抛出AI服务错误
-      throw new AiServiceError(
-        `AI API调用失败: ${api}`,
-        error,
-        aiConfig.modelType,
-        api
-      );
-    }
+    return doCall();
   }
 
   /**
