@@ -1,0 +1,10 @@
+# 从 pyproject.toml 生成: pip install -e .
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+pydantic>=2.10.0
+httpx>=0.28.0
+openai>=1.55.0
+mysql-connector-python>=9.0.0
+redis[hiredis]>=5.2.0
+typing-extensions>=4.12.0
+python-dotenv>=1.0.0
