@@ -4,10 +4,12 @@ import { clearMoodCache } from '../utils/cache'
 import { apiFailure, apiSuccess } from '../utils/apiResponse'
 import { createMoodService } from '../services/moodService'
 import { createMoodAlertService } from '../services/moodAlertService'
+import { createMoodAnalysisDataService } from '../services/moodAnalysisDataService'
 import logger from '../utils/logger'
 
 const moodService = createMoodService()
 const moodAlertService = createMoodAlertService()
+const moodAnalysisDataService = createMoodAnalysisDataService()
 
 function guardUserId(req: AuthRequest, res: Response): number | null {
   if (!req.user) {
@@ -187,6 +189,7 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
       }
 
       clearMoodCache(userId).catch((err) => logger.warn('清除缓存失败(非阻塞)', { error: (err as Error).message }))
+      moodAnalysisDataService.markStaleByRecordIds([moodId]).catch((err) => logger.warn('标记分析版本过期失败(非阻塞)', { error: (err as Error).message }))
       return res.json(apiSuccess(null, '更新成功'))
     }
 
@@ -241,6 +244,7 @@ export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
     }
 
     clearMoodCache(userId).catch((err) => logger.warn('清除缓存失败(非阻塞)', { error: (err as Error).message }))
+    moodAnalysisDataService.markStaleByRecordIds([moodId]).catch((err) => logger.warn('标记分析版本过期失败(非阻塞)', { error: (err as Error).message }))
     res.json(apiSuccess(null, '更新成功'))
   } catch (error) {
     logger.error('请求处理异常', { error: (error as Error).message })
@@ -265,6 +269,7 @@ export const deleteMoodHandler = async (req: AuthRequest, res: Response) => {
     }
 
     clearMoodCache(userId).catch((err) => logger.warn('清除缓存失败(非阻塞)', { error: (err as Error).message }))
+    moodAnalysisDataService.markStaleByRecordIds([moodId]).catch((err) => logger.warn('标记分析版本过期失败(非阻塞)', { error: (err as Error).message }))
     res.json(apiSuccess(null, '删除成功'))
   } catch (error) {
     logger.error('请求处理异常', { error: (error as Error).message })

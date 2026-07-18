@@ -25,6 +25,7 @@ import relaxRoutes from './routes/relaxRoutes'
 import achievementRoutes from './routes/achievementRoutes'
 import recommendRoutes from './routes/recommendRoutes'
 import feedbackRoutes from './routes/feedbackRoutes'
+import moodAnalysisRoutes from './routes/moodAnalysisRoutes'
 import logger, { summarizeRequestBody } from './utils/logger'
 import redisClient from './utils/redis.client'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler'
@@ -202,6 +203,7 @@ app.use('/api/achievements', requireNonCoreModules, achievementRoutes)
 app.use('/api/recommend', recommendRoutes)
 app.use('/api', feedbackRoutes)
 app.use('/api', managementRoutes)
+app.use('/api', moodAnalysisRoutes)
 
   app.get(
     '/health',
