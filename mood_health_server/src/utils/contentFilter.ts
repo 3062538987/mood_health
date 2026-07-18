@@ -52,6 +52,11 @@ const SENSITIVE_WORDS = [
   "涉骗",
 ];
 
+// 去重
+const UNIQUE_SENSITIVE_WORDS = [...new Set(SENSITIVE_WORDS)];
+
+const MAX_CONTENT_LENGTH = 10000;
+
 export interface ContentFilterResult {
   isSafe: boolean;
   detectedWords: string[];
@@ -59,10 +64,12 @@ export interface ContentFilterResult {
 }
 
 export const filterContent = (content: string): ContentFilterResult => {
+  // 长度限制，防止 DoS
+  const truncated = content.length > MAX_CONTENT_LENGTH ? content.slice(0, MAX_CONTENT_LENGTH) : content;
   const detectedWords: string[] = [];
-  const lowerContent = content.toLowerCase();
+  const lowerContent = truncated.toLowerCase();
 
-  for (const word of SENSITIVE_WORDS) {
+  for (const word of UNIQUE_SENSITIVE_WORDS) {
     if (lowerContent.includes(word.toLowerCase())) {
       detectedWords.push(word);
     }

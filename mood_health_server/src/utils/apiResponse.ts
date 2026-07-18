@@ -26,6 +26,9 @@ export const apiFailure = <T = null>(
   message: string,
   data: T = null as T
 ): ApiResponse<T> => {
+  if (typeof code !== 'number' || isNaN(code)) {
+    throw new Error('失败响应必须提供有效的数字业务码')
+  }
   if (code === 0) {
     throw new Error('失败响应必须使用非零业务码')
   }
