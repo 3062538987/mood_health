@@ -80,6 +80,10 @@ export interface MoodAnalysisResult {
   suggestions?: string[];
   mood_score?: number;
   risk_level?: string;
+  // A3-03: 来源标签
+  source?: 'model' | 'rule' | 'fallback';
+  isFallback?: boolean;
+  reasonCode?: string | null;
 }
 
 // 情绪预测请求接口

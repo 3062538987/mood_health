@@ -27,12 +27,16 @@ export interface FourSectionAnalysis {
 
 /**
  * 安全兜底 - 四段式分析（仅在 AI 响应解析失败时使用）
+ * 标记为 fallback 来源，不伪装成模型分析
  */
-export const SAFE_FALLBACK_ANALYSIS: FourSectionAnalysis = {
+export const SAFE_FALLBACK_ANALYSIS: FourSectionAnalysis & { source: string; isFallback: boolean; reasonCode: string } = {
   summary: '暂时无法生成分析，请稍后重试。',
   possibleCauses: 'AI 服务暂时不可用，无法分析可能原因。',
   todayActions: ['深呼吸，放松身心', '回顾今天的感受，写下来', '做一件让自己开心的小事'],
   whenToSeekHelp: '如果持续感到不适，建议联系专业心理咨询师。',
+  source: 'fallback',
+  isFallback: true,
+  reasonCode: 'AI_UNAVAILABLE',
 }
 
 /**
@@ -124,32 +128,61 @@ export class MoodAnalysisService {
     });
 
     // 解析 JSON 响应
-    let parsed: any;
+    let parsed: any
+    let source = 'model' as 'model' | 'rule' | 'fallback'
+    let isFallback = false
+    let reasonCode: string | null = null
+
     try {
-      const jsonStr = (rawResponse.match(/\{[\s\S]*\}/) || ['{}'])[0];
-      parsed = JSON.parse(jsonStr);
+      const jsonStr = (rawResponse.match(/\{[\s\S]*\}/) || ['{}'])[0]
+      parsed = JSON.parse(jsonStr)
+
+      // A3-04: 禁止默认值伪装完整结果
+      if (typeof parsed.risk_level !== 'string' || !['low', 'medium', 'high'].includes(parsed.risk_level)) {
+        source = 'rule'
+        isFallback = true
+        reasonCode = 'INVALID_RISK_LEVEL'
+        parsed.risk_level = 'medium' // 解析失败时保守处理
+      }
+      if (typeof parsed.mood_score !== 'number' || parsed.mood_score < 1 || parsed.mood_score > 10) {
+        source = 'rule'
+        isFallback = true
+        reasonCode = reasonCode || 'INVALID_MOOD_SCORE'
+      }
+      if (!parsed.analysis || typeof parsed.analysis !== 'string' || !parsed.analysis.trim()) {
+        source = 'rule'
+        isFallback = true
+        reasonCode = reasonCode || 'MISSING_ANALYSIS'
+        parsed.analysis = '分析结果不完整，请稍后重试。'
+      }
     } catch {
       parsed = {
         analysis: rawResponse.slice(0, 200),
         suggestions: ['保持积极心态', '适当放松身心'],
         mood: '未知',
-        mood_score: 5,
-        risk_level: 'low',
-      };
+        mood_score: undefined,
+        risk_level: undefined,
+      }
+      source = 'fallback'
+      isFallback = true
+      reasonCode = 'JSON_PARSE_FAILED'
     }
 
     const analysisResult: MoodAnalysisResult = {
-      mood: parsed.mood || '未知',
+      mood: parsed.mood || '',
       confidence: 0.85,
       emotions: [
-        { tag: parsed.mood || '未知', score: 1 },
+        { tag: parsed.mood || '', score: 1 },
       ],
       suggestion: (parsed.suggestions || ['保持积极心态']).join('；'),
       analysis: parsed.analysis || '',
       suggestions: parsed.suggestions || [],
-      mood_score: parsed.mood_score || 5,
-      risk_level: parsed.risk_level || 'low',
+      mood_score: parsed.mood_score,
+      risk_level: parsed.risk_level,
       timestamp: new Date().toISOString(),
+      source,
+      isFallback,
+      reasonCode,
     };
 
     if (aiConfig.enableCache && cacheKey) {

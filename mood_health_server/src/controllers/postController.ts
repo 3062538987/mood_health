@@ -65,13 +65,13 @@ export const createPostHandler = async (req: AuthRequest, res: Response) => {
         riskLevel = auditResult.severity === 'medium' ? 'medium' : 'low'
       }
     } catch (auditError) {
-      // AI 审核失败时降级为基础过滤
-      logger.warn('AI 内容审核失败，降级为本地审核', {
+      // AI 审核失败时安全降级：标记为需人工审核，而非直接放行
+      logger.warn('AI 内容审核失败，安全降级为待人工审核', {
         error: (auditError as Error).message,
         contentLength: content.length,
         userId,
       })
-      riskLevel = 'low'
+      riskLevel = 'medium'
     }
 
     const needsReview = riskLevel === 'medium' || shouldMarkForReview(content)
