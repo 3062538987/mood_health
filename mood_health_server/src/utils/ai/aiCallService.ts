@@ -5,7 +5,7 @@
 
 import { callChatCompletion } from './aiClient'
 import promptService from '../../services/promptService'
-import type { PromptTemplate } from '../../repositories/promptRepository'
+import type { PromptTemplate, PromptCategory } from '../../repositories/promptRepository'
 import aiConfig from '../../config/aiConfig'
 import logger from '../logger'
 
@@ -20,7 +20,7 @@ const loadAllTemplates = async (): Promise<PromptTemplate[]> => {
     return templateCache
   }
 
-  const categories = ['assessment_interpretation', 'mood_report', 'counseling', 'recommendation']
+  const categories: PromptCategory[] = ['assessment_interpretation', 'mood_report', 'counseling', 'recommendation']
   const results = await Promise.all(categories.map((cat) => promptService.getActiveByCategory(cat)))
   const allTemplates = results.flat()
 
