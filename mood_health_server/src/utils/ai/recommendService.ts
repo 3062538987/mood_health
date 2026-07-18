@@ -211,61 +211,62 @@ export class RecommendService {
     items: RecommendationItem[],
   ): Promise<RecommendationItem[]> {
     const pool = getMysqlPool();
-    const enriched: RecommendationItem[] = [];
 
-    for (const item of items) {
+    // 按类型分组，避免 N+1 查询
+    const typeQueries: Record<string, Promise<RowDataPacket[]>> = {};
+    const typeSet = new Set(items.map((item) => item.type));
+
+    for (const type of typeSet) {
+      switch (type) {
+        case 'music':
+          typeQueries[type] = pool.query<RowDataPacket[]>(
+            `SELECT id, title, description, url, cover_url FROM musics WHERE is_active = 1 LIMIT 1`
+          ).then(([rows]) => rows);
+          break;
+        case 'course':
+          typeQueries[type] = pool.query<RowDataPacket[]>(
+            `SELECT id, title, description, cover_url FROM courses WHERE is_active = 1 LIMIT 1`
+          ).then(([rows]) => rows);
+          break;
+        case 'activity':
+          typeQueries[type] = pool.query<RowDataPacket[]>(
+            `SELECT id, title, description, cover_url FROM activities WHERE is_active = 1 LIMIT 1`
+          ).then(([rows]) => rows);
+          break;
+        default:
+          typeQueries[type] = Promise.resolve([]);
+      }
+    }
+
+    // 等待所有查询完成
+    const typeResults: Record<string, RowDataPacket[]> = {};
+    for (const [type, promise] of Object.entries(typeQueries)) {
       try {
-        if (item.type === 'music') {
-          const [rows] = await pool.query<RowDataPacket[]>(
-            `SELECT id, title, description, url, cover_url
-             FROM musics WHERE is_active = 1 LIMIT 1`
-          );
-          if (rows.length > 0) {
-            enriched.push({
-              ...item,
-              id: String(rows[0].id),
-              title: rows[0].title as string,
-              description: rows[0].description as string || item.description,
-              url: `/api/music/${rows[0].id}`,
-              cover: rows[0].cover_url as string || item.cover,
-            });
-            continue;
-          }
-        } else if (item.type === 'course') {
-          const [rows] = await pool.query<RowDataPacket[]>(
-            `SELECT id, title, description, cover_url
-             FROM courses WHERE is_active = 1 LIMIT 1`
-          );
-          if (rows.length > 0) {
-            enriched.push({
-              ...item,
-              id: String(rows[0].id),
-              title: rows[0].title as string,
-              description: rows[0].description as string || item.description,
-              url: `/api/courses/${rows[0].id}`,
-              cover: rows[0].cover_url as string || item.cover,
-            });
-            continue;
-          }
-        } else if (item.type === 'activity') {
-          const [rows] = await pool.query<RowDataPacket[]>(
-            `SELECT id, title, description, cover_url
-             FROM activities WHERE is_active = 1 LIMIT 1`
-          );
-          if (rows.length > 0) {
-            enriched.push({
-              ...item,
-              id: String(rows[0].id),
-              title: rows[0].title as string,
-              description: rows[0].description as string || item.description,
-              url: `/api/activities/${rows[0].id}`,
-              cover: rows[0].cover_url as string || item.cover,
-            });
-            continue;
-          }
-        }
-        enriched.push(item);
+        typeResults[type] = await promise;
       } catch {
+        typeResults[type] = [];
+      }
+    }
+
+    const enriched: RecommendationItem[] = [];
+    for (const item of items) {
+      const rows = typeResults[item.type] || [];
+      if (rows.length > 0) {
+        const row = rows[0];
+        const urlMap: Record<string, string> = {
+          music: `/api/music/${row.id}`,
+          course: `/api/courses/${row.id}`,
+          activity: `/api/activities/${row.id}`,
+        };
+        enriched.push({
+          ...item,
+          id: String(row.id),
+          title: row.title as string,
+          description: (row.description as string) || item.description,
+          url: urlMap[item.type] || item.url,
+          cover: (row.cover_url as string) || item.cover,
+        });
+      } else {
         enriched.push(item);
       }
     }

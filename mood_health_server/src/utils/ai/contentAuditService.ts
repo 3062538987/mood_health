@@ -8,21 +8,12 @@ import logger from '../logger';
 import { setCache, getCache } from '../cache';
 import { ContentAuditRequest, ContentAuditResult, getAICacheKey } from '../../models/aiModel';
 import aiConfig from '../../config/aiConfig';
+import { filterContent } from '../contentFilter';
 
 /**
  * 内容审核服务类
  */
 export class ContentAuditService {
-  // 敏感词列表（作为基础过滤）
-  private readonly SENSITIVE_WORDS = [
-    "暴力", "恐怖", "自杀", "杀人", "毒品", "赌博", "色情", "诈骗", "传销", "邪教",
-    "枪支", "炸弹", "爆炸", "投毒", "绑架", "勒索", "抢劫", "强奸", "猥亵", "卖淫",
-    "嫖娼", "赌博", "吸毒", "贩毒", "制毒", "洗钱", "贪污", "受贿", "行贿", "诈骗",
-    "敲诈", "勒索", "诽谤", "造谣", "传谣", "煽动", "颠覆", "分裂", "恐怖主义", "极端主义",
-    "邪教组织", "黑社会", "黑恶势力", "涉黑", "涉恶", "涉毒", "涉黄", "涉赌", "涉枪", "涉爆",
-    "涉恐", "涉邪", "涉诈", "涉骗"
-  ];
-
   /**
    * 审核内容
    * @param request 内容审核请求
@@ -139,13 +130,11 @@ export class ContentAuditService {
    */
   private basicContentFilter(content: string): Omit<ContentAuditResult, 'timestamp'> {
     const detectedIssues: string[] = [];
-    const lowerContent = content.toLowerCase();
 
-    // 检查敏感词
-    for (const word of this.SENSITIVE_WORDS) {
-      if (lowerContent.includes(word.toLowerCase())) {
-        detectedIssues.push(`包含敏感词: ${word}`);
-      }
+    // 使用统一的敏感词过滤
+    const filterResult = filterContent(content);
+    if (!filterResult.isSafe) {
+      detectedIssues.push(...filterResult.detectedWords.map((w) => `包含敏感词: ${w}`));
     }
 
     // 检查内容长度
@@ -169,11 +158,9 @@ export class ContentAuditService {
       };
     }
 
-    let severity: 'low' | 'medium' | 'high' = 'low';
+    let severity: 'low' | 'medium' | 'high' = 'medium';
     if (detectedIssues.length >= 3) {
       severity = 'high';
-    } else if (detectedIssues.length >= 1) {
-      severity = 'medium';
     }
 
     let suggestion = '内容存在问题，建议修改后重新提交';
