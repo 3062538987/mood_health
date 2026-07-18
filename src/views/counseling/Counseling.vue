@@ -579,17 +579,18 @@ const clearConversation = async () => {
   padding: 2px 8px;
   font-size: 11px;
   color: #fff;
+  font-weight: 600;
 
   &.low {
-    background: #7cb680;
+    background: var(--risk-low);
   }
 
   &.medium {
-    background: #d2a35f;
+    background: var(--risk-medium);
   }
 
   &.high {
-    background: #cf6b7f;
+    background: var(--risk-high);
   }
 }
 

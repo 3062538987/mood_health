@@ -23,6 +23,29 @@ $success-color: #7cb89a;
 $warning-color: #f0c060;
 $danger-color: #e0556a;
 
+// ── 语义状态色（心理安全友好） ──
+$status-info: #7ba5c4;
+$status-success: #7cb89a;
+$status-warning: #f0b860;
+$status-caution: #d2a35f;
+$status-danger: #e0556a;
+$status-emergency: #cf6b7f;
+
+// ── 风险等级色（避免纯红绿表达，使用温暖色系） ──
+$risk-low: #8aab7c;
+$risk-low-soft: rgba(138, 171, 124, 0.12);
+$risk-medium: #d2a35f;
+$risk-medium-soft: rgba(210, 163, 95, 0.12);
+$risk-high: #cf6b7f;
+$risk-high-soft: rgba(207, 107, 127, 0.12);
+
+// ── 心理状态色 ──
+$mental-calm: #8aab7c;
+$mental-neutral: #b0a69c;
+$mental-anxious: #c090d0;
+$mental-stressed: #d2a35f;
+$mental-distressed: #cf6b7f;
+
 // ── 文字色 ──
 $text-color: #4a3f38;
 $text-light-color: #8c8078;
@@ -133,6 +156,29 @@ $dark-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
   --radius-xl: #{$radius-xl};
   --font-display: #{$font-display};
   --font-body: #{$font-body};
+
+  // 语义状态色
+  --status-info: #{$status-info};
+  --status-success: #{$status-success};
+  --status-warning: #{$status-warning};
+  --status-caution: #{$status-caution};
+  --status-danger: #{$status-danger};
+  --status-emergency: #{$status-emergency};
+
+  // 风险等级色
+  --risk-low: #{$risk-low};
+  --risk-low-soft: #{$risk-low-soft};
+  --risk-medium: #{$risk-medium};
+  --risk-medium-soft: #{$risk-medium-soft};
+  --risk-high: #{$risk-high};
+  --risk-high-soft: #{$risk-high-soft};
+
+  // 心理状态色
+  --mental-calm: #{$mental-calm};
+  --mental-neutral: #{$mental-neutral};
+  --mental-anxious: #{$mental-anxious};
+  --mental-stressed: #{$mental-stressed};
+  --mental-distressed: #{$mental-distressed};
 
   // 情绪色
   --mood-happy: #{$mood-happy};
