@@ -66,13 +66,13 @@
         <i class="fas fa-smile"></i>
         <span>情绪</span>
       </router-link>
+      <router-link v-if="featureFlags.nonCoreModules" to="/relax" class="tab-item" active-class="active">
+        <i class="fas fa-leaf"></i>
+        <span>放松</span>
+      </router-link>
       <router-link to="/improve" class="tab-item" active-class="active">
         <i class="fas fa-chart-line"></i>
         <span>提升</span>
-      </router-link>
-      <router-link to="/counseling" class="tab-item" active-class="active">
-        <i class="fas fa-heart"></i>
-        <span>咨询</span>
       </router-link>
       <div class="mobile-more-wrapper">
         <button
@@ -98,9 +98,13 @@
           @click.stop
           @keydown.esc.prevent.stop="closeMoreMenu(true)"
         >
-          <router-link to="/user/profile" class="mobile-more-menu-item" role="menuitem" @click="closeMoreMenu()">
+          <router-link to="/user" class="mobile-more-menu-item" role="menuitem" @click="closeMoreMenu()">
             <i class="fas fa-user"></i>
             <span>我的</span>
+          </router-link>
+          <router-link to="/counseling" class="mobile-more-menu-item" role="menuitem" @click="closeMoreMenu()">
+            <i class="fas fa-heart"></i>
+            <span>咨询</span>
           </router-link>
           <router-link
             v-if="userStore.isAdmin"

@@ -72,8 +72,8 @@ describe('App mobile navigation', () => {
     expect(primaryEntries.map((entry) => entry.text())).toEqual([
       '首页',
       '情绪',
+      '放松',
       '提升',
-      '咨询',
       '更多',
     ])
     expect(mobileNav.text()).not.toContain('管理后台')
