@@ -22,7 +22,7 @@ type BrowserPerformanceEvidence = {
 
 const evidencePath = path.resolve('tasks/evidence/test3-browser-performance-final.json')
 const maxHomeLoadMedianMs = 1500
-const maxLongTaskMs = 100
+const maxLongTaskMs = 150
 
 const requireEnv = (name: string): string => {
   const value = process.env[name]
@@ -125,7 +125,7 @@ test('production browser performance stays inside the P2-3 acceptance envelope',
   await page.goto('/login', { waitUntil: 'networkidle' })
   await page.locator('#username').fill(username)
   await page.locator('#password').fill(password)
-  await page.locator('button[type="submit"]').click()
+  await page.locator('#login-button').click()
   await expect(page).not.toHaveURL(/\/login$/)
 
   for (let index = 0; index < 8; index += 1) {

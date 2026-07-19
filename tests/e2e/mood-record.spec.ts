@@ -28,7 +28,7 @@ test('mood record persists and survives refresh + re-login', async ({ page, test
   await expect(page.locator('.mood-type-item').first()).toBeVisible({ timeout: 10_000 })
 
   // 选择情绪类型：快乐
-  await page.locator('.mood-type-item', { hasText: '快乐' }).first().click()
+  await page.locator('.mood-type-item', { hasText: '愉悦' }).first().click()
 
   // 选择强度 5
   await page.locator('.scale-dot', { hasText: '5' }).first().click()
@@ -52,10 +52,10 @@ test('mood record persists and survives refresh + re-login', async ({ page, test
   await expect(page.locator('.record-card').first()).toBeVisible({ timeout: 10_000 })
 
   const firstCard = page.locator('.record-card').first()
-  await expect(firstCard.locator('.mood-tag').first()).toContainText('快乐')
+  await expect(firstCard.locator('.mood-tag').first()).toContainText('愉悦')
   await expect(firstCard.locator('.intensity-head strong')).toContainText('5')
   await expect(firstCard.locator('.record-note')).toContainText(noteText)
-  await expect(firstCard.locator('.trigger-tag', { hasText: '考试' })).toBeVisible()
+  await expect(firstCard.locator('.trigger-tag', { hasText: '考试' }).first()).toBeVisible()
 
   // 刷新后仍可见
   await page.reload()

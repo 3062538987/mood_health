@@ -17,6 +17,12 @@ const noProxy = '127.0.0.1,localhost'
 
 // E2E MySQL 固定使用 3316（Docker 容器 mood-health-e2e-fullreview-mysql-1 的主机映射端口）
 process.env.MYSQL_PORT = process.env.E2E_MYSQL_PORT || '3316'
+// globalSetup 需要这些环境变量来运行种子数据（后端 .env 中 ALLOW_DEMO_SEED=false）
+// 强制覆盖：dotenv 已加载后端 .env（DEMO_PASSWORD=123456），E2E 需要统一密码
+process.env.ALLOW_DEMO_SEED = 'true'
+process.env.DEMO_PASSWORD = 'E2eDemoPass123!'
+process.env.E2E_USERNAME = 'demo_student'
+process.env.E2E_PASSWORD = 'E2eDemoPass123!'
 console.log('[DEBUG] E2E_MYSQL_PORT:', process.env.E2E_MYSQL_PORT, 'MYSQL_PORT:', process.env.MYSQL_PORT)
 
 process.env.NO_PROXY = process.env.NO_PROXY ? `${process.env.NO_PROXY},${noProxy}` : noProxy
@@ -60,7 +66,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
   },
-  // globalSetup: './tests/e2e/global-setup.ts',
+  globalSetup: './tests/e2e/global-setup.ts',
   webServer: [
     {
       command:

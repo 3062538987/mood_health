@@ -106,11 +106,21 @@ const getSafeCurrentFullPath = () => {
   return '/'
 }
 
+// 已知公开路由路径（用于 beforeEach 守卫期间 router.currentRoute 尚未更新时回退判断）
+const PUBLIC_PATH_PREFIXES = ['/guide', '/login', '/register']
+
 const handleUnauthorized = () => {
   const currentRoute = router.currentRoute.value
 
   // 公开页面或仅游客页面不需要重定向登录
   if (currentRoute.meta.public || currentRoute.meta.guestOnly) {
+    unauthorizedRedirectPending = false
+    return false
+  }
+
+  // beforeEach 守卫期间 router.currentRoute 还是旧路由，回退到浏览器 URL 判断
+  const pathname = window.location.pathname
+  if (PUBLIC_PATH_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + '/'))) {
     unauthorizedRedirectPending = false
     return false
   }

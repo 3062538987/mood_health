@@ -1,6 +1,6 @@
 CREATE TABLE mood_analysis_versions (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
   period VARCHAR(5) NOT NULL DEFAULT '7d',
   data_version VARCHAR(32) NOT NULL DEFAULT '',
   input_hash VARCHAR(32) NOT NULL DEFAULT '',

@@ -27,8 +27,9 @@ test('assessment flow lists questionnaires and submits with validation', async (
   // 页面应显示量表列表或空状态
   const listVisible = await page.locator('.survey-page li').first().isVisible().catch(() => false)
   const emptyVisible = await page.locator('.survey-page:has-text("暂无")').first().isVisible().catch(() => false)
+  const selectVisible = await page.locator('.survey-page h2:has-text("请选择")').first().isVisible().catch(() => false)
   await expect(page.locator('.survey-page')).toBeVisible()
-  expect(listVisible || emptyVisible).toBe(true)
+  expect(listVisible || emptyVisible || selectVisible).toBe(true)
 
   if (listVisible) {
     // 选择第一个量表
