@@ -9,6 +9,7 @@ import { AuditRepository, createAuditRepository } from '../repositories/auditRep
 dotenv.config()
 
 export type PermissionCode =
+  | 'user.delete'
   | 'user.manage'
   | 'role.manage'
   | 'system.config'
@@ -31,6 +32,7 @@ export type PermissionCode =
   | 'post.create'
   | 'post.comment.create'
   | 'post.like'
+  | 'prompt.manage'
   | 'activity.join'
   | 'relax.record.manage'
   | 'achievement.read'
@@ -144,6 +146,8 @@ export const rolePermissions: Record<UserRole, RolePermissionConfig> = {
   super_admin: {
     granted: [
       'user.manage',
+      'user.delete',
+      'prompt.manage',
       'role.manage',
       'system.config',
       'incident.fix',
@@ -173,6 +177,7 @@ export const rolePermissions: Record<UserRole, RolePermissionConfig> = {
       'feedback.handle',
       'mood.record.read',
       'questionnaire.submit',
+      'user.manage',
       'auth.profile.read',
     ],
     forbidden: ['role.manage', 'system.config', 'incident.fix', 'auth.register.role_assign'],

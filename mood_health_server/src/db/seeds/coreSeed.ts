@@ -3,7 +3,7 @@ export interface SeedDatabase {
 }
 
 export interface ReferenceRole {
-  code: 'student' | 'counselor' | 'super_admin'
+  code: 'student' | 'counselor' | 'super_admin' | 'admin'
   name: string
   description: string
 }
@@ -37,6 +37,11 @@ export const REFERENCE_ROLES: ReferenceRole[] = [
     code: 'super_admin',
     name: '超级管理员',
     description: '管理用户、角色分配和系统审计；默认不读取心理正文',
+  },
+  {
+    code: 'admin',
+    name: '管理员',
+    description: '管理内容审核、活动、课程、音乐等运营功能',
   },
 ]
 
@@ -78,6 +83,20 @@ export const ROLE_PERMISSION_CODES: Record<ReferenceRole['code'], string[]> = {
   ],
   counselor: ['auth.profile.read', 'report.aggregate.read', 'case.read_assigned', 'case.read_own', 'case.create', 'case.intervene', 'case.refer', 'case.close'],
   super_admin: ['auth.profile.read', 'report.aggregate.read', 'user.manage', 'user.role.assign', 'audit.log.read', 'case.read_assigned', 'case.read_own', 'case.create', 'case.assign', 'case.refer', 'case.close', 'user.delete', 'prompt.manage'],
+  admin: [
+    'auth.profile.read',
+    'post.audit.pending.read',
+    'post.audit',
+    'audit.log.read',
+    'activity.manage',
+    'course.manage',
+    'music.manage',
+    'report.aggregate.read',
+    'feedback.handle',
+    'mood.record.read_own',
+    'questionnaire.submit',
+    'user.manage',
+  ],
 }
 
 const REFERENCE_EMOTION_TYPES = [
