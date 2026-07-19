@@ -44,15 +44,16 @@ async function fetchMoodMetrics(userId: number, period: string): Promise<MetricP
   const days = periodToDays(period);
   const [rows] = await pool.query<any[]>(
     `SELECT
-       DATE_FORMAT(mr.recorded_at, '%Y-%m-%d') AS date,
+       DATE_FORMAT(m.recorded_at, '%Y-%m-%d') AS date,
        et.name AS emotionName,
        et.category AS emotionCategory,
-       ROUND(AVG(mr.intensity), 1) AS intensity,
+       ROUND(AVG(me.intensity), 1) AS intensity,
        COUNT(*) AS count
-     FROM mood_records mr
-     JOIN emotion_types et ON mr.emotion_type_id = et.id
-     WHERE mr.user_id = ? AND mr.recorded_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-     GROUP BY DATE_FORMAT(mr.recorded_at, '%Y-%m-%d'), et.name, et.category
+     FROM mood_emotions me
+     JOIN moods m ON me.mood_id = m.id
+     JOIN emotion_types et ON me.emotion_type_id = et.id
+     WHERE m.user_id = ? AND m.recorded_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+     GROUP BY DATE_FORMAT(m.recorded_at, '%Y-%m-%d'), et.name, et.category
      ORDER BY date`,
     [userId, days]
   );
@@ -73,16 +74,18 @@ async function fetchMoodTrend(userId: number, period: string): Promise<TrendPoin
   const days = periodToDays(period);
   const [rows] = await pool.query<any[]>(
     `SELECT
-       DATE_FORMAT(mr.recorded_at, '%Y-%m-%d') AS date,
-       ROUND(AVG(mr.intensity), 1) AS avgIntensity,
-       COUNT(*) AS recordCount,
+       DATE_FORMAT(m.recorded_at, '%Y-%m-%d') AS date,
+       ROUND(AVG(me.intensity), 1) AS avgIntensity,
+       COUNT(DISTINCT m.id) AS recordCount,
        (SELECT et.name FROM emotion_types et
-        JOIN mood_records mr2 ON mr2.emotion_type_id = et.id
-        WHERE mr2.user_id = ? AND DATE(mr2.recorded_at) = DATE(mr.recorded_at)
+        JOIN mood_emotions me2 ON me2.emotion_type_id = et.id
+        JOIN moods m2 ON me2.mood_id = m2.id
+        WHERE m2.user_id = ? AND DATE(m2.recorded_at) = DATE(m.recorded_at)
         GROUP BY et.name ORDER BY COUNT(*) DESC LIMIT 1) AS dominantEmotion
-     FROM mood_records mr
-     WHERE mr.user_id = ? AND mr.recorded_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-     GROUP BY DATE_FORMAT(mr.recorded_at, '%Y-%m-%d')
+     FROM moods m
+     JOIN mood_emotions me ON me.mood_id = m.id
+     WHERE m.user_id = ? AND m.recorded_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+     GROUP BY DATE_FORMAT(m.recorded_at, '%Y-%m-%d')
      ORDER BY date`,
     [userId, userId, days]
   );
@@ -102,10 +105,10 @@ async function fetchTriggers(userId: number, period: string): Promise<string[]> 
   const days = periodToDays(period);
   const [rows] = await pool.query<any[]>(
     `SELECT DISTINCT t.name
-     FROM mood_record_tags mrt
-     JOIN tags t ON mrt.tag_id = t.id
-     JOIN mood_records mr ON mrt.mood_record_id = mr.id
-     WHERE mr.user_id = ? AND mr.recorded_at >= DATE_SUB(NOW(), INTERVAL ? DAY)`,
+     FROM mood_tags mt
+     JOIN tags t ON mt.tag_id = t.id
+     JOIN moods m ON mt.mood_id = m.id
+     WHERE m.user_id = ? AND m.recorded_at >= DATE_SUB(NOW(), INTERVAL ? DAY)`,
     [userId, days]
   );
   return rows.map((r: any) => r.name);
