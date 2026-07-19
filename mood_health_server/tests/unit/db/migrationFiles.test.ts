@@ -69,6 +69,8 @@ const expectedMigrationFiles = [
   '0310_create_activity_feedback.up.sql',
   '0320_add_moods_include_note.down.sql',
   '0320_add_moods_include_note.up.sql',
+  '0330_create_mood_analysis_versions.down.sql',
+  '0330_create_mood_analysis_versions.up.sql',
 ]
 
 describe('migration SQL files', () => {
