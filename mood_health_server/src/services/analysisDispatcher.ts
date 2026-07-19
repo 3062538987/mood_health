@@ -20,7 +20,8 @@ import type {
 import { validateRequestExtraFields, validateForbiddenFields } from '../contracts/moodAnalysis';
 import { generateAuthHeaders } from './fastApiClient';
 import axios from 'axios';
-import logger from '../utils/logger';
+import logger from '../utils/logger'
+import { createMoodAnalysisDataService } from './moodAnalysisDataService';
 
 const FASTAPI_BASE_URL = process.env.FASTAPI_BASE_URL || 'http://127.0.0.1:8001';
 const FASTAPI_TIMEOUT = 30000;
@@ -163,7 +164,8 @@ export async function buildAnalysisRequest(options: AnalysisOptions): Promise<Mo
  * 调用 FastAPI 执行情绪分析
  */
 export async function dispatchAnalysis(
-  request: MoodAnalysisRequest
+  request: MoodAnalysisRequest,
+  versionId?: number
 ): Promise<MoodAnalysisResponse> {
   const token = process.env.AI_SERVICE_INTERNAL_TOKEN || '';
   const body = JSON.stringify(request);
@@ -200,6 +202,17 @@ export async function dispatchAnalysis(
     result.provider,
     result.model
   );
+
+  // 将分析结果落库到 mood_analysis_versions
+  if (versionId) {
+    try {
+      const dataService = createMoodAnalysisDataService()
+      await dataService.updateStatus(versionId, 'completed', result as unknown as Record<string, unknown>)
+      logger.info('分析结果已落库: versionId=%d', versionId)
+    } catch (saveError) {
+      logger.error('分析结果落库失败: versionId=%d, error=%s', versionId, saveError)
+    }
+  }
 
   return result;
 }

@@ -23,7 +23,7 @@ const createRepository = (): jest.Mocked<MoodRepository> => ({
 describe('moodService', () => {
   it('encrypts note and trigger before creating a mood with one primary emotion', async () => {
     const repository = createRepository()
-    repository.createMood.mockResolvedValue({ moodId: 21, jobId: null })
+    repository.createMood.mockResolvedValue({ moodId: 21 })
     const encryptField = jest.fn((value: string | null | undefined) => (value ? 'encrypted-value' : null))
     const service = createMoodService({ repository, encryptField })
 

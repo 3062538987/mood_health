@@ -180,7 +180,7 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
 
     return {
       recordId: result.moodId,
-      analysisJob: result.jobId ? { id: result.jobId, status: 'pending' } : null,
+      analysisJob: null,
     }
   }
 
