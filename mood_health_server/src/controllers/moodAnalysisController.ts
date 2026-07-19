@@ -77,7 +77,7 @@ export const getLatestAnalysis = async (req: AuthRequest, res: Response) => {
     const version = await moodAnalysisDataService.getLatestAnalysis(userId, parsedPeriod)
 
     if (!version) {
-      return res.status(404).json(apiFailure(404, '暂无分析记录'))
+      return res.json(apiSuccess(null, '暂无分析记录'))
     }
 
     res.json(apiSuccess(version, '获取成功'))

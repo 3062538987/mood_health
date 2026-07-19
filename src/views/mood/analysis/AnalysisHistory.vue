@@ -68,11 +68,15 @@
 <script setup lang="ts">
 import type { AnalysisHistoryItem, AnalysisPeriod, AnalysisStatus } from '@/types/moodAnalysis'
 
-defineProps<{
-  history: AnalysisHistoryItem[]
+const props = withDefaults(defineProps<{
+  history?: AnalysisHistoryItem[]
   loading?: boolean
   hasMore?: boolean
-}>()
+}>(), {
+  history: () => [],
+  loading: false,
+  hasMore: false,
+})
 
 defineEmits<{
   select: [item: AnalysisHistoryItem]
