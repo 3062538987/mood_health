@@ -1,13 +1,13 @@
 /**
- * FastAPI 客户端 — HMAC 签名认证 + HTTP 重试 + 错误处理。
- * Node 端通过此客户端调用 FastAPI 情绪分析微服务。
+ * AI 服务客户端 — HMAC 签名认证 + HTTP 重试 + 错误处理。
+ * Node 端通过此客户端调用 AI 情绪分析微服务。
  */
 
 import { randomBytes, createHmac } from 'crypto';
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import logger from '../utils/logger';
 
-const FASTAPI_URL = process.env.FASTAPI_BASE_URL || 'http://127.0.0.1:8001';
+const AI_SERVICE_URL = process.env.AI_SERVICE_BASE_URL || 'http://127.0.0.1:8001';
 const DEFAULT_TIMEOUT = 30000;
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 500;
@@ -37,7 +37,7 @@ let _client: AxiosInstance | null = null;
 function getClient(): AxiosInstance {
   if (!_client) {
     _client = axios.create({
-      baseURL: FASTAPI_URL,
+      baseURL: AI_SERVICE_URL,
       timeout: DEFAULT_TIMEOUT,
       headers: { 'Content-Type': 'application/json' },
     });

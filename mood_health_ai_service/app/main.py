@@ -13,6 +13,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.config import get_settings
+from app.routers.analyze import router as analyze_router
 
 logger = logging.getLogger("mood_ai_service")
 
@@ -105,6 +106,9 @@ async def log_requests(request: Request, call_next):
         elapsed_ms,
     )
     return response
+
+
+app.include_router(analyze_router)
 
 
 @app.get("/api/health")

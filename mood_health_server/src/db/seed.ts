@@ -6,6 +6,7 @@ import { SeedDatabase, seedReferenceData } from './seeds/coreSeed'
 import { seedDemoData, seedTestData } from './seeds/profileSeed'
 import { seedPromptTemplates } from './seeds/promptSeed'
 import { seedCourses } from './seeds/courseSeed'
+import { seedAiAnalysisData } from './seeds/seedAiAnalysisData'
 
 dotenv.config()
 
@@ -83,6 +84,14 @@ export const runSeedCommand = async (profile = process.argv[2] ?? 'reference'): 
       await seedReferenceData(db)
       const result = await seedCourses(db)
       console.log(`Course seed applied: ${result.count} courses.`)
+      return
+    }
+
+    if (profile === 'ai-analysis') {
+      await seedReferenceData(db)
+      await seedDemoData(db)
+      const result = await seedAiAnalysisData(db)
+      console.log(`AI analysis seed applied: moods=${result.moods}.`)
       return
     }
 

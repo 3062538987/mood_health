@@ -23,8 +23,8 @@ import axios from 'axios';
 import logger from '../utils/logger'
 import { createMoodAnalysisDataService } from './moodAnalysisDataService';
 
-const FASTAPI_BASE_URL = process.env.FASTAPI_BASE_URL || 'http://127.0.0.1:8001';
-const FASTAPI_TIMEOUT = 30000;
+const AI_SERVICE_BASE_URL = process.env.AI_SERVICE_BASE_URL || 'http://127.0.0.1:8001';
+const AI_SERVICE_TIMEOUT = 30000;
 
 /**
  * 分析请求选项
@@ -176,14 +176,14 @@ export async function dispatchAnalysis(
   logger.info('发送分析请求: requestId=%s, period=%s', request.requestId, request.period);
 
   const response = await axios.post<MoodAnalysisResponse>(
-    `${FASTAPI_BASE_URL}/api/analyze/mood`,
+    `${AI_SERVICE_BASE_URL}/api/analyze/mood`,
     request,
     {
       headers: {
         'Content-Type': 'application/json',
         ...authHeaders,
       },
-      timeout: FASTAPI_TIMEOUT,
+      timeout: AI_SERVICE_TIMEOUT,
     }
   );
 

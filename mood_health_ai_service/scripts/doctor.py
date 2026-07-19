@@ -106,7 +106,7 @@ def main():
         "AI_BASE_URL",
         "AI_MODEL",
         "MOOD_AI_SERVICE_PORT",
-        "FASTAPI_BASE_URL",
+        "AI_SERVICE_BASE_URL",
     ]
     for key in required_env:
         val = os.environ.get(key, "")
