@@ -22,6 +22,14 @@
           <router-link to="/counseling" active-class="active">
             <i class="fas fa-heart"></i> 咨询
           </router-link>
+          <a
+            v-if="userStore.isLoggedIn"
+            href="#"
+            class="nav-agent-link"
+            @click.prevent="openAgentAssistant"
+          >
+            <i class="fas fa-robot"></i> AI 知识助手
+          </a>
           <router-link to="/user" active-class="active">
             <i class="fas fa-user"></i> 我的
           </router-link>
@@ -106,6 +114,15 @@
             <i class="fas fa-heart"></i>
             <span>咨询</span>
           </router-link>
+          <a
+            v-if="userStore.isLoggedIn"
+            class="mobile-more-menu-item"
+            role="menuitem"
+            @click.prevent="closeMoreMenu(); openAgentAssistant()"
+          >
+            <i class="fas fa-robot"></i>
+            <span>AI 知识助手</span>
+          </a>
           <router-link
             v-if="userStore.isAdmin"
             to="/admin"
@@ -196,6 +213,12 @@ const handleLogout = async () => {
   router.push('/login')
 }
 
+// 打开 AI 知识助手（Streamlit）
+const openAgentAssistant = () => {
+  const userId = userStore.user?.id || 1
+  window.open(`http://localhost:8501/?user_id=${userId}`, '_blank')
+}
+
 // 组件挂载时获取情绪数据
 onMounted(() => {
   document.addEventListener('click', handleDocumentClick)
@@ -284,6 +307,32 @@ watch(
       background: var(--primary-soft);
       i { opacity: 1; }
     }
+  }
+}
+
+.nav-agent-link {
+  color: var(--text-light-color);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-md);
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+
+  i {
+    font-size: 1rem;
+    opacity: 0.7;
+    transition: opacity 0.25s ease;
+  }
+
+  &:hover {
+    color: var(--primary-color);
+    background: var(--primary-soft);
+    i { opacity: 1; }
   }
 }
 
