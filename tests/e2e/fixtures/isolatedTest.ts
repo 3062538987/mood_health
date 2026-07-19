@@ -27,18 +27,18 @@ export type IsolatedFixtures = {
 }
 
 export const test = base.extend<IsolatedFixtures>({
-  testAccount: async ({ request, baseURL }, use, testInfo) => {
+  testAccount: async ({ page, baseURL }, use, testInfo) => {
     const backendUrl = process.env.VITE_API_BASE_URL || baseURL || ''
     if (!backendUrl) {
       throw new Error('VITE_API_BASE_URL or baseURL must be set to create isolated test account')
     }
 
-    const account = await registerUniqueAccount(request, backendUrl)
+    const account = await registerUniqueAccount(page.request, backendUrl)
     await use(account)
 
     // 测试结束后清理账号；失败时仍尝试清理，但不抛出以避免覆盖原始失败
     try {
-      await deleteAccount(request, backendUrl, account)
+      await deleteAccount(page.request, backendUrl, account)
     } catch (error) {
       testInfo.attach('account-cleanup-error', {
         body: error instanceof Error ? error.message : String(error),
