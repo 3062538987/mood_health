@@ -67,6 +67,30 @@ export const REFERENCE_PERMISSIONS: ReferencePermission[] = [
   { code: 'case.close', name: '结案', description: '结案并记录结案摘要' },
   { code: 'user.delete', name: '物理删除用户', description: '物理删除用户及其关联数据' },
   { code: 'prompt.manage', name: '管理 Prompt 模板', description: '创建、编辑、删除 AI Prompt 模板' },
+  { code: 'role.manage', name: '管理角色', description: '管理角色定义和权限分配' },
+  { code: 'system.config', name: '系统配置', description: '修改系统级配置参数' },
+  { code: 'incident.fix', name: '修复事件', description: '处理系统异常事件' },
+  { code: 'audit.record.view_all', name: '查看所有审计记录', description: '查看全部审计日志' },
+  { code: 'post.audit', name: '审核帖子', description: '审核用户发布的帖子内容' },
+  { code: 'post.audit.pending.read', name: '读取待审核帖子', description: '读取待审核的帖子列表' },
+  { code: 'activity.manage', name: '管理活动', description: '创建、编辑、删除活动' },
+  { code: 'course.manage', name: '管理课程', description: '创建、编辑、删除课程' },
+  { code: 'music.manage', name: '管理音乐', description: '管理音乐资源' },
+  { code: 'report.view', name: '查看报告', description: '查看统计报告' },
+  { code: 'feedback.handle', name: '处理反馈', description: '处理用户反馈' },
+  { code: 'mood.record.read', name: '读取情绪记录', description: '读取用户情绪记录' },
+  { code: 'mood.record.update', name: '更新情绪记录', description: '更新用户情绪记录' },
+  { code: 'mood.record.delete', name: '删除情绪记录', description: '删除用户情绪记录' },
+  { code: 'mood.advice.history.read', name: '读取情绪建议历史', description: '读取AI情绪建议历史' },
+  { code: 'questionnaire.read', name: '读取问卷', description: '读取可用的问卷' },
+  { code: 'questionnaire.submit', name: '提交问卷', description: '提交问卷作答' },
+  { code: 'post.create', name: '创建帖子', description: '创建讨论帖子' },
+  { code: 'post.comment.create', name: '创建评论', description: '对帖子发表评论' },
+  { code: 'post.like', name: '点赞帖子', description: '对帖子进行点赞' },
+  { code: 'activity.join', name: '参加活动', description: '报名参加活动' },
+  { code: 'relax.record.manage', name: '管理放松记录', description: '管理放松训练记录' },
+  { code: 'achievement.read', name: '读取成就', description: '读取用户成就' },
+  { code: 'auth.register.role_assign', name: '注册时分配角色', description: '在用户注册时自动分配角色' },
 ]
 
 export const ROLE_PERMISSION_CODES: Record<ReferenceRole['code'], string[]> = {
@@ -87,13 +111,13 @@ export const ROLE_PERMISSION_CODES: Record<ReferenceRole['code'], string[]> = {
     'auth.profile.read',
     'post.audit.pending.read',
     'post.audit',
-    'audit.log.read',
+    'audit.record.view_all',
     'activity.manage',
     'course.manage',
     'music.manage',
-    'report.aggregate.read',
+    'report.view',
     'feedback.handle',
-    'mood.record.read_own',
+    'mood.record.read',
     'questionnaire.submit',
     'user.manage',
   ],
@@ -145,6 +169,8 @@ export const seedReferenceData = async (db: SeedDatabase): Promise<ReferenceSeed
   }
 
   let rolePermissionCount = 0
+  // 先清除旧的角色权限映射，确保与当前配置一致
+  await db.query('DELETE FROM role_permissions')
   for (const [roleCode, permissionCodes] of Object.entries(ROLE_PERMISSION_CODES)) {
     for (const permissionCode of permissionCodes) {
       await db.query(
