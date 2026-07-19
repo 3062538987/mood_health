@@ -19,7 +19,7 @@
     "test": "npm run test:stable",
     "test:stable": "jest tests/unit --runInBand",
     "typecheck": "tsc --noEmit",
-    "test:integration": "jest tests/unit --runInBand",
+    "test:integration": "jest --config jest.integration.config.js --runInBand",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch"
   },
