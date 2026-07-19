@@ -187,13 +187,13 @@ export const getSessionsHandler = async (req: AuthRequest, res: Response) => {
 export const getSessionMessagesHandler = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.userId
-    const { id: sessionId } = req.params
+    const sessionId = req.params.id as string
 
     if (!sessionId) {
       return res.status(400).json(apiFailure(400, '会话ID不能为空'))
     }
 
-    const messages = await loadSession(userId, sessionId)
+    const messages = await loadSession(userId, sessionId as string)
     res.json(apiSuccess(messages, '获取成功'))
   } catch (error: any) {
     logger.error('加载会话消息失败', { error: error?.message })

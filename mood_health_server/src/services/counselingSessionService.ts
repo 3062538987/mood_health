@@ -123,9 +123,9 @@ export async function buildContextMessages(
   userId: number,
   sessionId: string,
   currentMessage: string
-): Promise<Array<{ role: string; content: string }>> {
+): Promise<Array<{ role: 'system' | 'user' | 'assistant'; content: string }>> {
   const history = await loadSession(userId, sessionId)
-  const messages: Array<{ role: string; content: string }> = []
+  const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = []
 
   messages.push({
     role: 'system',
@@ -169,12 +169,12 @@ export async function buildContextMessages(
     }
     const recentMessages = history.slice(-10)
     messages.push(...recentMessages.map(m => ({
-      role: m.role === 'assistant' ? 'assistant' : 'user',
+      role: (m.role === 'assistant' ? 'assistant' : 'user') as 'assistant' | 'user',
       content: m.content
     })))
   } else {
     messages.push(...history.map(m => ({
-      role: m.role === 'assistant' ? 'assistant' : 'user',
+      role: (m.role === 'assistant' ? 'assistant' : 'user') as 'assistant' | 'user',
       content: m.content
     })))
   }
