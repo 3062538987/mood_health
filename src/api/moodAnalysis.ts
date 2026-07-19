@@ -110,7 +110,7 @@ const shouldRetry = (error: any): boolean => {
 
 export const createAnalysis = (params: CreateAnalysisParams) => {
   return request<AnalysisResponse>({
-    url: '/mood-analysis',
+    url: '/api/mood-analyses',
     method: 'post',
     data: params,
   })
@@ -118,19 +118,20 @@ export const createAnalysis = (params: CreateAnalysisParams) => {
 
 export const getAnalysis = (id: string) => {
   return request<AnalysisResponse>({
-    url: `/mood-analysis/${id}`,
+    url: `/api/mood-analyses/${id}`,
     method: 'get',
   })
 }
 
 export const getAnalysisStatus = (id: string) => {
   return request<{ status: AnalysisStatus; job?: AnalysisJob }>({
-    url: `/mood-analysis/${id}/status`,
+    url: `/api/mood-analyses/${id}`,
     method: 'get',
   })
 }
 
 export const getAnalysisHistory = (params?: {
+  period?: string
   page?: number
   pageSize?: number
 }) => {
@@ -140,7 +141,7 @@ export const getAnalysisHistory = (params?: {
     page: number
     pageSize: number
   }>({
-    url: '/mood-analysis/history',
+    url: '/api/mood-analyses',
     method: 'get',
     params,
   })
@@ -148,21 +149,22 @@ export const getAnalysisHistory = (params?: {
 
 export const deleteAnalysis = (id: string) => {
   return request<void>({
-    url: `/mood-analysis/${id}`,
+    url: `/api/mood-analyses/${id}`,
     method: 'delete',
   })
 }
 
 export const retryAnalysis = (id: string) => {
   return request<AnalysisResponse>({
-    url: `/mood-analysis/${id}/retry`,
+    url: `/api/mood-analyses/${id}`,
     method: 'post',
   })
 }
 
 export const getLatestAnalysis = (period: AnalysisPeriod) => {
   return request<AnalysisResponse | null>({
-    url: `/mood-analysis/latest/${period}`,
+    url: '/api/mood-analyses/latest',
     method: 'get',
+    params: { period },
   })
 }

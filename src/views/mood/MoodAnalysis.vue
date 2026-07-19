@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="mood-analysis">
     <div class="container">
       <header class="analysis-header">
@@ -307,7 +307,7 @@ const loadAnalysis = async () => {
 const loadHistory = async () => {
   historyLoading.value = true
   try {
-    const result = await getAnalysisHistory({ page: 1, pageSize: 10 })
+    const result = await getAnalysisHistory({ period: currentPeriod.value, page: 1, pageSize: 10 })
     historyData.value = result.data
   } catch {
     historyData.value = []
