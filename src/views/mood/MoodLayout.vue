@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="module-layout">
     <!-- 二级导航 -->
     <SubNav :items="subNavItems" />
@@ -16,6 +16,6 @@ type SubNavItem = NonNullable<RouteMeta['subNav']>[number]
 
 const route = useRoute()
 const subNavItems = computed<SubNavItem[]>(() =>
-  (route.meta.subNav ?? []).filter((item) => item.path !== '/mood/analysis')
+  (route.meta.subNav ?? [])
 )
 </script>
