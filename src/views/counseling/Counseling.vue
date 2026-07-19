@@ -1,11 +1,46 @@
 <template>
   <div class="counseling-page">
     <div class="page-header">
-      <h1>心理咨询陪伴</h1>
+      <div class="header-left">
+        <button class="sidebar-toggle" type="button" @click="sidebarOpen = !sidebarOpen" aria-label="切换会话列表">
+          <span class="toggle-icon">☰</span>
+        </button>
+        <h1>心理咨询陪伴</h1>
+      </div>
       <p class="description">专业支持，温柔陪伴，和你一起慢慢变好</p>
     </div>
 
-    <div class="counseling-container">
+    <div class="counseling-layout">
+      <!-- 会话列表侧边栏 -->
+      <transition name="sidebar-slide">
+        <div v-if="sidebarOpen" class="session-sidebar-overlay" @click.self="sidebarOpen = false">
+          <div class="session-sidebar">
+            <div class="sidebar-header">
+              <h3>历史会话</h3>
+              <button class="close-sidebar" type="button" @click="sidebarOpen = false">✕</button>
+            </div>
+            <button class="new-session-btn" type="button" @click="createNewSession">
+              + 新建对话
+            </button>
+            <div class="session-list">
+              <div
+                v-for="session in sessions"
+                :key="session.sessionId"
+                :class="['session-item', { active: session.sessionId === currentSessionId }]"
+                @click="switchSession(session.sessionId)"
+              >
+                <div class="session-title">对话 {{ formatDate(session.lastMessageAt) }}</div>
+                <div class="session-meta">{{ session.messageCount }} 条消息</div>
+              </div>
+              <div v-if="sessions.length === 0" class="session-empty">
+                暂无历史会话
+              </div>
+            </div>
+          </div>
+        </div>
+      </transition>
+
+      <div class="counseling-container">
       <aside class="info-panel">
         <section class="info-card">
           <h3>服务介绍</h3>
@@ -124,12 +159,14 @@
       </section>
     </div>
   </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { sendCounselingMessage } from '@/api/counseling'
+import { sendCounselingMessage, sendSessionCounselingMessage, getSessions, loadSessionMessages } from '@/api/counseling'
+import type { SessionItem } from '@/api/counseling'
 import { useUserStore } from '@/stores/userStore'
 
 type RiskLevel = 'low' | 'medium' | 'high'
@@ -149,6 +186,9 @@ const inputMessage = ref('')
 const isSending = ref(false)
 const sendError = ref('')
 const messageContainerRef = ref<HTMLElement | null>(null)
+const currentSessionId = ref('')
+const sessions = ref<SessionItem[]>([])
+const sidebarOpen = ref(false)
 const messages = ref<MessageItem[]>([
   {
     id: crypto.randomUUID(),
@@ -185,7 +225,83 @@ watch(
 
 onMounted(() => {
   scrollToBottom()
+  currentSessionId.value = generateSessionId()
+  loadSessions()
 })
+
+const generateSessionId = (): string => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = (Math.random() * 16) | 0
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
+  })
+}
+
+const loadSessions = async () => {
+  try {
+    const res = await getSessions()
+    sessions.value = (res as any).data?.data || []
+  } catch {
+    // 静默处理
+  }
+}
+
+const createNewSession = () => {
+  currentSessionId.value = generateSessionId()
+  messages.value = [
+    {
+      id: crypto.randomUUID(),
+      role: 'assistant',
+      content:
+        '你好，欢迎来到心理咨询陪伴空间。你可以和我聊聊今天让你最在意的一件事，我们一步一步来。',
+      createdAt: new Date().toISOString(),
+    },
+  ]
+  sendError.value = ''
+  sidebarOpen.value = false
+}
+
+const switchSession = async (sessionId: string) => {
+  currentSessionId.value = sessionId
+  try {
+    const res = await loadSessionMessages(sessionId)
+    const msgs = (res as any).data?.data || []
+    messages.value = msgs.map((m: any) => ({
+      id: crypto.randomUUID(),
+      role: m.role as 'user' | 'assistant',
+      content: m.content,
+      createdAt: m.createdAt || new Date().toISOString(),
+    }))
+    if (messages.value.length === 0) {
+      messages.value.push({
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: '你好，欢迎回来。我们继续聊聊吧。',
+        createdAt: new Date().toISOString(),
+      })
+    }
+  } catch {
+    messages.value = [
+      {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: '你好，欢迎回来。我们继续聊聊吧。',
+        createdAt: new Date().toISOString(),
+      },
+    ]
+  }
+  sendError.value = ''
+  sidebarOpen.value = false
+}
+
+const formatDate = (isoTime: string): string => {
+  if (!isoTime) return ''
+  const date = new Date(isoTime)
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
+  const hour = `${date.getHours()}`.padStart(2, '0')
+  const minute = `${date.getMinutes()}`.padStart(2, '0')
+  return `${month}-${day} ${hour}:${minute}`
+}
 
 const formatTime = (isoTime: string): string => {
   const date = new Date(isoTime)
@@ -228,15 +344,17 @@ const updateUserMessageStatus = (messageId: string, status: MessageStatus) => {
 }
 
 const sendToService = async (targetUserMessage: MessageItem, inputSnapshot: string) => {
-  const context = buildContext(targetUserMessage.id)
-
-  const result = await sendCounselingMessage({
+  const result = await sendSessionCounselingMessage({
     message: targetUserMessage.content,
-    context,
-    userId: userStore.user?.id,
-  })
+    sessionId: currentSessionId.value,
+  }) as any
 
   updateUserMessageStatus(targetUserMessage.id, 'sent')
+
+  // 如果服务端返回了 sessionId（首次发送时），更新本地 sessionId
+  if (result.sessionId && result.sessionId !== currentSessionId.value) {
+    currentSessionId.value = result.sessionId
+  }
 
   messages.value.push({
     id: crypto.randomUUID(),
@@ -254,6 +372,9 @@ const sendToService = async (targetUserMessage: MessageItem, inputSnapshot: stri
     inputMessage.value = ''
   }
   sendError.value = ''
+
+  // 刷新会话列表
+  loadSessions()
 }
 
 const sendMessage = async () => {
@@ -358,6 +479,13 @@ const clearConversation = async () => {
   text-align: center;
   margin-bottom: 20px;
 
+  .header-left {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+
   h1 {
     margin: 0;
     font-size: 30px;
@@ -369,6 +497,158 @@ const clearConversation = async () => {
   .description {
     margin-top: 8px;
     color: var(--chat-text-sub);
+  }
+}
+
+.sidebar-toggle {
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--chat-text-sub);
+  line-height: 1;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+}
+
+.counseling-layout {
+  position: relative;
+}
+
+.session-sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.session-sidebar {
+  width: 300px;
+  max-width: 85vw;
+  height: 100%;
+  background: var(--surface);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--chat-text-main);
+  }
+}
+
+.close-sidebar {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--chat-text-sub);
+  padding: 4px 8px;
+  border-radius: 4px;
+
+  &:hover {
+    color: var(--chat-text-main);
+    background: var(--surface-muted);
+  }
+}
+
+.new-session-btn {
+  margin: 12px 16px;
+  padding: 10px 16px;
+  border: 1px dashed var(--primary-color);
+  border-radius: 10px;
+  background: var(--primary-soft-bg);
+  color: var(--primary-color);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+
+  &:hover {
+    background: var(--primary-color);
+    color: #fff;
+    border-style: solid;
+  }
+}
+
+.session-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 8px;
+}
+
+.session-item {
+  padding: 12px 12px;
+  margin: 4px 0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+
+  &:hover {
+    background: var(--surface-muted);
+    border-color: var(--border-color);
+  }
+
+  &.active {
+    background: var(--primary-soft-bg);
+    border-color: var(--primary-color);
+  }
+}
+
+.session-title {
+  font-size: 14px;
+  color: var(--chat-text-main);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.session-meta {
+  font-size: 12px;
+  color: var(--chat-text-sub);
+}
+
+.session-empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--chat-text-sub);
+  font-size: 14px;
+}
+
+.sidebar-slide-enter-active,
+.sidebar-slide-leave-active {
+  transition: opacity 0.25s ease;
+
+  .session-sidebar {
+    transition: transform 0.25s ease;
+  }
+}
+
+.sidebar-slide-enter-from,
+.sidebar-slide-leave-to {
+  opacity: 0;
+
+  .session-sidebar {
+    transform: translateX(-100%);
   }
 }
 

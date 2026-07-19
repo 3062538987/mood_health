@@ -13,6 +13,28 @@
       </button>
     </div>
 
+    <!-- AI 温柔回复 -->
+    <div class="ai-reply" v-if="aiReply">
+      <div class="ai-reply-header">
+        <span class="ai-reply-badge">树洞的回复</span>
+        <span class="ai-reply-icon">💚</span>
+      </div>
+      <div class="ai-reply-content">{{ aiReply.content }}</div>
+    </div>
+
+    <!-- AI 回复加载中 -->
+    <div class="ai-reply loading" v-if="aiReplyLoading">
+      <div class="loading-dots">
+        <span></span><span></span><span></span>
+      </div>
+      <p>树洞正在思考温柔的回复...</p>
+    </div>
+
+    <!-- 生成 AI 回复按钮 -->
+    <button class="generate-ai-btn" v-if="!aiReply && !aiReplyLoading" @click="generateAiReply">
+      ✨ 生成 AI 温柔回复
+    </button>
+
     <!-- 评论列表 -->
     <CommentList
       :comments="comments"
@@ -29,11 +51,14 @@ import { useRoute } from 'vue-router'
 import CommentList from '@/components/treehole/CommentList.vue'
 import { usePosts } from '@/composables/usePosts'
 import { useComments } from '@/composables/useComments'
-import type { Post } from '@/types/post'
+import { getAiReply, generateAiReply as generateAiReplyApi } from '@/api/post'
+import type { Post, AiReply } from '@/types/post'
 
 const route = useRoute()
 const postId = Number(route.params.id)
 const post = ref<Post | null>(null)
+const aiReply = ref<AiReply | null>(null)
+const aiReplyLoading = ref(false)
 
 const { getPost, likePostById } = usePosts()
 const { comments, loadComments, createNewComment } = useComments()
@@ -42,7 +67,35 @@ const loadDetail = async () => {
   const postData = await getPost(postId)
   if (postData) {
     post.value = postData
+    if (postData.aiReply) {
+      aiReply.value = postData.aiReply
+    }
     await loadComments(postId)
+  }
+}
+
+const fetchAiReply = async () => {
+  // 如果帖子详情已包含 AI 回复，无需再请求
+  if (aiReply.value) return
+  try {
+    const res = await getAiReply(postId)
+    if (res) {
+      aiReply.value = res
+    }
+  } catch {
+    // 没有 AI 回复，显示生成按钮
+  }
+}
+
+const generateAiReply = async () => {
+  aiReplyLoading.value = true
+  try {
+    const res = await generateAiReplyApi(postId)
+    aiReply.value = res
+  } catch {
+    // 失败
+  } finally {
+    aiReplyLoading.value = false
   }
 }
 
@@ -75,7 +128,10 @@ const formatDate = (dateStr: string) => {
   return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
 }
 
-onMounted(loadDetail)
+onMounted(async () => {
+  await loadDetail()
+  await fetchAiReply()
+})
 </script>
 
 <style scoped lang="scss">
@@ -140,6 +196,89 @@ h1 {
     background-color: #ffeef0;
     border-color: #e74c3c;
     color: #e74c3c;
+  }
+}
+
+.ai-reply {
+  margin-top: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #fef9f0 0%, #fdf2f8 100%);
+  border-radius: 16px;
+  border: 1px solid #fce4d6;
+  margin-bottom: 20px;
+}
+
+.ai-reply-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.ai-reply-badge {
+  font-size: 13px;
+  color: #e8875b;
+  font-weight: 500;
+}
+
+.ai-reply-icon {
+  font-size: 18px;
+}
+
+.ai-reply-content {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #555;
+  white-space: pre-wrap;
+}
+
+.ai-reply.loading {
+  text-align: center;
+  padding: 30px 20px;
+}
+
+.loading-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.loading-dots span {
+  width: 8px;
+  height: 8px;
+  background: #e8875b;
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+.loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+.loading-dots + p {
+  font-size: 13px;
+  color: #999;
+}
+
+.generate-ai-btn {
+  margin-top: 16px;
+  margin-bottom: 20px;
+  padding: 10px 24px;
+  background: linear-gradient(135deg, #fef9f0 0%, #fdf2f8 100%);
+  border: 1px solid #fce4d6;
+  border-radius: 24px;
+  font-size: 14px;
+  color: #e8875b;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: linear-gradient(135deg, #fce4d6 0%, #fce4d6 100%);
   }
 }
 

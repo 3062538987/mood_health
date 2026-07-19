@@ -2,6 +2,13 @@ import { Response } from 'express'
 import { AuthRequest } from '../middleware/auth'
 import { apiSuccess, apiFailure } from '../utils/apiResponse'
 import { callChatCompletion } from '../utils/ai/aiClient'
+import {
+  saveMessagePair,
+  loadSession,
+  listSessions,
+  buildContextMessages,
+  generateSessionId,
+} from '../services/counselingSessionService'
 import logger from '../utils/logger'
 
 const CRISIS_HELPLINES = [
@@ -106,4 +113,96 @@ export const counselingHandler = async (req: AuthRequest, res: Response) => {
     logger.error('心理咨询调用失败', { error: error?.message })
     res.status(500).json(apiFailure(500, error?.message || 'AI 服务暂时不可用'))
   }
+}
+
+// 基于会话的多轮对话 handler
+export const sessionCounselingHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.userId
+    const { message, sessionId } = req.body
+
+    if (!message || !message.trim()) {
+      return res.status(400).json(apiFailure(400, '消息内容不能为空'))
+    }
+
+    if (message.length > 1000) {
+      return res.status(400).json(apiFailure(400, '消息内容不能超过1000字'))
+    }
+
+    const currentSessionId = sessionId || generateSessionId()
+    const hasRisk = checkRiskContent(message)
+
+    if (hasRisk) {
+      logger.warn('检测到风险内容', {
+        userId,
+        sessionId: currentSessionId,
+        messageLength: message.length,
+        hasRiskContent: true,
+        timestamp: new Date().toISOString(),
+      })
+    }
+
+    const userMessage = hasRisk
+      ? message + '\n\n（注意：用户消息包含风险内容，请表达关心并建议寻求专业帮助，不要深入讨论危险行为细节。）'
+      : message
+
+    // 构建带历史上下文的对话消息
+    const messages = await buildContextMessages(userId, currentSessionId, userMessage)
+
+    const reply = await callChatCompletion(messages, {
+      temperature: 0.8,
+      maxTokens: 600,
+    })
+
+    // 保存消息对
+    await saveMessagePair(userId, currentSessionId, message, reply)
+
+    res.json(apiSuccess({
+      sessionId: currentSessionId,
+      response: reply,
+      riskLevel: hasRisk ? 'medium' : 'low',
+      hasRiskContent: hasRisk,
+      suggestion: hasRisk ? '如果你正在经历困难，建议寻求专业心理咨询师的帮助' : undefined,
+      crisisHelplines: hasRisk ? CRISIS_HELPLINES : undefined,
+    }, '回复成功'))
+  } catch (error: any) {
+    logger.error('会话心理咨询调用失败', { error: error?.message })
+    res.status(500).json(apiFailure(500, error?.message || 'AI 服务暂时不可用'))
+  }
+}
+
+// 获取用户会话列表
+export const getSessionsHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.userId
+    const sessions = await listSessions(userId)
+    res.json(apiSuccess(sessions, '获取成功'))
+  } catch (error: any) {
+    logger.error('获取会话列表失败', { error: error?.message })
+    res.status(500).json(apiFailure(500, error?.message || '获取会话列表失败'))
+  }
+}
+
+// 加载指定会话消息
+export const getSessionMessagesHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.userId
+    const { id: sessionId } = req.params
+
+    if (!sessionId) {
+      return res.status(400).json(apiFailure(400, '会话ID不能为空'))
+    }
+
+    const messages = await loadSession(userId, sessionId)
+    res.json(apiSuccess(messages, '获取成功'))
+  } catch (error: any) {
+    logger.error('加载会话消息失败', { error: error?.message })
+    res.status(500).json(apiFailure(500, error?.message || '加载会话消息失败'))
+  }
+}
+
+// 创建新会话
+export const createSessionHandler = async (_req: AuthRequest, res: Response) => {
+  const newSessionId = generateSessionId()
+  res.json(apiSuccess({ sessionId: newSessionId }, '创建成功'))
 }

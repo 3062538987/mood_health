@@ -169,3 +169,7 @@ export const buildContextPrompt = (context: AggregatedContext): string => {
 
   return parts.join('\n')
 }
+
+// 重新导出用户画像相关函数，方便统一从 aiContextService 获取上下文能力
+export { getUserProfile, profileToPromptText, updateUserProfile } from './userProfileService'
+export type { UserProfile } from './userProfileService'

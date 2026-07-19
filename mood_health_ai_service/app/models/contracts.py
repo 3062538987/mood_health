@@ -87,3 +87,22 @@ class MoodAnalysisResponse(BaseModel):
     provider: str = ""
     model: str = ""
     promptVersion: str = ""
+
+
+# ---- 通用 AI 对话 ----
+
+class ChatMessage(BaseModel):
+    role: Literal["system", "user", "assistant"]
+    content: str = Field(..., min_length=1)
+
+class ChatRequest(BaseModel):
+    model_config = {"extra": "forbid"}
+    messages: List[ChatMessage] = Field(..., min_length=1)
+    model: Optional[str] = None
+    temperature: Optional[float] = Field(default=None, ge=0, le=2)
+    maxTokens: Optional[int] = Field(default=None, ge=1, le=8192)
+
+class ChatResponse(BaseModel):
+    content: str
+    model: str = ""
+    usage: Optional[dict] = None

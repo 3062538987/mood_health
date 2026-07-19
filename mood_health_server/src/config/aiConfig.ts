@@ -16,8 +16,6 @@ export interface AiConfig {
   modelType: AiModelType
   apiBaseUrl: string
   apiKey: string
-  deepseekApiKey: string
-  deepseekBaseUrl: string
   timeout: number
   maxRetries: number
   cacheTTL: number
@@ -55,8 +53,6 @@ const aiConfig: AiConfig = {
   modelType: (getEnv('AI_MODEL_TYPE', 'local') as AiModelType) || AiModelType.LOCAL,
   apiBaseUrl: getEnv('AI_API_BASE_URL', 'http://localhost:8000/api'),
   apiKey: getEnv('AI_API_KEY', ''),
-  deepseekApiKey: getEnv('DEEPSEEK_API_KEY', ''),
-  deepseekBaseUrl: getEnv('DEEPSEEK_BASE_URL', 'https://api.deepseek.com'),
   timeout: getEnvNumber('AI_TIMEOUT', 30000),
   maxRetries: getEnvNumber('AI_MAX_RETRIES', 3),
   cacheTTL: getEnvNumber('AI_CACHE_TTL', 3600), // 1小时

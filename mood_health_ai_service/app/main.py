@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 
 from app.config import get_settings
 from app.routers.analyze import router as analyze_router
+from app.routers.chat import router as chat_router
 
 logger = logging.getLogger("mood_ai_service")
 
@@ -109,6 +110,7 @@ async def log_requests(request: Request, call_next):
 
 
 app.include_router(analyze_router)
+app.include_router(chat_router)
 
 
 @app.get("/api/health")

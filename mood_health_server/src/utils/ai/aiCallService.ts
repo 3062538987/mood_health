@@ -39,7 +39,7 @@ const loadAllTemplates = async (): Promise<PromptTemplate[]> => {
 export const callWithTemplate = async (
   templateName: string,
   variables: Record<string, string> = {},
-  options: { model?: string; temperature?: number; maxTokens?: number } = {}
+  options: { model?: string; temperature?: number; maxTokens?: number; userId?: number; injectProfile?: boolean } = {}
 ): Promise<string> => {
   if (!aiConfig.enabled) {
     throw new Error('AI 服务未启用，请设置 AI_ENABLED=true')
@@ -82,6 +82,8 @@ export const callWithTemplate = async (
     model: options.model || template.model,
     temperature: options.temperature ?? template.temperature,
     maxTokens: options.maxTokens ?? template.maxTokens,
+    userId: options.userId,
+    injectProfile: options.injectProfile,
   })
 }
 
@@ -95,7 +97,7 @@ export const callWithTemplate = async (
 export const callDirect = async (
   systemPrompt: string,
   userPrompt: string,
-  options: { model?: string; temperature?: number; maxTokens?: number } = {}
+  options: { model?: string; temperature?: number; maxTokens?: number; userId?: number; injectProfile?: boolean } = {}
 ): Promise<string> => {
   if (!aiConfig.enabled) {
     throw new Error('AI 服务未启用，请设置 AI_ENABLED=true')
@@ -110,6 +112,8 @@ export const callDirect = async (
     model: options.model || aiConfig.models.moodAnalysis,
     temperature: options.temperature ?? 0.7,
     maxTokens: options.maxTokens ?? 2048,
+    userId: options.userId,
+    injectProfile: options.injectProfile,
   })
 }
 
@@ -117,5 +121,5 @@ export const callDirect = async (
  * 检查 AI 是否可用
  */
 export const isAiAvailable = (): boolean => {
-  return aiConfig.enabled && !!(aiConfig.deepseekApiKey || aiConfig.apiKey)
+  return aiConfig.enabled && !!(process.env.AI_SERVICE_BASE_URL || aiConfig.apiKey)
 }

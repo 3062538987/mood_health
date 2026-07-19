@@ -74,6 +74,8 @@ export class RecommendService {
     const rawResponse = await callChatCompletion(messages, {
       temperature: 0.7,
       maxTokens: 800,
+      userId: request.userId,
+      injectProfile: true,
     });
 
     let parsed: any;

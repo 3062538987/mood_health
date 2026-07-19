@@ -27,6 +27,7 @@ export interface PostDto {
   username?: string | null
   commentCount?: number
   liked?: boolean
+  hasAiReply?: boolean
 }
 
 export interface CommentDto {
@@ -48,6 +49,13 @@ export interface CreatePostInput {
   isAnonymous: boolean
   riskLevel?: 'low' | 'medium' | 'high'
   needsReview?: number
+}
+
+export interface AiReplyDto {
+  id: number
+  postId: number
+  content: string
+  createdAt: string
 }
 
 export interface CreateCommentInput {
@@ -74,6 +82,7 @@ type PostRow = RowDataPacket & {
   created_at: Date | string
   username?: string | null
   comment_count?: number
+  ai_reply_count?: number
 }
 
 type CommentRow = RowDataPacket & {
@@ -102,7 +111,15 @@ const mapPost = (row: PostRow): PostDto => ({
   createdAt: toIsoString(row.created_at),
   username: row.username ?? null,
   commentCount: row.comment_count != null ? Number(row.comment_count) : undefined,
+  hasAiReply: row.ai_reply_count != null ? row.ai_reply_count > 0 : false,
 })
+
+type AiReplyRow = RowDataPacket & {
+  id: number
+  post_id: number
+  content: string
+  created_at: Date | string
+}
 
 const mapComment = (row: CommentRow): CommentDto => ({
   id: row.id,
@@ -113,6 +130,13 @@ const mapComment = (row: CommentRow): CommentDto => ({
   likeCount: row.like_count,
   createdAt: toIsoString(row.created_at),
   username: row.username ?? null,
+})
+
+const mapAiReply = (row: AiReplyRow): AiReplyDto => ({
+  id: row.id,
+  postId: row.post_id,
+  content: row.content,
+  createdAt: toIsoString(row.created_at),
 })
 
 export const createPostRepository = (db: PostDatabase = getMysqlPool()) => {
@@ -143,7 +167,8 @@ export const createPostRepository = (db: PostDatabase = getMysqlPool()) => {
 
     const [rows] = await db.query<PostRow[]>(
       `SELECT p.*, u.username,
-        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count
+        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
+        (SELECT COUNT(*) FROM ai_replies ar WHERE ar.post_id = p.id) AS ai_reply_count
        FROM posts p
        LEFT JOIN users u ON p.user_id = u.id
        WHERE p.status = 1 AND p.deleted_at IS NULL
@@ -329,11 +354,33 @@ export const createPostRepository = (db: PostDatabase = getMysqlPool()) => {
     await db.query('UPDATE posts SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL', [id])
   }
 
+  // --- AI Replies ---
+  const saveAiReply = async (postId: number, content: string): Promise<AiReplyDto> => {
+    const [result] = await db.query<ResultSetHeader>(
+      'INSERT INTO ai_replies (post_id, content) VALUES (?, ?)',
+      [postId, content]
+    )
+    const [rows] = await db.query<AiReplyRow[]>(
+      'SELECT * FROM ai_replies WHERE id = ? LIMIT 1',
+      [result.insertId]
+    )
+    return mapAiReply(rows[0])
+  }
+
+  const getAiReply = async (postId: number): Promise<AiReplyDto | null> => {
+    const [rows] = await db.query<AiReplyRow[]>(
+      'SELECT * FROM ai_replies WHERE post_id = ? ORDER BY created_at DESC LIMIT 1',
+      [postId]
+    )
+    return rows.length > 0 ? mapAiReply(rows[0]) : null
+  }
+
   return {
     createPost, findPosts, findPostById, findPendingPosts, getAuditStats, auditPost,
     likePost, checkUserLikedPost,
     createComment, findCommentsByPostId, likeComment, checkUserLikedComment,
     deleteById,
+    saveAiReply, getAiReply,
   }
 }
 

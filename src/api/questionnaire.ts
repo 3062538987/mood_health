@@ -82,3 +82,15 @@ export const getAssessmentHistory = () => {
     method: 'get',
   })
 }
+
+/**
+ * 获取 AI 量表解读
+ */
+export function getAIInterpretation(data: {
+  scaleType: string
+  totalScore: number
+  itemScores: number[]
+  resultText: string
+}) {
+  return request.post('/api/ai/interpret', data)
+}

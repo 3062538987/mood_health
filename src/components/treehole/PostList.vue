@@ -4,6 +4,9 @@
       <div class="post-content" @click="goToDetail(post.id)">
         <h3>{{ post.title }}</h3>
         <p>{{ post.content.slice(0, 100) }}...</p>
+        <div class="post-ai-preview" v-if="post.hasAiReply">
+          <span class="ai-preview-badge">💚 树洞回复了</span>
+        </div>
         <div class="post-meta">
           <span>发布者：{{ post.isAnonymous ? '匿名' : post.username }}</span>
           <span>{{ formatDate(post.createdAt) }}</span>
@@ -167,6 +170,18 @@ const formatDate = (dateStr: string) => {
       opacity: 0.9;
     }
   }
+}
+
+.post-ai-preview {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: #fef9f0;
+  border-radius: 8px;
+}
+
+.ai-preview-badge {
+  font-size: 12px;
+  color: #e8875b;
 }
 
 @media (max-width: 768px) {

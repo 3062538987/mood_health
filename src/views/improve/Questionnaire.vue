@@ -86,6 +86,7 @@ import {
   getQuestionnaireDetail,
   getQuestionnaireQuestions,
   submitAssessment,
+  getAIInterpretation,
   Questionnaire,
   Question,
 } from '@/api/questionnaire'
@@ -191,14 +192,34 @@ const nextQuestion = async () => {
         questionnaire_id: questionnaireId.value,
         answers: questions.value.map((q, i) => ({ itemId: q.id, score: selectedAnswers.value[i] })),
       })
-      router.push({
-        path: '/improve/questionnaire/result',
-        query: {
-          score: res.score.toString(),
-          result: encodeURIComponent(res.result_text),
-          title: encodeURIComponent(questionnaire.value?.title || ''),
-        },
-      })
+      try {
+        const aiResult = await getAIInterpretation({
+          scaleType: questionnaire.value?.type || '',
+          totalScore: res.score,
+          itemScores: (res as any).item_scores || [],
+          resultText: res.result_text,
+        })
+        router.push({
+          path: '/improve/questionnaire/result',
+          query: {
+            score: res.score.toString(),
+            result: encodeURIComponent(res.result_text),
+            title: encodeURIComponent(questionnaire.value?.title || ''),
+            aiContent: encodeURIComponent(aiResult.content || ''),
+            aiGeneratedAt: encodeURIComponent(aiResult.generatedAt || ''),
+          },
+        })
+      } catch (aiError) {
+        router.push({
+          path: '/improve/questionnaire/result',
+          query: {
+            score: res.score.toString(),
+            result: encodeURIComponent(res.result_text),
+            title: encodeURIComponent(questionnaire.value?.title || ''),
+            aiFailed: 'true',
+          },
+        })
+      }
     } catch (error) {
       submitError.value = '提交失败，答案已保留，请稍后重试。'
       ElMessage.error('提交答案失败，请稍后重试')

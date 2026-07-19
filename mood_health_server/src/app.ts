@@ -24,6 +24,7 @@ import courseRoutes from './routes/courseRoutes'
 import relaxRoutes from './routes/relaxRoutes'
 import achievementRoutes from './routes/achievementRoutes'
 import recommendRoutes from './routes/recommendRoutes'
+import counselingRoutes from './routes/counselingRoutes'
 import feedbackRoutes from './routes/feedbackRoutes'
 import moodAnalysisRoutes from './routes/moodAnalysisRoutes'
 import logger, { summarizeRequestBody } from './utils/logger'
@@ -204,6 +205,7 @@ app.use('/api/recommend', recommendRoutes)
 app.use('/api', feedbackRoutes)
 app.use('/api', managementRoutes)
 app.use('/api', moodAnalysisRoutes)
+app.use('/api/counseling', counselingRoutes)
 
   app.get(
     '/health',

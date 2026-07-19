@@ -45,7 +45,7 @@ export const generateInsight = async (req: AuthRequest, res: Response) => {
     const response = await callChatCompletion([
       { role: 'system', content: '你是一位温暖的心理咨询师，擅长用共情的方式分析情绪数据并给出建议。' },
       { role: 'user', content: prompt },
-    ], { temperature: 0.8, maxTokens: 600 })
+    ], { temperature: 0.8, maxTokens: 600, userId: req.user!.userId, injectProfile: true })
 
     return res.json(apiSuccess({ analysis: response }))
   } catch (error) {

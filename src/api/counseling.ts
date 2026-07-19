@@ -116,3 +116,35 @@ export const formatMessagesToContext = (
     content: msg.content,
   }))
 }
+
+/**
+ * 会话列表项
+ */
+export interface SessionItem {
+  sessionId: string
+  messages: Array<{ role: string; content: string; createdAt?: string }>
+  createdAt: string
+  lastMessageAt: string
+  messageCount: number
+}
+
+/**
+ * 获取会话列表
+ */
+export function getSessions() {
+  return request.get('/api/counseling/sessions')
+}
+
+/**
+ * 加载指定会话的消息
+ */
+export function loadSessionMessages(sessionId: string) {
+  return request.get(`/api/counseling/sessions/${sessionId}`)
+}
+
+/**
+ * 发送基于会话的咨询消息
+ */
+export function sendSessionCounselingMessage(data: { message: string; sessionId: string }) {
+  return request.post('/api/counseling/send', data)
+}

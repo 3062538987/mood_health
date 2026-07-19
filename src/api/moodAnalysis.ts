@@ -168,3 +168,10 @@ export const getLatestAnalysis = (period: AnalysisPeriod) => {
     params: { period },
   })
 }
+
+/**
+ * 获取 AI 情绪洞察
+ */
+export function getMoodInsight(data: { period: string }) {
+  return request.post('/api/ai/insight', data)
+}

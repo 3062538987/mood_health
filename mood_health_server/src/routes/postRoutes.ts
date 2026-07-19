@@ -14,6 +14,10 @@ import {
   getPostAuditLogsHandler,
   deletePostHandler,
 } from '../controllers/postController'
+import {
+  getAiReplyHandler,
+  generateAiReplyHandler,
+} from '../controllers/treeholeController'
 import { authenticate, requirePermission } from '../middleware/auth'
 import { validateRequest } from '../middleware/validateRequest'
 import { auditOperation } from '../utils/operationLogger'
@@ -112,5 +116,11 @@ router.post('/comments/:commentId/like', authenticate, likeCommentHandler)
 
 // 删除帖子（仅作者可删除）
 router.delete('/:postId', authenticate, deletePostHandler)
+
+// 获取帖子的 AI 回复（公开）
+router.get('/:id/ai-reply', getAiReplyHandler)
+
+// 生成帖子的 AI 回复（需要认证）
+router.post('/:id/generate-ai-reply', authenticate, generateAiReplyHandler)
 
 export default router

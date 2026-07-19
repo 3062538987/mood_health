@@ -136,3 +136,28 @@ class OpenAICompatibleProvider:
         except Exception as e:
             logger.error("AI 调用失败: requestId=%s, error=%s", request.requestId, e)
             raise
+
+    async def chat(self, messages: list, model: str = None, temperature: float = 0.7, max_tokens: int = 2048) -> tuple:
+        """
+        通用 AI 对话 — 接收 messages 列表，转发到 DeepSeek，返回 (content, model, usage_dict)。
+        不验证响应格式，原样返回文本。
+        """
+        try:
+            response = await self.client.chat.completions.create(
+                model=model or self._settings.AI_MODEL,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            content = response.choices[0].message.content or ""
+            usage = None
+            if response.usage:
+                usage = {
+                    "promptTokens": response.usage.prompt_tokens,
+                    "completionTokens": response.usage.completion_tokens,
+                    "totalTokens": response.usage.total_tokens,
+                }
+            return content, response.model, usage
+        except Exception as e:
+            logger.error("AI 对话调用失败: %s", e)
+            raise

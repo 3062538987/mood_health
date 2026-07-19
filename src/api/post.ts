@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 import axios from 'axios'
-import type { Post, Comment, CreatePostData, CreateCommentData } from '@/types/post'
+import type { Post, Comment, AiReply, CreatePostData, CreateCommentData } from '@/types/post'
 
 type SafeResult<T> = { ok: true; data: T } | { ok: false; message: string; status?: number }
 
@@ -20,6 +20,13 @@ const normalizePost = (post: Record<string, any>): Post => ({
   commentCount: Number(post.commentCount ?? post.comment_count ?? 0),
   createdAt: post.createdAt || post.created_at || new Date().toISOString(),
   created_at: post.created_at || post.createdAt || new Date().toISOString(),
+  hasAiReply: Boolean(post.hasAiReply ?? post.has_ai_reply),
+  aiReply: post.aiReply ? {
+    id: post.aiReply.id,
+    postId: post.aiReply.postId ?? post.aiReply.post_id,
+    content: post.aiReply.content,
+    createdAt: post.aiReply.createdAt || post.aiReply.created_at,
+  } : undefined,
   comments: Array.isArray(post.comments)
     ? post.comments.map((item) => normalizeComment(item))
     : undefined,
@@ -144,4 +151,18 @@ export const getPostListSafe = async (
   } catch (error) {
     return { ok: false, ...toSafeError(error, '加载帖子失败') }
   }
+}
+
+export const getAiReply = (postId: number) => {
+  return request<AiReply | null>({
+    url: `/api/posts/${postId}/ai-reply`,
+    method: 'get',
+  })
+}
+
+export const generateAiReply = (postId: number) => {
+  return request<AiReply>({
+    url: `/api/posts/${postId}/generate-ai-reply`,
+    method: 'post',
+  })
 }

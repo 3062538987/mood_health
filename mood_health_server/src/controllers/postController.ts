@@ -6,6 +6,7 @@ import logger from '../utils/logger'
 import { filterContent, shouldAutoReject, shouldMarkForReview } from '../utils/contentFilter'
 import contentAuditService from '../utils/ai/contentAuditService'
 import { apiFailure, API_ERROR_CODES } from '../utils/apiResponse'
+import { generateAndSaveAiReply } from './treeholeController'
 
 const postRepo = createPostRepository()
 const auditService = createAuditService()
@@ -90,6 +91,15 @@ export const createPostHandler = async (req: AuthRequest, res: Response) => {
       data: post,
       message: needsReview ? '内容已提交，等待审核' : '发布成功',
     })
+
+    // 异步生成 AI 回复（不阻塞响应）
+    if (!needsReview) {
+      setTimeout(() => {
+        generateAndSaveAiReply(post.id, content).catch((err) => {
+          logger.error('异步 AI 回复生成失败', { postId: post.id, error: err?.message })
+        })
+      }, 100)
+    }
   } catch (error) {
     logger.error('创建帖子失败', { error: (error as Error).message })
     res.status(500).json({ code: 500, message: '服务器内部错误' })
@@ -129,7 +139,8 @@ export const getPostByIdHandler = async (req: Request, res: Response) => {
     }
 
     const comments = await postRepo.findCommentsByPostId(id)
-    res.status(200).json({ code: 0, data: { ...post, comments } })
+    const aiReply = await postRepo.getAiReply(id)
+    res.status(200).json({ code: 0, data: { ...post, comments, aiReply } })
   } catch (error) {
     logger.error('获取帖子详情失败', { error: (error as Error).message })
     res.status(500).json({ code: 500, message: '服务器内部错误' })
