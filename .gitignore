@@ -21,6 +21,7 @@ Thumbs.db
 *.log
 
 # Local databases and runtime state
+.codex-kimi-finished-triggered
 *.db
 *.db-wal
 *.db-shm
