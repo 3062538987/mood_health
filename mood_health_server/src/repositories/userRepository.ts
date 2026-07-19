@@ -1,4 +1,4 @@
-import { ResultSetHeader, RowDataPacket } from 'mysql2'
+import { PoolConnection, ResultSetHeader, RowDataPacket } from 'mysql2'
 import { getMysqlPool } from '../config/mysql'
 import logger from '../utils/logger'
 
@@ -209,28 +209,58 @@ export const createUserRepository = (db: MysqlExecutor = getMysqlPool()) => {
   }
 
   const deleteUser = async (id: number): Promise<{ deleted: boolean; username: string | null }> => {
-    const [rows] = await db.query<UserRow[]>(
-      'SELECT username FROM users WHERE id = ? LIMIT 1',
-      [id]
-    )
-    if (rows.length === 0) {
-      return { deleted: false, username: null }
+    const pool = getMysqlPool()
+    const connection = await pool.getConnection()
+
+    try {
+      await connection.beginTransaction()
+
+      const [rows] = await connection.query<UserRow[]>(
+        'SELECT username FROM users WHERE id = ? LIMIT 1',
+        [id]
+      )
+      if (rows.length === 0) {
+        await connection.rollback()
+        return { deleted: false, username: null }
+      }
+      const username = rows[0].username
+
+      logger.warn('删除用户及关联数据', { userId: id, username })
+
+      // 1. 删除 case_interventions（RESTRICT FK 必须先删）
+      await connection.query<ResultSetHeader>(
+        'DELETE FROM case_interventions WHERE counselor_user_id = ? OR case_id IN (SELECT id FROM cases WHERE student_user_id = ?)',
+        [id, id]
+      )
+
+      // 2. 删除 cases（RESTRICT FK 必须先删）
+      await connection.query<ResultSetHeader>(
+        'DELETE FROM cases WHERE student_user_id = ?',
+        [id]
+      )
+
+      // 3. 删除 audit_logs（SET NULL，显式删除更安全）
+      await connection.query<ResultSetHeader>(
+        'DELETE FROM audit_logs WHERE actor_user_id = ?',
+        [id]
+      )
+
+      // 4. 删除用户（CASCADE 自动清理 moods、mood_emotions、mood_tags、
+      //    assessment_sessions、assessment_answers、activities、relax_records、
+      //    achievements、ai_analysis_history、tags、post_likes、comment_likes 等）
+      await connection.query<ResultSetHeader>(
+        'DELETE FROM users WHERE id = ?',
+        [id]
+      )
+
+      await connection.commit()
+      return { deleted: true, username }
+    } catch (error) {
+      await connection.rollback()
+      throw error
+    } finally {
+      connection.release()
     }
-    const username = rows[0].username
-
-    // 审计日志：记录删除操作
-    logger.warn('删除用户及关联数据', { userId: id, username })
-
-    await db.query<ResultSetHeader>('DELETE FROM mood_records WHERE user_id = ?', [id])
-    await db.query<ResultSetHeader>('DELETE FROM assessment_sessions WHERE user_id = ?', [id])
-    await db.query<ResultSetHeader>('DELETE FROM case_interventions WHERE case_id IN (SELECT id FROM cases WHERE student_user_id = ?)', [id])
-    await db.query<ResultSetHeader>('DELETE FROM cases WHERE student_user_id = ?', [id])
-    await db.query<ResultSetHeader>('DELETE FROM audit_logs WHERE actor_user_id = ?', [id])
-    await db.query<ResultSetHeader>('DELETE FROM user_roles WHERE user_id = ?', [id])
-    await db.query<ResultSetHeader>('DELETE FROM refresh_tokens WHERE user_id = ?', [id])
-    await db.query<ResultSetHeader>('DELETE FROM users WHERE id = ?', [id])
-
-    return { deleted: true, username }
   }
 
   return {

@@ -1,8 +1,42 @@
 import { createManagementRepository } from '../../../src/repositories/managementRepository'
+import * as mysqlConfig from '../../../src/config/mysql'
 
 type QueryCall = {
   sql: string
   params: unknown[]
+}
+
+class FakeConnection {
+  public readonly calls: QueryCall[] = []
+  private readonly responses: unknown[] = []
+  private _transactionActive = false
+
+  queueRows(rows: unknown[]): void {
+    this.responses.push(rows)
+  }
+
+  queueResult(result: unknown): void {
+    this.responses.push(result)
+  }
+
+  async query<T>(sql: string, params: unknown[] = []): Promise<[T, unknown]> {
+    this.calls.push({ sql, params })
+    return [(this.responses.shift() ?? []) as T, []]
+  }
+
+  async beginTransaction(): Promise<void> {
+    this._transactionActive = true
+  }
+
+  async commit(): Promise<void> {
+    this._transactionActive = false
+  }
+
+  async rollback(): Promise<void> {
+    this._transactionActive = false
+  }
+
+  release(): void {}
 }
 
 class FakeManagementDb {
@@ -22,6 +56,20 @@ class FakeManagementDb {
     return [(this.responses.shift() ?? []) as T, []]
   }
 }
+
+let fakeConnection: FakeConnection
+let getMysqlPoolSpy: jest.SpiedFunction<typeof mysqlConfig.getMysqlPool>
+
+beforeEach(() => {
+  fakeConnection = new FakeConnection()
+  getMysqlPoolSpy = jest.spyOn(mysqlConfig, 'getMysqlPool').mockReturnValue({
+    getConnection: async () => fakeConnection,
+  } as any)
+})
+
+afterEach(() => {
+  getMysqlPoolSpy.mockRestore()
+})
 
 describe('managementRepository', () => {
   it('lists users from MySQL role tables with legacy admin DTO role names', async () => {
@@ -158,21 +206,19 @@ describe('managementRepository', () => {
 
   it('deletes a user with cascade cleanup through the MySQL repository boundary', async () => {
     const db = new FakeManagementDb()
-    // SELECT username first
-    db.queueRows([{ username: 'student_demo' }])
-    // cascade DELETEs: mood_records, assessment_sessions, case_interventions,
-    // cases, audit_logs, user_roles, refresh_tokens, users
-    for (let i = 0; i < 8; i++) {
-      db.queueResult({ affectedRows: 1 })
+    // SELECT username, DELETE case_interventions, DELETE cases, DELETE audit_logs, DELETE users
+    fakeConnection.queueRows([{ username: 'student_demo' }])
+    for (let i = 0; i < 4; i++) {
+      fakeConnection.queueResult({ affectedRows: 1 })
     }
     const repository = createManagementRepository(db)
 
     await expect(repository.deleteUserById(2)).resolves.toBe(true)
     // First call is SELECT username
-    expect(db.calls[0].sql).toContain('SELECT username FROM users')
-    expect(db.calls[0].params).toEqual([2])
+    expect(fakeConnection.calls[0].sql).toContain('SELECT username FROM users')
+    expect(fakeConnection.calls[0].params).toEqual([2])
     // Last call is DELETE FROM users
-    const lastCall = db.calls[db.calls.length - 1]
+    const lastCall = fakeConnection.calls[fakeConnection.calls.length - 1]
     expect(lastCall.sql).toContain('DELETE FROM users')
     expect(lastCall.params).toEqual([2])
   })
