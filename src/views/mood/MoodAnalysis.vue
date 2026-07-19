@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="mood-analysis">
     <div class="container">
       <header class="analysis-header">
@@ -153,7 +153,7 @@
               </div>
               <i class="fas fa-arrow-right support-arrow"></i>
             </router-link>
-            <router-link to="/courses" class="support-card">
+            <router-link to="/improve/courses" class="support-card">
               <div class="support-icon" style="background: rgba(34, 197, 94, 0.1); color: #22c55e;">
                 <i class="fas fa-book-open"></i>
               </div>
