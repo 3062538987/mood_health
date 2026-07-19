@@ -1,11 +1,629 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="light">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>产品页面流程图 · 大学生情绪健康管理平台</title>
-  <link rel="stylesheet" href="../colors_and_type.css">
-  <style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>产品页面流程图 · 大学生情绪健康管理平台</title>
+    <style id="theme-vars">
+/* =========================================================
+   Mood Health Platform - Flow Diagram Theme
+   ========================================================= */
+
+:root {
+  /* Brand colors - calm, therapeutic palette */
+  --color-primary: #4F7DF5;
+  --color-primary-light: #E8EEFD;
+  --color-primary-dark: #3A5FC9;
+
+  --color-secondary: #7C9EFF;
+  --color-accent: #67E8F9;
+  --color-accent-warm: #FCD34D;
+
+  /* Status / semantic */
+  --color-success: #34D399;
+  --color-success-bg: #D1FAE5;
+  --color-warning: #FBBF24;
+  --color-warning-bg: #FEF3C7;
+  --color-danger: #F87171;
+  --color-danger-bg: #FEE2E2;
+  --color-info: #60A5FA;
+  --color-info-bg: #DBEAFE;
+
+  /* Module colors */
+  --color-mood: #8B5CF6;
+  --color-mood-bg: #EDE9FE;
+  --color-relax: #10B981;
+  --color-relax-bg: #D1FAE5;
+  --color-improve: #F59E0B;
+  --color-improve-bg: #FEF3C7;
+  --color-counseling: #EC4899;
+  --color-counseling-bg: #FCE7F3;
+  --color-admin: #6366F1;
+  --color-admin-bg: #E0E7FF;
+  --color-user: #06B6D4;
+  --color-user-bg: #CFFAFE;
+
+  /* Neutrals */
+  --color-bg: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-border-soft: #F1F5F9;
+
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #94A3B8;
+  --color-text-muted: #CBD5E1;
+
+  /* Semantic theme aliases (required by fill-html-head.mjs) */
+  --color-foreground: #0F172A;
+  --color-card: #FFFFFF;
+  --color-muted: #94A3B8;
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 22px;
+  --text-3xl: 28px;
+  --text-4xl: 36px;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* Radius semantic aliases (required by fill-html-head.mjs) */
+  --color-radius-sm: 6px;
+  --color-radius-md: 10px;
+  --color-radius-lg: 16px;
+
+  /* Shadow */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --shadow-xl: 0 16px 40px rgba(15, 23, 42, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: var(--color-text-primary);
+  background: var(--color-bg);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-foreground: var(--color-foreground);
+    --color-card: var(--color-card);
+    --color-primary: var(--color-primary);
+    --color-secondary: var(--color-secondary);
+    --color-muted: var(--color-muted);
+    --color-accent: var(--color-accent);
+    --color-border: var(--color-border);
+    --color-background: var(--color-bg);
+    --radius-sm: var(--color-radius-sm);
+    --radius-md: var(--color-radius-md);
+    --radius-lg: var(--color-radius-lg);
+  }
+  @layer base {
+    body { background: var(--color-bg); color: var(--color-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-foreground { background-color: var(--color-foreground); }
+      .text-foreground { color: var(--color-foreground); }
+      .border-foreground { border-color: var(--color-foreground); }
+      .ring-foreground { --tw-ring-color: var(--color-foreground); }
+      .bg-card { background-color: var(--color-card); }
+      .text-card { color: var(--color-card); }
+      .border-card { border-color: var(--color-card); }
+      .ring-card { --tw-ring-color: var(--color-card); }
+      .bg-primary { background-color: var(--color-primary); }
+      .text-primary { color: var(--color-primary); }
+      .border-primary { border-color: var(--color-primary); }
+      .ring-primary { --tw-ring-color: var(--color-primary); }
+      .bg-secondary { background-color: var(--color-secondary); }
+      .text-secondary { color: var(--color-secondary); }
+      .border-secondary { border-color: var(--color-secondary); }
+      .ring-secondary { --tw-ring-color: var(--color-secondary); }
+      .bg-muted { background-color: var(--color-muted); }
+      .text-muted { color: var(--color-muted); }
+      .border-muted { border-color: var(--color-muted); }
+      .ring-muted { --tw-ring-color: var(--color-muted); }
+      .bg-accent { background-color: var(--color-accent); }
+      .text-accent { color: var(--color-accent); }
+      .border-accent { border-color: var(--color-accent); }
+      .ring-accent { --tw-ring-color: var(--color-accent); }
+      .bg-border { background-color: var(--color-border); }
+      .text-border { color: var(--color-border); }
+      .border-border { border-color: var(--color-border); }
+      .ring-border { --tw-ring-color: var(--color-border); }
+      .bg-background { background-color: var(--color-bg); }
+      .text-background { color: var(--color-bg); }
+      .border-background { border-color: var(--color-bg); }
+      .ring-background { --tw-ring-color: var(--color-bg); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body>
+  <div class="page-container">
+
+    <!-- ========== Header ========== -->
+    <header class="diagram-header">
+      <h1>产品页面流程图</h1>
+      <p class="subtitle">大学生情绪健康管理平台 · 页面导航全景</p>
+      <div class="stats-row">
+        <div class="stat-item">
+          <span class="stat-number">6</span>
+          <span class="stat-label">功能模块</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">40+</span>
+          <span class="stat-label">页面总数</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">5</span>
+          <span class="stat-label">层级深度</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">2</span>
+          <span class="stat-label">用户角色</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ========== Legend ========== -->
+    <section class="legend-section">
+      <div class="legend-title">模块图例</div>
+      <div class="legend-grid">
+        <div class="legend-item">
+          <div class="legend-dot" style="background: var(--color-primary);"></div>
+          <span class="legend-label">入口 & 认证</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background: var(--color-mood);"></div>
+          <span class="legend-label">情绪模块</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background: var(--color-relax);"></div>
+          <span class="legend-label">放松模块</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background: var(--color-improve);"></div>
+          <span class="legend-label">成长模块</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background: var(--color-counseling);"></div>
+          <span class="legend-label">心理咨询</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background: var(--color-user);"></div>
+          <span class="legend-label">用户中心</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background: var(--color-admin);"></div>
+          <span class="legend-label">管理后台</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== Main Diagram ========== -->
+    <main class="diagram-main">
+
+      <!-- Entry & Auth Section -->
+      <section class="flow-section">
+        <div class="section-label">第一层 · 入口与认证</div>
+        <div class="entry-module module-card module-entry">
+          <div class="module-header">
+            <span>入口 & 认证模块</span>
+            <span class="module-count">4 页</span>
+          </div>
+          <div class="module-body">
+            <div class="entry-flow">
+              <div class="entry-page">
+                <span class="entry-name">引导页</span>
+                <span class="entry-path">/guide</span>
+              </div>
+              <span class="flow-arrow">→</span>
+              <div class="entry-page">
+                <span class="entry-name">首页</span>
+                <span class="entry-path">/</span>
+              </div>
+              <span class="flow-arrow">→</span>
+              <div class="entry-page">
+                <span class="entry-name">登录</span>
+                <span class="entry-path">/login</span>
+              </div>
+              <span class="flow-arrow">→</span>
+              <div class="entry-page">
+                <span class="entry-name">注册</span>
+                <span class="entry-path">/register</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-indicator">
+          <span>登录成功后进入主应用</span>
+          <span class="arrow-down"></span>
+        </div>
+      </section>
+
+      <!-- Core Modules Section -->
+      <section class="flow-section">
+        <div class="section-label">第二层 · 核心功能模块</div>
+        <div class="modules-grid">
+
+          <!-- 情绪模块 -->
+          <div class="module-card module-mood">
+            <div class="module-header">
+              <span>情绪模块 Mood</span>
+              <span class="module-count">4 页</span>
+            </div>
+            <div class="module-body">
+              <div class="layout-badge">布局页 /mood</div>
+              <div class="page-list">
+                <div class="page-item">
+                  <span class="page-name">情绪记录</span>
+                  <span class="page-path">/mood/record</span>
+                </div>
+                <div class="page-item">
+                  <span class="page-name">情绪档案</span>
+                  <span class="page-path">/mood/archive</span>
+                </div>
+                <div class="page-item">
+                  <span class="page-name">情绪分析</span>
+                  <span class="page-path">/mood/analysis</span>
+                </div>
+                <div class="sub-page-group">
+                  <div class="page-item sub-page">
+                    <span class="page-name">AI 分析结果</span>
+                    <span class="page-path">内嵌</span>
+                  </div>
+                  <div class="page-item sub-page">
+                    <span class="page-name">分析历史</span>
+                    <span class="page-path">内嵌</span>
+                  </div>
+                  <div class="page-item sub-page">
+                    <span class="page-name">隐私说明</span>
+                    <span class="page-path">内嵌</span>
+                  </div>
+                </div>
+                <div class="page-item">
+                  <span class="page-name">情绪洞察</span>
+                  <span class="page-path">/mood/insight</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 放松模块 -->
+          <div class="module-card module-relax">
+            <div class="module-header">
+              <span>放松模块 Relax</span>
+              <span class="module-count">6 页</span>
+            </div>
+            <div class="module-body">
+              <div class="layout-badge">布局页 /relax</div>
+              <div class="page-list">
+                <div class="page-item">
+                  <span class="page-name">解压中心</span>
+                  <span class="page-path">/relax/center</span>
+                </div>
+                <div class="page-item">
+                  <span class="page-name">放松历史</span>
+                  <span class="page-path">/relax/history</span>
+                </div>
+                <div class="page-item">
+                  <span class="page-name">成就中心</span>
+                  <span class="page-path">/relax/achievements</span>
+                </div>
+                <div class="page-item">
+                  <span class="page-name">树洞</span>
+                  <span class="page-path">/relax/treehole</span>
+                </div>
+                <div class="sub-page-group">
+                  <div class="page-item sub-page">
+                    <span class="page-name">树洞详情</span>
+                    <span class="page-path">/relax/treehole/:id</span>
+                  </div>
+                </div>
+                <div class="page-item">
+                  <span class="page-name">音乐疗愈</span>
+                  <span class="page-path">/relax/music</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 成长模块 -->
+          <div class="module-card module-improve">
+            <div class="module-header">
+              <span>成长模块 Improve</span>
+              <span class="module-count">10 页</span>
+            </div>
+            <div class="module-body">
+              <div class="layout-badge">布局页 /improve</div>
+              <div class="page-list">
+                <div class="page-item">
+                  <span class="page-name">团体辅导</span>
+                  <span class="page-path">/improve/group</span>
+                </div>
+                <div class="sub-page-group">
+                  <div class="page-item sub-page">
+                    <span class="page-name">活动详情</span>
+                    <span class="page-path">/improve/group/:id</span>
+                  </div>
+                </div>
+                <div class="page-item">
+                  <span class="page-name">情绪科普</span>
+                  <span class="page-path">/improve/knowledge</span>
+                </div>
+                <div class="page-item">
+                  <span class="page-name">成长课程</span>
+                  <span class="page-path">/improve/courses</span>
+                </div>
+                <div class="sub-page-group">
+                  <div class="page-item sub-page">
+                    <span class="page-name">课程详情</span>
+                    <span class="page-path">/improve/course/:id</span>
+                  </div>
+                </div>
+                <div class="page-item">
+                  <span class="page-name">问卷调查</span>
+                  <span class="page-path">/improve/survey</span>
+                </div>
+                <div class="sub-page-group">
+                  <div class="page-item sub-page">
+                    <span class="page-name">问卷列表</span>
+                    <span class="page-path">/improve/questionnaire</span>
+                  </div>
+                  <div class="page-item sub-page">
+                    <span class="page-name">答题页</span>
+                    <span class="page-path">/improve/questionnaire/:id</span>
+                  </div>
+                  <div class="page-item sub-page">
+                    <span class="page-name">结果页</span>
+                    <span class="page-path">/improve/questionnaire/result</span>
+                  </div>
+                  <div class="page-item sub-page">
+                    <span class="page-name">问卷历史</span>
+                    <span class="page-path">/improve/questionnaire/history</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 心理咨询 -->
+          <div class="module-card module-counseling">
+            <div class="module-header">
+              <span>心理咨询 Counseling</span>
+              <span class="module-count">2 页</span>
+            </div>
+            <div class="module-body">
+              <div class="page-list">
+                <div class="page-item">
+                  <span class="page-name">AI 心理咨询</span>
+                  <span class="page-path">/counseling</span>
+                </div>
+                <div class="page-item">
+                  <span class="page-name">AI 历史记录</span>
+                  <span class="page-path">/ai-history</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 用户中心 -->
+          <div class="module-card module-user">
+            <div class="module-header">
+              <span>用户中心 User</span>
+              <span class="module-count">2 页</span>
+            </div>
+            <div class="module-body">
+              <div class="layout-badge">布局页 /user</div>
+              <div class="page-list">
+                <div class="page-item">
+                  <span class="page-name">个人资料</span>
+                  <span class="page-path">/user/profile</span>
+                </div>
+                <div class="page-item">
+                  <span class="page-name">设置</span>
+                  <span class="page-path">/user/setting</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Admin Section -->
+      <section class="flow-section admin-section">
+        <div class="section-label">第三层 · 管理后台（管理员 / 超级管理员）</div>
+        <div class="module-card module-admin">
+          <div class="module-header">
+            <span>管理后台 Admin</span>
+            <span class="module-count">12 页</span>
+          </div>
+          <div class="module-body">
+            <div class="layout-badge" style="color: var(--color-admin);">布局页 /admin</div>
+            <div class="admin-grid">
+              <div class="admin-col">
+                <div class="admin-col-title">数据概览</div>
+                <div class="page-list">
+                  <div class="page-item">
+                    <span class="page-name">管理首页</span>
+                    <span class="page-path">/admin/dashboard</span>
+                  </div>
+                  <div class="page-item">
+                    <span class="page-name">活动统计</span>
+                    <span class="page-path">/admin/activity-stats</span>
+                  </div>
+                </div>
+              </div>
+              <div class="admin-col">
+                <div class="admin-col-title">用户管理</div>
+                <div class="page-list">
+                  <div class="page-item">
+                    <span class="page-name">用户管理</span>
+                    <span class="page-path">/admin/users</span>
+                  </div>
+                  <div class="page-item">
+                    <span class="page-name">用户情绪数据</span>
+                    <span class="page-path">/admin/user-moods</span>
+                  </div>
+                </div>
+              </div>
+              <div class="admin-col">
+                <div class="admin-col-title">内容审核</div>
+                <div class="page-list">
+                  <div class="page-item">
+                    <span class="page-name">情绪记录</span>
+                    <span class="page-path">/admin/moods</span>
+                  </div>
+                  <div class="page-item">
+                    <span class="page-name">帖子审核</span>
+                    <span class="page-path">/admin/posts</span>
+                  </div>
+                  <div class="page-item">
+                    <span class="page-name">树洞审核</span>
+                    <span class="page-path">/admin/treehole</span>
+                  </div>
+                </div>
+              </div>
+              <div class="admin-col">
+                <div class="admin-col-title">风险干预</div>
+                <div class="page-list">
+                  <div class="page-item">
+                    <span class="page-name">风险个案</span>
+                    <span class="page-path">/admin/cases</span>
+                  </div>
+                  <div class="sub-page-group" style="border-color: rgba(99, 102, 241, 0.3);">
+                    <div class="page-item sub-page">
+                      <span class="page-name">个案详情</span>
+                      <span class="page-path">/admin/cases/:id</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="admin-col">
+                <div class="admin-col-title">资源管理</div>
+                <div class="page-list">
+                  <div class="page-item">
+                    <span class="page-name">课程管理</span>
+                    <span class="page-path">/admin/courses</span>
+                  </div>
+                  <div class="page-item">
+                    <span class="page-name">音乐管理</span>
+                    <span class="page-path">/admin/music</span>
+                  </div>
+                </div>
+              </div>
+              <div class="admin-col">
+                <div class="admin-col-title">系统审计</div>
+                <div class="page-list">
+                  <div class="page-item">
+                    <span class="page-name">审计日志</span>
+                    <span class="page-path">/admin/audit-logs</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Other Pages -->
+      <section class="flow-section">
+        <div class="section-label">其他页面</div>
+        <div class="other-pages">
+          <div class="other-page">
+            <span>404 页面未找到</span>
+            <span style="opacity: 0.6; font-family: var(--font-mono); font-size: 12px; margin-left: 8px;">/404</span>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ========== Footer ========== -->
+    <footer class="diagram-footer">
+      <div class="footer-info">
+        <span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+          大学生情绪健康管理平台
+        </span>
+        <span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="9" y1="9" x2="15" y2="9"/>
+            <line x1="9" y1="15" x2="15" y2="15"/>
+          </svg>
+          Vue.js + Node.js
+        </span>
+        <span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+          守护每一份情绪
+        </span>
+      </div>
+      <p class="copyright">产品页面流程图 · v1.0 · 共 6 大功能模块 / 40+ 页面</p>
+    </footer>
+
+  </div>
+
+    <style>
     /* =========================================================
        Page Flow Diagram - Custom Styles
        ========================================================= */
@@ -534,439 +1152,5 @@
       }
     }
   </style>
-</head>
-<body>
-  <div class="page-container">
-
-    <!-- ========== Header ========== -->
-    <header class="diagram-header">
-      <h1>产品页面流程图</h1>
-      <p class="subtitle">大学生情绪健康管理平台 · 页面导航全景</p>
-      <div class="stats-row">
-        <div class="stat-item">
-          <span class="stat-number">6</span>
-          <span class="stat-label">功能模块</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-number">40+</span>
-          <span class="stat-label">页面总数</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-number">5</span>
-          <span class="stat-label">层级深度</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-number">2</span>
-          <span class="stat-label">用户角色</span>
-        </div>
-      </div>
-    </header>
-
-    <!-- ========== Legend ========== -->
-    <section class="legend-section">
-      <div class="legend-title">模块图例</div>
-      <div class="legend-grid">
-        <div class="legend-item">
-          <div class="legend-dot" style="background: var(--color-primary);"></div>
-          <span class="legend-label">入口 & 认证</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-dot" style="background: var(--color-mood);"></div>
-          <span class="legend-label">情绪模块</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-dot" style="background: var(--color-relax);"></div>
-          <span class="legend-label">放松模块</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-dot" style="background: var(--color-improve);"></div>
-          <span class="legend-label">成长模块</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-dot" style="background: var(--color-counseling);"></div>
-          <span class="legend-label">心理咨询</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-dot" style="background: var(--color-user);"></div>
-          <span class="legend-label">用户中心</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-dot" style="background: var(--color-admin);"></div>
-          <span class="legend-label">管理后台</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========== Main Diagram ========== -->
-    <main class="diagram-main">
-
-      <!-- Entry & Auth Section -->
-      <section class="flow-section">
-        <div class="section-label">第一层 · 入口与认证</div>
-        <div class="entry-module module-card module-entry">
-          <div class="module-header">
-            <span>入口 & 认证模块</span>
-            <span class="module-count">4 页</span>
-          </div>
-          <div class="module-body">
-            <div class="entry-flow">
-              <div class="entry-page">
-                <span class="entry-name">引导页</span>
-                <span class="entry-path">/guide</span>
-              </div>
-              <span class="flow-arrow">→</span>
-              <div class="entry-page">
-                <span class="entry-name">首页</span>
-                <span class="entry-path">/</span>
-              </div>
-              <span class="flow-arrow">→</span>
-              <div class="entry-page">
-                <span class="entry-name">登录</span>
-                <span class="entry-path">/login</span>
-              </div>
-              <span class="flow-arrow">→</span>
-              <div class="entry-page">
-                <span class="entry-name">注册</span>
-                <span class="entry-path">/register</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="flow-indicator">
-          <span>登录成功后进入主应用</span>
-          <span class="arrow-down"></span>
-        </div>
-      </section>
-
-      <!-- Core Modules Section -->
-      <section class="flow-section">
-        <div class="section-label">第二层 · 核心功能模块</div>
-        <div class="modules-grid">
-
-          <!-- 情绪模块 -->
-          <div class="module-card module-mood">
-            <div class="module-header">
-              <span>情绪模块 Mood</span>
-              <span class="module-count">4 页</span>
-            </div>
-            <div class="module-body">
-              <div class="layout-badge">布局页 /mood</div>
-              <div class="page-list">
-                <div class="page-item">
-                  <span class="page-name">情绪记录</span>
-                  <span class="page-path">/mood/record</span>
-                </div>
-                <div class="page-item">
-                  <span class="page-name">情绪档案</span>
-                  <span class="page-path">/mood/archive</span>
-                </div>
-                <div class="page-item">
-                  <span class="page-name">情绪分析</span>
-                  <span class="page-path">/mood/analysis</span>
-                </div>
-                <div class="sub-page-group">
-                  <div class="page-item sub-page">
-                    <span class="page-name">AI 分析结果</span>
-                    <span class="page-path">内嵌</span>
-                  </div>
-                  <div class="page-item sub-page">
-                    <span class="page-name">分析历史</span>
-                    <span class="page-path">内嵌</span>
-                  </div>
-                  <div class="page-item sub-page">
-                    <span class="page-name">隐私说明</span>
-                    <span class="page-path">内嵌</span>
-                  </div>
-                </div>
-                <div class="page-item">
-                  <span class="page-name">情绪洞察</span>
-                  <span class="page-path">/mood/insight</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 放松模块 -->
-          <div class="module-card module-relax">
-            <div class="module-header">
-              <span>放松模块 Relax</span>
-              <span class="module-count">6 页</span>
-            </div>
-            <div class="module-body">
-              <div class="layout-badge">布局页 /relax</div>
-              <div class="page-list">
-                <div class="page-item">
-                  <span class="page-name">解压中心</span>
-                  <span class="page-path">/relax/center</span>
-                </div>
-                <div class="page-item">
-                  <span class="page-name">放松历史</span>
-                  <span class="page-path">/relax/history</span>
-                </div>
-                <div class="page-item">
-                  <span class="page-name">成就中心</span>
-                  <span class="page-path">/relax/achievements</span>
-                </div>
-                <div class="page-item">
-                  <span class="page-name">树洞</span>
-                  <span class="page-path">/relax/treehole</span>
-                </div>
-                <div class="sub-page-group">
-                  <div class="page-item sub-page">
-                    <span class="page-name">树洞详情</span>
-                    <span class="page-path">/relax/treehole/:id</span>
-                  </div>
-                </div>
-                <div class="page-item">
-                  <span class="page-name">音乐疗愈</span>
-                  <span class="page-path">/relax/music</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 成长模块 -->
-          <div class="module-card module-improve">
-            <div class="module-header">
-              <span>成长模块 Improve</span>
-              <span class="module-count">10 页</span>
-            </div>
-            <div class="module-body">
-              <div class="layout-badge">布局页 /improve</div>
-              <div class="page-list">
-                <div class="page-item">
-                  <span class="page-name">团体辅导</span>
-                  <span class="page-path">/improve/group</span>
-                </div>
-                <div class="sub-page-group">
-                  <div class="page-item sub-page">
-                    <span class="page-name">活动详情</span>
-                    <span class="page-path">/improve/group/:id</span>
-                  </div>
-                </div>
-                <div class="page-item">
-                  <span class="page-name">情绪科普</span>
-                  <span class="page-path">/improve/knowledge</span>
-                </div>
-                <div class="page-item">
-                  <span class="page-name">成长课程</span>
-                  <span class="page-path">/improve/courses</span>
-                </div>
-                <div class="sub-page-group">
-                  <div class="page-item sub-page">
-                    <span class="page-name">课程详情</span>
-                    <span class="page-path">/improve/course/:id</span>
-                  </div>
-                </div>
-                <div class="page-item">
-                  <span class="page-name">问卷调查</span>
-                  <span class="page-path">/improve/survey</span>
-                </div>
-                <div class="sub-page-group">
-                  <div class="page-item sub-page">
-                    <span class="page-name">问卷列表</span>
-                    <span class="page-path">/improve/questionnaire</span>
-                  </div>
-                  <div class="page-item sub-page">
-                    <span class="page-name">答题页</span>
-                    <span class="page-path">/improve/questionnaire/:id</span>
-                  </div>
-                  <div class="page-item sub-page">
-                    <span class="page-name">结果页</span>
-                    <span class="page-path">/improve/questionnaire/result</span>
-                  </div>
-                  <div class="page-item sub-page">
-                    <span class="page-name">问卷历史</span>
-                    <span class="page-path">/improve/questionnaire/history</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 心理咨询 -->
-          <div class="module-card module-counseling">
-            <div class="module-header">
-              <span>心理咨询 Counseling</span>
-              <span class="module-count">2 页</span>
-            </div>
-            <div class="module-body">
-              <div class="page-list">
-                <div class="page-item">
-                  <span class="page-name">AI 心理咨询</span>
-                  <span class="page-path">/counseling</span>
-                </div>
-                <div class="page-item">
-                  <span class="page-name">AI 历史记录</span>
-                  <span class="page-path">/ai-history</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 用户中心 -->
-          <div class="module-card module-user">
-            <div class="module-header">
-              <span>用户中心 User</span>
-              <span class="module-count">2 页</span>
-            </div>
-            <div class="module-body">
-              <div class="layout-badge">布局页 /user</div>
-              <div class="page-list">
-                <div class="page-item">
-                  <span class="page-name">个人资料</span>
-                  <span class="page-path">/user/profile</span>
-                </div>
-                <div class="page-item">
-                  <span class="page-name">设置</span>
-                  <span class="page-path">/user/setting</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      <!-- Admin Section -->
-      <section class="flow-section admin-section">
-        <div class="section-label">第三层 · 管理后台（管理员 / 超级管理员）</div>
-        <div class="module-card module-admin">
-          <div class="module-header">
-            <span>管理后台 Admin</span>
-            <span class="module-count">12 页</span>
-          </div>
-          <div class="module-body">
-            <div class="layout-badge" style="color: var(--color-admin);">布局页 /admin</div>
-            <div class="admin-grid">
-              <div class="admin-col">
-                <div class="admin-col-title">数据概览</div>
-                <div class="page-list">
-                  <div class="page-item">
-                    <span class="page-name">管理首页</span>
-                    <span class="page-path">/admin/dashboard</span>
-                  </div>
-                  <div class="page-item">
-                    <span class="page-name">活动统计</span>
-                    <span class="page-path">/admin/activity-stats</span>
-                  </div>
-                </div>
-              </div>
-              <div class="admin-col">
-                <div class="admin-col-title">用户管理</div>
-                <div class="page-list">
-                  <div class="page-item">
-                    <span class="page-name">用户管理</span>
-                    <span class="page-path">/admin/users</span>
-                  </div>
-                  <div class="page-item">
-                    <span class="page-name">用户情绪数据</span>
-                    <span class="page-path">/admin/user-moods</span>
-                  </div>
-                </div>
-              </div>
-              <div class="admin-col">
-                <div class="admin-col-title">内容审核</div>
-                <div class="page-list">
-                  <div class="page-item">
-                    <span class="page-name">情绪记录</span>
-                    <span class="page-path">/admin/moods</span>
-                  </div>
-                  <div class="page-item">
-                    <span class="page-name">帖子审核</span>
-                    <span class="page-path">/admin/posts</span>
-                  </div>
-                  <div class="page-item">
-                    <span class="page-name">树洞审核</span>
-                    <span class="page-path">/admin/treehole</span>
-                  </div>
-                </div>
-              </div>
-              <div class="admin-col">
-                <div class="admin-col-title">风险干预</div>
-                <div class="page-list">
-                  <div class="page-item">
-                    <span class="page-name">风险个案</span>
-                    <span class="page-path">/admin/cases</span>
-                  </div>
-                  <div class="sub-page-group" style="border-color: rgba(99, 102, 241, 0.3);">
-                    <div class="page-item sub-page">
-                      <span class="page-name">个案详情</span>
-                      <span class="page-path">/admin/cases/:id</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="admin-col">
-                <div class="admin-col-title">资源管理</div>
-                <div class="page-list">
-                  <div class="page-item">
-                    <span class="page-name">课程管理</span>
-                    <span class="page-path">/admin/courses</span>
-                  </div>
-                  <div class="page-item">
-                    <span class="page-name">音乐管理</span>
-                    <span class="page-path">/admin/music</span>
-                  </div>
-                </div>
-              </div>
-              <div class="admin-col">
-                <div class="admin-col-title">系统审计</div>
-                <div class="page-list">
-                  <div class="page-item">
-                    <span class="page-name">审计日志</span>
-                    <span class="page-path">/admin/audit-logs</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Other Pages -->
-      <section class="flow-section">
-        <div class="section-label">其他页面</div>
-        <div class="other-pages">
-          <div class="other-page">
-            <span>404 页面未找到</span>
-            <span style="opacity: 0.6; font-family: var(--font-mono); font-size: 12px; margin-left: 8px;">/404</span>
-          </div>
-        </div>
-      </section>
-
-    </main>
-
-    <!-- ========== Footer ========== -->
-    <footer class="diagram-footer">
-      <div class="footer-info">
-        <span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-            <path d="M2 17l10 5 10-5"/>
-            <path d="M2 12l10 5 10-5"/>
-          </svg>
-          大学生情绪健康管理平台
-        </span>
-        <span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-            <line x1="9" y1="9" x2="15" y2="9"/>
-            <line x1="9" y1="15" x2="15" y2="15"/>
-          </svg>
-          Vue.js + Node.js
-        </span>
-        <span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-          </svg>
-          守护每一份情绪
-        </span>
-      </div>
-      <p class="copyright">产品页面流程图 · v1.0 · 共 6 大功能模块 / 40+ 页面</p>
-    </footer>
-
-  </div>
 </body>
 </html>

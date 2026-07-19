@@ -7,7 +7,7 @@
       "version": 1,
       "createdAt": 1784388000000,
       "canvasData": {
-        "x": 0,
+        "x": 48,
         "y": 0,
         "group": 0
       },
@@ -17,13 +17,29 @@
       }
     },
     {
-      "id": "page-state-machines",
-      "title": "状态机与状态转换图",
+      "id": "page-interaction-flow",
+      "title": "用户交互流程图",
       "type": "page",
       "version": 1,
       "createdAt": 1784388000001,
       "canvasData": {
         "x": 620,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/interaction-flow.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-state-machines",
+      "title": "状态机与状态转换图",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784388000002,
+      "canvasData": {
+        "x": 1240,
         "y": 0,
         "group": 0
       },
@@ -34,7 +50,7 @@
     }
   ],
   "config": {
-    "autoLayout": true,
+    "autoLayout": false,
     "deviceType": "desktop",
     "projectName": "情绪健康平台 - 流程图集",
     "designLibrary": null
