@@ -18,7 +18,7 @@
 
     <main class="home-content">
       <div v-if="userStore.isLoggedIn" class="today-section">
-        <div v-if="showFirstRecordOnboarding" class="today-card onboarding-card">
+        <div v-if="showFirstRecordOnboarding" class="today-card onboarding-card first-record-onboarding">
           <div class="card-icon-wrapper">
             <div class="card-icon">
               <i class="fas fa-pencil-alt"></i>
@@ -29,7 +29,9 @@
             <h2>从第一条情绪开始了解自己</h2>
             <p>你还没有情绪记录。先写下一件今天真实发生的小事，后续趋势才会更准确。</p>
           </div>
-          <router-link to="/mood/record" class="card-action">记录第一条情绪</router-link>
+          <router-link to="/mood/record" class="card-action onboarding-action">
+            记录第一条情绪
+          </router-link>
         </div>
 
         <div v-else-if="latestRecord" class="today-card mood-card">

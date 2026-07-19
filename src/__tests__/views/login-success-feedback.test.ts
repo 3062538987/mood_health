@@ -55,7 +55,7 @@ describe('Login success feedback', () => {
     localStorage.clear()
   })
 
-  it('shows one lightweight success message before navigating home', async () => {
+  it('shows one lightweight success message before first-use guide when guide is incomplete', async () => {
     requestMock.mockResolvedValueOnce({
       token: 'jwt-token',
       user: { id: 1, username: 'student_demo', email: 'student@qq.com', role: 'user' },
@@ -69,7 +69,7 @@ describe('Login success feedback', () => {
 
     expect(messageSuccessMock).toHaveBeenCalledTimes(1)
     expect(messageSuccessMock).toHaveBeenCalledWith('登录成功')
-    expect(routerMocks.push).toHaveBeenCalledWith('/')
+    expect(routerMocks.push).toHaveBeenCalledWith('/guide')
   })
 
   it.each([
@@ -77,6 +77,7 @@ describe('Login success feedback', () => {
     ['/mood/archive?keyword=%E5%AD%A6%E4%B9%A0&from=401', '/mood/archive?keyword=%E5%AD%A6%E4%B9%A0&from=401'],
     ['/user/profile/security', '/user/profile/security'],
   ])('returns to a safe internal redirect after login: %s', async (redirect, expected) => {
+    localStorage.setItem('guideCompleted', 'true')
     routerMocks.routeQuery = { redirect }
     requestMock.mockResolvedValueOnce({
       token: 'jwt-token',
@@ -95,6 +96,7 @@ describe('Login success feedback', () => {
   it.each(['https://evil.example/mood/archive', '//evil.example/mood/archive'])(
     'rejects unsafe post-login redirect: %s',
     async (redirect) => {
+      localStorage.setItem('guideCompleted', 'true')
       routerMocks.routeQuery = { redirect }
       requestMock.mockResolvedValueOnce({
         token: 'jwt-token',
