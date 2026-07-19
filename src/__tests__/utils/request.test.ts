@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => {
       value: {
         path: '/mood/record',
         fullPath: '/mood/record?source=expired',
+        meta: {},
       },
     },
     loadingClose: vi.fn(),
@@ -59,6 +60,7 @@ describe('request response contract', () => {
     mocks.currentRoute.value = {
       path: '/mood/record',
       fullPath: '/mood/record?source=expired',
+      meta: {},
     }
   })
 
@@ -139,6 +141,42 @@ describe('request response contract', () => {
     expect(mocks.messageError).toHaveBeenCalledTimes(1)
 
     mocks.responseHandlers.fulfilled?.(response({ code: 0, message: 'ok', data: null }))
+  })
+
+  it('does not redirect on 401 when current route is public', async () => {
+    const { ApiRequestError } = await import('@/utils/request')
+    mocks.currentRoute.value = {
+      path: '/register',
+      fullPath: '/register',
+      meta: { public: true, guestOnly: true },
+    }
+
+    const promise = mocks.responseHandlers.rejected?.({
+      config: {},
+      response: { status: 401, data: { code: 1002, message: '令牌已过期', data: null } },
+    })
+
+    await expect(promise).rejects.toBeInstanceOf(ApiRequestError)
+    expect(mocks.routerPush).not.toHaveBeenCalled()
+    expect(mocks.messageError).not.toHaveBeenCalled()
+  })
+
+  it('does not redirect on 401 when current route is guestOnly', async () => {
+    const { ApiRequestError } = await import('@/utils/request')
+    mocks.currentRoute.value = {
+      path: '/login',
+      fullPath: '/login',
+      meta: { public: true, guestOnly: true },
+    }
+
+    const promise = mocks.responseHandlers.rejected?.({
+      config: {},
+      response: { status: 401, data: { code: 1002, message: '令牌已过期', data: null } },
+    })
+
+    await expect(promise).rejects.toBeInstanceOf(ApiRequestError)
+    expect(mocks.routerPush).not.toHaveBeenCalled()
+    expect(mocks.messageError).not.toHaveBeenCalled()
   })
 
   it('normalizes a 500 HTTP error without exposing a different error shape', async () => {

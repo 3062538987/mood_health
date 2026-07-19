@@ -107,9 +107,12 @@ const getSafeCurrentFullPath = () => {
 }
 
 const handleUnauthorized = () => {
-  if (router.currentRoute.value.path === '/login') {
+  const currentRoute = router.currentRoute.value
+
+  // 公开页面或仅游客页面不需要重定向登录
+  if (currentRoute.meta.public || currentRoute.meta.guestOnly) {
     unauthorizedRedirectPending = false
-    return true
+    return false
   }
 
   if (unauthorizedRedirectPending) {
@@ -127,6 +130,7 @@ const handleUnauthorized = () => {
 const service = axios.create({
   baseURL: apiBaseUrl,
   timeout: 10000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
