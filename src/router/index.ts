@@ -212,6 +212,11 @@ const baseRoutes: RouteRecordRaw[] = [
         { path: '/admin/user-moods', name: '用户情绪数据', icon: 'fas fa-chart-line' },
         { path: '/admin/moods', name: '情绪记录', icon: 'fas fa-face-smile' },
         {
+          path: '/admin/assessments',
+          name: '测评管理',
+          icon: 'fas fa-clipboard-list',
+        },
+        {
           path: '/admin/posts',
           name: '帖子审核',
           icon: 'fas fa-clipboard-check',
@@ -285,6 +290,15 @@ const baseRoutes: RouteRecordRaw[] = [
           adminOnly: true,
           roles: ['admin', 'super_admin'],
           permission: 'mood.record.read',
+        },
+      },
+      {
+        path: 'assessments',
+        component: () => import('@/views/admin/AdminAssessments.vue'),
+        meta: {
+          adminOnly: true,
+          roles: ['admin', 'super_admin'],
+          permission: 'user.manage',
         },
       },
       {
@@ -362,8 +376,7 @@ const baseRoutes: RouteRecordRaw[] = [
   {
     path: '/ai/knowledge-assistant',
     name: 'KnowledgeAssistant',
-    component: () => import('@/views/counseling/Counseling.vue'),
-    beforeEnter: () => ({ path: '/counseling', replace: true }),
+    component: () => import('@/views/ai/KnowledgeAssistant.vue'),
   },
   {
     path: '/ai-history',

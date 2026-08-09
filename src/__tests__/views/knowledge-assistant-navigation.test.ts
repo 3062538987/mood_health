@@ -46,11 +46,14 @@ describe('unified AI psychological assistant navigation', () => {
     expect(router.currentRoute.value.fullPath).toBe('/counseling')
   })
 
-  it('redirects the retired knowledge assistant route to counseling', () => {
+  it('revives the knowledge assistant route as a standalone page', () => {
     const route = createRoutes().find((item) => item.path === '/ai/knowledge-assistant')
 
     expect(route).toBeDefined()
-    expect(route?.beforeEnter).toBeTypeOf('function')
-    expect((route?.beforeEnter as () => unknown)()).toEqual({ path: '/counseling', replace: true })
+    expect(route?.name).toBe('KnowledgeAssistant')
+    // 不再重定向到咨询页：知识助手是独立可达的页面
+    expect(route?.beforeEnter).toBeUndefined()
+    // 组件为懒加载函数（指向 KnowledgeAssistant.vue）
+    expect(typeof route?.component).toBe('function')
   })
 })

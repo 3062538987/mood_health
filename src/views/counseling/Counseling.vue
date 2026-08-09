@@ -97,6 +97,19 @@
                     </li>
                   </ul>
                 </div>
+                <details
+                  v-if="msg.role === 'assistant' && msg.reasoningSteps?.length"
+                  class="reasoning-trace"
+                >
+                  <summary>AI 是怎么想的</summary>
+                  <ol>
+                    <li v-for="(step, idx) in msg.reasoningSteps" :key="idx">
+                      <span class="trace-phase">{{ step.phase }}</span>
+                      <span class="trace-label">{{ step.label }}</span>
+                      <small v-if="step.detail" class="trace-detail">{{ step.detail }}</small>
+                    </li>
+                  </ol>
+                </details>
                 <div class="message-meta">
                   <span class="time">{{ formatTime(msg.createdAt) }}</span>
                   <button
@@ -174,7 +187,7 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { sendSessionCounselingMessage, getSessions, loadSessionMessages, renameSession } from '@/api/counseling'
-import type { KnowledgeSource, SessionItem } from '@/api/counseling'
+import type { KnowledgeSource, SessionItem, ReasoningStep } from '@/api/counseling'
 import { useUserStore } from '@/stores/userStore'
 import CounselingHistorySidebar from '@/components/counseling/CounselingHistorySidebar.vue'
 
@@ -189,6 +202,7 @@ interface MessageItem {
   status?: MessageStatus
   riskLevel?: RiskLevel
   sources?: KnowledgeSource[]
+  reasoningSteps?: ReasoningStep[]
 }
 
 const userStore = useUserStore()
@@ -380,6 +394,7 @@ const sendToService = async (targetUserMessage: MessageItem, inputSnapshot: stri
     content: result.response,
     riskLevel: result.riskLevel as MessageItem['riskLevel'],
     sources: result.sources || [],
+    reasoningSteps: result.reasoningSteps || [],
     createdAt: new Date().toISOString(),
   })
 
@@ -773,6 +788,55 @@ const clearConversation = async () => {
   }
 
   small {
+    color: var(--chat-text-sub);
+  }
+}
+
+.reasoning-trace {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px dashed var(--chat-line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg-color) 60%, transparent);
+
+  summary {
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--chat-text-sub);
+    user-select: none;
+  }
+
+  ol {
+    display: grid;
+    gap: 8px;
+    margin: 10px 0 2px;
+    padding-left: 18px;
+  }
+
+  li {
+    display: grid;
+    gap: 2px;
+    font-size: 13px;
+    color: var(--chat-text);
+  }
+
+  .trace-phase {
+    display: inline-block;
+    margin-right: 8px;
+    padding: 1px 8px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--brand-color, #2f6f5c);
+    background: color-mix(in srgb, var(--brand-color, #2f6f5c) 14%, transparent);
+  }
+
+  .trace-label {
+    font-weight: 600;
+  }
+
+  .trace-detail {
     color: var(--chat-text-sub);
   }
 }

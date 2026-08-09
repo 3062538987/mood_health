@@ -6,6 +6,15 @@
 import request from '@/utils/request'
 
 /**
+ * AI 推理轨迹单步 —— 用于「AI 是怎么想的」可解释面板。
+ */
+export interface ReasoningStep {
+  phase: string
+  label: string
+  detail?: string | null
+}
+
+/**
  * 心理咨询请求接口
  */
 export interface CounselingRequest {
@@ -152,6 +161,8 @@ export interface SessionCounselingResponse {
   sources: KnowledgeSource[]
   groundingUsed: boolean
   requestId: string
+  reasoningSteps?: ReasoningStep[]
+  webSearchStatus?: 'not_requested' | 'not_needed' | 'used' | 'failed'
 }
 
 /**

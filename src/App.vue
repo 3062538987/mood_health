@@ -22,6 +22,9 @@
           <router-link to="/counseling" class="nav-assistant-link" active-class="active">
             <i class="fas fa-heart"></i> AI 心理助手
           </router-link>
+          <router-link to="/ai/knowledge-assistant" class="nav-knowledge-link" active-class="active">
+            <i class="fas fa-book-open"></i> 知识助手
+          </router-link>
           <router-link to="/user" active-class="active">
             <i class="fas fa-user"></i> 我的
           </router-link>
@@ -105,6 +108,10 @@
           <router-link to="/counseling" class="mobile-more-menu-item" role="menuitem" @click="closeMoreMenu()">
             <i class="fas fa-heart"></i>
             <span>AI 心理助手</span>
+          </router-link>
+          <router-link to="/ai/knowledge-assistant" class="mobile-more-menu-item" role="menuitem" @click="closeMoreMenu()">
+            <i class="fas fa-book-open"></i>
+            <span>知识助手</span>
           </router-link>
           <router-link
             v-if="userStore.isAdmin"
