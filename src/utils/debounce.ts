@@ -4,13 +4,13 @@
  * @param delay 延迟时间（毫秒）
  * @returns 防抖后的函数
  */
-export function debounce<T extends (...args: any[]) => any>(
-  fn: T,
+export function debounce<TArgs extends unknown[], TReturn>(
+  fn: (...args: TArgs) => TReturn,
   delay: number = 300
-): (...args: Parameters<T>) => void {
+): (...args: TArgs) => void {
   let timeoutId: ReturnType<typeof setTimeout> | null = null
 
-  return function (this: unknown, ...args: Parameters<T>) {
+  return function (this: unknown, ...args: TArgs) {
     if (timeoutId) {
       clearTimeout(timeoutId)
     }

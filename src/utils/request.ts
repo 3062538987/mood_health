@@ -1,39 +1,53 @@
 import axios, {
+  AxiosError,
   AxiosRequestConfig,
   AxiosResponse,
   InternalAxiosRequestConfig,
-  AxiosError,
 } from 'axios'
-import { ElMessage, ElLoading } from 'element-plus'
+import { ElLoading, ElMessage } from 'element-plus'
 import router from '@/router'
+import type { ApiRequestErrorOptions, ApiResponse } from '@/types/api'
 import { getApiBaseUrl } from '@/utils/apiBase'
 
-interface ErrorResponse {
-  message?: string
-  code?: number
+// 读取非 HttpOnly Cookie（用于 CSRF Token）
+const getCookie = (name: string): string | null => {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name.replace(/([.$?*|{}()\[\]\\\/+^])/g, '\\$1')}=([^;]*)`))
+  return match ? decodeURIComponent(match[1]) : null
 }
 
-interface AxiosErrorResponse {
-  response?: {
-    status?: number
-    data?: ErrorResponse
-  }
-  request?: unknown
-  message?: string
-}
+type ApiPayload<T = unknown> = Partial<ApiResponse<T>> & Record<string, unknown>
 
 type RequestConfigWithLoading = InternalAxiosRequestConfig & {
   _withLoading?: boolean
   showLoading?: boolean
 }
 
-// 全局loading计数器
+export class ApiRequestError extends Error {
+  readonly kind: ApiRequestErrorOptions['kind']
+  readonly code?: number
+  readonly status?: number
+  readonly data?: unknown
+  readonly cause?: unknown
+  readonly requestId?: string
+
+  constructor(options: ApiRequestErrorOptions) {
+    super(options.message)
+    this.name = 'ApiRequestError'
+    this.kind = options.kind
+    this.code = options.code
+    this.status = options.status
+    this.data = options.data
+    this.cause = options.cause
+    this.requestId = options.requestId
+  }
+}
+
 let loadingCount = 0
 let loadingInstance: ReturnType<typeof ElLoading.service> | null = null
 const apiBaseUrl = getApiBaseUrl()
 const apiBaseUsesApiPrefix = apiBaseUrl.endsWith('/api')
+let unauthorizedRedirectPending = false
 
-// 开启loading
 const startLoading = () => {
   if (loadingCount === 0) {
     loadingInstance = ElLoading.service({
@@ -45,31 +59,97 @@ const startLoading = () => {
   loadingCount++
 }
 
-// 关闭loading
 const endLoading = () => {
   if (loadingCount > 0) {
     loadingCount--
   }
-  if (loadingCount === 0 && loadingInstance) {
-    loadingInstance.close()
-    loadingInstance = null
+  if (loadingCount <= 0) {
+    loadingCount = 0
+    if (loadingInstance) {
+      loadingInstance.close()
+      loadingInstance = null
+    }
   }
 }
 
-// 创建 axios 实例
+const isApiPayload = (value: unknown): value is ApiPayload =>
+  typeof value === 'object' && value !== null
+
+const unwrapResponse = <T>(payload: unknown): T => {
+  if (!isApiPayload(payload) || payload.code === undefined) {
+    throw new ApiRequestError({
+      kind: 'business',
+      message: '响应缺少业务状态码',
+      data: payload,
+      requestId: isApiPayload(payload) ? (payload.requestId as string) : undefined,
+    })
+  }
+
+  if (Number(payload.code) === 0) {
+    return payload.data as T
+  }
+
+  throw new ApiRequestError({
+    kind: 'business',
+    code: typeof payload.code === 'number' ? payload.code : undefined,
+    message: typeof payload.message === 'string' ? payload.message : '请求失败',
+    data: payload.data,
+    requestId: typeof payload.requestId === 'string' ? payload.requestId : undefined,
+  })
+}
+
+const getSafeCurrentFullPath = () => {
+  const fullPath = router.currentRoute.value.fullPath
+  if (fullPath.startsWith('/') && !fullPath.startsWith('//')) {
+    return fullPath
+  }
+  return '/'
+}
+
+// 已知公开路由路径（用于 beforeEach 守卫期间 router.currentRoute 尚未更新时回退判断）
+const PUBLIC_PATH_PREFIXES = ['/guide', '/login', '/register']
+
+const handleUnauthorized = () => {
+  const currentRoute = router.currentRoute.value
+
+  // 公开页面或仅游客页面不需要重定向登录
+  if (currentRoute.meta.public || currentRoute.meta.guestOnly) {
+    unauthorizedRedirectPending = false
+    return false
+  }
+
+  // beforeEach 守卫期间 router.currentRoute 还是旧路由，回退到浏览器 URL 判断
+  const pathname = window.location.pathname
+  if (PUBLIC_PATH_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + '/'))) {
+    unauthorizedRedirectPending = false
+    return false
+  }
+
+  if (unauthorizedRedirectPending) {
+    return false
+  }
+
+  unauthorizedRedirectPending = true
+  void router.push({
+    path: '/login',
+    query: { redirect: getSafeCurrentFullPath() },
+  })
+  return true
+}
+
 const service = axios.create({
   baseURL: apiBaseUrl,
   timeout: 10000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 })
 
-// 请求拦截器
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const typedConfig = config as RequestConfigWithLoading
-    if (typedConfig.showLoading !== false) {
+    if (typedConfig.showLoading === true) {
       startLoading()
       typedConfig._withLoading = true
     }
@@ -78,42 +158,45 @@ service.interceptors.request.use(
       config.url = config.url.slice(4)
     }
 
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    const safeMethods = ['get', 'head', 'options']
+    if (!safeMethods.includes(config.method?.toLowerCase() || '')) {
+      const csrfToken = getCookie('csrf_token')
+      if (csrfToken) {
+        config.headers['x-csrf-token'] = csrfToken
+      }
     }
     return config
   },
   (error: unknown) => {
     endLoading()
-    ElMessage.error('请求发送失败')
-    return Promise.reject(error)
+    const requestError = new ApiRequestError({
+      kind: 'config',
+      message: '请求发送失败',
+      cause: error,
+    })
+    ElMessage.error(requestError.message)
+    return Promise.reject(requestError)
   }
 )
 
-// 响应拦截器
 service.interceptors.response.use(
   (response: AxiosResponse) => {
     const responseConfig = response.config as RequestConfigWithLoading
     if (responseConfig._withLoading) {
       endLoading()
     }
+    unauthorizedRedirectPending = false
 
-    const res = response.data
-
-    if (res.code === undefined) {
-      return res
-    }
-
-    if (res.code === 0 || res.code === 200) {
-      return res.data
-    } else {
-      const errorMessage = res.message || '请求失败'
-      ElMessage.error(errorMessage)
-      return Promise.reject(new Error(errorMessage))
+    try {
+      return unwrapResponse(response.data)
+    } catch (error) {
+      if (error instanceof ApiRequestError) {
+        ElMessage.error(error.message)
+      }
+      throw error
     }
   },
-  (error: AxiosError<ErrorResponse>) => {
+  (error: AxiosError<ApiPayload>) => {
     const errorConfig = error.config as RequestConfigWithLoading | undefined
     if (errorConfig?._withLoading) {
       endLoading()
@@ -121,42 +204,79 @@ service.interceptors.response.use(
 
     console.error('API Error:', error)
 
-    const axiosError = error as AxiosErrorResponse
-
-    if (axiosError.response) {
-      const status = axiosError.response.status
-      const errorMessage = axiosError.response.data?.message
+    if (error.response) {
+      const status = error.response.status
+      const responseData = error.response.data
+      const responseMessage =
+        typeof responseData?.message === 'string' ? responseData.message : undefined
+      const code = typeof responseData?.code === 'number' ? responseData.code : undefined
+      let message = responseMessage || `请求失败 (${status})`
+      let shouldShowMessage = true
 
       switch (status) {
         case 401:
-          ElMessage.error('登录已过期，请重新登录')
-          localStorage.removeItem('token')
-          router.push('/login')
+          message = '登录已过期，请重新登录'
+          shouldShowMessage = handleUnauthorized()
           break
         case 403:
-          ElMessage.error('没有权限访问该资源')
+          message = responseMessage || '没有权限访问该资源'
           break
         case 404:
-          ElMessage.error('请求的资源不存在')
+          message = responseMessage || '请求的资源不存在'
           break
         case 500:
-          ElMessage.error(errorMessage || '服务器内部错误')
+          message = responseMessage || '服务器内部错误'
           break
-        default:
-          ElMessage.error(errorMessage || `请求失败 (${status})`)
+        case 502:
+          message = responseMessage || '网关错误，服务可能正在重启'
+          break
+        case 503:
+          message = responseMessage || '服务暂时不可用，请稍后重试'
+          break
       }
-    } else if (axiosError.request) {
-      ElMessage.error('网络连接失败，请检查网络')
-    } else {
-      ElMessage.error('请求配置错误')
+
+      const requestError = new ApiRequestError({
+        kind: 'http',
+        status,
+        code,
+        message,
+        data: responseData?.data,
+        cause: error,
+        requestId: typeof responseData?.requestId === 'string' ? responseData.requestId : undefined,
+      })
+      if (shouldShowMessage) {
+        ElMessage.error(requestError.message)
+      }
+      return Promise.reject(requestError)
     }
 
-    return Promise.reject(error)
+    const requestError = new ApiRequestError({
+      kind: error.request ? 'network' : 'config',
+      message: error.request ? '网络连接失败，请检查网络' : '请求配置错误',
+      cause: error,
+    })
+    ElMessage.error(requestError.message)
+    return Promise.reject(requestError)
   }
 )
 
 const request = <T = unknown>(config: AxiosRequestConfig): Promise<T> => {
   return service.request(config) as Promise<T>
+}
+
+// ---- 错误契约辅助函数（供各 store / 组件统一提取错误信息） ----
+export const isApiRequestError = (error: unknown): error is ApiRequestError =>
+  error instanceof ApiRequestError
+
+export const getErrorMessage = (error: unknown, fallback = '请求失败'): string => {
+  if (error instanceof ApiRequestError) return error.message
+  if (error instanceof Error) return error.message
+  return fallback
+}
+
+export const getErrorStatus = (error: unknown): number | undefined => {
+  if (error instanceof ApiRequestError) return error.status
+  return undefined
 }
 
 export default request

@@ -54,8 +54,6 @@ export interface AdminMoodRecord {
   username: string
   moodType: string[]
   intensity: number
-  note: string
-  trigger: string
   createdAt: string
 }
 
@@ -87,7 +85,7 @@ export const getAdminUsers = async (): Promise<AdminUser[]> => {
 }
 
 export const updateAdminUserRole = async (userId: number, targetRole: UserRole) => {
-  return request<{ message?: string }>({
+  return request<null>({
     url: '/api/admin/users',
     method: 'put',
     data: {
@@ -98,7 +96,7 @@ export const updateAdminUserRole = async (userId: number, targetRole: UserRole) 
 }
 
 export const deleteAdminUser = async (id: number) => {
-  return request<{ message?: string }>({
+  return request<null>({
     url: `/api/admin/users/${id}`,
     method: 'delete',
   })

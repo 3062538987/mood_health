@@ -2,12 +2,14 @@ import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
 import logger from '../utils/logger'
-import { logOperation } from '../utils/operationLogger'
-import { UserRole, isValidUserRole } from '../models/userModel'
+import { apiFailure, businessCodeForHttpStatus } from '../utils/apiResponse'
+import { AccessRepository, createAccessRepository } from '../repositories/accessRepository'
+import { AuditRepository, createAuditRepository } from '../repositories/auditRepository'
 
 dotenv.config()
 
 export type PermissionCode =
+  | 'user.delete'
   | 'user.manage'
   | 'role.manage'
   | 'system.config'
@@ -30,6 +32,7 @@ export type PermissionCode =
   | 'post.create'
   | 'post.comment.create'
   | 'post.like'
+  | 'prompt.manage'
   | 'activity.join'
   | 'relax.record.manage'
   | 'achievement.read'
@@ -41,15 +44,110 @@ interface RolePermissionConfig {
   forbidden: readonly PermissionCode[]
 }
 
+export type UserRole = 'student' | 'counselor' | 'super_admin' | 'user' | 'admin'
+
+const USER_ROLES: readonly UserRole[] = ['student', 'counselor', 'super_admin', 'user', 'admin']
+
+export const isValidUserRole = (role: unknown): role is UserRole => {
+  return typeof role === 'string' && USER_ROLES.includes(role as UserRole)
+}
+
+let accessRepository: AccessRepository | undefined
+let auditRepository: AuditRepository | undefined
+
+const getAccessRepository = (): AccessRepository => {
+  accessRepository = accessRepository ?? createAccessRepository()
+  return accessRepository
+}
+
+const getAuditRepository = (): AuditRepository => {
+  auditRepository = auditRepository ?? createAuditRepository()
+  return auditRepository
+}
+
+/**
+ * 设置自定义 Repository（用于测试注入 mock）
+ */
+export const setAccessRepository = (repo: AccessRepository): void => {
+  accessRepository = repo
+}
+
+export const setAuditRepository = (repo: AuditRepository): void => {
+  auditRepository = repo
+}
+
+/**
+ * 重置 Repository 为默认值（测试清理用）
+ */
+export const resetAuthRepositories = (): void => {
+  accessRepository = undefined
+  auditRepository = undefined
+}
+
 /**
  * 角色-权限映射表
  * granted: 当前角色允许的权限
  * forbidden: 当前角色显式禁止的权限（命中直接 403）
  */
 export const rolePermissions: Record<UserRole, RolePermissionConfig> = {
+  student: {
+    granted: [
+      'auth.profile.read',
+      'mood.record.create',
+      'mood.record.read',
+      'mood.record.update',
+      'mood.record.delete',
+      'mood.advice.history.read',
+      'post.create',
+      'post.comment.create',
+      'post.like',
+      'activity.join',
+      'questionnaire.read',
+      'questionnaire.submit',
+      'relax.record.manage',
+      'achievement.read',
+    ],
+    forbidden: [
+      'post.audit',
+      'post.audit.pending.read',
+      'activity.manage',
+      'course.manage',
+      'music.manage',
+      'user.manage',
+      'role.manage',
+      'system.config',
+      'incident.fix',
+      'audit.record.view_all',
+      'feedback.handle',
+      'report.view',
+      'auth.register.role_assign',
+    ],
+  },
+  counselor: {
+    granted: [
+      'auth.profile.read',
+      'audit.record.view_all',
+      'report.view',
+      'feedback.handle',
+      'mood.record.read',
+      'questionnaire.submit',
+    ],
+    forbidden: [
+      'user.manage',
+      'role.manage',
+      'system.config',
+      'incident.fix',
+      'auth.register.role_assign',
+      'activity.manage',
+      'course.manage',
+      'music.manage',
+    ],
+  },
   super_admin: {
     granted: [
       'user.manage',
+      'user.delete',
+      'prompt.manage',
       'role.manage',
       'system.config',
       'incident.fix',
@@ -79,6 +177,7 @@ export const rolePermissions: Record<UserRole, RolePermissionConfig> = {
       'feedback.handle',
       'mood.record.read',
       'questionnaire.submit',
+      'user.manage',
       'auth.profile.read',
     ],
     forbidden: ['role.manage', 'system.config', 'incident.fix', 'auth.register.role_assign'],
@@ -130,12 +229,7 @@ export interface AuthRequest extends Request {
 }
 
 const sendAuthError = (req: Request, res: Response, statusCode: number, message: string) => {
-  return res.status(statusCode).json({
-    code: statusCode,
-    message,
-    path: req.originalUrl,
-    timestamp: new Date().toISOString(),
-  })
+  return res.status(statusCode).json(apiFailure(businessCodeForHttpStatus(statusCode), message))
 }
 
 const getClientIp = (req: Request): string => {
@@ -144,6 +238,27 @@ const getClientIp = (req: Request): string => {
     return forwarded.split(',')[0].trim()
   }
   return req.ip || '-'
+}
+
+const auditAccessDenied = async (
+  userId: number,
+  userRole: string,
+  permissionCode: string,
+  content: string,
+  ip: string
+): Promise<void> => {
+  await getAuditRepository().record({
+    actorUserId: userId,
+    actorRoleCode: userRole,
+    permissionCode,
+    action: 'ACCESS_DENIED',
+    targetType: null,
+    targetId: null,
+    result: 'failed',
+    summary: content,
+    ipAddress: ip,
+    requestId: null,
+  })
 }
 
 const getRoleFromToken = (role: unknown): UserRole => {
@@ -161,14 +276,25 @@ const getNormalizedRequestRole = (req: AuthRequest): UserRole => {
 
 export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
   const jwtSecret = process.env.JWT_SECRET
-  const authHeader = req.headers.authorization
-  if (!authHeader) {
-    return sendAuthError(req, res, 401, '未提供认证令牌')
+
+  // 安全: 优先从 HttpOnly Cookie 读取 Token，防止 XSS 窃取 (VUE-AUTH-001)
+  let token: string | undefined
+  const cookieToken = req.cookies?.auth_token
+  if (cookieToken) {
+    token = cookieToken
+  } else {
+    // 兼容旧的 Authorization Header 方式
+    const authHeader = req.headers.authorization
+    if (authHeader) {
+      const [scheme, headerToken] = authHeader.split(' ')
+      if (scheme === 'Bearer' && headerToken) {
+        token = headerToken
+      }
+    }
   }
 
-  const [scheme, token] = authHeader.split(' ')
-  if (scheme !== 'Bearer' || !token) {
-    return sendAuthError(req, res, 401, '令牌格式错误')
+  if (!token) {
+    return sendAuthError(req, res, 401, '未提供认证令牌')
   }
 
   if (!jwtSecret) {
@@ -205,14 +331,11 @@ export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction
       username: req.user.username,
       role: req.user.role,
     })
-    void logOperation(
+    void auditAccessDenied(
       req.user.userId,
       req.user.role,
       'post.audit',
-      'ACCESS_DENIED',
-      null,
       `requireAdmin 拒绝访问: ${req.originalUrl}`,
-      'failed',
       getClientIp(req)
     )
     return sendAuthError(req, res, 403, '需要管理员权限')
@@ -241,14 +364,11 @@ export const requireRole = (roles: string[]) => {
         role: req.user.role,
         requiredRoles: roles,
       })
-      void logOperation(
+      void auditAccessDenied(
         req.user.userId,
         req.user.role,
         'role.check',
-        'ACCESS_DENIED',
-        null,
         `角色校验失败: path=${req.originalUrl}, requiredRoles=${roles.join(',')}`,
-        'failed',
         getClientIp(req)
       )
       return sendAuthError(req, res, 403, '角色权限不足')
@@ -264,49 +384,26 @@ export const requireRole = (roles: string[]) => {
  * @returns {Function} Express 中间件
  */
 export const requirePermission = (permission: string) => {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
+  return async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       return sendAuthError(req, res, 401, '未登录')
     }
 
     const userRole = getNormalizedRequestRole(req)
-    const permissionConfig = rolePermissions[userRole]
+    const granted = await getAccessRepository().hasPermission(userRole, permission)
 
-    if (permissionConfig.forbidden.includes(permission as PermissionCode)) {
-      logger.warn('命中禁止权限', {
-        path: req.originalUrl,
-        username: req.user.username,
-        role: userRole,
-        permission,
-      })
-      void logOperation(
-        req.user.userId,
-        userRole,
-        permission,
-        'ACCESS_DENIED',
-        null,
-        `命中禁止权限: ${req.originalUrl}`,
-        'failed',
-        getClientIp(req)
-      )
-      return sendAuthError(req, res, 403, '权限不足：该操作被禁止')
-    }
-
-    if (!permissionConfig.granted.includes(permission as PermissionCode)) {
+    if (!granted) {
       logger.warn('权限校验失败', {
         path: req.originalUrl,
         username: req.user.username,
         role: userRole,
         permission,
       })
-      void logOperation(
+      await auditAccessDenied(
         req.user.userId,
         userRole,
         permission,
-        'ACCESS_DENIED',
-        null,
         `权限校验失败: ${req.originalUrl}`,
-        'failed',
         getClientIp(req)
       )
       return sendAuthError(req, res, 403, '权限不足')

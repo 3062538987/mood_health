@@ -1,0 +1,48 @@
+{
+  "success": true,
+  "skillProvenance": {
+    "name": "solo-design",
+    "version": null,
+    "version_source": "unknown",
+    "runtime_skill_dir": null,
+    "recorded_at": null,
+    "read_status": "missing",
+    "reason": "orchestration-summary.json missing skillProvenance"
+  },
+  "operatingMode": "free-explore",
+  "renderBlockingErrorCount": 0,
+  "softWarningCount": 10,
+  "renderBlockingErrors": [],
+  "softWarnings": [
+    "[orchestration-summary] orchestration-summary.json is missing. Canvas validation can still pass, but quality-context checks (operatingMode, visualNorthStar, compositionPattern, continuityAnchors, miniProgramStyle) are degraded.",
+    "[html-quality] colors_and_type.css: free-explore brand CSS must use one primary hue only; forbidden secondary/accent brand variables found (--color-secondary, --color-accent). Use --state-success/warning/error/info only for semantic states.",
+    "[html-quality] 01-overall-business-flow.html: hardcoded colors are forbidden outside <style id=\"theme-vars\">. Use brand CSS variables from the token reference.",
+    "[html-quality] 01-overall-business-flow.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
+    "[html-quality] 02-mood-record-flow.html: hardcoded colors are forbidden outside <style id=\"theme-vars\">. Use brand CSS variables from the token reference.",
+    "[html-quality] 02-mood-record-flow.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
+    "[html-quality] 03-assessment-case-flow.html: hardcoded colors are forbidden outside <style id=\"theme-vars\">. Use brand CSS variables from the token reference.",
+    "[html-quality] 03-assessment-case-flow.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
+    "[html-quality] 04-ai-auth-logic-flow.html: hardcoded colors are forbidden outside <style id=\"theme-vars\">. Use brand CSS variables from the token reference.",
+    "[html-quality] 04-ai-auth-logic-flow.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states."
+  ],
+  "repairPlanHints": [],
+  "errorCount": 0,
+  "warningCount": 10,
+  "errors": [],
+  "warnings": [
+    "[orchestration-summary] orchestration-summary.json is missing. Canvas validation can still pass, but quality-context checks (operatingMode, visualNorthStar, compositionPattern, continuityAnchors, miniProgramStyle) are degraded.",
+    "[html-quality] colors_and_type.css: free-explore brand CSS must use one primary hue only; forbidden secondary/accent brand variables found (--color-secondary, --color-accent). Use --state-success/warning/error/info only for semantic states.",
+    "[html-quality] 01-overall-business-flow.html: hardcoded colors are forbidden outside <style id=\"theme-vars\">. Use brand CSS variables from the token reference.",
+    "[html-quality] 01-overall-business-flow.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
+    "[html-quality] 02-mood-record-flow.html: hardcoded colors are forbidden outside <style id=\"theme-vars\">. Use brand CSS variables from the token reference.",
+    "[html-quality] 02-mood-record-flow.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
+    "[html-quality] 03-assessment-case-flow.html: hardcoded colors are forbidden outside <style id=\"theme-vars\">. Use brand CSS variables from the token reference.",
+    "[html-quality] 03-assessment-case-flow.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
+    "[html-quality] 04-ai-auth-logic-flow.html: hardcoded colors are forbidden outside <style id=\"theme-vars\">. Use brand CSS variables from the token reference.",
+    "[html-quality] 04-ai-auth-logic-flow.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states."
+  ],
+  "designDir": "d:\\桌面\\ccooddee\\business-flowcharts.design",
+  "expectedPages": 4,
+  "requireInteractions": null,
+  "checkedAt": "2026-07-18T15:26:38.666Z"
+}

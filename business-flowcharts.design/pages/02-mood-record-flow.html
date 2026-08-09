@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情绪记录与分析业务流程图</title>
+    <style id="theme-vars">
+:root {
+  --color-primary: #4F46E5;
+  --color-primary-light: #EEF2FF;
+  --color-primary-dark: #4338CA;
+  --color-secondary: #0EA5E9;
+  --color-accent: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-background: #F8FAFC;
+  --color-foreground: #111827;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #111827;
+  --color-muted: #6B7280;
+  --color-muted-foreground: #6B7280;
+  --color-border: #E5E7EB;
+  --color-ring: #4F46E5;
+  --color-radius-sm: 6px;
+  --color-radius-md: 8px;
+  --color-radius-lg: 12px;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--color-background);
+    --color-foreground: var(--color-foreground);
+    --color-card: var(--color-card);
+    --color-card-foreground: var(--color-card-foreground);
+    --color-primary: var(--color-primary);
+    --color-secondary: var(--color-secondary);
+    --color-muted: var(--color-muted);
+    --color-muted-foreground: var(--color-muted-foreground);
+    --color-accent: var(--color-accent);
+    --color-border: var(--color-border);
+    --color-ring: var(--color-ring);
+    --radius-sm: var(--color-radius-sm);
+    --radius-md: var(--color-radius-md);
+    --radius-lg: var(--color-radius-lg);
+  }
+  @layer base {
+    body { background: var(--color-background); color: var(--color-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--color-background); }
+      .text-background { color: var(--color-background); }
+      .border-background { border-color: var(--color-background); }
+      .ring-background { --tw-ring-color: var(--color-background); }
+      .bg-foreground { background-color: var(--color-foreground); }
+      .text-foreground { color: var(--color-foreground); }
+      .border-foreground { border-color: var(--color-foreground); }
+      .ring-foreground { --tw-ring-color: var(--color-foreground); }
+      .bg-card { background-color: var(--color-card); }
+      .text-card { color: var(--color-card); }
+      .border-card { border-color: var(--color-card); }
+      .ring-card { --tw-ring-color: var(--color-card); }
+      .bg-card-foreground { background-color: var(--color-card-foreground); }
+      .text-card-foreground { color: var(--color-card-foreground); }
+      .border-card-foreground { border-color: var(--color-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--color-card-foreground); }
+      .bg-primary { background-color: var(--color-primary); }
+      .text-primary { color: var(--color-primary); }
+      .border-primary { border-color: var(--color-primary); }
+      .ring-primary { --tw-ring-color: var(--color-primary); }
+      .bg-secondary { background-color: var(--color-secondary); }
+      .text-secondary { color: var(--color-secondary); }
+      .border-secondary { border-color: var(--color-secondary); }
+      .ring-secondary { --tw-ring-color: var(--color-secondary); }
+      .bg-muted { background-color: var(--color-muted); }
+      .text-muted { color: var(--color-muted); }
+      .border-muted { border-color: var(--color-muted); }
+      .ring-muted { --tw-ring-color: var(--color-muted); }
+      .bg-muted-foreground { background-color: var(--color-muted-foreground); }
+      .text-muted-foreground { color: var(--color-muted-foreground); }
+      .border-muted-foreground { border-color: var(--color-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--color-muted-foreground); }
+      .bg-accent { background-color: var(--color-accent); }
+      .text-accent { color: var(--color-accent); }
+      .border-accent { border-color: var(--color-accent); }
+      .ring-accent { --tw-ring-color: var(--color-accent); }
+      .bg-border { background-color: var(--color-border); }
+      .text-border { color: var(--color-border); }
+      .border-border { border-color: var(--color-border); }
+      .ring-border { --tw-ring-color: var(--color-border); }
+      .bg-ring { background-color: var(--color-ring); }
+      .text-ring { color: var(--color-ring); }
+      .border-ring { border-color: var(--color-ring); }
+      .ring-ring { --tw-ring-color: var(--color-ring); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body>
+  <div class="page-container">
+    <header class="page-header">
+      <h1 class="page-title">情绪记录与分析业务流程图</h1>
+      <p class="page-subtitle">核心业务模块 · 情绪数据全生命周期</p>
+    </header>
+
+    <!-- Section 1: 情绪记录提交流程 -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-badge badge-sky">01</div>
+        <div class="section-title-group">
+          <h2 class="section-title">情绪记录提交流程</h2>
+          <p class="section-desc">用户从进入记录页到提交成功并触发AI分析的完整链路</p>
+        </div>
+      </div>
+      <div class="flowchart-container">
+        <pre class="mermaid">
+flowchart TD
+    A([用户进入情绪记录页]):::start --> B[选择情绪类型]:::process
+
+    subgraph 情绪类型选择["情绪类型分类"]
+      direction LR
+      B --> B1[正向情绪<br/>开心/满足/平静/期待]:::input
+      B --> B2[负向情绪<br/>焦虑/难过/愤怒/孤独]:::input
+      B --> B3[中性情绪<br/>平静/无聊/疲惫]:::input
+    end
+
+    B1 --> C[设置情绪强度 1-10]:::process
+    B2 --> C
+    B3 --> C
+
+    C --> D[选择主要情绪<br/>最多1个]:::process
+    D --> E[添加标签]:::process
+
+    subgraph 标签体系["标签来源"]
+      direction LR
+      E --> E1[系统标签<br/>学业/人际/家庭/健康]:::input
+      E --> E2[自定义标签<br/>用户自由输入]:::input
+    end
+
+    E1 --> F[填写事件描述<br/>可选]:::process
+    E2 --> F
+    F --> G[填写触发原因<br/>可选]:::process
+
+    G --> H{确认提交?}:::decision
+    H -->|否| I[返回编辑]:::process
+    I --> B
+    H -->|是| J[提交记录请求]:::output
+
+    subgraph 服务端处理["服务端处理流程"]
+      direction TB
+      J --> K[服务端参数校验]:::decision
+      K -->|校验失败| L[返回错误信息]:::output
+      K -->|校验通过| M[AES加密敏感字段<br/>事件描述/触发原因]:::process
+      M --> N[写入情绪主表 moods]:::database
+      N --> O[写入情绪关联表<br/>mood_emotions / mood_tags]:::database
+      O --> P[生成记录ID]:::process
+    end
+
+    L --> Q([返回结果]):::end
+    P --> Q
+    P --> R[触发AI分析任务<br/>异步队列]:::process
+    R --> S[AI服务消费任务]:::database
+    S --> T[生成AI洞察结果]:::process
+
+    classDef start fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#fff,font-weight:600
+    classDef end fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#fff,font-weight:600
+    classDef process fill:#e0f2fe,stroke:#0ea5e9,stroke-width:1.5px,color:#0c4a6e
+    classDef decision fill:#ccfbf1,stroke:#14b8a6,stroke-width:1.5px,color:#115e59
+    classDef input fill:#fef3c7,stroke:#f59e0b,stroke-width:1.5px,color:#78350f
+    classDef output fill:#fef3c7,stroke:#f59e0b,stroke-width:1.5px,color:#78350f
+    classDef database fill:#e0e7ff,stroke:#6366f1,stroke-width:1.5px,color:#3730a3
+
+    style 情绪类型选择 fill:#f0f9ff,stroke:#7dd3fc,stroke-width:1px,color:#0369a1
+    style 标签体系 fill:#fffbeb,stroke:#fcd34d,stroke-width:1px,color:#b45309
+    style 服务端处理 fill:#f0fdfa,stroke:#5eead4,stroke-width:1px,color:#0f766e
+        </pre>
+      </div>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-shape legend-rect"></div>
+          <span>流程步骤</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-shape legend-diamond"></div>
+          <span>判断节点</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-shape legend-parallelogram"></div>
+          <span>输入/输出</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-shape legend-cylinder"></div>
+          <span>数据存储</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: 情绪数据分析流程 -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-badge badge-teal">02</div>
+        <div class="section-title-group">
+          <h2 class="section-title">情绪数据分析流程</h2>
+          <p class="section-desc">从用户请求分析报告到返回结构化分析结果的完整计算流程</p>
+        </div>
+      </div>
+      <div class="flowchart-container">
+        <pre class="mermaid">
+flowchart TD
+    A([用户请求分析报告]):::start --> B[选择时间周期]:::input
+
+    subgraph 周期选择["报告周期"]
+      direction LR
+      B --> B1[周报<br/>近7天]:::input
+      B --> B2[月报<br/>近30天]:::input
+      B --> B3[季报<br/>近90天]:::input
+    end
+
+    B1 --> C[查询时间范围内<br/>的情绪记录]:::database
+    B2 --> C
+    B3 --> C
+
+    C --> D{记录是否充足?}:::decision
+    D -->|记录不足 3条| E[返回数据不足提示]:::output
+    D -->|记录充足| F[数据聚合计算]:::process
+
+    subgraph 聚合计算["聚合计算维度"]
+      direction TB
+      F --> F1[平均强度计算<br/>加权平均情绪强度值]:::calc
+      F --> F2[情绪极性分布<br/>正向/负向/中性占比]:::calc
+      F --> F3[主导情绪识别<br/>出现频率最高的情绪]:::calc
+      F --> F4[情绪趋势判断<br/>改善 / 下降 / 稳定]:::calc
+      F --> F5[连续低落天数统计<br/>最长连续负向情绪天数]:::calc
+      F --> F6[触发因素统计<br/>高频标签与关联场景]:::calc
+    end
+
+    F1 --> G[生成健康建议]:::process
+    F2 --> G
+    F3 --> G
+    F4 --> G
+    F5 --> G
+    F6 --> G
+
+    subgraph 规则引擎["规则引擎匹配"]
+      direction LR
+      G --> G1[高风险预警<br/>连续低落 &gt; 7天]:::warn
+      G --> G2[正向鼓励<br/>情绪持续改善]:::success
+      G --> G3[针对性建议<br/>基于触发因素]:::info
+    end
+
+    G1 --> H[返回分析结果]:::output
+    G2 --> H
+    G3 --> H
+    E --> I([结束]):::end
+    H --> I
+
+    classDef start fill:#14b8a6,stroke:#0d9488,stroke-width:2px,color:#fff,font-weight:600
+    classDef end fill:#14b8a6,stroke:#0d9488,stroke-width:2px,color:#fff,font-weight:600
+    classDef process fill:#ccfbf1,stroke:#14b8a6,stroke-width:1.5px,color:#115e59
+    classDef decision fill:#fef3c7,stroke:#f59e0b,stroke-width:1.5px,color:#78350f
+    classDef input fill:#e0f2fe,stroke:#0ea5e9,stroke-width:1.5px,color:#0c4a6e
+    classDef output fill:#e0f2fe,stroke:#0ea5e9,stroke-width:1.5px,color:#0c4a6e
+    classDef database fill:#e0e7ff,stroke:#6366f1,stroke-width:1.5px,color:#3730a3
+    classDef calc fill:#f1f5f9,stroke:#64748b,stroke-width:1.5px,color:#334155
+    classDef warn fill:#fee2e2,stroke:#ef4444,stroke-width:1.5px,color:#991b1b
+    classDef success fill:#dcfce7,stroke:#22c55e,stroke-width:1.5px,color:#166534
+    classDef info fill:#dbeafe,stroke:#3b82f6,stroke-width:1.5px,color:#1e40af
+
+    style 周期选择 fill:#f0f9ff,stroke:#7dd3fc,stroke-width:1px,color:#0369a1
+    style 聚合计算 fill:#f8fafc,stroke:#cbd5e1,stroke-width:1px,color:#475569
+    style 规则引擎 fill:#fdf4ff,stroke:#e9d5ff,stroke-width:1px,color:#7e22ce
+        </pre>
+      </div>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-shape" style="background:#ccfbf1;border-color:#14b8a6;"></div>
+          <span>核心流程</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-shape legend-diamond" style="background:#fef3c7;border-color:#f59e0b;"></div>
+          <span>条件判断</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-shape" style="background:#f1f5f9;border-color:#64748b;"></div>
+          <span>计算维度</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-shape" style="background:#fee2e2;border-color:#ef4444;"></div>
+          <span>预警规则</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-shape" style="background:#e0e7ff;border-color:#6366f1;border-radius:50%/20%;"></div>
+          <span>数据查询</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: 情绪洞察数据处理流程 -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-badge badge-amber">03</div>
+        <div class="section-title-group">
+          <h2 class="section-title">情绪洞察数据处理流程</h2>
+          <p class="section-desc">单次聚合算法：一次SQL查询 + 单遍遍历计算多维洞察数据</p>
+        </div>
+      </div>
+      <div class="flowchart-container">
+        <pre class="mermaid">
+flowchart TD
+    A([接收洞察数据请求]):::start --> B[构建SQL查询]:::process
+
+    B --> C[一次SQL查询<br/>获取时间范围内<br/>所有情绪记录行]:::database
+
+    C --> D{数据行数 &gt; 0?}:::decision
+    D -->|否| E[返回空数据集<br/>默认零值结构]:::output
+    D -->|是| F[单遍遍历数据行]:::process
+
+    subgraph 单次遍历计算["单次遍历 · 并行计算 5 大维度"]
+      direction TB
+      F --> G1[概览统计<br/>总记录数 / 平均强度 /<br/>记录天数 / 连续记录天数]:::dim1
+      F --> G2[情绪分布<br/>各情绪类型计数 /<br/>频率排序 / 主导情绪]:::dim2
+      F --> G3[每日趋势<br/>按日聚合强度 /<br/>极性比例 / 时间序列]:::dim3
+      F --> G4[极性比例<br/>正向/负向/中性<br/>占比与数量]:::dim4
+      F --> G5[周期对比<br/>环比上一周期<br/>强度变化 / 极性变化]:::dim5
+    end
+
+    G1 --> H[组装结构化数据]:::process
+    G2 --> H
+    G3 --> H
+    G4 --> H
+    G5 --> H
+
+    subgraph 输出结构["洞察数据结构"]
+      direction LR
+      H --> H1[overview<br/>概览指标]:::struct
+      H --> H2[emotions<br/>情绪分布]:::struct
+      H --> H3[trend<br/>趋势数据]:::struct
+      H --> H4[polarity<br/>极性比例]:::struct
+      H --> H5[comparison<br/>周期对比]:::struct
+    end
+
+    H1 --> I[返回JSON响应]:::output
+    H2 --> I
+    H3 --> I
+    H4 --> I
+    H5 --> I
+    E --> J([完成]):::end
+    I --> J
+
+    classDef start fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff,font-weight:600
+    classDef end fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff,font-weight:600
+    classDef process fill:#fef3c7,stroke:#f59e0b,stroke-width:1.5px,color:#78350f
+    classDef decision fill:#ccfbf1,stroke:#14b8a6,stroke-width:1.5px,color:#115e59
+    classDef database fill:#e0e7ff,stroke:#6366f1,stroke-width:1.5px,color:#3730a3
+    classDef output fill:#e0f2fe,stroke:#0ea5e9,stroke-width:1.5px,color:#0c4a6e
+    classDef dim1 fill:#e0f2fe,stroke:#0ea5e9,stroke-width:1.5px,color:#0c4a6e
+    classDef dim2 fill:#ccfbf1,stroke:#14b8a6,stroke-width:1.5px,color:#115e59
+    classDef dim3 fill:#fef3c7,stroke:#f59e0b,stroke-width:1.5px,color:#78350f
+    classDef dim4 fill:#fce7f3,stroke:#ec4899,stroke-width:1.5px,color:#9d174d
+    classDef dim5 fill:#ede9fe,stroke:#8b5cf6,stroke-width:1.5px,color:#5b21b6
+    classDef struct fill:#f1f5f9,stroke:#64748b,stroke-width:1.5px,color:#334155,stroke-dasharray:4 2
+
+    style 单次遍历计算 fill:#fffbeb,stroke:#fcd34d,stroke-width:1px,color:#b45309
+    style 输出结构 fill:#f8fafc,stroke:#cbd5e1,stroke-width:1px,color:#475569
+        </pre>
+      </div>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-shape" style="background:#fef3c7;border-color:#f59e0b;"></div>
+          <span>处理步骤</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-shape legend-diamond" style="background:#ccfbf1;border-color:#14b8a6;"></div>
+          <span>条件判断</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-shape" style="background:#e0f2fe;border-color:#0ea5e9;"></div>
+          <span>计算维度</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-shape" style="background:#e0e7ff;border-color:#6366f1;border-radius:50%/20%;"></div>
+          <span>数据库查询</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-shape" style="background:#f1f5f9;border-color:#64748b;border-style:dashed;"></div>
+          <span>输出数据结构</span>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>大学生心理健康平台 · 情绪记录与分析模块 · 业务流程图</p>
+    </footer>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "base",
+      themeVariables: {
+        primaryColor: "#e0f2fe",
+        primaryTextColor: "#0c4a6e",
+        primaryBorderColor: "#0ea5e9",
+        lineColor: "#64748b",
+        secondaryColor: "#ccfbf1",
+        tertiaryColor: "#fef3c7",
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif',
+        fontSize: "13px",
+      },
+      flowchart: {
+        curve: "basis",
+        padding: 20,
+        nodeSpacing: 40,
+        rankSpacing: 50,
+        useMaxWidth: true,
+        htmlLabels: true,
+      },
+    });
+  </script>
+
+    <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      line-height: 1.6;
+    }
+
+    .page-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 48px 32px 64px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .page-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .page-subtitle {
+      font-size: 16px;
+      color: #64748b;
+      font-weight: 400;
+    }
+
+    .section {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+      padding: 32px;
+      margin-bottom: 32px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .section-header {
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      color: #ffffff;
+      flex-shrink: 0;
+    }
+
+    .badge-sky {
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    }
+
+    .badge-teal {
+      background: linear-gradient(135deg, #14b8a6, #0d9488);
+    }
+
+    .badge-amber {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .section-desc {
+      font-size: 14px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    .section-title-group {
+      flex: 1;
+    }
+
+    .flowchart-container {
+      width: 100%;
+      overflow-x: auto;
+      padding: 16px 0;
+    }
+
+    .flowchart-container svg {
+      max-width: 100%;
+      height: auto !important;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px dashed #e2e8f0;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #475569;
+    }
+
+    .legend-shape {
+      width: 28px;
+      height: 18px;
+      border: 1.5px solid;
+      border-radius: 3px;
+    }
+
+    .legend-rect {
+      background: #e0f2fe;
+      border-color: #0ea5e9;
+    }
+
+    .legend-diamond {
+      background: #ccfbf1;
+      border-color: #14b8a6;
+      transform: rotate(45deg);
+      width: 16px;
+      height: 16px;
+      border-radius: 2px;
+    }
+
+    .legend-parallelogram {
+      background: #fef3c7;
+      border-color: #f59e0b;
+      transform: skewX(-15deg);
+    }
+
+    .legend-cylinder {
+      background: #e0e7ff;
+      border-color: #6366f1;
+      border-radius: 50% / 20%;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+  </style>
+</body>
+</html>

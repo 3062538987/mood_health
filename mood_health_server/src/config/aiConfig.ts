@@ -12,23 +12,24 @@ export enum AiModelType {
 
 // AI配置接口
 export interface AiConfig {
-  modelType: AiModelType;
-  apiBaseUrl: string;
-  apiKey: string;
-  timeout: number;
-  maxRetries: number;
-  cacheTTL: number;
-  enableCache: boolean;
-  enableRateLimit: boolean;
+  enabled: boolean
+  modelType: AiModelType
+  apiBaseUrl: string
+  apiKey: string
+  timeout: number
+  maxRetries: number
+  cacheTTL: number
+  enableCache: boolean
+  enableRateLimit: boolean
   rateLimit: {
-    maxRequests: number;
-    windowMs: number;
-  };
+    maxRequests: number
+    windowMs: number
+  }
   models: {
-    moodAnalysis: string;
-    contentAudit: string;
-    recommendation: string;
-  };
+    moodAnalysis: string
+    contentAudit: string
+    recommendation: string
+  }
 }
 
 // 环境变量获取函数
@@ -48,8 +49,9 @@ const getEnvBoolean = (key: string, defaultValue: boolean): boolean => {
 
 // AI配置
 const aiConfig: AiConfig = {
+  enabled: getEnvBoolean('AI_ENABLED', false),
   modelType: (getEnv('AI_MODEL_TYPE', 'local') as AiModelType) || AiModelType.LOCAL,
-  apiBaseUrl: getEnv('AI_API_BASE_URL', 'http://localhost:8000/api'),
+  apiBaseUrl: getEnv('AI_API_BASE_URL', 'http://localhost:8001/api'),  // N2/T5：默认 8001
   apiKey: getEnv('AI_API_KEY', ''),
   timeout: getEnvNumber('AI_TIMEOUT', 30000),
   maxRetries: getEnvNumber('AI_MAX_RETRIES', 3),
@@ -61,9 +63,9 @@ const aiConfig: AiConfig = {
     windowMs: getEnvNumber('AI_RATE_LIMIT_WINDOW_MS', 60000) // 1分钟
   },
   models: {
-    moodAnalysis: getEnv('AI_MODEL_MOOD_ANALYSIS', 'gpt-4o-mini'),
-    contentAudit: getEnv('AI_MODEL_CONTENT_AUDIT', 'gpt-4o-mini'),
-    recommendation: getEnv('AI_MODEL_RECOMMENDATION', 'gpt-4o-mini')
+    moodAnalysis: getEnv('AI_MODEL_MOOD_ANALYSIS', 'deepseek-chat'),
+    contentAudit: getEnv('AI_MODEL_CONTENT_AUDIT', 'deepseek-chat'),
+    recommendation: getEnv('AI_MODEL_RECOMMENDATION', 'deepseek-chat')
   }
 };
 

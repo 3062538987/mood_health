@@ -39,12 +39,12 @@
     <!-- 加载状态 -->
     <div v-if="loading" class="loading">
       <div class="loading-spinner"></div>
-      <p>加载中...</p>
+      <p>正在整理课程列表...</p>
     </div>
 
     <!-- 空状态 -->
     <div v-if="!loading && courses.length === 0" class="empty-state">
-      <p>暂无课程</p>
+      <p>还没有课程</p>
     </div>
   </div>
 </template>
@@ -52,13 +52,24 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { buildApiUrl } from '@/utils/apiBase'
+import request from '@/utils/request'
+
+interface Course {
+  id: number
+  title: string
+  description?: string
+  coverUrl?: string
+  category?: string
+  studyCount?: number
+  content?: string
+  type?: string
+}
 
 const router = useRouter()
 
 const categories = ['全部', '心理知识', '情绪调节', '人际交往']
 const activeCategory = ref('全部')
-const courses = ref<any[]>([])
+const courses = ref<Course[]>([])
 const loading = ref(true)
 
 const setActiveCategory = (category: string) => {
@@ -70,11 +81,10 @@ const fetchCourses = async () => {
   loading.value = true
   try {
     const category = activeCategory.value === '全部' ? '' : activeCategory.value
-    const response = await fetch(
-      buildApiUrl(`/api/courses?category=${encodeURIComponent(category)}`)
-    )
-    const data = await response.json()
-    courses.value = data
+    courses.value = await request<Course[]>({
+      url: `/api/courses?category=${encodeURIComponent(category)}`,
+      method: 'GET',
+    })
   } catch (error) {
     console.error('Error fetching courses:', error)
   } finally {

@@ -13,12 +13,4 @@ router.get(
   getOperationLogsHandler
 )
 
-router.get(
-  '/all',
-  authenticate,
-  requireRole(['super_admin']),
-  requirePermission('audit.record.view_all'),
-  getOperationLogsHandler
-)
-
 export default router

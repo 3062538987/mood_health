@@ -1,13 +1,29 @@
 <template>
-  <div class="mood-record-page">
+  <div v-if="pageLoading" class="loading-wrapper">
+    <SoftLoadingState
+      :title="messages.loading.moodRecord.title"
+      :description="messages.loading.moodRecord.description"
+      variant="panel"
+      :item-count="5"
+    />
+  </div>
+  <div v-else-if="pageError" class="error-state">
+    <div class="error-icon">
+      <i class="fas fa-exclamation-circle"></i>
+    </div>
+    <h3>{{ messages.error.server.title }}</h3>
+    <p>{{ messages.error.server.description }}</p>
+    <button type="button" class="error-retry" @click="loadPageData">{{ messages.error.server.action }}</button>
+  </div>
+  <div v-else class="mood-record-page">
     <div class="page-shell">
       <section class="hero-panel">
         <div>
           <p class="eyebrow">Mood Record</p>
           <h1>把今天的情绪，温柔但清楚地记下来</h1>
           <p class="hero-copy">
-            先记录情绪，再决定要不要解决它。这里会帮你把感受、触发因素和智能
-            建议整理成一条更顺滑的路径。
+            先记录情绪，再决定要不要解决它。这里会帮你把感受、触发因素和个人
+            记录整理成一条更清楚的路径。
           </p>
         </div>
 
@@ -137,7 +153,7 @@
             <textarea
               v-model="moodContent"
               rows="6"
-              placeholder="可以从一件小事开始：今天什么时候开始觉得不舒服，或哪一刻突然轻松了？"
+              placeholder="从一件小事开始：今天什么时候开始觉得不舒服？"
             ></textarea>
           </section>
 
@@ -194,29 +210,56 @@
               <small>如果中途离开，这段内容会在 24 小时内等你回来。</small>
             </div>
 
+            <div v-if="showSuccessMessage" class="success-banner">
+              <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+              </div>
+              <div class="success-content">
+                <strong>{{ messages.success.moodRecord.title }}</strong>
+                <p>{{ messages.success.moodRecord.description }}</p>
+              </div>
+              <router-link to="/mood/analysis" class="success-action">{{ messages.success.moodRecord.action }}</router-link>
+            </div>
+
             <div class="action-row">
               <button
                 type="button"
                 class="submit-action"
-                :class="{ success: isSubmittingSuccess }"
+                :class="{
+                  success: isSubmittingSuccess,
+                  loading: isSubmitting,
+                }"
                 :disabled="!canSubmit"
                 @click="handleSubmit"
               >
+                <span v-if="isSubmitting" class="submit-spinner"></span>
                 {{ isSubmitting ? '正在提交...' : '保存这次情绪记录' }}
               </button>
             </div>
           </section>
         </main>
+
+        <aside class="insight-column">
+          <MoodAlert />
+          <MoodComparison />
+        </aside>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { EMOTION_MAP } from '@/constants/emotions'
+import { messages } from '@/constants/messages'
 import { useMoodRecordStore } from '@/stores/moodRecordStore'
+import MoodComparison from '@/components/mood/MoodComparison.vue'
+import MoodAlert from '@/components/mood/MoodAlert.vue'
+import SoftLoadingState from '@/components/shared/SoftLoadingState.vue'
+
+const pageLoading = ref(true)
+const pageError = ref(false)
 
 const store = useMoodRecordStore()
 
@@ -229,6 +272,7 @@ const {
   hasDraft,
   isSubmitting,
   isSubmittingSuccess,
+  canSubmit,
   filteredTriggerSuggestions,
   characterCount,
   formProgress,
@@ -311,8 +355,6 @@ const selectedMoodLabelText = computed(() => {
   return selectedMoodTypeIds.value.map((id) => getMoodLabel(id)).join('、')
 })
 
-const canSubmit = computed(() => !isSubmitting.value)
-
 const getMoodLabel = (moodId: string) => {
   return EMOTION_MAP[moodId] || moodId
 }
@@ -353,21 +395,95 @@ const isMoodDisabled = (moodId: string) => {
   return selectedMoodTypeIds.value.length >= 3 && !selectedMoodTypeIds.value.includes(moodId)
 }
 
+const showSuccessMessage = ref(false)
+
 const handleSubmit = async () => {
-  console.log('点击了保存按钮')
   await store.submitRecord()
+  if (store.isSubmittingSuccess) {
+    showSuccessMessage.value = true
+    setTimeout(() => {
+      showSuccessMessage.value = false
+    }, 10000)
+  }
+}
+
+const loadPageData = async () => {
+  pageLoading.value = true
+  pageError.value = false
+  try {
+    await store.initializePage()
+  } catch {
+    pageError.value = true
+  } finally {
+    pageLoading.value = false
+  }
 }
 
 onMounted(() => {
-  store.initializePage()
+  loadPageData()
 })
 </script>
 
 <style scoped lang="scss">
+.loading-wrapper {
+  min-height: 100%;
+  padding: 36px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 80px;
+}
+
+.error-state {
+  text-align: center;
+  padding: 64px 20px;
+}
+
+.error-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(224, 85, 106, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  font-size: 28px;
+  color: #e0556a;
+}
+
+.error-state h3 {
+  font-size: 18px;
+  color: #334155;
+  margin: 0 0 8px;
+}
+
+.error-state p {
+  font-size: 14px;
+  color: #94a3b8;
+  margin: 0 0 20px;
+}
+
+.error-retry {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: #8b5cf6;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.error-retry:hover {
+  background: #7c3aed;
+}
+
 .mood-record-page {
   min-height: 100%;
   padding: 36px;
-  background: #fdf8f2;
+  background: var(--bg-color);
 }
 
 .page-shell {
@@ -380,9 +496,9 @@ onMounted(() => {
 .hero-panel,
 .panel {
   border-radius: 22px;
-  border: 1px solid #eee5d8;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border-color);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .hero-panel {
@@ -394,7 +510,7 @@ onMounted(() => {
 
 .eyebrow {
   margin: 0 0 0.45rem;
-  color: #9c8f7d;
+  color: var(--muted);
   font-size: 0.84rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -404,7 +520,8 @@ onMounted(() => {
 h1,
 h2 {
   margin: 0;
-  color: #5c5c5c;
+  color: var(--text-color);
+  font-family: var(--font-display);
 }
 
 h1 {
@@ -415,13 +532,13 @@ h1 {
 h2 {
   font-size: 18px;
   font-weight: 700;
-  color: #333;
+  color: var(--text-color);
 }
 
 .hero-copy {
   margin: 0.8rem 0 0;
   max-width: 46rem;
-  color: #5c5c5c;
+  color: var(--text-color);
   line-height: 1.8;
 }
 
@@ -437,16 +554,16 @@ h2 {
   gap: 0.28rem;
   padding: 1rem;
   border-radius: 20px;
-  background: linear-gradient(180deg, rgba(196, 154, 108, 0.1), rgba(255, 255, 255, 0.92));
+  background: var(--surface-muted);
 }
 
 .hero-metrics strong {
   font-size: 1.5rem;
-  color: #8b9dc3;
+  color: var(--primary-color);
 }
 
 .hero-metrics span {
-  color: #7a746b;
+  color: var(--muted);
   font-size: 0.9rem;
 }
 
@@ -462,6 +579,10 @@ h2 {
   gap: 1.4rem;
 }
 
+.insight-column {
+  min-width: 0;
+}
+
 .panel {
   padding: 1.65rem;
 }
@@ -473,6 +594,16 @@ h2 {
 
 .mood-grid-scroll {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+  }
   padding-bottom: 0.25rem;
 }
 
@@ -488,22 +619,26 @@ h2 {
   margin: 0 0 0.42rem;
   font-size: 13px;
   font-weight: 700;
-  color: #6f6a62;
+  color: var(--text-color);
 }
 
 .mood-grid {
-  display: grid;
-  grid-template-columns: repeat(8, minmax(86px, 1fr));
-  gap: 0.58rem;
-  min-width: 760px;
-}
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 0.5rem;
+
+    @media (max-width: 640px) {
+      grid-template-columns: repeat(3, minmax(64px, 1fr));
+      gap: 0.4rem;
+    }
+  }
 
 .mood-type-item {
   min-height: 92px;
-  border: 1px solid #e8e2d8;
+  border: 1px solid var(--border-color);
   border-radius: 16px;
-  background: #f8f4ee;
-  color: #5c5c5c;
+  background: var(--surface-muted);
+  color: var(--text-color);
   padding: 0.55rem 0.4rem;
   display: grid;
   justify-items: center;
@@ -519,13 +654,13 @@ h2 {
 
 .mood-type-item:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 18px var(--mood-glow, rgba(196, 154, 108, 0.2));
+  box-shadow: 0 8px 18px var(--mood-glow, var(--primary-soft-bg));
 }
 
 .mood-type-item.active {
-  border-color: #8b9dc3;
+  border-color: var(--primary-color);
   box-shadow:
-    0 10px 20px var(--mood-glow, rgba(139, 157, 195, 0.22)),
+    0 10px 20px var(--mood-glow, var(--primary-soft-bg)),
     inset 0 0 0 1px rgba(255, 255, 255, 0.7);
 }
 
@@ -577,20 +712,20 @@ h2 {
   border-radius: 20px;
   display: grid;
   justify-items: center;
-  background: rgba(139, 157, 195, 0.12);
-  color: #5c5c5c;
+  background: var(--primary-soft-bg);
+  color: var(--text-color);
 }
 
 .intensity-badge.low {
-  background: rgba(148, 163, 184, 0.16);
+  background: var(--surface-muted);
 }
 
 .intensity-badge.mid {
-  background: rgba(139, 157, 195, 0.12);
+  background: var(--primary-soft-bg);
 }
 
 .intensity-badge.high {
-  background: rgba(196, 154, 108, 0.16);
+  background: var(--primary-soft-bg);
 }
 
 .intensity-badge strong {
@@ -601,7 +736,7 @@ h2 {
 .scale-labels,
 .ai-entry-row p,
 .draft-banner small {
-  color: #888;
+  color: var(--muted);
   font-size: 13px;
 }
 
@@ -615,8 +750,8 @@ h2 {
   min-height: 44px;
   border: none;
   border-radius: 16px;
-  background: rgba(196, 154, 108, 0.12);
-  color: #6f6a62;
+  background: var(--primary-soft-bg);
+  color: var(--text-color);
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
@@ -628,20 +763,20 @@ h2 {
 }
 
 .scale-dot.active {
-  background: rgba(139, 157, 195, 0.24);
-  color: #5c5c5c;
+  background: var(--primary-soft-bg);
+  color: var(--text-color);
 }
 
 .scale-dot.current {
-  background: linear-gradient(135deg, #8b9dc3, #c49a6c);
+  background: var(--primary-color);
   color: #fff;
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
 }
 
 .intensity-slider {
   width: 100%;
-  accent-color: #c49a6c;
+  accent-color: var(--primary-color);
 }
 
 .scale-labels {
@@ -654,15 +789,20 @@ textarea,
 .trigger-input {
   width: 100%;
   border-radius: 20px;
-  border: 1px solid #e8e2d8;
-  background: #fff;
-  color: #5c5c5c;
+  border: 1px solid var(--border-color);
+  background: var(--surface);
+  color: var(--text-color);
   padding: 1.15rem 1.2rem;
-  outline: none;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease,
     background 0.2s ease;
+
+  &:focus {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+    border-color: var(--primary-color);
+  }
 }
 
 textarea {
@@ -674,21 +814,21 @@ textarea {
 
 textarea::placeholder {
   font-size: 15px;
-  color: #888;
+  color: var(--muted);
 }
 
 textarea:focus,
 .trigger-input:focus {
-  border-color: #c49a6c;
-  box-shadow: 0 0 0 4px rgba(196, 154, 108, 0.12);
-  background: #fff;
+  border-color: var(--focus);
+  box-shadow: 0 0 0 4px var(--primary-soft-bg);
+  background: var(--surface);
 }
 
 .count-chip {
   padding: 0.42rem 0.7rem;
   border-radius: 999px;
-  background: rgba(196, 154, 108, 0.14);
-  color: #888;
+  background: var(--primary-soft-bg);
+  color: var(--muted);
   font-size: 12px;
 }
 
@@ -696,8 +836,8 @@ textarea:focus,
   margin-bottom: 0.9rem;
   padding: 1rem 1.1rem;
   border-radius: 20px;
-  border: 1px solid #e5e7eb;
-  background: #f6f7f9;
+  border: 1px solid var(--border-color);
+  background: var(--surface-muted);
   display: flex;
   justify-content: space-between;
   gap: 0.8rem;
@@ -710,12 +850,12 @@ textarea:focus,
 }
 
 .tip-text strong {
-  color: #555;
+  color: var(--text-color);
   font-size: 12px;
 }
 
 .tip-text small {
-  color: #888;
+  color: var(--muted);
   font-size: 12px;
 }
 
@@ -732,13 +872,13 @@ textarea:focus,
   font-size: 15px;
   font-weight: 700;
   color: #fff;
-  background: linear-gradient(135deg, #8b9dc3, #c49a6c);
+  background: var(--primary-color);
 }
 
 .tip-btn.ghost {
   font-weight: 400;
-  color: #6f6a62;
-  background: rgba(196, 154, 108, 0.16);
+  color: var(--text-color);
+  background: var(--primary-soft-bg);
 }
 
 .ai-entry-row {
@@ -772,10 +912,10 @@ textarea:focus,
 .submit-action {
   padding: 0.95rem 1.3rem;
   border-radius: 40px;
-  background: linear-gradient(135deg, #8b9dc3, #c49a6c);
+  background: var(--primary-color);
   font-weight: 700;
   color: #fff;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
 }
 
 .add-trigger-btn {
@@ -784,7 +924,14 @@ textarea:focus,
 
 .inline-ai-btn.loading,
 .submit-action:disabled {
-  opacity: 0.75;
+  cursor: not-allowed;
+  opacity: 0.62;
+  filter: grayscale(0.35);
+  box-shadow: none;
+}
+
+.submit-action:disabled:hover {
+  transform: none;
 }
 
 .auto-recommend-list {
@@ -796,7 +943,7 @@ textarea:focus,
 }
 
 .tip-label {
-  color: #888;
+  color: var(--muted);
   font-weight: 400;
   font-size: 13px;
 }
@@ -808,8 +955,8 @@ textarea:focus,
 .add-trigger-btn {
   padding: 0.74rem 0.95rem;
   border-radius: 999px;
-  background: rgba(196, 154, 108, 0.14);
-  color: #5c5c5c;
+  background: var(--primary-soft-bg);
+  color: var(--text-color);
 }
 
 .auto-pill:hover,
@@ -837,8 +984,8 @@ textarea:focus,
 }
 
 .selected-trigger {
-  background: rgba(139, 157, 195, 0.2);
-  color: #5c5c5c;
+  background: var(--primary-soft-bg);
+  color: var(--text-color);
   font-weight: 400;
 }
 
@@ -850,13 +997,13 @@ textarea:focus,
   display: none;
   padding: 0.95rem 1rem;
   border-radius: 20px;
-  border: 1px solid #e5e7eb;
-  background: #f6f7f9;
+  border: 1px solid var(--border-color);
+  background: var(--surface-muted);
   font-size: 12px;
 }
 
 .eyebrow {
-  color: #888;
+  color: var(--muted);
   font-size: 13px;
 }
 
@@ -866,11 +1013,94 @@ textarea:focus,
 }
 
 .ghost-action {
-  background: rgba(196, 154, 108, 0.16);
+  background: var(--primary-soft-bg);
 }
 
 .submit-action.success {
-  background: linear-gradient(135deg, #8b9dc3, #c49a6c);
+  background: var(--success-color);
+}
+
+.success-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  margin-bottom: 12px;
+}
+
+.success-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(34, 197, 94, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #22c55e;
+  flex-shrink: 0;
+}
+
+.success-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.success-content strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.success-content p {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.success-action {
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--primary-color);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.success-action:hover {
+  background: var(--primary-hover);
+}
+
+.submit-action.loading {
+  pointer-events: none;
+  opacity: 0.72;
+}
+
+.submit-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 :deep(.el-message--error) {
@@ -914,7 +1144,7 @@ textarea:focus,
 .trigger-panel .eyebrow {
   font-size: 20px !important;
   font-weight: 700 !important;
-  color: #2c3e50 !important;
+  color: var(--text-color) !important;
   margin-bottom: 12px !important;
   text-transform: none !important;
   letter-spacing: 0 !important;
@@ -927,13 +1157,13 @@ textarea:focus,
 .trigger-panel h2 {
   font-size: 13px !important;
   font-weight: 400 !important;
-  color: #95a5a6 !important;
+  color: var(--muted) !important;
   line-height: 1.4 !important;
   margin-bottom: 0 !important;
 }
 
 .panel-head {
-  border-bottom: 1px solid #eceff1 !important;
+  border-bottom: 1px solid var(--border-color) !important;
   padding-bottom: 12px !important;
   margin-bottom: 12px !important;
 }
@@ -946,7 +1176,7 @@ textarea:focus,
 .draft-banner small,
 .tip-label {
   font-size: 13px !important;
-  color: #95a5a6 !important;
+  color: var(--muted) !important;
   line-height: 1.4 !important;
 }
 
@@ -964,7 +1194,7 @@ textarea:focus,
 .intensity-badge strong {
   font-size: 20px !important;
   font-weight: 700 !important;
-  color: #8b9dc3 !important;
+  color: var(--primary-color) !important;
 }
 
 textarea {
@@ -974,15 +1204,15 @@ textarea {
 
 textarea::placeholder {
   font-size: 14px !important;
-  color: #bbb !important;
+  color: var(--muted) !important;
 }
 
 .inline-draft-tip,
 .draft-banner {
-  background: #f8f9fa !important;
+  background: var(--surface-muted) !important;
   border-radius: 16px !important;
   padding: 12px !important;
-  border: none !important;
+  border: 1px solid var(--border-color) !important;
 }
 
 .tip-text strong,
@@ -993,7 +1223,7 @@ textarea::placeholder {
 }
 
 .submit-action {
-  background: linear-gradient(135deg, #8b9dc3, #c49a6c) !important;
+  background: var(--primary-color) !important;
   color: #fff !important;
   font-size: 16px !important;
   font-weight: 700 !important;
@@ -1003,8 +1233,8 @@ textarea::placeholder {
 .tip-actions .tip-btn,
 .tip-actions .tip-btn.ghost {
   background: transparent !important;
-  border: 1px solid #d0d7de !important;
-  color: #4b5563 !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-color) !important;
   font-size: 14px !important;
   font-weight: 400 !important;
 }

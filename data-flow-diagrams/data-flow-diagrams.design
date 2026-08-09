@@ -1,0 +1,28 @@
+{
+  "name": "数据流程图与ETL流程",
+  "version": 1,
+  "description": "大学生情绪健康管理平台 — 系统数据流图与核心ETL流程图",
+  "data": [
+    {
+      "id": "page-index",
+      "title": "数据流程图总览",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784388000000,
+      "devMetadata": {
+        "htmlSrc": "pages/index.html",
+        "interactions": []
+      },
+      "canvasData": {
+        "x": 0,
+        "y": 0,
+        "group": 0
+      }
+    }
+  ],
+  "config": {
+    "autoLayout": true,
+    "deviceType": "desktop",
+    "projectName": "数据流程图与ETL流程"
+  }
+}

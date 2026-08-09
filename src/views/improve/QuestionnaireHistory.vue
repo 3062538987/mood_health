@@ -2,10 +2,18 @@
   <div class="questionnaire-history">
     <div class="container">
       <h2>测评历史记录</h2>
-      <p class="description">查看您过往的心理测评记录，追踪自己的情绪变化趋势</p>
+      <p class="description">查看过往筛查记录，用于自我了解和观察近期变化</p>
+
+      <!-- 加载骨架 -->
+      <el-skeleton v-if="loading" :rows="4" animated />
+
+      <!-- 错误状态 -->
+      <el-empty v-else-if="error" description="加载失败">
+        <el-button type="primary" @click="fetchHistory">重试</el-button>
+      </el-empty>
 
       <!-- 历史记录列表 -->
-      <div v-if="history.length > 0" class="history-list">
+      <div v-else-if="history.length > 0" class="history-list">
         <div
           v-for="item in history"
           :key="item.id"
@@ -47,15 +55,22 @@ import { useRouter } from 'vue-router'
 import { getAssessmentHistory, AssessmentHistory } from '@/api/questionnaire'
 
 const router = useRouter()
+const loading = ref(true)
+const error = ref(false)
 const history = ref<AssessmentHistory[]>([])
 
 // 获取测评历史记录
 const fetchHistory = async () => {
+  loading.value = true
+  error.value = false
   try {
     const res = await getAssessmentHistory()
-    history.value = (res as { data: AssessmentHistory[] }).data
-  } catch (error) {
-    console.error('获取历史记录失败', error)
+    history.value = res
+  } catch (err) {
+    error.value = true
+    console.error('获取历史记录失败', err)
+  } finally {
+    loading.value = false
   }
 }
 

@@ -34,3 +34,22 @@ test('npm PM2 commands only target project-owned process names', async () => {
   assert.match(packageJson.scripts['pm2:stop'], /delete mood-health-server mood-ai-server/)
   assert.equal(packageJson.scripts['pm2:status'], 'node ./node_modules/pm2/bin/pm2 status')
 })
+
+test('backend launch commands use the production server entry', async () => {
+  const [backendPackage, powershell, shell, doctor] = await Promise.all([
+    readFile(new URL('../mood_health_server/package.json', import.meta.url), 'utf8').then(JSON.parse),
+    readFile(new URL('../start-project.ps1', import.meta.url), 'utf8'),
+    readFile(new URL('../start-project.sh', import.meta.url), 'utf8'),
+    readFile(new URL('./doctor.mjs', import.meta.url), 'utf8'),
+  ])
+  const ecosystem = require('../mood_health_server/ecosystem.config.js')
+
+  assert.equal(backendPackage.main, 'dist/server.js')
+  assert.match(backendPackage.scripts.dev, /src\/server\.ts/)
+  assert.match(backendPackage.scripts.start, /dist\/server\.js/)
+  assert.match(backendPackage.scripts.doctor, /dist\/server\.js/)
+  assert.equal(ecosystem.apps[0].script, 'dist/server.js')
+  assert.match(powershell, /dist\\server\.js/)
+  assert.match(shell, /dist\/server\.js/)
+  assert.match(doctor, /mood_health_server\/dist\/server\.js/)
+})

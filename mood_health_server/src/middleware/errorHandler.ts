@@ -1,96 +1,73 @@
-import { Request, Response, NextFunction } from 'express'
+import type { NextFunction, Request, Response } from 'express'
 import logger, { sanitizeForLogs } from '../utils/logger'
 import { AppError } from '../utils/errors'
+import { API_ERROR_CODES, apiFailure, businessCodeForHttpStatus, generateRequestId, type ValidationDetail } from '../utils/apiResponse'
 
-/**
- * 全局错误处理中间件
- * @param err 错误对象
- * @param req 请求对象
- * @param res 响应对象
- * @param next 下一个中间件
- */
-export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
-  const isProduction = process.env.NODE_ENV === 'production'
-  const statusCode = err.statusCode || err.status || 500
-  const shouldHideInternalMessage = isProduction && statusCode >= 500
-  const responseMessage = shouldHideInternalMessage
-    ? '服务器内部错误'
-    : err.message || '服务器内部错误'
-
-  // 构建错误信息
-  const errorInfo = {
-    name: err.name || 'Error',
-    message: responseMessage,
-    rawMessage: err.message || '服务器内部错误',
-    statusCode,
-    path: req.originalUrl,
-    method: req.method,
-    timestamp: new Date().toISOString(),
-    stack: isProduction ? undefined : err.stack,
-    data: sanitizeForLogs(err.data || null),
-  }
-
-  // 记录错误日志
-  if (statusCode >= 500) {
-    logger.error(`[${req.method}] ${req.originalUrl}`, errorInfo)
-  } else if (statusCode >= 400) {
-    logger.warn(`[${req.method}] ${req.originalUrl}`, errorInfo)
-  } else {
-    logger.info(`[${req.method}] ${req.originalUrl}`, errorInfo)
-  }
-
-  // 统一返回格式
-  const response = {
-    success: false,
-    code: statusCode,
-    message: responseMessage,
-    path: errorInfo.path,
-    timestamp: errorInfo.timestamp,
-    ...(isProduction || !err.stack ? {} : { stack: err.stack }),
-  }
-
-  // 处理验证错误
-  if (err.name === 'ValidationError') {
-    return res.status(400).json({
-      ...response,
-      code: 400,
-      message: '请求参数验证失败',
-    })
-  }
-
-  // 处理 express-validator 错误
-  if (err.array) {
-    return res.status(400).json({
-      ...response,
-      code: 400,
-      message: '请求参数验证失败',
-    })
-  }
-
-  // 处理自定义错误
-  if (err instanceof AppError) {
-    const appErrorMessage = isProduction && err.statusCode >= 500 ? '服务器内部错误' : err.message
-    return res.status(err.statusCode).json({
-      success: false,
-      code: err.statusCode,
-      message: appErrorMessage,
-      path: err.path || req.originalUrl,
-      timestamp: err.timestamp || new Date().toISOString(),
-      ...(isProduction || !err.stack ? {} : { stack: err.stack }),
-    })
-  }
-
-  // 处理其他错误
-  res.status(errorInfo.statusCode).json(response)
+type ErrorLike = Error & {
+  status?: number
+  statusCode?: number
+  path?: string
+  timestamp?: string
+  data?: unknown
+  array?: () => { path: string; msg: string }[]
 }
 
-/**
- * 404 处理中间件
- * @param req 请求对象
- * @param res 响应对象
- * @param next 下一个中间件
- */
-export const notFoundHandler = (req: Request, res: Response, next: NextFunction) => {
-  const error = new AppError('请求的资源不存在', 404, null, req.originalUrl)
-  next(error)
+export const errorHandler = (
+  error: ErrorLike,
+  request: Request,
+  response: Response,
+  _next: NextFunction
+) => {
+  const isValidationError = error.name === 'ValidationError' || typeof error.array === 'function'
+  const statusCode = isValidationError ? 400 : error.statusCode || error.status || 500
+  const isInternalError = statusCode >= 500
+  const message = isValidationError
+    ? '请求参数验证失败'
+    : process.env.NODE_ENV === 'production' && isInternalError
+      ? '服务器内部错误'
+      : error.message || '服务器内部错误'
+
+  const requestId = generateRequestId()
+
+  const logContext = {
+    requestId,
+    name: error.name || 'Error',
+    message: error.message || '服务器内部错误',
+    statusCode,
+    path: request.originalUrl,
+    method: request.method,
+    timestamp: new Date().toISOString(),
+    stack: process.env.NODE_ENV === 'production' ? undefined : error.stack,
+    data: sanitizeForLogs(error.data ?? null),
+  }
+
+  if (isInternalError) {
+    logger.error(`[${request.method}] ${request.originalUrl}`, logContext)
+  } else {
+    logger.warn(`[${request.method}] ${request.originalUrl}`, logContext)
+  }
+
+  const businessCode = isValidationError
+    ? API_ERROR_CODES.BAD_REQUEST
+    : businessCodeForHttpStatus(statusCode)
+
+  // 提取验证错误详情
+  let details: ValidationDetail[] | undefined
+  if (isValidationError && typeof error.array === 'function') {
+    const validationErrors = error.array()
+    if (validationErrors.length > 0) {
+      details = validationErrors.map((e) => ({
+        field: e.path,
+        message: e.msg,
+      }))
+    }
+  }
+
+  const body = apiFailure(businessCode, message, null, details)
+  body.requestId = requestId
+  return response.status(statusCode).json(body)
+}
+
+export const notFoundHandler = (request: Request, _response: Response, next: NextFunction) => {
+  next(new AppError('请求的资源不存在', 404, null, request.originalUrl))
 }

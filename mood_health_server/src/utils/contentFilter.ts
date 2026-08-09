@@ -20,7 +20,6 @@ const SENSITIVE_WORDS = [
   "猥亵",
   "卖淫",
   "嫖娼",
-  "赌博",
   "吸毒",
   "贩毒",
   "制毒",
@@ -28,9 +27,7 @@ const SENSITIVE_WORDS = [
   "贪污",
   "受贿",
   "行贿",
-  "诈骗",
   "敲诈",
-  "勒索",
   "诽谤",
   "造谣",
   "传谣",
@@ -53,45 +50,12 @@ const SENSITIVE_WORDS = [
   "涉邪",
   "涉诈",
   "涉骗",
-  "涉黑涉恶",
-  "涉黄涉赌",
-  "涉毒涉枪",
-  "涉恐涉爆",
-  "涉邪涉诈",
-  "涉黑涉恶涉毒",
-  "涉黄涉赌涉枪",
-  "涉恐涉爆涉邪",
-  "涉诈涉骗涉黑",
-  "涉恶涉毒涉黄",
-  "涉赌涉枪涉爆",
-  "涉恐涉邪涉诈",
-  "涉黑涉恶涉毒涉黄",
-  "涉赌涉枪涉爆涉邪",
-  "涉恐涉邪涉诈涉骗",
-  "涉黑涉恶涉毒涉黄涉赌",
-  "涉枪涉爆涉邪涉诈涉骗",
-  "涉黑涉恶涉毒涉黄涉赌涉枪",
-  "涉爆涉邪涉诈涉骗涉黑涉恶",
-  "涉毒涉黄涉赌涉枪涉爆涉邪",
-  "涉邪涉诈涉骗涉黑涉恶涉毒涉黄",
-  "涉赌涉枪涉爆涉邪涉诈涉骗涉黑涉恶",
-  "涉恐涉邪涉诈涉骗涉黑涉恶涉毒涉黄涉赌",
-  "涉枪涉爆涉邪涉诈涉骗涉黑涉恶涉毒涉黄涉赌涉恐",
-  "涉爆涉邪涉诈涉骗涉黑涉恶涉毒涉黄涉赌涉枪涉爆",
-  "涉邪涉诈涉骗涉黑涉恶涉毒涉黄涉赌涉枪涉爆涉邪",
-  "涉诈涉骗涉黑涉恶涉毒涉黄涉赌涉枪涉爆涉邪涉诈",
-  "涉骗涉黑涉恶涉毒涉黄涉赌涉枪涉爆涉邪涉诈涉骗",
-  "涉黑涉恶涉毒涉黄涉赌涉枪涉爆涉邪涉诈涉骗涉黑",
-  "涉恶涉毒涉黄涉赌涉枪涉爆涉邪涉诈涉骗涉黑涉恶",
-  "涉毒涉黄涉赌涉枪涉爆涉邪涉诈涉骗涉黑涉恶涉毒",
-  "涉黄涉赌涉枪涉爆涉邪涉诈涉骗涉黑涉恶涉毒涉黄",
-  "涉赌涉枪涉爆涉邪涉诈涉骗涉黑涉恶涉毒涉黄涉赌",
-  "涉枪涉爆涉邪涉诈涉骗涉黑涉恶涉毒涉黄涉赌涉枪",
-  "涉爆涉邪涉诈涉骗涉黑涉恶涉毒涉黄涉赌涉枪涉爆",
-  "涉邪涉诈涉骗涉黑涉恶涉毒涉黄涉赌涉枪涉爆涉邪",
-  "涉诈涉骗涉黑涉恶涉毒涉黄涉赌涉枪涉爆涉邪涉诈",
-  "涉骗涉黑涉恶涉毒涉黄涉赌涉枪涉爆涉邪涉诈涉骗"
 ];
+
+// 去重
+const UNIQUE_SENSITIVE_WORDS = [...new Set(SENSITIVE_WORDS)];
+
+const MAX_CONTENT_LENGTH = 10000;
 
 export interface ContentFilterResult {
   isSafe: boolean;
@@ -100,10 +64,12 @@ export interface ContentFilterResult {
 }
 
 export const filterContent = (content: string): ContentFilterResult => {
+  // 长度限制，防止 DoS
+  const truncated = content.length > MAX_CONTENT_LENGTH ? content.slice(0, MAX_CONTENT_LENGTH) : content;
   const detectedWords: string[] = [];
-  const lowerContent = content.toLowerCase();
+  const lowerContent = truncated.toLowerCase();
 
-  for (const word of SENSITIVE_WORDS) {
+  for (const word of UNIQUE_SENSITIVE_WORDS) {
     if (lowerContent.includes(word.toLowerCase())) {
       detectedWords.push(word);
     }

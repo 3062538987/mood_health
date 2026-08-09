@@ -1,4 +1,23 @@
 /**
+ * AI 回复接口
+ * @interface AiReply
+ * @property {number} id - 回复ID
+ * @property {number} postId - 帖子ID
+ * @property {string} content - 回复内容
+ * @property {string} createdAt - 创建时间
+ */
+export interface AiReply {
+  /** 回复ID */
+  id: number
+  /** 帖子ID */
+  postId: number
+  /** 回复内容 */
+  content: string
+  /** 创建时间 */
+  createdAt: string
+}
+
+/**
  * 帖子接口
  * @interface Post
  * @property {number} id - 帖子ID
@@ -35,6 +54,8 @@ export interface Post {
   status?: number
   /** 审核备注（可选） */
   audit_remark?: string | null
+  /** 审核备注（兼容后端 camelCase 字段，可选） */
+  auditRemark?: string | null
   /** 评论数（可选） */
   commentCount?: number
   /** 创建时间 */
@@ -45,6 +66,10 @@ export interface Post {
   is_anonymous?: boolean
   /** 评论列表（可选） */
   comments?: Comment[]
+  /** AI 回复（可选） */
+  aiReply?: AiReply
+  /** 是否有 AI 回复（列表页用，可选） */
+  hasAiReply?: boolean
 }
 
 /**

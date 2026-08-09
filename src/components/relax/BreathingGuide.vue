@@ -94,19 +94,6 @@
     <div v-if="gameFinished" class="meditation-report">
       <h4>🧘 冥想报告</h4>
       <div class="report-content">
-        <div class="report-card main-stats">
-          <div class="stat-item">
-            <span class="stat-icon">🎯</span>
-            <span class="stat-label">专注度</span>
-            <span class="stat-value">{{ focusLevel }}%</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-icon">💓</span>
-            <span class="stat-label">平均心率</span>
-            <span class="stat-value">{{ averageHeartRate }} bpm</span>
-          </div>
-        </div>
-
         <div class="report-card breathing-details">
           <h5>呼吸统计</h5>
           <div class="detail-row">
@@ -122,22 +109,12 @@
             <span class="highlight">{{ exhaleCount }} 次</span>
           </div>
           <div class="detail-row">
+            <span>完成轮次：</span>
+            <span class="highlight">{{ completedRounds }} 轮</span>
+          </div>
+          <div class="detail-row">
             <span>平均呼吸频率：</span>
             <span class="highlight">{{ breathingRate }} 次/分钟</span>
-          </div>
-        </div>
-
-        <div class="report-card rhythm-info">
-          <div class="rhythm-stability">
-            <span class="label">呼吸节奏稳定性：</span>
-            <span class="value" :class="rhythmClass">{{ rhythmStability }}</span>
-          </div>
-        </div>
-
-        <div class="report-card achievement-card">
-          <div class="achievement">
-            <span class="achievement-icon">🏆</span>
-            <span class="achievement-text">{{ achievement }}</span>
           </div>
         </div>
 
@@ -150,6 +127,12 @@
             <span>实际时长：</span>
             <span class="highlight">{{ actualDuration }} 分钟</span>
           </div>
+        </div>
+
+        <div class="report-card disclaimer-card">
+          <p class="disclaimer-text">
+            以上数据为练习统计，非生理指标测量。呼吸练习有助于放松身心，请根据自身情况选择练习强度。
+          </p>
         </div>
       </div>
       <button class="game-btn restart-btn" @click="restartGame">🔄 重新开始</button>
@@ -231,14 +214,11 @@ let phaseTimer: number = 0 // 当前呼吸阶段的计时（毫秒）
 let currentPhaseTime: number = 0
 
 // 冥想报告数据
-const focusLevel = ref(0)
-const rhythmStability = ref('')
-const achievement = ref('')
 const actualDuration = ref(0)
-const averageHeartRate = ref(0)
 const inhaleCount = ref(0)
 const exhaleCount = ref(0)
 const breathingRate = ref(0)
+const completedRounds = ref(0)
 
 // 计算属性
 const currentPatternDescription = computed(() => {
@@ -249,12 +229,6 @@ const currentPatternDescription = computed(() => {
 const currentPatternName = computed(() => {
   const pattern = breathingPatterns.find((p) => p.id === selectedPattern.value)
   return pattern ? pattern.name : ''
-})
-
-const rhythmClass = computed(() => {
-  if (focusLevel.value >= 90) return 'excellent'
-  if (focusLevel.value >= 80) return 'good'
-  return 'normal'
 })
 
 // 计算属性
@@ -526,10 +500,11 @@ const saveRelaxRecord = async () => {
     startTime: startTime.value,
     endTime: endTime,
     metrics: {
-      focusLevel: focusLevel.value,
-      rhythmStability: rhythmStability.value,
       actualDuration: actualDuration.value,
       selectedDuration: selectedDuration.value,
+      completedRounds: completedRounds.value,
+      breathingPattern: currentPatternName.value,
+      breathingRate: breathingRate.value,
     },
   })
   // 检查成就
@@ -538,36 +513,13 @@ const saveRelaxRecord = async () => {
 
 // 生成冥想报告
 const generateMeditationReport = () => {
-  // 模拟生成专注度（80-95%）
-  focusLevel.value = Math.floor(Math.random() * 16) + 80
-
-  // 模拟平均心率（60-80 bpm）
-  averageHeartRate.value = Math.floor(Math.random() * 21) + 60
-
   // 计算呼吸频率（次/分钟）
   const totalBreaths = inhaleCount.value
   const minutes = actualDuration.value || 1
   breathingRate.value = Math.round(totalBreaths / minutes)
 
-  // 呼吸节奏稳定性
-  if (focusLevel.value >= 90) {
-    rhythmStability.value = '非常稳定'
-  } else if (focusLevel.value >= 80) {
-    rhythmStability.value = '稳定'
-  } else {
-    rhythmStability.value = '一般'
-  }
-
-  // 成就
-  if (focusLevel.value >= 95) {
-    achievement.value = '冥想大师！继续保持这等专注！'
-  } else if (focusLevel.value >= 90) {
-    achievement.value = '太棒了！您的专注力非常出色！'
-  } else if (focusLevel.value >= 85) {
-    achievement.value = '很好！呼吸节奏保持得不错！'
-  } else {
-    achievement.value = '继续练习，专注度会逐渐提升！'
-  }
+  // 计算完成轮次
+  completedRounds.value = Math.floor((inhaleCount.value + exhaleCount.value) / 2)
 }
 
 // 重新开始
@@ -972,6 +924,20 @@ onUnmounted(() => {
             font-weight: 600;
             color: #42b983;
           }
+        }
+      }
+
+      .disclaimer-card {
+        background: #f0f9ff;
+        border: 1px solid #bae7ff;
+        border-radius: 8px;
+
+        .disclaimer-text {
+          margin: 0;
+          font-size: 13px;
+          color: #666;
+          line-height: 1.6;
+          text-align: left;
         }
       }
     }

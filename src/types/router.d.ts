@@ -7,6 +7,9 @@ declare module 'vue-router' {
     adminOnly?: boolean
     roles?: string[]
     permission?: string
+    feature?: 'nonCore'
+    disabledRedirect?: string
+    nonCoreSubNavPaths?: string[]
     subNav?: {
       path: string
       name: string

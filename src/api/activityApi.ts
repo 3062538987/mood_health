@@ -199,6 +199,129 @@ export const deleteActivity = async (id: number): Promise<void> => {
 }
 
 /**
+ * 设置活动提醒
+ */
+export const setActivityReminder = async (id: number): Promise<{ remindAt: string }> => {
+  const response = await request<{ data: { remindAt: string } }>({
+    url: `/api/activities/remind/${id}`,
+    method: 'post',
+    ...noBlockingLoadingConfig,
+  })
+  return response.data
+}
+
+/**
+ * 取消活动提醒
+ */
+export const cancelActivityReminder = async (id: number): Promise<void> => {
+  await request({
+    url: `/api/activities/remind/${id}`,
+    method: 'delete',
+    ...noBlockingLoadingConfig,
+  })
+}
+
+/**
+ * 获取提醒状态
+ */
+export const getReminderStatus = async (id: number): Promise<boolean> => {
+  const response = await request<{ data: { hasReminder: boolean } }>({
+    url: `/api/activities/remind/${id}`,
+    method: 'get',
+    ...noBlockingLoadingConfig,
+  })
+  return response.data.hasReminder
+}
+
+/**
+ * 活动反馈数据
+ */
+export interface ActivityFeedback {
+  id: number
+  activityId: number
+  userId: number
+  rating: number
+  comment: string | null
+  createdAt: string
+}
+
+export interface ActivityFeedbackStats {
+  averageRating: number
+  totalCount: number
+  ratingDistribution: Record<number, number>
+}
+
+/**
+ * 提交活动反馈
+ */
+export const submitActivityFeedback = async (
+  id: number,
+  rating: number,
+  comment?: string,
+): Promise<void> => {
+  await request({
+    url: `/api/activities/feedback/${id}`,
+    method: 'post',
+    data: { rating, comment },
+    ...noBlockingLoadingConfig,
+  })
+}
+
+/**
+ * 获取活动反馈列表
+ */
+export const getActivityFeedback = async (
+  id: number,
+): Promise<{ feedbacks: ActivityFeedback[]; stats: ActivityFeedbackStats }> => {
+  const response = await request<{
+    data: { feedbacks: ActivityFeedback[]; stats: ActivityFeedbackStats }
+  }>({
+    url: `/api/activities/feedback/${id}`,
+    method: 'get',
+    ...noBlockingLoadingConfig,
+  })
+  return response.data
+}
+
+/**
+ * 获取用户对活动的反馈
+ */
+export const getUserActivityFeedback = async (
+  id: number,
+): Promise<ActivityFeedback | null> => {
+  const response = await request<{ data: { feedback: ActivityFeedback | null } }>({
+    url: `/api/activities/my-feedback/${id}`,
+    method: 'get',
+    ...noBlockingLoadingConfig,
+  })
+  return response.data.feedback
+}
+
+/**
+ * 获取活动统计（管理端）
+ */
+export interface ActivityStatsData {
+  totalActivities: number
+  totalParticipants: number
+  averageParticipants: number
+  totalFeedback: number
+  averageRating: number
+  ratingDistribution: Record<number, number>
+}
+
+export const getActivityStats = async (
+  params?: Record<string, string>,
+): Promise<ActivityStatsData> => {
+  const response = await request<{ data: ActivityStatsData }>({
+    url: '/api/activities/stats',
+    method: 'get',
+    params,
+    ...noBlockingLoadingConfig,
+  })
+  return response.data
+}
+
+/**
  * 参与者信息
  */
 export interface Participant {

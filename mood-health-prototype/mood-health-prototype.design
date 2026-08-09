@@ -1,0 +1,513 @@
+{
+  "data": [
+    {
+      "id": "page-home",
+      "title": "首页",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784387760000,
+      "canvasData": {
+        "x": 0,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/home.html",
+        "interactions": [
+          {
+            "domId": "btn-record-mood",
+            "targetPageId": "page-mood-record",
+            "transitionLabel": "记录情绪"
+          },
+          {
+            "domId": "action-mood-insight",
+            "targetPageId": "page-mood-insight",
+            "hideEdge": true,
+            "transitionLabel": "情绪洞察"
+          },
+          {
+            "domId": "action-ai-counseling",
+            "targetPageId": "page-ai-counseling",
+            "hideEdge": true,
+            "transitionLabel": "AI咨询"
+          },
+          {
+            "domId": "action-relax",
+            "targetPageId": "page-relax",
+            "hideEdge": true,
+            "transitionLabel": "放松中心"
+          },
+          {
+            "domId": "action-treehole",
+            "targetPageId": "page-treehole",
+            "hideEdge": true,
+            "transitionLabel": "树洞"
+          },
+          {
+            "domId": "action-improve",
+            "targetPageId": "page-improve",
+            "hideEdge": true,
+            "transitionLabel": "提升计划"
+          },
+          {
+            "domId": "card-ai-insight",
+            "targetPageId": "page-mood-insight",
+            "hideEdge": true,
+            "transitionLabel": "查看洞察"
+          },
+          {
+            "domId": "nav-mood",
+            "targetPageId": "page-mood-record",
+            "hideEdge": true,
+            "transitionLabel": "情绪"
+          },
+          {
+            "domId": "nav-relax",
+            "targetPageId": "page-relax",
+            "hideEdge": true,
+            "transitionLabel": "放松"
+          },
+          {
+            "domId": "nav-treehole",
+            "targetPageId": "page-treehole",
+            "hideEdge": true,
+            "transitionLabel": "树洞"
+          },
+          {
+            "domId": "nav-profile",
+            "targetPageId": "page-profile",
+            "hideEdge": true,
+            "transitionLabel": "我的"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-mood-record",
+      "title": "情绪记录",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784387761000,
+      "canvasData": {
+        "x": 309,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/mood-record.html",
+        "interactions": [
+          {
+            "domId": "back-home",
+            "targetPageId": "page-home",
+            "hideEdge": true,
+            "transitionLabel": "返回"
+          },
+          {
+            "domId": "btn-save-mood",
+            "targetPageId": "page-mood-insight",
+            "transitionLabel": "保存后查看洞察"
+          },
+          {
+            "domId": "nav-home",
+            "targetPageId": "page-home",
+            "hideEdge": true,
+            "transitionLabel": "首页"
+          },
+          {
+            "domId": "nav-relax",
+            "targetPageId": "page-relax",
+            "hideEdge": true,
+            "transitionLabel": "放松"
+          },
+          {
+            "domId": "nav-treehole",
+            "targetPageId": "page-treehole",
+            "hideEdge": true,
+            "transitionLabel": "树洞"
+          },
+          {
+            "domId": "nav-profile",
+            "targetPageId": "page-profile",
+            "hideEdge": true,
+            "transitionLabel": "我的"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-mood-insight",
+      "title": "情绪洞察",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784387762000,
+      "canvasData": {
+        "x": 618,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/mood-insight.html",
+        "interactions": [
+          {
+            "domId": "back-home",
+            "targetPageId": "page-home",
+            "hideEdge": true,
+            "transitionLabel": "返回"
+          },
+          {
+            "domId": "card-ai-insight-detail",
+            "targetPageId": "page-ai-counseling",
+            "transitionLabel": "AI深度解读"
+          },
+          {
+            "domId": "nav-home",
+            "targetPageId": "page-home",
+            "hideEdge": true,
+            "transitionLabel": "首页"
+          },
+          {
+            "domId": "nav-mood",
+            "targetPageId": "page-mood-record",
+            "hideEdge": true,
+            "transitionLabel": "情绪"
+          },
+          {
+            "domId": "nav-relax",
+            "targetPageId": "page-relax",
+            "hideEdge": true,
+            "transitionLabel": "放松"
+          },
+          {
+            "domId": "nav-treehole",
+            "targetPageId": "page-treehole",
+            "hideEdge": true,
+            "transitionLabel": "树洞"
+          },
+          {
+            "domId": "nav-profile",
+            "targetPageId": "page-profile",
+            "hideEdge": true,
+            "transitionLabel": "我的"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-ai-counseling",
+      "title": "AI咨询",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784387763000,
+      "canvasData": {
+        "x": 927,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/ai-counseling.html",
+        "interactions": [
+          {
+            "domId": "back-home",
+            "targetPageId": "page-home",
+            "hideEdge": true,
+            "transitionLabel": "返回"
+          },
+          {
+            "domId": "quick-relax",
+            "targetPageId": "page-relax",
+            "transitionLabel": "去放松一下"
+          },
+          {
+            "domId": "quick-stress-relief",
+            "targetPageId": "page-relax",
+            "hideEdge": true,
+            "transitionLabel": "呼吸练习"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-relax",
+      "title": "放松中心",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784387764000,
+      "canvasData": {
+        "x": 1236,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/relax.html",
+        "interactions": [
+          {
+            "domId": "btn-breathing-play",
+            "targetPageId": "page-treehole",
+            "transitionLabel": "呼吸完去树洞"
+          },
+          {
+            "domId": "cat-music-therapy",
+            "targetPageId": "page-treehole",
+            "hideEdge": true,
+            "transitionLabel": "音乐疗愈"
+          },
+          {
+            "domId": "nav-home",
+            "targetPageId": "page-home",
+            "hideEdge": true,
+            "transitionLabel": "首页"
+          },
+          {
+            "domId": "nav-mood",
+            "targetPageId": "page-mood-record",
+            "hideEdge": true,
+            "transitionLabel": "情绪"
+          },
+          {
+            "domId": "nav-treehole",
+            "targetPageId": "page-treehole",
+            "hideEdge": true,
+            "transitionLabel": "树洞"
+          },
+          {
+            "domId": "nav-profile",
+            "targetPageId": "page-profile",
+            "hideEdge": true,
+            "transitionLabel": "我的"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-treehole",
+      "title": "树洞",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784387765000,
+      "canvasData": {
+        "x": 1545,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/treehole.html",
+        "interactions": [
+          {
+            "domId": "fab-create-post",
+            "targetPageId": "page-improve",
+            "transitionLabel": "分享后去成长"
+          },
+          {
+            "domId": "post-1",
+            "targetPageId": "page-ai-counseling",
+            "hideEdge": true,
+            "transitionLabel": "找AI聊聊"
+          },
+          {
+            "domId": "post-2",
+            "targetPageId": "page-relax",
+            "hideEdge": true,
+            "transitionLabel": "放松一下"
+          },
+          {
+            "domId": "nav-home",
+            "targetPageId": "page-home",
+            "hideEdge": true,
+            "transitionLabel": "首页"
+          },
+          {
+            "domId": "nav-mood",
+            "targetPageId": "page-mood-record",
+            "hideEdge": true,
+            "transitionLabel": "情绪"
+          },
+          {
+            "domId": "nav-relax",
+            "targetPageId": "page-relax",
+            "hideEdge": true,
+            "transitionLabel": "放松"
+          },
+          {
+            "domId": "nav-profile",
+            "targetPageId": "page-profile",
+            "hideEdge": true,
+            "transitionLabel": "我的"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-improve",
+      "title": "提升计划",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784387766000,
+      "canvasData": {
+        "x": 1854,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/improve.html",
+        "interactions": [
+          {
+            "domId": "course-featured",
+            "targetPageId": "page-profile",
+            "transitionLabel": "查看学习进度"
+          },
+          {
+            "domId": "assessment-mood",
+            "targetPageId": "page-mood-insight",
+            "hideEdge": true,
+            "transitionLabel": "测评结果"
+          },
+          {
+            "domId": "nav-home",
+            "targetPageId": "page-home",
+            "hideEdge": true,
+            "transitionLabel": "首页"
+          },
+          {
+            "domId": "nav-mood",
+            "targetPageId": "page-mood-record",
+            "hideEdge": true,
+            "transitionLabel": "情绪"
+          },
+          {
+            "domId": "nav-relax",
+            "targetPageId": "page-relax",
+            "hideEdge": true,
+            "transitionLabel": "放松"
+          },
+          {
+            "domId": "nav-treehole",
+            "targetPageId": "page-treehole",
+            "hideEdge": true,
+            "transitionLabel": "树洞"
+          },
+          {
+            "domId": "nav-profile",
+            "targetPageId": "page-profile",
+            "hideEdge": true,
+            "transitionLabel": "我的"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-profile",
+      "title": "个人中心",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1784387767000,
+      "canvasData": {
+        "x": 2163,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/profile.html",
+        "interactions": [
+          {
+            "domId": "menu-mood-archive",
+            "targetPageId": "page-mood-insight",
+            "hideEdge": true,
+            "transitionLabel": "情绪档案"
+          },
+          {
+            "domId": "menu-account",
+            "targetPageId": "page-home",
+            "hideEdge": true,
+            "transitionLabel": "账号设置"
+          },
+          {
+            "domId": "nav-home",
+            "targetPageId": "page-home",
+            "hideEdge": true,
+            "transitionLabel": "首页"
+          },
+          {
+            "domId": "nav-mood",
+            "targetPageId": "page-mood-record",
+            "hideEdge": true,
+            "transitionLabel": "情绪"
+          },
+          {
+            "domId": "nav-relax",
+            "targetPageId": "page-relax",
+            "hideEdge": true,
+            "transitionLabel": "放松"
+          },
+          {
+            "domId": "nav-treehole",
+            "targetPageId": "page-treehole",
+            "hideEdge": true,
+            "transitionLabel": "树洞"
+          }
+        ]
+      }
+    },
+    {
+      "id": "image-001",
+      "title": "日落花园主视觉",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1784387770000,
+      "canvasData": {
+        "x": 0,
+        "y": 419
+      },
+      "devMetadata": {
+        "imageSrc": "assets/hero-sunset-garden.jpg"
+      }
+    },
+    {
+      "id": "image-002",
+      "title": "情绪光谱插画",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1784387771000,
+      "canvasData": {
+        "x": 309,
+        "y": 419
+      },
+      "devMetadata": {
+        "imageSrc": "assets/mood-spectrum.jpg"
+      }
+    },
+    {
+      "id": "image-003",
+      "title": "禅意花园放松",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1784387772000,
+      "canvasData": {
+        "x": 618,
+        "y": 419
+      },
+      "devMetadata": {
+        "imageSrc": "assets/relax-zen-garden.jpg"
+      }
+    },
+    {
+      "id": "image-004",
+      "title": "AI陪伴之光",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1784387773000,
+      "canvasData": {
+        "x": 927,
+        "y": 419
+      },
+      "devMetadata": {
+        "imageSrc": "assets/ai-companion.jpg"
+      }
+    }
+  ],
+  "config": {
+    "autoLayout": true,
+    "deviceType": "mobile",
+    "projectName": "情绪健康平台 · UI原型",
+    "designLibrary": null
+  }
+}

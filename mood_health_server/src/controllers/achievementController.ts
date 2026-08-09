@@ -1,25 +1,22 @@
+import { HTTP_STATUS } from '../utils/httpStatus'
 import { Response } from "express";
 import { AuthRequest } from "../middleware/auth";
-import {
-  checkAchievements,
-  getAchievementProgress,
-  getAllAchievements,
-  getUserAchievements,
-} from "../models/achievementModel";
+import { createAchievementRepository } from "../repositories/achievementRepository";
+import { apiFailure, apiSuccess } from "../utils/apiResponse";
 import logger from "../utils/logger";
+
+const achievementRepo = createAchievementRepository();
 
 export const getAchievementsHandler = async (
   _req: AuthRequest,
   res: Response,
 ) => {
   try {
-    const data = await getAllAchievements();
-    res.json({ code: 0, data });
+    const data = await achievementRepo.getAllDefinitions();
+    res.json(apiSuccess(data, "获取成就列表成功"));
   } catch (error) {
     logger.error("获取成就列表失败", { error });
-    res
-      .status(500)
-      .json({ code: 500, message: "获取成就列表失败，请稍后重试" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, "获取成就列表失败，请稍后重试"));
   }
 };
 
@@ -28,13 +25,11 @@ export const getUserAchievementsHandler = async (
   res: Response,
 ) => {
   try {
-    const data = await getUserAchievements(req.user!.userId);
-    res.json({ code: 0, data });
+    const data = await achievementRepo.getUserAchievements(req.user!.userId);
+    res.json(apiSuccess(data, "获取用户成就成功"));
   } catch (error) {
     logger.error("获取用户成就失败", { userId: req.user?.userId, error });
-    res
-      .status(500)
-      .json({ code: 500, message: "获取用户成就失败，请稍后重试" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, "获取用户成就失败，请稍后重试"));
   }
 };
 
@@ -43,11 +38,11 @@ export const checkAchievementsHandler = async (
   res: Response,
 ) => {
   try {
-    const data = await checkAchievements(req.user!.userId);
-    res.json({ code: 0, data });
+    const data = await achievementRepo.checkAndUnlock(req.user!.userId);
+    res.json(apiSuccess(data, "检查成就成功"));
   } catch (error) {
     logger.error("检查成就失败", { userId: req.user?.userId, error });
-    res.status(500).json({ code: 500, message: "检查成就失败，请稍后重试" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, "检查成就失败，请稍后重试"));
   }
 };
 
@@ -56,12 +51,10 @@ export const getAchievementProgressHandler = async (
   res: Response,
 ) => {
   try {
-    const data = await getAchievementProgress(req.user!.userId);
-    res.json({ code: 0, data });
+    const data = await achievementRepo.getAchievementProgress(req.user!.userId);
+    res.json(apiSuccess(data, "获取成就进度成功"));
   } catch (error) {
     logger.error("获取成就进度失败", { userId: req.user?.userId, error });
-    res
-      .status(500)
-      .json({ code: 500, message: "获取成就进度失败，请稍后重试" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, "获取成就进度失败，请稍后重试"));
   }
 };

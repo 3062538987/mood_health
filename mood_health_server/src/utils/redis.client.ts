@@ -9,6 +9,7 @@ class RedisClient {
   private maxReconnectAttempts: number = 10;
   private reconnectDelay: number = 2000;
   private fallbackEnabled: boolean = true;
+  public lastError: Error | null = null;
 
   constructor() {
     this.client = this.createClient();
@@ -87,23 +88,49 @@ class RedisClient {
    * 执行 Redis 命令，带错误处理
    */
   public async execute<T>(
-    command: (...args: any[]) => Promise<T>,
-    ...args: any[]
+    command: (...args: any[]) => Promise<T>, // TODO: tighten type (any preserved) — 变长 Redis 命令参数，异构无法统一收窄
+    ...args: any[] // TODO: tighten type (any preserved)
   ): Promise<T | null> {
     try {
       if (!this.isConnected) {
         if (this.fallbackEnabled) {
           logger.warn("Redis 未连接，返回 null");
+          this.lastError = new Error("Redis 未连接");
           return null;
         }
         throw new RedisError("Redis 未连接", new Error("Redis 未连接"));
       }
-      return await command.apply(this.client, args);
+      const result = await command.apply(this.client, args);
+      this.lastError = null;
+      return result;
     } catch (error) {
       logger.error("Redis 命令执行失败:", error);
+      this.lastError = error instanceof Error ? error : new Error(String(error));
       if (this.fallbackEnabled) {
         return null;
       }
+      throw new RedisError("Redis 命令执行失败", error);
+    }
+  }
+
+  /**
+   * 安全关键路径专用（fail-closed）：登录锁定、限流等不可被静默降级的场景。
+   * Redis 未连接或命令执行失败一律抛出 RedisError，调用方应据此拒绝请求，
+   * 而不是像 execute() 那样返回 null 静默放行。
+   */
+  public async executeSecure<T>(
+    command: (...args: any[]) => Promise<T>, // TODO: tighten type (any preserved) — 变长 Redis 命令参数，异构无法统一收窄
+    ...args: any[] // TODO: tighten type (any preserved)
+  ): Promise<T> {
+    if (!this.isConnected) {
+      throw new RedisError("Redis 未连接", new Error("Redis 未连接"));
+    }
+    try {
+      const result = await command.apply(this.client, args);
+      this.lastError = null;
+      return result;
+    } catch (error) {
+      this.lastError = error instanceof Error ? error : new Error(String(error));
       throw new RedisError("Redis 命令执行失败", error);
     }
   }
@@ -152,6 +179,50 @@ class RedisClient {
    */
   public async keys(pattern: string): Promise<string[] | null> {
     return this.execute(this.client.keys.bind(this.client), pattern);
+  }
+
+  /**
+   * 自增计数器
+   */
+  public async incr(key: string): Promise<number | null> {
+    return this.execute(this.client.incr.bind(this.client), key);
+  }
+
+  /**
+   * 设置键过期时间（秒）
+   */
+  public async expire(key: string, seconds: number): Promise<number | null> {
+    return this.execute(this.client.expire.bind(this.client), key, seconds);
+  }
+
+  /**
+   * 使用 SCAN 迭代匹配模式的键（避免 KEYS 阻塞 Redis）
+   * 返回匹配的键数组
+   */
+  public async scan(pattern: string, count: number = 100): Promise<string[]> {
+    try {
+      if (!this.isConnected) {
+        if (this.fallbackEnabled) {
+          logger.warn('Redis 未连接，scan 返回空数组');
+          return [];
+        }
+        throw new RedisError('Redis 未连接', new Error('Redis 未连接'));
+      }
+      const keys: string[] = [];
+      let cursor = '0';
+      do {
+        const [newCursor, batch] = await this.client.scan(cursor, 'MATCH', pattern, 'COUNT', count);
+        cursor = newCursor;
+        keys.push(...batch);
+      } while (cursor !== '0');
+      return keys;
+    } catch (error) {
+      logger.error('Redis scan 失败:', error);
+      if (this.fallbackEnabled) {
+        return [];
+      }
+      throw new RedisError('Redis scan 失败', error);
+    }
   }
 
   /**

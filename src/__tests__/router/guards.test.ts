@@ -15,7 +15,9 @@ const createUserStore = (overrides = {}) => ({
   user: null,
   isLoggedIn: false,
   isAdmin: false,
+  authInitialized: false,
   fetchUserInfo: vi.fn().mockResolvedValue(true),
+  trySessionRestore: vi.fn().mockResolvedValue(true),
   ...overrides,
 })
 
@@ -26,20 +28,20 @@ describe('router guards', () => {
   })
 
   describe('initializeUserState', () => {
-    it('在存在 token 且用户信息未加载时拉取用户信息', async () => {
-      const userStore = createUserStore({ token: 'token-value' })
-
-      await initializeUserState(userStore as never)
-
-      expect(userStore.fetchUserInfo).toHaveBeenCalledTimes(1)
-    })
-
-    it('在没有 token 时不拉取用户信息', async () => {
+    it('在未初始化时尝试会话恢复', async () => {
       const userStore = createUserStore()
 
       await initializeUserState(userStore as never)
 
-      expect(userStore.fetchUserInfo).not.toHaveBeenCalled()
+      expect(userStore.trySessionRestore).toHaveBeenCalledTimes(1)
+    })
+
+    it('在已初始化时跳过会话恢复', async () => {
+      const userStore = createUserStore({ authInitialized: true })
+
+      await initializeUserState(userStore as never)
+
+      expect(userStore.trySessionRestore).not.toHaveBeenCalled()
     })
   })
 

@@ -1,6 +1,7 @@
 <template>
   <div class="survey-page">
-    <h1>情绪问卷</h1>
+    <h1>情绪筛查问卷</h1>
+    <p class="screening-note">结果仅用于自我筛查与风险提示，不构成医学诊断。</p>
     <div v-if="!currentQuestionnaire">
       <h2>请选择一个问卷</h2>
       <ul>
@@ -24,7 +25,7 @@
               v-model="answers[question.id]"
               type="radio"
               :name="'q' + question.id"
-              :value="opt"
+              :value="optIndex"
             />
             {{ opt }}
           </label>
@@ -42,17 +43,25 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getQuestionnaires, getQuestionnaireDetail, submitAssessment } from '@/api/questionnaire'
-import type { Questionnaire, SubmitData } from '@/types/questionnaire'
+import {
+  getQuestionnaires,
+  getQuestionnaireDetail,
+  getQuestionnaireQuestions,
+  submitAssessment,
+  type Questionnaire,
+  type Question,
+} from '@/api/questionnaire'
+
+type QuestionnaireWithQuestions = Questionnaire & { questions: Question[] }
 
 const questionnaires = ref<Questionnaire[]>([])
-const currentQuestionnaire = ref<Questionnaire | null>(null)
-const answers = ref<Record<number, any>>({}) // 使用对象存储，key为questionId
+const currentQuestionnaire = ref<QuestionnaireWithQuestions | null>(null)
+const answers = ref<Record<number, number>>({})
 
 onMounted(async () => {
   try {
     const res = await getQuestionnaires()
-    questionnaires.value = res as Questionnaire[]
+    questionnaires.value = res
   } catch (error) {
     console.error('加载问卷列表失败', error)
   }
@@ -61,8 +70,11 @@ onMounted(async () => {
 const selectQuestionnaire = async (q: Questionnaire) => {
   // 如果需要完整题目，可调用详情接口
   try {
-    const res = await getQuestionnaireDetail(q.id)
-    currentQuestionnaire.value = res as Questionnaire
+    const [detail, questions] = await Promise.all([
+      getQuestionnaireDetail(q.id),
+      getQuestionnaireQuestions(q.id),
+    ])
+    currentQuestionnaire.value = { ...detail, questions }
     answers.value = {} // 重置答案
   } catch (error) {
     console.error('加载问卷详情失败', error)
@@ -73,23 +85,18 @@ const submitSurvey = async () => {
   if (!currentQuestionnaire.value || !currentQuestionnaire.value.questions) return
   // 简单验证：所有问题都需回答（可根据需要加强）
   const allQuestions = currentQuestionnaire.value.questions
-  const missing = allQuestions.some(
-    (q) => answers.value[q.id] === undefined || answers.value[q.id] === ''
-  )
+  const missing = allQuestions.some((q) => answers.value[q.id] === undefined)
   if (missing) {
     ElMessage.warning('请回答所有问题')
     return
   }
   try {
-    const submitData: SubmitData = {
+    const submitData = {
       questionnaire_id: currentQuestionnaire.value.id,
-      answers: Object.entries(answers.value).map(([questionId, answer]) => ({
-        question_id: Number(questionId),
-        answer: answer.toString(),
-      })),
+      answers: allQuestions.map((question) => ({ itemId: question.id, score: answers.value[question.id] })),
     }
-    await submitAssessment(submitData as any)
-    ElMessage.success('提交成功')
+    await submitAssessment(submitData)
+    ElMessage.success('筛查结果已保存')
     currentQuestionnaire.value = null
   } catch (error) {
     ElMessage.error('提交失败，请稍后重试')
@@ -111,6 +118,10 @@ const cancelSurvey = () => {
   margin: 0 auto;
   padding: 20px;
   background-color: $bg-color;
+  .screening-note {
+    color: $text-light-color;
+    line-height: 1.6;
+  }
   .question {
     margin: 20px 0;
     border-bottom: 1px solid $text-light-color;

@@ -1,8 +1,9 @@
 /**
  * 心理咨询API
- * 提供心理咨询对话功能，支持多轮对话和上下文管理
+ * 提供心理咨询对话功能，调用后端 DeepSeek AI 接口
  */
 
+import request from '@/utils/request'
 
 /**
  * 心理咨询请求接口
@@ -29,44 +30,6 @@ export interface CounselingResponse {
 }
 
 /**
- * 网络异常时的兜底响应
- */
-const DEFAULT_FALLBACK_RESPONSE: CounselingResponse = {
-  response: '很抱歉，我暂时无法为你提供帮助，请稍后再试',
-  mood: '平静',
-  riskLevel: 'low',
-}
-
-const getLocalCounselingReply = (message: string): CounselingResponse => {
-  const trimmed = message.trim()
-  if (trimmed.length === 0) {
-    return DEFAULT_FALLBACK_RESPONSE
-  }
-
-  if (trimmed.includes('压力') || trimmed.includes('焦虑')) {
-    return {
-      response: '先做三次缓慢深呼吸，把注意力放在当下。你可以把最紧急的一件事写下来，先完成最小一步。',
-      mood: '焦虑',
-      riskLevel: 'low',
-    }
-  }
-
-  if (trimmed.includes('难过') || trimmed.includes('低落') || trimmed.includes('抑郁')) {
-    return {
-      response: '你愿意说出来已经很不容易。今天先给自己一个小目标，比如散步十分钟或和信任的人聊一会儿。',
-      mood: '低落',
-      riskLevel: 'low',
-    }
-  }
-
-  return {
-    response: '谢谢你的分享。你可以先照顾好身体状态，按优先级拆分任务，一步一步来。需要时也可以寻求专业支持。',
-    mood: '平静',
-    riskLevel: 'low',
-  }
-}
-
-/**
  * 发送心理咨询消息
  * @param data 咨询请求数据
  * @returns 咨询响应
@@ -82,7 +45,16 @@ export const sendCounselingMessage = async (
     throw new Error('消息内容不能超过1000字')
   }
 
-  return getLocalCounselingReply(data.message)
+  const res = await request<CounselingResponse>({
+    url: '/api/ai/counseling',
+    method: 'post',
+    data: {
+      message: data.message,
+      context: data.context,
+    },
+  })
+
+  return res
 }
 
 /**
@@ -143,4 +115,84 @@ export const formatMessagesToContext = (
     role: msg.role,
     content: msg.content,
   }))
+}
+
+/**
+ * 会话列表项
+ */
+export interface SessionItem {
+  sessionId: string
+  title: string
+  createdAt: string
+  lastMessageAt: string
+  messageCount: number
+}
+
+export interface SessionMessage {
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  createdAt?: string
+  sources?: KnowledgeSource[]
+}
+
+export interface KnowledgeSource {
+  title: string
+  reference: string
+}
+
+export interface SessionCounselingResponse {
+  response: string
+  sessionId: string
+  riskLevel?: string
+  hasRiskContent?: boolean
+  suggestion?: string
+  fallbackUsed?: boolean
+  provider?: string | null
+  model?: string | null
+  sources: KnowledgeSource[]
+  groundingUsed: boolean
+  requestId: string
+}
+
+/**
+ * 获取会话列表
+ */
+export function getSessions() {
+  return request<SessionItem[]>({
+    url: '/api/counseling/sessions',
+    method: 'get',
+  })
+}
+
+/**
+ * 加载指定会话的消息
+ */
+export function loadSessionMessages(sessionId: string) {
+  return request<SessionMessage[]>({
+    url: `/api/counseling/sessions/${sessionId}`,
+    method: 'get',
+  })
+}
+
+/**
+ * 重命名指定会话
+ */
+export function renameSession(sessionId: string, title: string) {
+  return request<{ sessionId: string; title: string }>({
+    url: `/api/counseling/sessions/${sessionId}`,
+    method: 'patch',
+    data: { title },
+  })
+}
+
+/**
+ * 发送基于会话的咨询消息
+ */
+export function sendSessionCounselingMessage(data: { message: string; sessionId: string }) {
+  return request<SessionCounselingResponse>({
+    url: '/api/counseling/send',
+    method: 'post',
+    data,
+    timeout: 60_000,
+  })
 }

@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统总体业务流程图 | 大学生情绪健康管理平台</title>
+    <style id="theme-vars">
+:root {
+  --color-primary: #4F46E5;
+  --color-primary-light: #EEF2FF;
+  --color-primary-dark: #4338CA;
+  --color-secondary: #0EA5E9;
+  --color-accent: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-background: #F8FAFC;
+  --color-foreground: #111827;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #111827;
+  --color-muted: #6B7280;
+  --color-muted-foreground: #6B7280;
+  --color-border: #E5E7EB;
+  --color-ring: #4F46E5;
+  --color-radius-sm: 6px;
+  --color-radius-md: 8px;
+  --color-radius-lg: 12px;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--color-background);
+    --color-foreground: var(--color-foreground);
+    --color-card: var(--color-card);
+    --color-card-foreground: var(--color-card-foreground);
+    --color-primary: var(--color-primary);
+    --color-secondary: var(--color-secondary);
+    --color-muted: var(--color-muted);
+    --color-muted-foreground: var(--color-muted-foreground);
+    --color-accent: var(--color-accent);
+    --color-border: var(--color-border);
+    --color-ring: var(--color-ring);
+    --radius-sm: var(--color-radius-sm);
+    --radius-md: var(--color-radius-md);
+    --radius-lg: var(--color-radius-lg);
+  }
+  @layer base {
+    body { background: var(--color-background); color: var(--color-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--color-background); }
+      .text-background { color: var(--color-background); }
+      .border-background { border-color: var(--color-background); }
+      .ring-background { --tw-ring-color: var(--color-background); }
+      .bg-foreground { background-color: var(--color-foreground); }
+      .text-foreground { color: var(--color-foreground); }
+      .border-foreground { border-color: var(--color-foreground); }
+      .ring-foreground { --tw-ring-color: var(--color-foreground); }
+      .bg-card { background-color: var(--color-card); }
+      .text-card { color: var(--color-card); }
+      .border-card { border-color: var(--color-card); }
+      .ring-card { --tw-ring-color: var(--color-card); }
+      .bg-card-foreground { background-color: var(--color-card-foreground); }
+      .text-card-foreground { color: var(--color-card-foreground); }
+      .border-card-foreground { border-color: var(--color-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--color-card-foreground); }
+      .bg-primary { background-color: var(--color-primary); }
+      .text-primary { color: var(--color-primary); }
+      .border-primary { border-color: var(--color-primary); }
+      .ring-primary { --tw-ring-color: var(--color-primary); }
+      .bg-secondary { background-color: var(--color-secondary); }
+      .text-secondary { color: var(--color-secondary); }
+      .border-secondary { border-color: var(--color-secondary); }
+      .ring-secondary { --tw-ring-color: var(--color-secondary); }
+      .bg-muted { background-color: var(--color-muted); }
+      .text-muted { color: var(--color-muted); }
+      .border-muted { border-color: var(--color-muted); }
+      .ring-muted { --tw-ring-color: var(--color-muted); }
+      .bg-muted-foreground { background-color: var(--color-muted-foreground); }
+      .text-muted-foreground { color: var(--color-muted-foreground); }
+      .border-muted-foreground { border-color: var(--color-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--color-muted-foreground); }
+      .bg-accent { background-color: var(--color-accent); }
+      .text-accent { color: var(--color-accent); }
+      .border-accent { border-color: var(--color-accent); }
+      .ring-accent { --tw-ring-color: var(--color-accent); }
+      .bg-border { background-color: var(--color-border); }
+      .text-border { color: var(--color-border); }
+      .border-border { border-color: var(--color-border); }
+      .ring-border { --tw-ring-color: var(--color-border); }
+      .bg-ring { background-color: var(--color-ring); }
+      .text-ring { color: var(--color-ring); }
+      .border-ring { border-color: var(--color-ring); }
+      .ring-ring { --tw-ring-color: var(--color-ring); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Page Header -->
+  <header class="page-header">
+    <span class="badge">业务架构文档</span>
+    <h1>系统总体业务流程图</h1>
+    <p class="subtitle">大学生情绪健康管理平台 · 业务架构总览</p>
+  </header>
+
+  <!-- Section 1: System Overall Business Architecture -->
+  <section class="section-card">
+    <div class="section-header">
+      <div class="section-icon primary">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+      </div>
+      <div>
+        <h2 class="section-title">系统总体业务架构图</h2>
+        <p class="section-desc">平台六大业务模块及其层级关系总览</p>
+      </div>
+    </div>
+
+    <div class="mermaid-container">
+      <pre class="mermaid">
+flowchart TD
+    classDef entry fill:#4F46E5,stroke:#4338CA,stroke-width:2px,color:#fff,font-weight:600,rx:8px
+    classDef core fill:#0EA5E9,stroke:#0284C7,stroke-width:2px,color:#fff,font-weight:600,rx:8px
+    classDef screening fill:#8B5CF6,stroke:#7C3AED,stroke-width:2px,color:#fff,font-weight:600,rx:8px
+    classDef intervention fill:#EF4444,stroke:#DC2626,stroke-width:2px,color:#fff,font-weight:600,rx:8px
+    classDef enhancement fill:#10B981,stroke:#059669,stroke-width:2px,color:#fff,font-weight:600,rx:8px
+    classDef noncore fill:#F59E0B,stroke:#D97706,stroke-width:2px,color:#fff,font-weight:600,rx:8px
+    classDef management fill:#6B7280,stroke:#4B5563,stroke-width:2px,color:#fff,font-weight:600,rx:8px
+    classDef dataflow stroke:#94A3B8,stroke-width:1.5px,stroke-dasharray:5 3
+
+    subgraph 用户层["👤 用户入口层"]
+        direction LR
+        Auth["🔐 用户认证与权限\nUser Auth &amp; RBAC"]:::entry
+    end
+
+    subgraph 核心业务层["💎 核心业务层"]
+        direction LR
+        Mood["📝 情绪记录与分析\nMood Recording &amp; Analysis"]:::core
+        Assessment["📋 心理测评\nPsychological Assessment"]:::screening
+    end
+
+    subgraph 干预管理层["🚨 干预管理层"]
+        direction LR
+        Case["⚕️ 风险个案管理\nRisk Case Management"]:::intervention
+    end
+
+    subgraph 智能增强层["🤖 智能增强层"]
+        direction LR
+        AI["🧠 AI 智能分析\nAI Analysis"]:::enhancement
+    end
+
+    subgraph 辅助成长层["🌱 辅助成长层"]
+        direction LR
+        Relax["🎵 放松与成长\nRelax &amp; Growth"]:::noncore
+    end
+
+    subgraph 系统管理层["⚙️ 系统管理层"]
+        direction LR
+        Admin["🛠️ 管理后台\nAdmin Dashboard"]:::management
+    end
+
+    Auth -->|认证通过| Mood
+    Auth -->|认证通过| Assessment
+    Auth -->|认证通过| Relax
+
+    Mood -->|情绪数据| AI
+    Assessment -->|测评结果| AI
+
+    Mood -->|高风险预警| Case
+    Assessment -->|高风险筛查| Case
+    AI -->|风险识别| Case
+
+    AI -->|智能建议| Mood
+    AI -->|个性化推荐| Relax
+
+    Admin -.->|监管| Mood
+    Admin -.->|监管| Assessment
+    Admin -.->|监管| Case
+    Admin -.->|监管| AI
+    Admin -.->|监管| Relax
+    Admin -.->|用户/权限管理| Auth
+
+    class Admin,Auth,Mood,Assessment,Case,AI,Relax entry
+      </pre>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="legend-dot primary"></span>入口模块</div>
+      <div class="legend-item"><span class="legend-dot secondary"></span>核心模块</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#8B5CF6;"></span>筛查模块</div>
+      <div class="legend-item"><span class="legend-dot danger"></span>干预模块</div>
+      <div class="legend-item"><span class="legend-dot accent"></span>增强模块</div>
+      <div class="legend-item"><span class="legend-dot warning"></span>辅助模块</div>
+      <div class="legend-item"><span class="legend-dot gray"></span>管理模块</div>
+    </div>
+  </section>
+
+  <!-- Section 2: User Role & Permission Matrix -->
+  <section class="section-card">
+    <div class="section-header">
+      <div class="section-icon secondary">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+      </div>
+      <div>
+        <h2 class="section-title">用户角色与权限矩阵</h2>
+        <p class="section-desc">三类用户角色对各业务模块的访问权限一览</p>
+      </div>
+    </div>
+
+    <div class="mermaid-container">
+      <pre class="mermaid">
+flowchart LR
+    classDef student fill:#0EA5E9,stroke:#0284C7,stroke-width:2px,color:#fff,font-weight:600,rx:8px
+    classDef counselor fill:#10B981,stroke:#059669,stroke-width:2px,color:#fff,font-weight:600,rx:8px
+    classDef admin fill:#6B7280,stroke:#4B5563,stroke-width:2px,color:#fff,font-weight:600,rx:8px
+    classDef module fill:#F9FAFB,stroke:#E5E7EB,stroke-width:1.5px,color:#374151,font-weight:500,rx:8px
+    classDef full stroke:#10B981,stroke-width:2.5px
+    classDef partial stroke:#F59E0B,stroke-width:2px,stroke-dasharray:5 3
+    classDef noaccess stroke:#D1D5DB,stroke-width:1px,stroke-dasharray:3 3,opacity:0.5
+
+    subgraph 角色["用户角色"]
+        direction TB
+        S["🎓 学生\nStudent"]:::student
+        C["👩‍⚕️ 心理咨询师\nCounselor"]:::counselor
+        A["👑 超级管理员\nSuper Admin"]:::admin
+    end
+
+    subgraph 模块["业务模块权限"]
+        direction TB
+        M1["🔐 用户认证与权限"]:::module
+        M2["📝 情绪记录与分析"]:::module
+        M3["📋 心理测评"]:::module
+        M4["⚕️ 风险个案管理"]:::module
+        M5["🤖 AI 智能分析"]:::module
+        M6["🎵 放松与成长"]:::module
+        M7["🛠️ 管理后台"]:::module
+    end
+
+    S -->|完整访问| M2
+    S -->|完整访问| M3
+    S -->|完整访问| M5
+    S -->|完整访问| M6
+    S -.->|仅本人| M1
+    S -.->|查看本人预警| M4
+    S -.x.|无权限| M7
+
+    C -->|完整访问| M4
+    C -->|查看学生数据| M2
+    C -->|查看学生数据| M3
+    C -->|完整访问| M5
+    C -.->|有限访问| M6
+    C -.->|有限管理| M1
+    C -.x.|无权限| M7
+
+    A -->|全部权限| M1
+    A -->|全部权限| M2
+    A -->|全部权限| M3
+    A -->|全部权限| M4
+    A -->|全部权限| M5
+    A -->|全部权限| M6
+    A -->|全部权限| M7
+
+    class M1,M2,M3,M4,M5 module
+      </pre>
+    </div>
+
+    <!-- Detailed Permission Table -->
+    <h3 style="font-size:16px; font-weight:600; color:var(--gray-900); margin:32px 0 16px 0;">权限详情表</h3>
+    <table class="role-matrix">
+      <thead>
+        <tr>
+          <th>业务模块</th>
+          <th>🎓 学生</th>
+          <th>👩‍⚕️ 心理咨询师</th>
+          <th>👑 超级管理员</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>🔐 用户认证与权限</td>
+          <td><span class="access-partial">本人信息</span></td>
+          <td><span class="access-partial">有限管理</span></td>
+          <td><span class="access-full">全部权限</span></td>
+        </tr>
+        <tr>
+          <td>📝 情绪记录与分析</td>
+          <td><span class="access-full">完整访问</span></td>
+          <td><span class="access-partial">查看学生数据</span></td>
+          <td><span class="access-full">全部权限</span></td>
+        </tr>
+        <tr>
+          <td>📋 心理测评</td>
+          <td><span class="access-full">参与测评</span></td>
+          <td><span class="access-partial">查看结果</span></td>
+          <td><span class="access-full">全部权限</span></td>
+        </tr>
+        <tr>
+          <td>⚕️ 风险个案管理</td>
+          <td><span class="access-partial">本人预警</span></td>
+          <td><span class="access-full">个案干预</span></td>
+          <td><span class="access-full">全部权限</span></td>
+        </tr>
+        <tr>
+          <td>🤖 AI 智能分析</td>
+          <td><span class="access-full">个人报告</span></td>
+          <td><span class="access-full">学生分析</span></td>
+          <td><span class="access-full">全部权限</span></td>
+        </tr>
+        <tr>
+          <td>🎵 放松与成长</td>
+          <td><span class="access-full">完整访问</span></td>
+          <td><span class="access-partial">内容管理</span></td>
+          <td><span class="access-full">全部权限</span></td>
+        </tr>
+        <tr>
+          <td>🛠️ 管理后台</td>
+          <td><span class="access-none">无权限</span></td>
+          <td><span class="access-none">无权限</span></td>
+          <td><span class="access-full">全部权限</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="legend">
+      <div class="legend-item"><span class="access-full" style="padding:2px 8px; font-size:12px;">完整访问</span> 拥有全部读写权限</div>
+      <div class="legend-item"><span class="access-partial" style="padding:2px 8px; font-size:12px;">部分访问</span> 仅限特定场景或只读</div>
+      <div class="legend-item"><span class="access-none" style="padding:2px 8px; font-size:12px;">无权限</span> 无法访问该模块</div>
+    </div>
+  </section>
+
+  <!-- Section 3: Business Module Relationship -->
+  <section class="section-card">
+    <div class="section-header">
+      <div class="section-icon accent">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="18" cy="5" r="3"></circle>
+          <circle cx="6" cy="12" r="3"></circle>
+          <circle cx="18" cy="19" r="3"></circle>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+        </svg>
+      </div>
+      <div>
+        <h2 class="section-title">业务模块关系图</h2>
+        <p class="section-desc">核心业务数据流与模块间的协同关系</p>
+      </div>
+    </div>
+
+    <div class="mermaid-container">
+      <pre class="mermaid">
+flowchart TD
+    classDef user fill:#4F46E5,stroke:#4338CA,stroke-width:2px,color:#fff,font-weight:600,rx:8px
+    classDef mood fill:#0EA5E9,stroke:#0284C7,stroke-width:2px,color:#fff,font-weight:600,rx:8px
+    classDef assess fill:#8B5CF6,stroke:#7C3AED,stroke-width:2px,color:#fff,font-weight:600,rx:8px
+    classDef ai fill:#10B981,stroke:#059669,stroke-width:2px,color:#fff,font-weight:600,rx:8px
+    classDef risk fill:#EF4444,stroke:#DC2626,stroke-width:2px,color:#fff,font-weight:600,rx:8px
+    classDef counselor fill:#F59E0B,stroke:#D97706,stroke-width:2px,color:#fff,font-weight:600,rx:8px
+    classDef relax fill:#14B8A6,stroke:#0D9488,stroke-width:2px,color:#fff,font-weight:600,rx:8px
+    classDef admin fill:#6B7280,stroke:#4B5563,stroke-width:2px,color:#fff,font-weight:600,rx:8px
+    classDef process fill:#FEF3C7,stroke:#F59E0B,stroke-width:1.5px,color:#92400E,font-weight:500,rx:6px
+
+    %% User journey path
+    subgraph 学生用户旅程["🎓 学生用户旅程"]
+        direction LR
+        Register["注册/登录"]:::user
+        RecordMood["记录情绪"]:::mood
+        TakeAssess["心理测评"]:::assess
+        ViewReport["查看AI报告"]:::ai
+        UseRelax["放松训练"]:::relax
+    end
+
+    %% Risk intervention path
+    subgraph 风险干预流程["🚨 风险干预流程"]
+        direction TD
+        AutoDetect["自动风险检测"]:::process
+        CreateCase["自动创建个案"]:::risk
+        CounselorIntervene["咨询师介入干预"]:::counselor
+        TrackProgress["跟踪干预进展"]:::process
+        CaseClosed["个案闭环结案"]:::risk
+    end
+
+    %% AI Analysis path
+    subgraph AI智能分析引擎["🤖 AI 智能分析引擎"]
+        direction TD
+        DataFeed["数据采集"]:::process
+        AIAnalysis["AI 多维度分析"]:::ai
+        GenerateReport["生成分析报告"]:::process
+        SmartRecommend["智能推荐干预"]:::ai
+    end
+
+    %% Admin oversight
+    subgraph 管理监管["🛠️ 管理后台监管"]
+        Admin["超级管理员\n全模块监管"]:::admin
+    end
+
+    %% Main flow - Student journey
+    Register --> RecordMood
+    RecordMood --> TakeAssess
+    RecordMood --> UseRelax
+    TakeAssess --> ViewReport
+    RecordMood --> ViewReport
+
+    %% Data to AI engine
+    RecordMood -->|情绪数据| DataFeed
+    TakeAssess -->|测评数据| DataFeed
+    DataFeed --> AIAnalysis
+    AIAnalysis --> GenerateReport
+    GenerateReport --> ViewReport
+    GenerateReport --> SmartRecommend
+    SmartRecommend --> UseRelax
+
+    %% Risk detection flow
+    AIAnalysis -->|高风险识别| AutoDetect
+    AutoDetect --> CreateCase
+    CreateCase --> CounselorIntervene
+    CounselorIntervene --> TrackProgress
+    TrackProgress -->|持续评估| AIAnalysis
+    TrackProgress --> CaseClosed
+
+    %% Admin oversight
+    Admin -.->|用户管理| Register
+    Admin -.->|数据监管| RecordMood
+    Admin -.->|测评管理| TakeAssess
+    Admin -.->|个案监管| CreateCase
+    Admin -.->|AI配置| AIAnalysis
+    Admin -.->|内容管理| UseRelax
+
+    %% Legend note
+    class Register,RecordMood,TakeAssess,ViewReport,UseRelax user
+    class AutoDetect,CreateCase,CounselorIntervene,TrackProgress,CaseClosed risk
+    class DataFeed,AIAnalysis,GenerateReport,SmartRecommend ai
+    class Admin admin
+      </pre>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="legend-dot primary"></span>用户操作</div>
+      <div class="legend-item"><span class="legend-dot accent"></span>AI 分析</div>
+      <div class="legend-item"><span class="legend-dot danger"></span>风险干预</div>
+      <div class="legend-item"><span class="legend-dot gray"></span>管理监管</div>
+      <div class="legend-item"><span style="display:inline-block;width:20px;height:2px;background:#94A3B8;"></span> 数据流</div>
+      <div class="legend-item"><span style="display:inline-block;width:20px;height:2px;background:#94A3B8;border-top:1px dashed #94A3B8;"></span> 监管关系</div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="page-footer">
+    <p>大学生情绪健康管理平台 · 业务架构文档 · V1.0</p>
+  </footer>
+
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#EEF2FF',
+      primaryTextColor: '#374151',
+      primaryBorderColor: '#4F46E5',
+      lineColor: '#94A3B8',
+      secondaryColor: '#E0F2FE',
+      tertiaryColor: '#D1FAE5',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif',
+      fontSize: '14px',
+      noteBkgColor: '#FEF3C7',
+      noteTextColor: '#92400E',
+      noteBorderColor: '#F59E0B',
+    },
+    flowchart: {
+      htmlLabels: true,
+      curve: 'basis',
+      padding: 20,
+      nodeSpacing: 50,
+      rankSpacing: 60,
+      useMaxWidth: true,
+    },
+    securityLevel: 'loose',
+  });
+</script>
+
+    <style>
+  :root {
+    --primary: #4F46E5;
+    --primary-light: #EEF2FF;
+    --primary-dark: #4338CA;
+    --secondary: #0EA5E9;
+    --secondary-light: #E0F2FE;
+    --accent: #10B981;
+    --accent-light: #D1FAE5;
+    --warning: #F59E0B;
+    --warning-light: #FEF3C7;
+    --danger: #EF4444;
+    --danger-light: #FEE2E2;
+    --gray-50: #F9FAFB;
+    --gray-100: #F3F4F6;
+    --gray-200: #E5E7EB;
+    --gray-300: #D1D5DB;
+    --gray-500: #6B7280;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #F0F9FF 100%);
+    color: var(--gray-900);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 48px 24px;
+  }
+
+  /* Header */
+  .page-header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .page-header .badge {
+    display: inline-block;
+    padding: 6px 16px;
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    letter-spacing: 0.5px;
+  }
+
+  .page-header h1 {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .page-header .subtitle {
+    font-size: 16px;
+    color: var(--gray-500);
+    font-weight: 400;
+  }
+
+  /* Section Cards */
+  .section-card {
+    background: #ffffff;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    padding: 36px;
+    margin-bottom: 32px;
+    border: 1px solid rgba(229, 231, 235, 0.5);
+    transition: box-shadow 0.3s ease;
+  }
+
+  .section-card:hover {
+    box-shadow: var(--shadow-lg);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  .section-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .section-icon.primary {
+    background: var(--primary-light);
+    color: var(--primary);
+  }
+
+  .section-icon.secondary {
+    background: var(--secondary-light);
+    color: var(--secondary);
+  }
+
+  .section-icon.accent {
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+
+  .section-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--gray-900);
+  }
+
+  .section-desc {
+    font-size: 14px;
+    color: var(--gray-500);
+    margin-top: 2px;
+  }
+
+  /* Mermaid Container */
+  .mermaid-container {
+    width: 100%;
+    overflow-x: auto;
+    padding: 20px 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  .mermaid {
+    font-size: 14px;
+  }
+
+  /* Role Matrix Table */
+  .role-matrix {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--gray-200);
+  }
+
+  .role-matrix thead th {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 16px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .role-matrix thead th:first-child {
+    text-align: left;
+  }
+
+  .role-matrix tbody td {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--gray-100);
+    font-size: 14px;
+    color: var(--gray-700);
+  }
+
+  .role-matrix tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .role-matrix tbody tr:nth-child(even) {
+    background: var(--gray-50);
+  }
+
+  .role-matrix tbody tr:hover {
+    background: var(--primary-light);
+  }
+
+  .role-matrix tbody td:first-child {
+    font-weight: 500;
+    color: var(--gray-900);
+  }
+
+  .role-matrix tbody td:not(:first-child) {
+    text-align: center;
+  }
+
+  .access-full {
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--accent-light);
+    color: #065F46;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .access-partial {
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--warning-light);
+    color: #92400E;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .access-none {
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--gray-100);
+    color: var(--gray-500);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 24px;
+    padding: 16px 20px;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--gray-700);
+  }
+
+  .legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+
+  .legend-dot.primary { background: var(--primary); }
+  .legend-dot.secondary { background: var(--secondary); }
+  .legend-dot.accent { background: var(--accent); }
+  .legend-dot.warning { background: var(--warning); }
+  .legend-dot.danger { background: var(--danger); }
+  .legend-dot.gray { background: var(--gray-500); }
+
+  /* Footer */
+  .page-footer {
+    text-align: center;
+    padding: 32px 0;
+    color: var(--gray-500);
+    font-size: 13px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .container {
+      padding: 24px 16px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+    }
+
+    .section-card {
+      padding: 24px 20px;
+    }
+
+    .section-title {
+      font-size: 18px;
+    }
+
+    .role-matrix {
+      font-size: 12px;
+    }
+
+    .role-matrix thead th,
+    .role-matrix tbody td {
+      padding: 10px 12px;
+    }
+  }
+</style>
+</body>
+</html>

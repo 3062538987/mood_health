@@ -13,6 +13,13 @@ import {
   createActivityHandler,
   updateActivityHandler,
   deleteActivityHandler,
+  setReminderHandler,
+  cancelReminderHandler,
+  getReminderStatusHandler,
+  submitFeedbackHandler,
+  getFeedbackHandler,
+  getUserFeedbackHandler,
+  getActivityStatsHandler,
 } from '../controllers/activityController'
 
 const router = Router()
@@ -77,5 +84,18 @@ router.delete(
   }),
   deleteActivityHandler
 )
+
+// 活动提醒
+router.post('/remind/:id', authenticate, setReminderHandler)
+router.delete('/remind/:id', authenticate, cancelReminderHandler)
+router.get('/remind/:id', authenticate, getReminderStatusHandler)
+
+// 活动反馈
+router.post('/feedback/:id', authenticate, submitFeedbackHandler)
+router.get('/feedback/:id', getFeedbackHandler)
+router.get('/my-feedback/:id', authenticate, getUserFeedbackHandler)
+
+// 活动统计（管理端）
+router.get('/stats', authenticate, requirePermission('activity.manage'), getActivityStatsHandler)
 
 export default router

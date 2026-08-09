@@ -1,31 +1,52 @@
+import { HTTP_STATUS } from '../utils/httpStatus'
 import { Response } from 'express'
 import { AuthRequest } from '../middleware/auth'
-import {
-  createMood,
-  createMoodWithRelations,
-  getMoodsByUser,
-  getMoodsWithRelations,
-  getMoodTotalCount,
-  getWeeklyReport,
-  getMoodTrend as getMoodTrendModel,
-  findMoodById,
-  findMoodWithRelationsById,
-  updateMood,
-  updateMoodWithRelations,
-  deleteMood,
-  getEmotionTypes,
-  getTags,
-  createOrGetTag,
-  getMoodsByEmotionType,
-  getMoodAnalysis,
-} from '../models/moodModel'
-import { createAdviceHistory, getAdviceHistoryByUser } from '../models/adviceModel'
 import { clearMoodCache } from '../utils/cache'
+import { apiFailure, apiSuccess } from '../utils/apiResponse'
+import { createMoodService } from '../services/moodService'
+import { createMoodAlertService } from '../services/moodAlertService'
+import { createMoodAnalysisDataService } from '../services/moodAnalysisDataService'
 import logger from '../utils/logger'
+
+const moodService = createMoodService()
+
+let moodAlertService: ReturnType<typeof createMoodAlertService> | undefined
+let moodAnalysisDataService: ReturnType<typeof createMoodAnalysisDataService> | undefined
+
+const getMoodAlertService = () => {
+  if (!moodAlertService) {
+    moodAlertService = createMoodAlertService()
+  }
+  return moodAlertService
+}
+
+const getMoodAnalysisDataService = () => {
+  if (!moodAnalysisDataService) {
+    moodAnalysisDataService = createMoodAnalysisDataService()
+  }
+  return moodAnalysisDataService
+}
+
+export const setMoodAlertService = (service: ReturnType<typeof createMoodAlertService>) => {
+  moodAlertService = service
+}
+
+export const setMoodAnalysisDataService = (service: ReturnType<typeof createMoodAnalysisDataService>) => {
+  moodAnalysisDataService = service
+}
+
+function guardUserId(req: AuthRequest, res: Response): number | null {
+  if (!req.user) {
+    res.status(HTTP_STATUS.UNAUTHORIZED).json(apiFailure(401, '未登录'))
+    return null
+  }
+  return req.user.userId
+}
 
 export const recordMood = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
+    const userId = guardUserId(req, res)
+    if (userId === null) return
     const {
       moodType,
       moodRatio,
@@ -38,31 +59,33 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
       recordDate,
       emotions,
       tagIds,
+      includeNote,
     } = req.body
 
     if (emotions && Array.isArray(emotions) && emotions.length > 0) {
       for (const emotion of emotions) {
         if (!emotion.emotionTypeId || emotion.intensity === undefined) {
-          return res.status(400).json({ code: 400, message: '情绪数据格式错误' })
+          return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(400, '情绪数据格式错误'))
         }
         if (emotion.intensity < 1 || emotion.intensity > 10) {
-          return res.status(400).json({ code: 400, message: '强度必须在1-10之间' })
+          return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(400, '强度必须在1-10之间'))
         }
       }
 
       const date = recordDate || new Date().toISOString().split('T')[0]
       const resolvedTagIds = tagIds || []
 
-      await createMoodWithRelations(
+      const result = await moodService.recordMood({
         userId,
+        note: event || '',
+        trigger: trigger || '',
+        includeNote: includeNote === true,
+        recordedAt: new Date(`${date}T00:00:00.000Z`),
         emotions,
-        event || '',
-        resolvedTagIds,
-        trigger || '',
-        date
-      )
-      await clearMoodCache(userId)
-      return res.status(201).json({ code: 0, message: '记录成功' })
+        tagIds: resolvedTagIds,
+      })
+      clearMoodCache(userId).catch((err) => logger.warn('清除缓存失败(非阻塞)', { error: (err as Error).message }))
+      return res.status(HTTP_STATUS.CREATED).json(apiSuccess(result, '记录成功'))
     }
 
     const rawIntensity = Array.isArray(moodRatio)
@@ -70,347 +93,218 @@ export const recordMood = async (req: AuthRequest, res: Response) => {
       : (moodRatio ?? intensity ?? intensity_score ?? level)
 
     if (!moodType || rawIntensity === undefined) {
-      return res.status(400).json({ code: 400, message: '情绪类型和强度为必填' })
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(400, '情绪类型和强度为必填'))
     }
 
-    const moodTypeStr = Array.isArray(moodType) ? moodType.join(',') : moodType
+    const moodTypeNames = (Array.isArray(moodType) ? moodType : String(moodType).split(/[,，、]/))
+      .map((item) => String(item).trim())
+      .filter(Boolean)
     const resolvedIntensity = Number(rawIntensity)
 
     if (!Number.isFinite(resolvedIntensity) || resolvedIntensity < 1 || resolvedIntensity > 10) {
-      return res.status(400).json({ code: 400, message: '强度必须在1-10之间' })
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(400, '强度必须在1-10之间'))
     }
 
     const date = recordDate || new Date().toISOString().split('T')[0]
-    const tagsStr = Array.isArray(tags) ? tags.join(',') : tags || ''
+    const emotionTypes = await moodService.listEmotionTypes()
+    const matchedEmotions = moodTypeNames.map((name) => emotionTypes.find((type) => type.name === name || type.code === name))
 
-    await createMood(
+    if (matchedEmotions.some((emotion) => !emotion)) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(400, '情绪类型不存在'))
+    }
+
+    const tagNames = (Array.isArray(tags) ? tags : String(tags || '').split(/[,，、]/))
+      .map((item) => String(item).trim())
+      .filter(Boolean)
+    if (tagNames.length > 20) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(400, '标签数量不能超过20个'))
+    }
+    const tagIdMap = await moodService.createOrGetTagsBatch(tagNames, userId)
+    const mappedTagIds = tagNames.map((name: string) => tagIdMap.get(name)!).filter(Boolean)
+    const resolvedTags = mappedTagIds.map((id: number) => ({ id }))
+
+    const result = await moodService.recordMood({
       userId,
-      moodTypeStr,
-      resolvedIntensity,
-      event || '',
-      tagsStr,
-      trigger || '',
-      date
-    )
-    await clearMoodCache(userId)
-    res.status(201).json({ code: 0, message: '记录成功' })
+      note: event || '',
+      trigger: trigger || '',
+      includeNote: includeNote === true,
+      recordedAt: new Date(`${date}T00:00:00.000Z`),
+      emotions: matchedEmotions.map((emotion, index) => ({
+        emotionTypeId: emotion!.id,
+        intensity: resolvedIntensity,
+        isPrimary: index === 0,
+      })),
+      tagIds: resolvedTags.map((tag) => tag.id),
+    })
+    clearMoodCache(userId).catch((err) => logger.warn('清除缓存失败(非阻塞)', { error: (err as Error).message }))
+    res.status(HTTP_STATUS.CREATED).json(apiSuccess(result, '记录成功'))
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    logger.error('请求处理异常', { error: (error as Error).message })
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '服务器错误'))
   }
 }
-
 export const getMoodList = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
-    const page = parseInt(req.query.page as string) || 1
-    const limit = parseInt(req.query.size as string) || parseInt(req.query.limit as string) || 20
+    const userId = guardUserId(req, res)
+    if (userId === null) return
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.size as string) || parseInt(req.query.limit as string) || 20))
     const emotionTypeId = req.query.emotionTypeId
       ? parseInt(req.query.emotionTypeId as string)
       : null
 
-    let moods
-    if (emotionTypeId) {
-      moods = await getMoodsByEmotionType(userId, emotionTypeId, page, limit)
-    } else {
-      moods = await getMoodsWithRelations(userId, page, limit)
-    }
 
-    const formattedMoods = moods.map((mood) => {
-      if (mood.emotions && mood.emotions.length > 0) {
-        return {
-          id: mood.id.toString(),
-          userId: mood.user_id.toString(),
-          moodType: mood.emotions.map((e) => e.emotion_name),
-          moodRatio: mood.emotions.map((e) => e.intensity * 10),
-          emotions: mood.emotions.map((e) => ({
-            emotionTypeId: e.emotion_type_id,
-            name: e.emotion_name,
-            icon: e.emotion_icon,
-            intensity: e.intensity,
-          })),
-          tags: mood.tagList ? mood.tagList.map((t) => t.name) : [],
-          tagIds: mood.tagList ? mood.tagList.map((t) => t.id) : [],
-          event: mood.note || '',
-          trigger: mood.trigger || '',
-          createTime: mood.created_at.toISOString(),
-        }
-      }
-
-      return {
-        id: mood.id.toString(),
-        userId: mood.user_id.toString(),
-        moodType: mood.mood_type ? mood.mood_type.split(',') : [],
-        moodRatio: mood.intensity ? [mood.intensity * 10] : [],
-        tags: mood.tags ? mood.tags.split(',') : [],
-        event: mood.note || '',
-        trigger: mood.trigger || '',
-        createTime: mood.created_at.toISOString(),
-      }
+    const result = await moodService.listMoods(userId, {
+      page,
+      limit,
+      ...(emotionTypeId ? { emotionTypeId } : {}),
     })
-
-    const total = await getMoodTotalCount(userId)
-
-    res.json({ code: 0, data: { list: formattedMoods, total } })
+    res.json(apiSuccess(result, '获取情绪记录成功'))
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    logger.error('请求处理异常', { error: (error as Error).message })
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '服务器错误'))
   }
 }
-
 export const getWeeklyReportHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
-    const report = await getWeeklyReport(userId)
-    res.json({ code: 0, data: report })
+    const userId = guardUserId(req, res)
+    if (userId === null) return
+    const report = await moodService.getWeeklyReport(userId)
+    res.json(apiSuccess(report, '获取情绪周报成功'))
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
-  }
-}
-
-export const updateMoodHandler = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user!.userId
-    const moodId = parseInt(req.params.id as string)
-    const { moodType, intensity, note, tags, trigger, emotions, tagIds } = req.body
-
-    if (!Number.isInteger(moodId) || moodId <= 0) {
-      return res.status(400).json({ code: 400, message: '无效的记录 ID' })
-    }
-
-    if (emotions && Array.isArray(emotions) && emotions.length > 0) {
-      for (const emotion of emotions) {
-        if (emotion.intensity < 1 || emotion.intensity > 10) {
-          return res.status(400).json({ code: 400, message: '强度必须在1-10之间' })
-        }
-      }
-
-      const updated = await updateMoodWithRelations(
-        moodId,
-        emotions,
-        note || '',
-        tagIds || [],
-        trigger || '',
-        userId
-      )
-
-      if (!updated) {
-        return res.status(404).json({ code: 404, message: '记录不存在' })
-      }
-
-      await clearMoodCache(userId)
-      return res.json({ code: 0, message: '更新成功' })
-    }
-
-    const moodTypeStr = Array.isArray(moodType) ? moodType.join(',') : moodType
-    const tagsStr = Array.isArray(tags) ? tags.join(',') : tags || ''
-
-    const mood = await findMoodById(moodId, userId)
-    if (!mood) {
-      return res.status(404).json({ code: 404, message: '记录不存在' })
-    }
-
-    const updated = await updateMood(
-      moodId,
-      moodTypeStr || mood.mood_type,
-      intensity || mood.intensity,
-      note || '',
-      tagsStr,
-      trigger || '',
-      userId
-    )
-
-    if (!updated) {
-      return res.status(404).json({ code: 404, message: '记录不存在' })
-    }
-
-    await clearMoodCache(userId)
-    res.json({ code: 0, message: '更新成功' })
-  } catch (error) {
-    console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    logger.error('请求处理异常', { error: (error as Error).message })
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '服务器错误'))
   }
 }
 
 export const deleteMoodHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
+    const userId = guardUserId(req, res)
+    if (userId === null) return
     const moodId = parseInt(req.params.id as string)
 
     if (!Number.isInteger(moodId) || moodId <= 0) {
-      return res.status(400).json({ code: 400, message: '无效的记录 ID' })
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(400, '无效的记录 ID'))
     }
 
-    const deleted = await deleteMood(moodId, userId)
+    const deleted = await moodService.deleteMood(userId, moodId)
 
     if (!deleted) {
-      return res.status(404).json({ code: 404, message: '记录不存在' })
+      return res.status(HTTP_STATUS.NOT_FOUND).json(apiFailure(404, '记录不存在'))
     }
 
-    await clearMoodCache(userId)
-    res.json({ code: 0, message: '删除成功' })
+    clearMoodCache(userId).catch((err) => logger.warn('清除缓存失败(非阻塞)', { error: (err as Error).message }))
+    getMoodAnalysisDataService().markStaleByRecordIds([moodId]).catch((err) => logger.warn('标记分析版本过期失败(非阻塞)', { error: (err as Error).message }))
+    res.json(apiSuccess(null, '删除成功'))
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    logger.error('请求处理异常', { error: (error as Error).message })
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '服务器错误'))
   }
 }
 
 export const getMoodTrend = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
+    const userId = guardUserId(req, res)
+    if (userId === null) return
     const range = (req.query.range as string) || 'week'
 
     if (!['week', 'month', 'quarter'].includes(range)) {
-      return res.status(400).json({ code: 400, message: '无效的时间范围' })
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(400, '无效的时间范围'))
     }
 
-    const trendData = await getMoodTrendModel(userId, range)
-    res.json({ code: 0, data: trendData })
+    const trendData = await moodService.getMoodTrend(userId, range as 'week' | 'month' | 'quarter')
+    res.json(apiSuccess(trendData, '获取情绪趋势成功'))
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    logger.error('请求处理异常', { error: (error as Error).message })
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '服务器错误'))
   }
 }
 
 export const getMoodTypes = async (req: AuthRequest, res: Response) => {
   try {
-    const emotionTypes = await getEmotionTypes()
+    const emotionTypes = await moodService.listEmotionTypes()
     const formattedTypes = emotionTypes.map((type) => ({
       id: type.id,
       name: type.name,
       icon: type.icon,
       category: type.category,
     }))
-    res.json({ code: 0, data: formattedTypes, message: '获取成功' })
+    res.json(apiSuccess(formattedTypes, '获取成功'))
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    logger.error('请求处理异常', { error: (error as Error).message })
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '服务器错误'))
   }
 }
 
-export const getTagsHandler = async (req: AuthRequest, res: Response) => {
+export const getMoodComparison = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
-    const tags = await getTags(userId)
-    res.json({ code: 0, data: tags, message: '获取成功' })
+    const userId = guardUserId(req, res)
+    if (userId === null) return
+    const period = (req.query.period as string) || 'week'
+
+    if (!['week', 'month'].includes(period)) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(400, '无效的周期参数，仅支持 week 或 month'))
+    }
+
+    const comparison = await moodService.getPeriodComparison(userId, period as 'week' | 'month')
+    res.json(apiSuccess(comparison, '获取周期对比成功'))
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    logger.error('请求处理异常', { error: (error as Error).message })
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '服务器错误'))
   }
 }
 
-export const createTagHandler = async (req: AuthRequest, res: Response) => {
+export const getMoodAlerts = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
-    const { name } = req.body
-
-    if (!name || typeof name !== 'string') {
-      return res.status(400).json({ code: 400, message: '标签名称不能为空' })
-    }
-
-    const tagId = await createOrGetTag(name.trim(), userId)
-    res.status(201).json({
-      code: 0,
-      data: { id: tagId, name: name.trim() },
-      message: '创建成功',
-    })
+    const userId = guardUserId(req, res)
+    if (userId === null) return
+    // 先检测新提醒，再获取所有提醒
+    await getMoodAlertService().detectAlerts(userId)
+    const alerts = await getMoodAlertService().getAlerts(userId)
+    res.json(apiSuccess(alerts, '获取提醒成功'))
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    logger.error('请求处理异常', { error: (error as Error).message })
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '服务器错误'))
   }
 }
 
-export const getMoodAnalysisHandler = async (req: AuthRequest, res: Response) => {
+export const markAlertRead = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
-    const range = (req.query.range as string) || 'month'
+    const userId = guardUserId(req, res)
+    if (userId === null) return
+    const alertId = parseInt(String(req.params.id))
 
-    if (!['week', 'month', 'quarter'].includes(range)) {
-      return res.status(400).json({ code: 400, message: '无效的时间范围' })
+    if (!Number.isInteger(alertId) || alertId <= 0) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(400, '无效的提醒 ID'))
     }
 
-    const analysis = await getMoodAnalysis(userId, range)
-    res.json({ code: 0, data: analysis })
+    const updated = await getMoodAlertService().markAsRead(userId, alertId)
+    if (!updated) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json(apiFailure(404, '提醒不存在'))
+    }
+
+    res.json(apiSuccess(null, '已标记为已读'))
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    logger.error('请求处理异常', { error: (error as Error).message })
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '服务器错误'))
   }
 }
 
-export const saveAdviceHandler = async (req: AuthRequest, res: Response) => {
+export const getMoodInsightHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId
-    const { moodRecordId, analysis, suggestions } = req.body
+    const userId = guardUserId(req, res)
+    if (userId === null) return
+    const period = (req.query.period as string) || 'week'
 
-    if (!analysis || typeof analysis !== 'string') {
-      return res.status(400).json({ code: 400, message: '分析内容不能为空' })
+    if (!['day', 'week', 'month', 'year'].includes(period)) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(400, '无效的时间范围，支持 day/week/month/year'))
     }
 
-    if (!suggestions || !Array.isArray(suggestions)) {
-      return res.status(400).json({ code: 400, message: '建议列表不能为空' })
-    }
-
-    const normalizedMoodRecordId =
-      moodRecordId === undefined || moodRecordId === null ? undefined : Number(moodRecordId)
-    if (
-      normalizedMoodRecordId !== undefined &&
-      (!Number.isInteger(normalizedMoodRecordId) || normalizedMoodRecordId <= 0)
-    ) {
-      return res.status(400).json({ code: 400, message: 'moodRecordId 必须是正整数' })
-    }
-
-    await createAdviceHistory(userId, normalizedMoodRecordId, analysis, suggestions)
-    res.status(201).json({ code: 0, message: '保存成功' })
+    const insight = await moodService.getMoodInsight(userId, period as 'day' | 'week' | 'month' | 'year')
+    res.json(apiSuccess(insight))
   } catch (error) {
-    const err = error as {
-      message?: string
-      originalError?: { info?: { message?: string } }
-    }
-    const dbMessage = err.originalError?.info?.message || err.message || '未知异常'
-
-    logger.error('saveAdviceHandler 执行失败', {
-      userId: req.user?.userId,
-      body: {
-        moodRecordId: req.body?.moodRecordId,
-        analysisLength: typeof req.body?.analysis === 'string' ? req.body.analysis.length : 0,
-        suggestionsCount: Array.isArray(req.body?.suggestions) ? req.body.suggestions.length : 0,
-      },
-      dbMessage,
-      error,
-    })
-
-    const message =
-      dbMessage.includes('FOREIGN KEY') || dbMessage.includes('REFERENCE')
-        ? '关联的心情记录不存在，无法保存建议'
-        : 'AI 建议保存失败，请稍后重试'
-    res.status(500).json({ code: 500, message })
+    logger.error('请求处理异常', { error: (error as Error).message })
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '服务器错误'))
   }
 }
 
-export const getAdviceHistoryHandler = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user!.userId
-    const page = parseInt(req.query.page as string) || 1
-    const pageSize = parseInt(req.query.pageSize as string) || 20
-
-    const result = await getAdviceHistoryByUser(userId, page, pageSize)
-    res.json({ code: 0, data: result })
-  } catch (error) {
-    const err = error as {
-      message?: string
-      originalError?: { info?: { message?: string } }
-    }
-    const dbMessage = err.originalError?.info?.message || err.message || '未知异常'
-
-    logger.error('getAdviceHistoryHandler 执行失败', {
-      userId: req.user?.userId,
-      page: req.query.page,
-      pageSize: req.query.pageSize,
-      dbMessage,
-      error,
-    })
-
-    res.status(500).json({ code: 500, message: 'AI 建议历史获取失败，请稍后重试' })
-  }
-}

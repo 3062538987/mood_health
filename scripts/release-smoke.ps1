@@ -60,8 +60,9 @@ Assert-CodeZero -Name 'moods/list' -Response $list
 $trend = Invoke-RestMethod -Method Get -Uri ($BaseUrl + '/api/moods/trend?range=week') -Headers $headers -TimeoutSec 20
 Assert-CodeZero -Name 'moods/trend' -Response $trend
 
-$analysis = Invoke-RestMethod -Method Get -Uri ($BaseUrl + '/api/moods/analysis?range=week') -Headers $headers -TimeoutSec 20
-Assert-CodeZero -Name 'moods/analysis' -Response $analysis
+$analysisBody = @{ period = '7d' } | ConvertTo-Json
+$analysis = Invoke-RestMethod -Method Post -Uri ($BaseUrl + '/api/mood-analyses') -Headers $headers -ContentType 'application/json' -Body $analysisBody -TimeoutSec 20
+Assert-CodeZero -Name 'mood-analyses' -Response $analysis
 
 $aiCheck = 'skipped'
 if (-not $SkipAiRouteCheck) {

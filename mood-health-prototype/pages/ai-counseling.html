@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI咨询</title>
+    <style id="theme-vars">
+/* ============================================
+   日落花园 · 暖光治愈 — 情绪健康平台主题
+   ============================================ */
+
+:root {
+  /* Brand prefix: mh (mood health) */
+  --mh-primary: #e8834a;
+  --mh-primary-foreground: #ffffff;
+  --mh-primary-light: #f5c5a3;
+  --mh-primary-hover: #d4723a;
+  --mh-primary-soft: #fdf0e6;
+
+  --mh-secondary: #8aab7c;
+  --mh-secondary-foreground: #ffffff;
+  --mh-secondary-light: #b8d0a8;
+  --mh-secondary-hover: #7a9b6c;
+
+  --mh-accent: #f0b860;
+  --mh-accent-foreground: #4a3f38;
+  --mh-accent-light: #f8d898;
+  --mh-accent-hover: #e0a848;
+
+  /* Background & Surface */
+  --mh-background: #fef8f2;
+  --mh-foreground: #4a3f38;
+  --mh-warm: #fdf2e8;
+  --mh-card: #fffdf9;
+  --mh-card-foreground: #4a3f38;
+  --mh-popover: #fffdf9;
+  --mh-popover-foreground: #4a3f38;
+  --mh-surface-muted: #faf5ee;
+
+  /* Text */
+  --mh-text: #4a3f38;
+  --mh-text-light: #8c8078;
+  --mh-text-muted: #b0a69c;
+  --mh-muted: #faf5ee;
+  --mh-muted-foreground: #8c8078;
+
+  /* Border & Input */
+  --mh-border: #e8ddd0;
+  --mh-input: #e8ddd0;
+  --mh-ring: #e8834a;
+
+  /* Radius */
+  --mh-radius-sm: 6px;
+  --mh-radius-md: 10px;
+  --mh-radius-lg: 16px;
+  --mh-radius-xl: 24px;
+  --mh-radius-full: 9999px;
+
+  /* Status Colors */
+  --mh-success: #7cb89a;
+  --mh-success-foreground: #ffffff;
+  --mh-warning: #f0b860;
+  --mh-warning-foreground: #4a3f38;
+  --mh-error: #e0556a;
+  --mh-error-foreground: #ffffff;
+  --mh-info: #7ba5c4;
+  --mh-info-foreground: #ffffff;
+
+  /* Risk Levels */
+  --mh-risk-low: #8aab7c;
+  --mh-risk-low-soft: rgba(138, 171, 124, 0.12);
+  --mh-risk-medium: #d2a35f;
+  --mh-risk-medium-soft: rgba(210, 163, 95, 0.12);
+  --mh-risk-high: #cf6b7f;
+  --mh-risk-high-soft: rgba(207, 107, 127, 0.12);
+
+  /* Mental States */
+  --mh-mental-calm: #8aab7c;
+  --mh-mental-neutral: #b0a69c;
+  --mh-mental-anxious: #c090d0;
+  --mh-mental-stressed: #d2a35f;
+  --mh-mental-distressed: #cf6b7f;
+
+  /* Mood Colors */
+  --mh-mood-happy: #f0b860;
+  --mh-mood-sad: #7ba5c4;
+  --mh-mood-angry: #e0556a;
+  --mh-mood-anxious: #c090d0;
+  --mh-mood-calm: #8aab7c;
+  --mh-mood-neutral: #b0a69c;
+
+  /* Shadow */
+  --mh-shadow-sm: 0 2px 8px rgba(180, 140, 100, 0.08);
+  --mh-shadow-md: 0 4px 16px rgba(180, 140, 100, 0.10);
+  --mh-shadow-lg: 0 8px 32px rgba(180, 140, 100, 0.14);
+  --mh-shadow-glow: 0 0 40px rgba(240, 184, 96, 0.12);
+
+  /* Typography */
+  --mh-font-display: 'Noto Serif SC', 'Georgia', 'Songti SC', serif;
+  --mh-font-body: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+
+  /* Semantic aliases for Tailwind compatibility */
+  --background: var(--mh-background);
+  --foreground: var(--mh-foreground);
+  --card: var(--mh-card);
+  --card-foreground: var(--mh-card-foreground);
+  --popover: var(--mh-popover);
+  --popover-foreground: var(--mh-popover-foreground);
+  --primary: var(--mh-primary);
+  --primary-foreground: var(--mh-primary-foreground);
+  --secondary: var(--mh-secondary);
+  --secondary-foreground: var(--mh-secondary-foreground);
+  --accent: var(--mh-accent);
+  --accent-foreground: var(--mh-accent-foreground);
+  --muted: var(--mh-muted);
+  --muted-foreground: var(--mh-muted-foreground);
+  --destructive: var(--mh-error);
+  --destructive-foreground: var(--mh-error-foreground);
+  --border: var(--mh-border);
+  --input: var(--mh-input);
+  --ring: var(--mh-ring);
+  --radius: var(--mh-radius-lg);
+  --radius-sm: var(--mh-radius-sm);
+  --radius-md: var(--mh-radius-md);
+  --radius-lg: var(--mh-radius-lg);
+  --radius-xl: var(--mh-radius-xl);
+  --radius-full: var(--mh-radius-full);
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --mh-background: #1e1b18;
+    --mh-foreground: #e8ddd0;
+    --mh-warm: #25211d;
+    --mh-card: #2a2520;
+    --mh-card-foreground: #e8ddd0;
+    --mh-popover: #2a2520;
+    --mh-popover-foreground: #e8ddd0;
+    --mh-surface-muted: #2f2a24;
+    --mh-text: #e8ddd0;
+    --mh-text-light: #b0a69c;
+    --mh-text-muted: #8c8078;
+    --mh-muted: #2f2a24;
+    --mh-muted-foreground: #b0a69c;
+    --mh-border: #3d3630;
+    --mh-input: #3d3630;
+    --mh-primary: #f0a070;
+    --mh-primary-hover: #f5b890;
+    --mh-primary-soft: rgba(240, 160, 112, 0.12);
+    --mh-secondary: #a8c898;
+    --mh-accent: #f8c878;
+    --mh-ring: #f5b890;
+
+    --background: var(--mh-background);
+    --foreground: var(--mh-foreground);
+    --card: var(--mh-card);
+    --card-foreground: var(--mh-card-foreground);
+    --popover: var(--mh-popover);
+    --popover-foreground: var(--mh-popover-foreground);
+    --primary: var(--mh-primary);
+    --secondary: var(--mh-secondary);
+    --accent: var(--mh-accent);
+    --muted: var(--mh-muted);
+    --muted-foreground: var(--mh-muted-foreground);
+    --destructive: var(--mh-error);
+    --border: var(--mh-border);
+    --input: var(--mh-input);
+    --ring: var(--mh-ring);
+  }
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--mh-font-body);
+  background: var(--mh-background);
+  color: var(--mh-text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--mh-font-display);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--mh-background);
+    --color-foreground: var(--mh-foreground);
+    --color-card: var(--mh-card);
+    --color-card-foreground: var(--mh-card-foreground);
+    --color-popover: var(--mh-popover);
+    --color-popover-foreground: var(--mh-popover-foreground);
+    --color-primary: var(--mh-primary);
+    --color-primary-foreground: var(--mh-primary-foreground);
+    --color-secondary: var(--mh-secondary);
+    --color-secondary-foreground: var(--mh-secondary-foreground);
+    --color-muted: var(--mh-muted);
+    --color-muted-foreground: var(--mh-muted-foreground);
+    --color-accent: var(--mh-accent);
+    --color-accent-foreground: var(--mh-accent-foreground);
+    --color-border: var(--mh-border);
+    --color-input: var(--mh-input);
+    --color-ring: var(--mh-ring);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --radius-sm: var(--mh-radius-sm);
+    --radius-md: var(--mh-radius-md);
+    --radius-lg: var(--mh-radius-lg);
+    --radius-xl: var(--mh-radius-xl);
+  }
+  @layer base {
+    body { background: var(--mh-background); color: var(--mh-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--mh-background); }
+      .text-background { color: var(--mh-background); }
+      .border-background { border-color: var(--mh-background); }
+      .ring-background { --tw-ring-color: var(--mh-background); }
+      .bg-foreground { background-color: var(--mh-foreground); }
+      .text-foreground { color: var(--mh-foreground); }
+      .border-foreground { border-color: var(--mh-foreground); }
+      .ring-foreground { --tw-ring-color: var(--mh-foreground); }
+      .bg-card { background-color: var(--mh-card); }
+      .text-card { color: var(--mh-card); }
+      .border-card { border-color: var(--mh-card); }
+      .ring-card { --tw-ring-color: var(--mh-card); }
+      .bg-card-foreground { background-color: var(--mh-card-foreground); }
+      .text-card-foreground { color: var(--mh-card-foreground); }
+      .border-card-foreground { border-color: var(--mh-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--mh-card-foreground); }
+      .bg-popover { background-color: var(--mh-popover); }
+      .text-popover { color: var(--mh-popover); }
+      .border-popover { border-color: var(--mh-popover); }
+      .ring-popover { --tw-ring-color: var(--mh-popover); }
+      .bg-popover-foreground { background-color: var(--mh-popover-foreground); }
+      .text-popover-foreground { color: var(--mh-popover-foreground); }
+      .border-popover-foreground { border-color: var(--mh-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--mh-popover-foreground); }
+      .bg-primary { background-color: var(--mh-primary); }
+      .text-primary { color: var(--mh-primary); }
+      .border-primary { border-color: var(--mh-primary); }
+      .ring-primary { --tw-ring-color: var(--mh-primary); }
+      .bg-primary-foreground { background-color: var(--mh-primary-foreground); }
+      .text-primary-foreground { color: var(--mh-primary-foreground); }
+      .border-primary-foreground { border-color: var(--mh-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--mh-primary-foreground); }
+      .bg-secondary { background-color: var(--mh-secondary); }
+      .text-secondary { color: var(--mh-secondary); }
+      .border-secondary { border-color: var(--mh-secondary); }
+      .ring-secondary { --tw-ring-color: var(--mh-secondary); }
+      .bg-secondary-foreground { background-color: var(--mh-secondary-foreground); }
+      .text-secondary-foreground { color: var(--mh-secondary-foreground); }
+      .border-secondary-foreground { border-color: var(--mh-secondary-foreground); }
+      .ring-secondary-foreground { --tw-ring-color: var(--mh-secondary-foreground); }
+      .bg-muted { background-color: var(--mh-muted); }
+      .text-muted { color: var(--mh-muted); }
+      .border-muted { border-color: var(--mh-muted); }
+      .ring-muted { --tw-ring-color: var(--mh-muted); }
+      .bg-muted-foreground { background-color: var(--mh-muted-foreground); }
+      .text-muted-foreground { color: var(--mh-muted-foreground); }
+      .border-muted-foreground { border-color: var(--mh-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--mh-muted-foreground); }
+      .bg-accent { background-color: var(--mh-accent); }
+      .text-accent { color: var(--mh-accent); }
+      .border-accent { border-color: var(--mh-accent); }
+      .ring-accent { --tw-ring-color: var(--mh-accent); }
+      .bg-accent-foreground { background-color: var(--mh-accent-foreground); }
+      .text-accent-foreground { color: var(--mh-accent-foreground); }
+      .border-accent-foreground { border-color: var(--mh-accent-foreground); }
+      .ring-accent-foreground { --tw-ring-color: var(--mh-accent-foreground); }
+      .bg-border { background-color: var(--mh-border); }
+      .text-border { color: var(--mh-border); }
+      .border-border { border-color: var(--mh-border); }
+      .ring-border { --tw-ring-color: var(--mh-border); }
+      .bg-input { background-color: var(--mh-input); }
+      .text-input { color: var(--mh-input); }
+      .border-input { border-color: var(--mh-input); }
+      .ring-input { --tw-ring-color: var(--mh-input); }
+      .bg-ring { background-color: var(--mh-ring); }
+      .text-ring { color: var(--mh-ring); }
+      .border-ring { border-color: var(--mh-ring); }
+      .ring-ring { --tw-ring-color: var(--mh-ring); }
+      .bg-destructive { background-color: var(--destructive); }
+      .text-destructive { color: var(--destructive); }
+      .border-destructive { border-color: var(--destructive); }
+      .ring-destructive { --tw-ring-color: var(--destructive); }
+      .bg-destructive-foreground { background-color: var(--destructive-foreground); }
+      .text-destructive-foreground { color: var(--destructive-foreground); }
+      .border-destructive-foreground { border-color: var(--destructive-foreground); }
+      .ring-destructive-foreground { --tw-ring-color: var(--destructive-foreground); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <main class="mx-auto w-full max-w-[375px] min-h-screen flex flex-col bg-[var(--mh-background)]" style="background: linear-gradient(180deg, var(--mh-warm) 0%, var(--mh-background) 30%);">
+        <!-- Status bar (mock iOS) -->
+        <div class="flex items-center justify-between px-6 pt-3 pb-1 text-[13px] font-semibold text-[var(--mh-text)]">
+            <span>9:41</span>
+            <div class="flex items-center gap-1">
+                <i data-lucide="signal" class="w-3.5 h-3.5"></i>
+                <i data-lucide="wifi" class="w-3.5 h-3.5"></i>
+                <i data-lucide="battery-full" class="w-5 h-5"></i>
+            </div>
+        </div>
+
+        <!-- Chat header -->
+        <header class="flex items-center gap-3 px-4 py-3 bg-[var(--mh-card)]/80 backdrop-blur-sm border-b border-[var(--mh-border)]">
+            <button data-dom-id="back-home" class="shrink-0 flex items-center justify-center w-9 h-9 rounded-lg text-[var(--mh-text)] hover:bg-[var(--mh-muted)] active:scale-95 transition-transform" aria-label="返回">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+            </button>
+            <div class="flex items-center gap-2.5 flex-1 min-w-0">
+                <div class="relative shrink-0">
+                    <img src="../assets/ai-companion.jpg" alt="AI助手头像" class="w-10 h-10 rounded-full object-cover ring-2 ring-[var(--mh-primary-soft)]">
+                    <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[var(--mh-success)] rounded-full ring-2 ring-[var(--mh-card)]"></span>
+                </div>
+                <div class="flex flex-col min-w-0">
+                    <h1 class="text-[15px] font-semibold text-[var(--mh-text)] truncate">暖心 AI 助手</h1>
+                    <div class="flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 bg-[var(--mh-success)] rounded-full"></span>
+                        <span class="text-[11px] text-[var(--mh-text-light)]">在线</span>
+                    </div>
+                </div>
+            </div>
+            <button class="shrink-0 flex items-center justify-center w-9 h-9 rounded-lg text-[var(--mh-text-light)] hover:bg-[var(--mh-muted)] hover:text-[var(--mh-text)] transition-colors" aria-label="更多">
+                <i data-lucide="more-horizontal" class="w-5 h-5"></i>
+            </button>
+        </header>
+
+        <!-- Disclaimer banner -->
+        <div class="mx-4 mt-3 px-3.5 py-2.5 rounded-xl bg-[var(--mh-accent-light)]/40 border border-[var(--mh-accent-light)] flex items-start gap-2">
+            <i data-lucide="info" class="w-4 h-4 text-[var(--mh-accent-foreground)]/70 shrink-0 mt-0.5"></i>
+            <p class="text-[11.5px] leading-relaxed text-[var(--mh-accent-foreground)]/80">
+                AI 建议仅供参考，不能替代专业心理咨询。如有严重情绪困扰，请及时寻求专业帮助。
+            </p>
+        </div>
+
+        <!-- Chat messages area -->
+        <div class="flex-1 px-4 pt-4 pb-4 space-y-4">
+            <!-- Date divider -->
+            <div class="flex items-center justify-center">
+                <span class="text-[11px] text-[var(--mh-text-muted)]">今天</span>
+            </div>
+
+            <!-- AI greeting message -->
+            <div class="flex items-end gap-2">
+                <img src="../assets/ai-companion.jpg" alt="" class="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-[var(--mh-primary-soft)]">
+                <div class="flex flex-col gap-1 max-w-[75%]">
+                    <div class="px-4 py-3 rounded-2xl rounded-bl-md bg-[var(--mh-card)] text-[14px] leading-relaxed text-[var(--mh-text)] shadow-[0_2px_8px_rgba(180,140,100,0.06)] border border-[var(--mh-border)]/50">
+                        你好呀，我是你的暖心 AI 助手。今天过得怎么样？有什么想和我聊聊的吗？
+                    </div>
+                    <span class="text-[10px] text-[var(--mh-text-muted)] pl-1">09:32</span>
+                </div>
+            </div>
+
+            <!-- User message -->
+            <div class="flex items-end gap-2 justify-end">
+                <div class="flex flex-col gap-1 max-w-[75%] items-end">
+                    <div class="px-4 py-3 rounded-2xl rounded-br-md text-[14px] leading-relaxed text-white shadow-[0_2px_8px_rgba(232,131,74,0.18)]" style="background: linear-gradient(135deg, var(--mh-primary) 0%, var(--mh-accent) 100%);">
+                        最近工作压力好大，晚上总是睡不好
+                    </div>
+                    <div class="flex items-center gap-1 pr-1">
+                        <span class="text-[10px] text-[var(--mh-text-muted)]">已读</span>
+                        <i data-lucide="check" class="w-3 h-3 text-[var(--mh-primary)]"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI thoughtful response -->
+            <div class="flex items-end gap-2">
+                <img src="../assets/ai-companion.jpg" alt="" class="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-[var(--mh-primary-soft)]">
+                <div class="flex flex-col gap-1 max-w-[78%]">
+                    <div class="px-4 py-3.5 rounded-2xl rounded-bl-md bg-[var(--mh-card)] text-[14px] leading-relaxed text-[var(--mh-text)] shadow-[0_2px_8px_rgba(180,140,100,0.06)] border border-[var(--mh-border)]/50">
+                        <p class="mb-2">我理解你的感受。工作压力大的时候，睡眠确实容易受到影响，这是很正常的身心反应。</p>
+                        <p class="mb-2">压力和睡眠其实是相互影响的——压力让我们难以入睡，睡不好又会让第二天的压力感更强。</p>
+                        <p>我们可以先试试几个简单的方法来打破这个循环。睡前试试<strong class="text-[var(--mh-primary)]">4-7-8 呼吸法</strong>，或者做几分钟的渐进式肌肉放松，帮助身体从紧张状态中慢慢释放出来。</p>
+                    </div>
+                    <span class="text-[10px] text-[var(--mh-text-muted)] pl-1">09:35</span>
+                </div>
+            </div>
+
+            <!-- AI suggestion cards message -->
+            <div class="flex items-end gap-2">
+                <img src="../assets/ai-companion.jpg" alt="" class="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-[var(--mh-primary-soft)]">
+                <div class="flex flex-col gap-2 max-w-[82%]">
+                    <div class="px-4 pt-3 pb-2 text-[14px] text-[var(--mh-text)] font-medium">
+                        试试这些方法
+                    </div>
+                    <!-- Suggestion cards grid -->
+                    <div class="space-y-2.5">
+                        <!-- Card 1: 深呼吸练习 -->
+                        <button data-dom-id="quick-stress-relief" class="w-full flex items-center gap-3 p-3 rounded-xl bg-[var(--mh-card)] border border-[var(--mh-border)]/60 text-left hover:border-[var(--mh-primary)]/30 hover:shadow-[0_2px_12px_rgba(232,131,74,0.08)] active:scale-[0.98] transition-all">
+                            <div class="shrink-0 w-10 h-10 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, var(--mh-primary-soft) 0%, var(--mh-accent-light)/30 100%);">
+                                <i data-lucide="wind" class="w-5 h-5 text-[var(--mh-primary)]"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-[13.5px] font-medium text-[var(--mh-text)] truncate">深呼吸练习</div>
+                                <div class="text-[11.5px] text-[var(--mh-text-light)] truncate">3 分钟 · 缓解焦虑</div>
+                            </div>
+                            <i data-lucide="play-circle" class="w-5 h-5 text-[var(--mh-primary)] shrink-0"></i>
+                        </button>
+                        <!-- Card 2: 睡前冥想 -->
+                        <button data-dom-id="quick-relax" class="w-full flex items-center gap-3 p-3 rounded-xl bg-[var(--mh-card)] border border-[var(--mh-border)]/60 text-left hover:border-[var(--mh-secondary)]/30 hover:shadow-[0_2px_12px_rgba(138,171,124,0.08)] active:scale-[0.98] transition-all">
+                            <div class="shrink-0 w-10 h-10 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, var(--mh-risk-low-soft) 0%, rgba(138,171,124,0.08) 100%);">
+                                <i data-lucide="moon" class="w-5 h-5 text-[var(--mh-secondary)]"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-[13.5px] font-medium text-[var(--mh-text)] truncate">睡前冥想</div>
+                                <div class="text-[11.5px] text-[var(--mh-text-light)] truncate">10 分钟 · 改善睡眠</div>
+                            </div>
+                            <i data-lucide="play-circle" class="w-5 h-5 text-[var(--mh-secondary)] shrink-0"></i>
+                        </button>
+                        <!-- Card 3: 情绪日记 -->
+                        <button data-dom-id="quick-suggestions" class="w-full flex items-center gap-3 p-3 rounded-xl bg-[var(--mh-card)] border border-[var(--mh-border)]/60 text-left hover:border-[var(--mh-accent)]/30 hover:shadow-[0_2px_12px_rgba(240,184,96,0.08)] active:scale-[0.98] transition-all">
+                            <div class="shrink-0 w-10 h-10 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, var(--mh-accent-light)/40 0%, var(--mh-primary-soft) 100%);">
+                                <i data-lucide="book-open" class="w-5 h-5 text-[var(--mh-accent-foreground)]/80"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-[13.5px] font-medium text-[var(--mh-text)] truncate">情绪日记</div>
+                                <div class="text-[11.5px] text-[var(--mh-text-light)] truncate">记录心情 · 梳理思绪</div>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-[var(--mh-text-muted)] shrink-0"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick reply chips -->
+            <div class="flex flex-wrap gap-2 pt-2 pl-10">
+                <button class="px-3.5 py-1.5 rounded-full border border-[var(--mh-border)] bg-[var(--mh-card)] text-[12.5px] text-[var(--mh-text-light)] hover:border-[var(--mh-primary)]/40 hover:text-[var(--mh-primary)] hover:bg-[var(--mh-primary-soft)]/30 active:scale-95 transition-all whitespace-nowrap">
+                    我想聊聊情绪
+                </button>
+                <button class="px-3.5 py-1.5 rounded-full border border-[var(--mh-border)] bg-[var(--mh-card)] text-[12.5px] text-[var(--mh-text-light)] hover:border-[var(--mh-primary)]/40 hover:text-[var(--mh-primary)] hover:bg-[var(--mh-primary-soft)]/30 active:scale-95 transition-all whitespace-nowrap">
+                    给我一些建议
+                </button>
+                <button class="px-3.5 py-1.5 rounded-full border border-[var(--mh-border)] bg-[var(--mh-card)] text-[12.5px] text-[var(--mh-text-light)] hover:border-[var(--mh-primary)]/40 hover:text-[var(--mh-primary)] hover:bg-[var(--mh-primary-soft)]/30 active:scale-95 transition-all whitespace-nowrap">
+                    帮我放松一下
+                </button>
+                <button class="px-3.5 py-1.5 rounded-full border border-[var(--mh-border)] bg-[var(--mh-card)] text-[12.5px] text-[var(--mh-text-light)] hover:border-[var(--mh-primary)]/40 hover:text-[var(--mh-primary)] hover:bg-[var(--mh-primary-soft)]/30 active:scale-95 transition-all whitespace-nowrap">
+                    继续说
+                </button>
+            </div>
+
+            <!-- Bottom spacer for input area -->
+            <div class="h-24"></div>
+        </div>
+
+        <!-- Input area (sticky bottom) -->
+        <div class="sticky bottom-0 left-0 right-0 px-4 py-3 bg-[var(--mh-card)]/90 backdrop-blur-md border-t border-[var(--mh-border)]/60">
+            <div class="flex items-end gap-2.5">
+                <button class="shrink-0 flex items-center justify-center w-9 h-9 rounded-lg text-[var(--mh-text-light)] hover:bg-[var(--mh-muted)] hover:text-[var(--mh-text)] transition-colors" aria-label="添加">
+                    <i data-lucide="plus" class="w-5 h-5"></i>
+                </button>
+                <div class="flex-1 relative">
+                    <textarea
+                        rows="1"
+                        placeholder="想说点什么..."
+                        class="w-full max-h-28 px-4 py-2.5 rounded-xl bg-[var(--mh-muted)] text-[14px] text-[var(--mh-text)] placeholder:text-[var(--mh-text-muted)] resize-none outline-none focus:ring-2 focus:ring-[var(--mh-primary)]/20 border border-transparent focus:border-[var(--mh-primary)]/30 transition-all"
+                    ></textarea>
+                </div>
+                <button data-dom-id="btn-send-message" class="shrink-0 flex items-center justify-center w-10 h-10 rounded-full text-white shadow-[0_4px_12px_rgba(232,131,74,0.25)] hover:shadow-[0_6px_16px_rgba(232,131,74,0.32)] active:scale-90 transition-all" style="background: linear-gradient(135deg, var(--mh-primary) 0%, var(--mh-accent) 100%);" aria-label="发送">
+                    <i data-lucide="send" class="w-4.5 h-4.5 -ml-0.5"></i>
+                </button>
+            </div>
+            <!-- Safe area spacer -->
+            <div class="h-[env(safe-area-inset-bottom,8px)]"></div>
+        </div>
+    </main>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

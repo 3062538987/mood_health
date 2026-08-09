@@ -206,19 +206,37 @@ onMounted(() => {
   .wooden-fish {
     position: relative;
     cursor: pointer;
-    transition: transform 0.1s ease;
     user-select: none;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
 
     &.tapping {
-      transform: scale(0.95);
+      animation: fishKnock 0.4s ease-out;
+    }
+
+    // 波纹效果
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 215, 0, 0.25);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    &.tapping::after {
+      animation: ripple 0.6s ease-out;
     }
 
     &:hover {
-      transform: scale(1.02);
+      transform: scale(1.03);
     }
 
     &:active {
-      transform: scale(0.92);
+      transform: scale(0.95);
     }
 
     .fish-body {
@@ -341,7 +359,8 @@ onMounted(() => {
         transition: border-color 0.3s;
 
         &:focus {
-          outline: none;
+          outline: 3px solid var(--focus);
+          outline-offset: 2px;
           border-color: #42b983;
         }
       }
@@ -399,7 +418,38 @@ onMounted(() => {
   }
   100% {
     opacity: 0;
-    transform: translateX(-50%) translateY(-30px);
+    transform: translateX(-50%) translateY(-40px);
+  }
+}
+
+@keyframes fishKnock {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  20% {
+    transform: scale(0.85) rotate(-3deg);
+  }
+  40% {
+    transform: scale(1.05) rotate(1deg);
+  }
+  60% {
+    transform: scale(0.95) rotate(-1deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes ripple {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 1;
+  }
+  100% {
+    width: 240px;
+    height: 240px;
+    opacity: 0;
   }
 }
 

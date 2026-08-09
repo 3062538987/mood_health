@@ -1,11 +1,61 @@
 import request from '@/utils/request'
 import axios from 'axios'
-import type { Post, Comment, CreatePostData, CreateCommentData } from '@/types/post'
+import type { Post, Comment, AiReply, CreatePostData, CreateCommentData } from '@/types/post'
 
 type SafeResult<T> = { ok: true; data: T } | { ok: false; message: string; status?: number }
 
-const normalizePost = (post: Record<string, any>): Post => ({
-  id: post.id,
+interface RawAiReply {
+  id?: number
+  postId?: number
+  post_id?: number
+  content?: string
+  createdAt?: string
+  created_at?: string
+}
+
+interface RawComment {
+  id?: number
+  postId?: number
+  post_id?: number
+  userId?: number
+  user_id?: number
+  username?: string
+  content?: string
+  isAnonymous?: boolean
+  is_anonymous?: boolean
+  createdAt?: string
+  created_at?: string
+  liked?: boolean
+  like_count?: number
+}
+
+interface RawPost {
+  id?: number
+  userId?: number
+  user_id?: number
+  username?: string
+  title?: string
+  content?: string
+  isAnonymous?: boolean
+  is_anonymous?: boolean
+  likes?: number
+  like_count?: number
+  liked?: boolean
+  status?: number
+  audit_remark?: string | null
+  auditRemark?: string | null
+  commentCount?: number
+  comment_count?: number
+  createdAt?: string
+  created_at?: string
+  hasAiReply?: boolean
+  has_ai_reply?: boolean
+  aiReply?: RawAiReply
+  comments?: RawComment[]
+}
+
+const normalizePost = (post: RawPost): Post => ({
+  id: post.id as number,
   userId: post.userId ?? post.user_id ?? 0,
   username: post.username || '匿名用户',
   title: post.title || '未命名帖子',
@@ -20,14 +70,21 @@ const normalizePost = (post: Record<string, any>): Post => ({
   commentCount: Number(post.commentCount ?? post.comment_count ?? 0),
   createdAt: post.createdAt || post.created_at || new Date().toISOString(),
   created_at: post.created_at || post.createdAt || new Date().toISOString(),
+  hasAiReply: Boolean(post.hasAiReply ?? post.has_ai_reply),
+  aiReply: post.aiReply ? {
+    id: post.aiReply.id as number,
+    postId: post.aiReply.postId ?? post.aiReply.post_id ?? 0,
+    content: post.aiReply.content || '',
+    createdAt: post.aiReply.createdAt || post.aiReply.created_at || '',
+  } : undefined,
   comments: Array.isArray(post.comments)
     ? post.comments.map((item) => normalizeComment(item))
     : undefined,
 })
 
-const normalizeComment = (comment: Record<string, any>): Comment => ({
-  id: comment.id,
-  postId: comment.postId ?? comment.post_id,
+const normalizeComment = (comment: RawComment): Comment => ({
+  id: comment.id as number,
+  postId: comment.postId ?? comment.user_id ?? 0,
   userId: comment.userId ?? comment.user_id ?? 0,
   username: comment.username || '匿名用户',
   content: comment.content || '',
@@ -50,7 +107,7 @@ const toSafeError = (error: unknown, fallback: string) => {
 }
 
 export const getPostList = (page = 1, pageSize = 10) => {
-  return request<{ list: Record<string, any>[]; total: number }>({
+  return request<{ list: RawPost[]; total: number }>({
     url: '/api/posts',
     method: 'get',
     params: { page, pageSize },
@@ -61,14 +118,14 @@ export const getPostList = (page = 1, pageSize = 10) => {
 }
 
 export const getPostDetail = (postId: number) => {
-  return request<Record<string, any>>({
+  return request<RawPost>({
     url: `/api/posts/${postId}`,
     method: 'get',
   }).then((response) => normalizePost(response))
 }
 
 export const createPost = (data: CreatePostData) => {
-  return request<Record<string, any>>({
+  return request<RawPost>({
     url: '/api/posts',
     method: 'post',
     data,
@@ -82,15 +139,22 @@ export const likePost = (postId: number) => {
   })
 }
 
+export const deletePost = (postId: number) => {
+  return request<{ message: string }>({
+    url: `/api/posts/${postId}`,
+    method: 'delete',
+  })
+}
+
 export const getComments = (postId: number) => {
-  return request<Record<string, any>[]>({
+  return request<RawComment[]>({
     url: `/api/posts/${postId}/comments`,
     method: 'get',
   }).then((response) => response.map((item) => normalizeComment(item)))
 }
 
 export const createComment = (data: CreateCommentData) => {
-  return request<Record<string, any>>({
+  return request<RawComment>({
     url: `/api/posts/${data.postId}/comments`,
     method: 'post',
     data: { content: data.content, isAnonymous: data.isAnonymous },
@@ -105,7 +169,7 @@ export const likeComment = (commentId: number) => {
 }
 
 export const getPendingPosts = (page = 1, pageSize = 10, status = 0) => {
-  return request<Record<string, any>[]>({
+  return request<RawPost[]>({
     url: '/api/posts/admin/pending',
     method: 'get',
     params: { page, pageSize, status },
@@ -120,7 +184,7 @@ export const getPostAuditStats = () => {
 }
 
 export const auditPost = (postId: number, data: { status: number; audit_remark?: string }) => {
-  return request<Record<string, any>>({
+  return request<RawPost>({
     url: `/api/posts/admin/audit/${postId}`,
     method: 'post',
     data,
@@ -137,4 +201,18 @@ export const getPostListSafe = async (
   } catch (error) {
     return { ok: false, ...toSafeError(error, '加载帖子失败') }
   }
+}
+
+export const getAiReply = (postId: number) => {
+  return request<AiReply | null>({
+    url: `/api/posts/${postId}/ai-reply`,
+    method: 'get',
+  })
+}
+
+export const generateAiReply = (postId: number) => {
+  return request<AiReply>({
+    url: `/api/posts/${postId}/generate-ai-reply`,
+    method: 'post',
+  })
 }

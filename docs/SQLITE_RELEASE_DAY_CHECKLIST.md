@@ -57,7 +57,7 @@ $record = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:3000/api/moods/r
 $list = Invoke-RestMethod -Method Get -Uri 'http://127.0.0.1:3000/api/moods/list?page=1&size=10' -Headers $headers
 $trend = Invoke-RestMethod -Method Get -Uri 'http://127.0.0.1:3000/api/moods/trend?range=week' -Headers $headers
 $weekly = Invoke-RestMethod -Method Get -Uri 'http://127.0.0.1:3000/api/moods/weekly-report' -Headers $headers
-$analysis = Invoke-RestMethod -Method Get -Uri 'http://127.0.0.1:3000/api/moods/analysis?range=week' -Headers $headers
+$analysis = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:3000/api/mood-analyses' -Headers $headers -ContentType 'application/json' -Body (@{ period = '7d' } | ConvertTo-Json)
 
 [PSCustomObject]@{
   username=$u

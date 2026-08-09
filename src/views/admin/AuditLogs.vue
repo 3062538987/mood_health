@@ -5,8 +5,8 @@
       <button :disabled="loading" @click="load">刷新</button>
     </div>
 
-    <div v-if="loading" class="state">加载中...</div>
-    <div v-else-if="logs.length === 0" class="state">暂无日志</div>
+    <div v-if="loading" class="state">正在加载日志记录...</div>
+    <div v-else-if="logs.length === 0" class="state">还没有审计日志</div>
 
     <table v-else class="table">
       <thead>

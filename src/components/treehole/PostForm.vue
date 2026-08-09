@@ -1,8 +1,12 @@
 <template>
   <div class="create-post card">
     <h2>分享你的心事</h2>
+    <div class="post-privacy-info">
+      <i class="fas fa-info-circle"></i>
+      <span>发布后需经过审核，审核通过后其他用户才能看到</span>
+    </div>
     <div class="form-group">
-      <input v-model="newPost.title" placeholder="标题" />
+      <input v-model="newPost.title" placeholder="标题" autocomplete="off" />
     </div>
     <div class="form-group">
       <textarea
@@ -24,6 +28,12 @@
       <label class="checkbox-label">
         <input v-model="newPost.isAnonymous" type="checkbox" />
         <span>匿名发布</span>
+      </label>
+    </div>
+    <div class="form-group checkbox-group">
+      <label class="checkbox-label">
+        <input v-model="showPreview" type="checkbox" />
+        <span>发布前预览温柔回复</span>
       </label>
     </div>
 
@@ -71,7 +81,7 @@
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { CreatePostData } from '@/types/post'
-import { validateTreeHoleContent, checkSensitiveContent } from '@/api/treehole'
+import { validateTreeHoleContent, checkSensitiveContent, generateGentleReply } from '@/api/treehole'
 
 const newPost = ref<CreatePostData>({
   title: '',
@@ -83,22 +93,7 @@ const isLoading = ref(false)
 const gentleReply = ref('')
 const isFallback = ref(false)
 const sensitiveWarning = ref('')
-
-const localReplyPool = [
-  '谢谢你愿意说出来。先深呼吸一下，你已经很勇敢了。',
-  '你正在经历的感受很真实，也很值得被认真对待。',
-  '慢一点也没有关系，先照顾好自己，再去处理事情。',
-  '今天已经很不容易了，允许自己先休息一会儿。',
-  '你并不孤单，很多人也在和类似的压力做斗争。',
-  '把问题拆小，一步一步来，你会比想象中更稳。',
-  '情绪有起伏很正常，给自己一点耐心和温柔。',
-  '无论今天怎样，明天都可以是一个新的开始。',
-]
-
-const getLocalGentleReply = () => {
-  const index = Math.floor(Math.random() * localReplyPool.length)
-  return localReplyPool[index]
-}
+const showPreview = ref(true)
 
 const emit = defineEmits<{
   (e: 'submit', post: CreatePostData): void
@@ -153,9 +148,10 @@ const submitPost = async () => {
   isFallback.value = false
 
   try {
-    // 使用本地温柔文案，避免依赖外部服务
-    gentleReply.value = getLocalGentleReply()
-    isFallback.value = true
+    // 调用后端 AI 生成温柔回复
+    const result = await generateGentleReply(newPost.value.content)
+    gentleReply.value = result.reply
+    isFallback.value = result.is_fallback
 
     // 触发提交事件
     emit('submit', newPost.value)
@@ -166,9 +162,9 @@ const submitPost = async () => {
 
     // 显示成功提示
     ElMessage.success('发布成功！树洞给你回复了温暖的话语')
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('发布失败:', error)
-    ElMessage.error(error.message || '发布失败，请稍后重试')
+    ElMessage.error(error instanceof Error ? error.message : '发布失败，请稍后重试')
   } finally {
     isLoading.value = false
   }
@@ -188,9 +184,25 @@ const submitPost = async () => {
 
   h2 {
     color: $text-color;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
     font-size: $font-size-xl;
     font-weight: 600;
+  }
+
+  .post-privacy-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    background: rgba(138, 171, 124, 0.1);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #6b8e78;
+
+    i {
+      font-size: 14px;
+    }
   }
 
   .form-group {
@@ -207,7 +219,8 @@ const submitPost = async () => {
       background: rgba(255, 255, 255, 0.8);
 
       &:focus {
-        outline: none;
+        outline: 3px solid var(--focus);
+        outline-offset: 2px;
         border-color: $primary-color;
         box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
       }

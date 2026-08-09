@@ -7,7 +7,7 @@
 
 import { Router } from 'express'
 import { body } from 'express-validator'
-import { register, login, getMe } from '../controllers/authController'
+import { register, login, logout, getMe, deleteMe } from '../controllers/authController'
 import { authenticate } from '../middleware/auth'
 import { validateRequest } from '../middleware/validateRequest'
 
@@ -36,7 +36,11 @@ router.post(
     body('username')
       .matches(/^[\u4e00-\u9fa5a-zA-Z0-9_]{3,20}$/)
       .withMessage('用户名需为3-20位，可包含中文、字母、数字或下划线'),
-    body('password').isLength({ min: 6 }).withMessage('密码至少6个字符'),
+    body('password').isLength({ min: 6, max: 128 }).withMessage('密码长度需在6-128个字符之间'),
+    body('email')
+      .optional({ values: 'null' })
+      .matches(/^[a-zA-Z0-9._%+-]+@qq\.com$/)
+      .withMessage('请输入正确的QQ邮箱（例如：123456789@qq.com）'),
   ],
   validateRequest,
   register
@@ -85,5 +89,26 @@ router.post(
  * Headers: { "Authorization": "Bearer eyJhbGciOiJIUzI1NiIs..." }
  */
 router.get('/me', authenticate, getMe)
+
+/**
+ * 用户退出登录接口
+ * @route POST /api/auth/logout
+ * @description 清除 HttpOnly Cookie 中的认证令牌
+ * @access 公开
+ */
+router.post('/logout', logout)
+
+/**
+ * 当前账号注销接口
+ * @route DELETE /api/auth/me
+ * @description 注销当前登录账号，删除用户及关联数据
+ * @access 需要认证
+ * @header {string} Authorization - Bearer token
+ * @returns {Object} 200 - 注销成功
+ * @returns {Object} 401 - 未登录
+ * @returns {Object} 404 - 用户不存在
+ * @returns {Object} 500 - 服务器错误
+ */
+router.delete('/me', authenticate, deleteMe)
 
 export default router

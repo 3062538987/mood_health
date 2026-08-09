@@ -31,7 +31,7 @@
 
         <!-- 文章内容 -->
         <div v-else class="article-container">
-          <div class="article-content" v-html="course.content"></div>
+          <div class="article-content" v-html="sanitizedContent"></div>
         </div>
       </div>
     </div>
@@ -51,23 +51,43 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { buildApiUrl } from '@/utils/apiBase'
+import request from '@/utils/request'
+import DOMPurify from 'dompurify'
+
+interface Course {
+  id: number
+  title: string
+  description?: string
+  coverUrl?: string
+  category?: string
+  studyCount?: number
+  content?: string
+  type?: string
+}
 
 const route = useRoute()
 const router = useRouter()
 
-const course = ref<any>(null)
+const course = ref<Course | null>(null)
 const loading = ref(true)
+
+const sanitizedContent = computed(() => {
+  if (course.value?.content) {
+    return DOMPurify.sanitize(course.value.content)
+  }
+  return ''
+})
 
 const fetchCourseDetail = async () => {
   loading.value = true
   try {
     const courseId = route.params.id
-    const response = await fetch(buildApiUrl(`/api/courses/${courseId}`))
-    const data = await response.json()
-    course.value = data
+    course.value = await request<Course>({
+      url: `/api/courses/${courseId}`,
+      method: 'GET',
+    })
   } catch (error) {
     console.error('Error fetching course detail:', error)
   } finally {

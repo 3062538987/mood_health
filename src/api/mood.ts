@@ -1,7 +1,9 @@
 import request from '@/utils/request'
 import {
+  CreateMoodRecordInput,
   MoodRecord,
   MoodListResponse,
+  MoodListParams,
   MoodWeeklyReport,
   MoodTrendResponse,
   MoodTypeEnum,
@@ -50,7 +52,7 @@ export const analyzeMoodWithRetryLegacy = async (
 ): Promise<AnalyzeMoodResponse> => {
   try {
     return await analyzeMoodLegacy(data)
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (retries > 0 && shouldRetry(error)) {
       await new Promise((resolve) => setTimeout(resolve, delay))
       return analyzeMoodWithRetryLegacy(data, retries - 1, delay * 2)
@@ -59,33 +61,43 @@ export const analyzeMoodWithRetryLegacy = async (
   }
 }
 
-const shouldRetry = (error: any): boolean => {
-  if (error.response) {
-    const status = error.response.status
-    return status >= 500 || status === 429
+const shouldRetry = (error: unknown): boolean => {
+  const err = error as { response?: { status?: number }; code?: string; message?: string }
+  if (err.response) {
+    const status = err.response.status
+    if (status !== undefined && (status >= 500 || status === 429)) {
+      return true
+    }
   }
-  if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+  if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') {
     return true
   }
-  if (error.message && error.message.includes('Network Error')) {
+  if (err.message && err.message.includes('Network Error')) {
     return true
   }
   return false
 }
 
-export const submitMoodRecord = (data: Omit<MoodRecord, 'id' | 'userId' | 'createTime'>) => {
-  return request({
+export const submitMoodRecord = (data: CreateMoodRecordInput) => {
+  return request<null>({
     url: '/api/moods/record',
     method: 'post',
     data,
   })
 }
 
-export const getMoodRecordList = (params: { page: number; size: number }) => {
+export const getMoodRecordList = (params: MoodListParams) => {
   return request<MoodListResponse>({
     url: '/api/moods/list',
     method: 'get',
     params,
+  })
+}
+
+export const deleteMoodRecord = (id: number): Promise<null> => {
+  return request<null>({
+    url: `/api/moods/${id}`,
+    method: 'delete',
   })
 }
 

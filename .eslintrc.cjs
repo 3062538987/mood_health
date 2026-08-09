@@ -7,11 +7,16 @@ module.exports = {
   },
   ignorePatterns: [
     'dist',
+    'dist_build',
     'coverage',
     'node_modules',
     'logs',
+    'playwright-report',
+    'test-results',
+    'screenshots',
     'mood_health_server',
     'public/audio',
+    'vite.e2e.config.ts.timestamp-*',
   ],
   extends: [
     'eslint:recommended',

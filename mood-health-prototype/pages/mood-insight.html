@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情绪洞察</title>
+    <style id="theme-vars">
+/* ============================================
+   日落花园 · 暖光治愈 — 情绪健康平台主题
+   ============================================ */
+
+:root {
+  /* Brand prefix: mh (mood health) */
+  --mh-primary: #e8834a;
+  --mh-primary-foreground: #ffffff;
+  --mh-primary-light: #f5c5a3;
+  --mh-primary-hover: #d4723a;
+  --mh-primary-soft: #fdf0e6;
+
+  --mh-secondary: #8aab7c;
+  --mh-secondary-foreground: #ffffff;
+  --mh-secondary-light: #b8d0a8;
+  --mh-secondary-hover: #7a9b6c;
+
+  --mh-accent: #f0b860;
+  --mh-accent-foreground: #4a3f38;
+  --mh-accent-light: #f8d898;
+  --mh-accent-hover: #e0a848;
+
+  /* Background & Surface */
+  --mh-background: #fef8f2;
+  --mh-foreground: #4a3f38;
+  --mh-warm: #fdf2e8;
+  --mh-card: #fffdf9;
+  --mh-card-foreground: #4a3f38;
+  --mh-popover: #fffdf9;
+  --mh-popover-foreground: #4a3f38;
+  --mh-surface-muted: #faf5ee;
+
+  /* Text */
+  --mh-text: #4a3f38;
+  --mh-text-light: #8c8078;
+  --mh-text-muted: #b0a69c;
+  --mh-muted: #faf5ee;
+  --mh-muted-foreground: #8c8078;
+
+  /* Border & Input */
+  --mh-border: #e8ddd0;
+  --mh-input: #e8ddd0;
+  --mh-ring: #e8834a;
+
+  /* Radius */
+  --mh-radius-sm: 6px;
+  --mh-radius-md: 10px;
+  --mh-radius-lg: 16px;
+  --mh-radius-xl: 24px;
+  --mh-radius-full: 9999px;
+
+  /* Status Colors */
+  --mh-success: #7cb89a;
+  --mh-success-foreground: #ffffff;
+  --mh-warning: #f0b860;
+  --mh-warning-foreground: #4a3f38;
+  --mh-error: #e0556a;
+  --mh-error-foreground: #ffffff;
+  --mh-info: #7ba5c4;
+  --mh-info-foreground: #ffffff;
+
+  /* Risk Levels */
+  --mh-risk-low: #8aab7c;
+  --mh-risk-low-soft: rgba(138, 171, 124, 0.12);
+  --mh-risk-medium: #d2a35f;
+  --mh-risk-medium-soft: rgba(210, 163, 95, 0.12);
+  --mh-risk-high: #cf6b7f;
+  --mh-risk-high-soft: rgba(207, 107, 127, 0.12);
+
+  /* Mental States */
+  --mh-mental-calm: #8aab7c;
+  --mh-mental-neutral: #b0a69c;
+  --mh-mental-anxious: #c090d0;
+  --mh-mental-stressed: #d2a35f;
+  --mh-mental-distressed: #cf6b7f;
+
+  /* Mood Colors */
+  --mh-mood-happy: #f0b860;
+  --mh-mood-sad: #7ba5c4;
+  --mh-mood-angry: #e0556a;
+  --mh-mood-anxious: #c090d0;
+  --mh-mood-calm: #8aab7c;
+  --mh-mood-neutral: #b0a69c;
+
+  /* Shadow */
+  --mh-shadow-sm: 0 2px 8px rgba(180, 140, 100, 0.08);
+  --mh-shadow-md: 0 4px 16px rgba(180, 140, 100, 0.10);
+  --mh-shadow-lg: 0 8px 32px rgba(180, 140, 100, 0.14);
+  --mh-shadow-glow: 0 0 40px rgba(240, 184, 96, 0.12);
+
+  /* Typography */
+  --mh-font-display: 'Noto Serif SC', 'Georgia', 'Songti SC', serif;
+  --mh-font-body: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+
+  /* Semantic aliases for Tailwind compatibility */
+  --background: var(--mh-background);
+  --foreground: var(--mh-foreground);
+  --card: var(--mh-card);
+  --card-foreground: var(--mh-card-foreground);
+  --popover: var(--mh-popover);
+  --popover-foreground: var(--mh-popover-foreground);
+  --primary: var(--mh-primary);
+  --primary-foreground: var(--mh-primary-foreground);
+  --secondary: var(--mh-secondary);
+  --secondary-foreground: var(--mh-secondary-foreground);
+  --accent: var(--mh-accent);
+  --accent-foreground: var(--mh-accent-foreground);
+  --muted: var(--mh-muted);
+  --muted-foreground: var(--mh-muted-foreground);
+  --destructive: var(--mh-error);
+  --destructive-foreground: var(--mh-error-foreground);
+  --border: var(--mh-border);
+  --input: var(--mh-input);
+  --ring: var(--mh-ring);
+  --radius: var(--mh-radius-lg);
+  --radius-sm: var(--mh-radius-sm);
+  --radius-md: var(--mh-radius-md);
+  --radius-lg: var(--mh-radius-lg);
+  --radius-xl: var(--mh-radius-xl);
+  --radius-full: var(--mh-radius-full);
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --mh-background: #1e1b18;
+    --mh-foreground: #e8ddd0;
+    --mh-warm: #25211d;
+    --mh-card: #2a2520;
+    --mh-card-foreground: #e8ddd0;
+    --mh-popover: #2a2520;
+    --mh-popover-foreground: #e8ddd0;
+    --mh-surface-muted: #2f2a24;
+    --mh-text: #e8ddd0;
+    --mh-text-light: #b0a69c;
+    --mh-text-muted: #8c8078;
+    --mh-muted: #2f2a24;
+    --mh-muted-foreground: #b0a69c;
+    --mh-border: #3d3630;
+    --mh-input: #3d3630;
+    --mh-primary: #f0a070;
+    --mh-primary-hover: #f5b890;
+    --mh-primary-soft: rgba(240, 160, 112, 0.12);
+    --mh-secondary: #a8c898;
+    --mh-accent: #f8c878;
+    --mh-ring: #f5b890;
+
+    --background: var(--mh-background);
+    --foreground: var(--mh-foreground);
+    --card: var(--mh-card);
+    --card-foreground: var(--mh-card-foreground);
+    --popover: var(--mh-popover);
+    --popover-foreground: var(--mh-popover-foreground);
+    --primary: var(--mh-primary);
+    --secondary: var(--mh-secondary);
+    --accent: var(--mh-accent);
+    --muted: var(--mh-muted);
+    --muted-foreground: var(--mh-muted-foreground);
+    --destructive: var(--mh-error);
+    --border: var(--mh-border);
+    --input: var(--mh-input);
+    --ring: var(--mh-ring);
+  }
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--mh-font-body);
+  background: var(--mh-background);
+  color: var(--mh-text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--mh-font-display);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--mh-background);
+    --color-foreground: var(--mh-foreground);
+    --color-card: var(--mh-card);
+    --color-card-foreground: var(--mh-card-foreground);
+    --color-popover: var(--mh-popover);
+    --color-popover-foreground: var(--mh-popover-foreground);
+    --color-primary: var(--mh-primary);
+    --color-primary-foreground: var(--mh-primary-foreground);
+    --color-secondary: var(--mh-secondary);
+    --color-secondary-foreground: var(--mh-secondary-foreground);
+    --color-muted: var(--mh-muted);
+    --color-muted-foreground: var(--mh-muted-foreground);
+    --color-accent: var(--mh-accent);
+    --color-accent-foreground: var(--mh-accent-foreground);
+    --color-border: var(--mh-border);
+    --color-input: var(--mh-input);
+    --color-ring: var(--mh-ring);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --radius-sm: var(--mh-radius-sm);
+    --radius-md: var(--mh-radius-md);
+    --radius-lg: var(--mh-radius-lg);
+    --radius-xl: var(--mh-radius-xl);
+  }
+  @layer base {
+    body { background: var(--mh-background); color: var(--mh-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--mh-background); }
+      .text-background { color: var(--mh-background); }
+      .border-background { border-color: var(--mh-background); }
+      .ring-background { --tw-ring-color: var(--mh-background); }
+      .bg-foreground { background-color: var(--mh-foreground); }
+      .text-foreground { color: var(--mh-foreground); }
+      .border-foreground { border-color: var(--mh-foreground); }
+      .ring-foreground { --tw-ring-color: var(--mh-foreground); }
+      .bg-card { background-color: var(--mh-card); }
+      .text-card { color: var(--mh-card); }
+      .border-card { border-color: var(--mh-card); }
+      .ring-card { --tw-ring-color: var(--mh-card); }
+      .bg-card-foreground { background-color: var(--mh-card-foreground); }
+      .text-card-foreground { color: var(--mh-card-foreground); }
+      .border-card-foreground { border-color: var(--mh-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--mh-card-foreground); }
+      .bg-popover { background-color: var(--mh-popover); }
+      .text-popover { color: var(--mh-popover); }
+      .border-popover { border-color: var(--mh-popover); }
+      .ring-popover { --tw-ring-color: var(--mh-popover); }
+      .bg-popover-foreground { background-color: var(--mh-popover-foreground); }
+      .text-popover-foreground { color: var(--mh-popover-foreground); }
+      .border-popover-foreground { border-color: var(--mh-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--mh-popover-foreground); }
+      .bg-primary { background-color: var(--mh-primary); }
+      .text-primary { color: var(--mh-primary); }
+      .border-primary { border-color: var(--mh-primary); }
+      .ring-primary { --tw-ring-color: var(--mh-primary); }
+      .bg-primary-foreground { background-color: var(--mh-primary-foreground); }
+      .text-primary-foreground { color: var(--mh-primary-foreground); }
+      .border-primary-foreground { border-color: var(--mh-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--mh-primary-foreground); }
+      .bg-secondary { background-color: var(--mh-secondary); }
+      .text-secondary { color: var(--mh-secondary); }
+      .border-secondary { border-color: var(--mh-secondary); }
+      .ring-secondary { --tw-ring-color: var(--mh-secondary); }
+      .bg-secondary-foreground { background-color: var(--mh-secondary-foreground); }
+      .text-secondary-foreground { color: var(--mh-secondary-foreground); }
+      .border-secondary-foreground { border-color: var(--mh-secondary-foreground); }
+      .ring-secondary-foreground { --tw-ring-color: var(--mh-secondary-foreground); }
+      .bg-muted { background-color: var(--mh-muted); }
+      .text-muted { color: var(--mh-muted); }
+      .border-muted { border-color: var(--mh-muted); }
+      .ring-muted { --tw-ring-color: var(--mh-muted); }
+      .bg-muted-foreground { background-color: var(--mh-muted-foreground); }
+      .text-muted-foreground { color: var(--mh-muted-foreground); }
+      .border-muted-foreground { border-color: var(--mh-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--mh-muted-foreground); }
+      .bg-accent { background-color: var(--mh-accent); }
+      .text-accent { color: var(--mh-accent); }
+      .border-accent { border-color: var(--mh-accent); }
+      .ring-accent { --tw-ring-color: var(--mh-accent); }
+      .bg-accent-foreground { background-color: var(--mh-accent-foreground); }
+      .text-accent-foreground { color: var(--mh-accent-foreground); }
+      .border-accent-foreground { border-color: var(--mh-accent-foreground); }
+      .ring-accent-foreground { --tw-ring-color: var(--mh-accent-foreground); }
+      .bg-border { background-color: var(--mh-border); }
+      .text-border { color: var(--mh-border); }
+      .border-border { border-color: var(--mh-border); }
+      .ring-border { --tw-ring-color: var(--mh-border); }
+      .bg-input { background-color: var(--mh-input); }
+      .text-input { color: var(--mh-input); }
+      .border-input { border-color: var(--mh-input); }
+      .ring-input { --tw-ring-color: var(--mh-input); }
+      .bg-ring { background-color: var(--mh-ring); }
+      .text-ring { color: var(--mh-ring); }
+      .border-ring { border-color: var(--mh-ring); }
+      .ring-ring { --tw-ring-color: var(--mh-ring); }
+      .bg-destructive { background-color: var(--destructive); }
+      .text-destructive { color: var(--destructive); }
+      .border-destructive { border-color: var(--destructive); }
+      .ring-destructive { --tw-ring-color: var(--destructive); }
+      .bg-destructive-foreground { background-color: var(--destructive-foreground); }
+      .text-destructive-foreground { color: var(--destructive-foreground); }
+      .border-destructive-foreground { border-color: var(--destructive-foreground); }
+      .ring-destructive-foreground { --tw-ring-color: var(--destructive-foreground); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <main class="min-h-screen bg-background pb-[calc(60px+env(safe-area-inset-bottom,16px))]" style="font-family: var(--mh-font-body);">
+      <!-- iOS Status Bar -->
+      <div class="flex items-center justify-between px-6 pt-3 pb-1 text-[13px] font-semibold text-foreground">
+        <span>9:41</span>
+        <div class="flex items-center gap-1">
+          <i data-lucide="signal" class="w-4 h-4"></i>
+          <i data-lucide="wifi" class="w-4 h-4"></i>
+          <i data-lucide="battery" class="w-5 h-4"></i>
+        </div>
+      </div>
+
+      <!-- Page Header with decorative image -->
+      <div class="relative overflow-hidden">
+        <div class="absolute inset-0 opacity-20">
+          <img src="../assets/mood-spectrum.jpg" alt="" class="w-full h-full object-cover" style="filter: blur(2px);">
+        </div>
+        <div class="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background"></div>
+        <div class="relative px-4 pt-3 pb-4">
+          <div class="flex items-center justify-between">
+            <button data-dom-id="back-home" class="w-10 h-10 flex items-center justify-center rounded-full bg-card/80 backdrop-blur-sm" aria-label="返回">
+              <i data-lucide="chevron-left" class="w-5 h-5 text-foreground"></i>
+            </button>
+            <h1 class="text-[18px] font-semibold text-foreground" style="font-family: var(--mh-font-display);">情绪洞察</h1>
+            <button class="w-10 h-10 flex items-center justify-center rounded-full bg-card/80 backdrop-blur-sm" aria-label="更多">
+              <i data-lucide="more-horizontal" class="w-5 h-5 text-foreground"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Period Tabs -->
+      <div class="px-4 pb-4">
+        <div class="flex bg-muted rounded-full p-1">
+          <button class="flex-1 py-2 text-[13px] font-medium text-muted-foreground rounded-full transition-all">周</button>
+          <button class="flex-1 py-2 text-[13px] font-semibold text-primary-foreground rounded-full bg-primary shadow-sm transition-all">月</button>
+          <button class="flex-1 py-2 text-[13px] font-medium text-muted-foreground rounded-full transition-all">年</button>
+        </div>
+      </div>
+
+      <!-- Overview Stats Row -->
+      <div class="px-4 pb-5">
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-card rounded-xl p-3 text-center shadow-sm" style="box-shadow: var(--mh-shadow-sm);">
+            <div class="text-[22px] font-bold text-foreground mb-1" style="font-family: var(--mh-font-display);">28</div>
+            <div class="text-[11px] text-muted-foreground truncate">总记录数</div>
+          </div>
+          <div class="bg-card rounded-xl p-3 text-center shadow-sm" style="box-shadow: var(--mh-shadow-sm);">
+            <div class="text-[22px] font-bold mb-1" style="color: var(--mh-mental-calm); font-family: var(--mh-font-display);">12</div>
+            <div class="text-[11px] text-muted-foreground truncate">平静天数</div>
+          </div>
+          <div class="bg-card rounded-xl p-3 text-center shadow-sm" style="box-shadow: var(--mh-shadow-sm);">
+            <div class="text-[22px] font-bold mb-1" style="color: var(--mh-accent); font-family: var(--mh-font-display);">65%</div>
+            <div class="text-[11px] text-muted-foreground truncate">积极占比</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mood Trend Chart -->
+      <section class="px-4 pb-5">
+        <div class="bg-card rounded-2xl p-4 shadow-sm" style="box-shadow: var(--mh-shadow-sm);">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-[15px] font-semibold text-foreground" style="font-family: var(--mh-font-display);">情绪趋势</h2>
+            <span class="text-[11px] text-muted-foreground">过去30天</span>
+          </div>
+          <!-- SVG Wave Chart -->
+          <div class="relative w-full" style="height: 160px;">
+            <svg viewBox="0 0 320 160" class="w-full h-full" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="moodGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" style="stop-color: var(--mh-primary); stop-opacity: 0.35"/>
+                  <stop offset="100%" style="stop-color: var(--mh-primary); stop-opacity: 0.02"/>
+                </linearGradient>
+                <linearGradient id="moodLine" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" style="stop-color: var(--mh-accent);"/>
+                  <stop offset="50%" style="stop-color: var(--mh-primary);"/>
+                  <stop offset="100%" style="stop-color: var(--mh-secondary);"/>
+                </linearGradient>
+              </defs>
+              <!-- Grid lines -->
+              <line x1="0" y1="40" x2="320" y2="40" stroke="var(--mh-border)" stroke-width="0.5" stroke-dasharray="3,3"/>
+              <line x1="0" y1="80" x2="320" y2="80" stroke="var(--mh-border)" stroke-width="0.5" stroke-dasharray="3,3"/>
+              <line x1="0" y1="120" x2="320" y2="120" stroke="var(--mh-border)" stroke-width="0.5" stroke-dasharray="3,3"/>
+              <!-- Area fill -->
+              <path d="M0,110 Q15,95 30,100 T60,85 T90,70 T120,55 T150,65 T180,45 T210,60 T240,75 T270,50 T300,65 T320,55 L320,160 L0,160 Z" fill="url(#moodGradient)"/>
+              <!-- Line -->
+              <path d="M0,110 Q15,95 30,100 T60,85 T90,70 T120,55 T150,65 T180,45 T210,60 T240,75 T270,50 T300,65 T320,55" fill="none" stroke="url(#moodLine)" stroke-width="2.5" stroke-linecap="round"/>
+              <!-- Data points -->
+              <circle cx="60" cy="85" r="4" fill="var(--mh-card)" stroke="var(--mh-primary)" stroke-width="2"/>
+              <circle cx="120" cy="55" r="4" fill="var(--mh-card)" stroke="var(--mh-accent)" stroke-width="2"/>
+              <circle cx="180" cy="45" r="4" fill="var(--mh-card)" stroke="var(--mh-primary)" stroke-width="2"/>
+              <circle cx="270" cy="50" r="4" fill="var(--mh-card)" stroke="var(--mh-secondary)" stroke-width="2"/>
+            </svg>
+            <!-- Y-axis labels -->
+            <div class="absolute top-0 right-0 text-[9px] text-muted-foreground">积极</div>
+            <div class="absolute top-1/2 right-0 -translate-y-1/2 text-[9px] text-muted-foreground">平稳</div>
+            <div class="absolute bottom-0 right-0 text-[9px] text-muted-foreground">低落</div>
+          </div>
+          <!-- X-axis labels -->
+          <div class="flex justify-between mt-2 px-1 text-[10px] text-muted-foreground">
+            <span>1日</span>
+            <span>8日</span>
+            <span>15日</span>
+            <span>22日</span>
+            <span>30日</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Emotion Distribution -->
+      <section class="px-4 pb-5">
+        <div class="bg-card rounded-2xl p-4 shadow-sm" style="box-shadow: var(--mh-shadow-sm);">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-[15px] font-semibold text-foreground" style="font-family: var(--mh-font-display);">情绪分布</h2>
+            <span class="text-[11px] text-muted-foreground">本月</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <!-- Donut Chart -->
+            <div class="relative shrink-0" style="width: 120px; height: 120px;">
+              <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90">
+                <!-- Background circle -->
+                <circle cx="60" cy="60" r="48" fill="none" stroke="var(--mh-muted)" stroke-width="14"/>
+                <!-- Happy 35% -->
+                <circle cx="60" cy="60" r="48" fill="none" stroke="var(--mh-mood-happy)" stroke-width="14"
+                  stroke-dasharray="105.56 196.04" stroke-dashoffset="0" stroke-linecap="round"/>
+                <!-- Calm 25% = 75.4, starting at 105.56 -->
+                <circle cx="60" cy="60" r="48" fill="none" stroke="var(--mh-mood-calm)" stroke-width="14"
+                  stroke-dasharray="75.4 226.2" stroke-dashoffset="-105.56" stroke-linecap="round"/>
+                <!-- Anxious 15% = 45.24, starting at 180.96 -->
+                <circle cx="60" cy="60" r="48" fill="none" stroke="var(--mh-mood-anxious)" stroke-width="14"
+                  stroke-dasharray="45.24 256.36" stroke-dashoffset="-180.96" stroke-linecap="round"/>
+                <!-- Tired 12% = 36.19, starting at 226.2 -->
+                <circle cx="60" cy="60" r="48" fill="none" stroke="var(--mh-mental-stressed)" stroke-width="14"
+                  stroke-dasharray="36.19 265.41" stroke-dashoffset="-226.2" stroke-linecap="round"/>
+                <!-- Sad 8% = 24.13, starting at 262.39 -->
+                <circle cx="60" cy="60" r="48" fill="none" stroke="var(--mh-mood-sad)" stroke-width="14"
+                  stroke-dasharray="24.13 277.47" stroke-dashoffset="-262.39" stroke-linecap="round"/>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span class="text-[20px] font-bold text-foreground" style="font-family: var(--mh-font-display);">28</span>
+                <span class="text-[10px] text-muted-foreground">次记录</span>
+              </div>
+            </div>
+            <!-- Legend -->
+            <div class="flex-1 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background: var(--mh-mood-happy);"></span>
+                  <span class="text-[12px] text-foreground truncate">开心</span>
+                </div>
+                <span class="text-[12px] font-medium text-foreground shrink-0">35%</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background: var(--mh-mood-calm);"></span>
+                  <span class="text-[12px] text-foreground truncate">平静</span>
+                </div>
+                <span class="text-[12px] font-medium text-foreground shrink-0">25%</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background: var(--mh-mood-anxious);"></span>
+                  <span class="text-[12px] text-foreground truncate">焦虑</span>
+                </div>
+                <span class="text-[12px] font-medium text-foreground shrink-0">15%</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background: var(--mh-mental-stressed);"></span>
+                  <span class="text-[12px] text-foreground truncate">疲惫</span>
+                </div>
+                <span class="text-[12px] font-medium text-foreground shrink-0">12%</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background: var(--mh-mood-sad);"></span>
+                  <span class="text-[12px] text-foreground truncate">难过</span>
+                </div>
+                <span class="text-[12px] font-medium text-foreground shrink-0">8%</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background: var(--mh-mood-neutral);"></span>
+                  <span class="text-[12px] text-foreground truncate">其他</span>
+                </div>
+                <span class="text-[12px] font-medium text-foreground shrink-0">5%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI Insight Card -->
+      <section class="px-4 pb-5">
+        <div data-dom-id="card-ai-insight-detail" class="relative overflow-hidden rounded-2xl p-5 cursor-pointer transition-transform active:scale-[0.98]"
+          style="background: linear-gradient(135deg, #f5a66b 0%, #e8834a 40%, #d4723a 100%); box-shadow: var(--mh-shadow-glow);">
+          <!-- Decorative glow -->
+          <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-30" style="background: var(--mh-accent-light); filter: blur(20px);"></div>
+          <div class="absolute -bottom-8 -left-8 w-24 h-24 rounded-full opacity-20" style="background: #fff; filter: blur(16px);"></div>
+          
+          <div class="relative">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <i data-lucide="sparkles" class="w-4 h-4 text-white"></i>
+              </div>
+              <h2 class="text-[16px] font-semibold text-white" style="font-family: var(--mh-font-display);">AI 情绪洞察</h2>
+            </div>
+            
+            <div class="space-y-3">
+              <div class="flex items-start gap-3">
+                <div class="w-7 h-7 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center shrink-0 mt-0.5">
+                  <i data-lucide="calendar-days" class="w-3.5 h-3.5 text-white"></i>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-[13px] text-white/95 leading-relaxed">你<span class="font-semibold text-white">周三</span>的情绪最为积极，工作效率也最高</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="w-7 h-7 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center shrink-0 mt-0.5">
+                  <i data-lucide="clock" class="w-3.5 h-3.5 text-white"></i>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-[13px] text-white/95 leading-relaxed">下午<span class="font-semibold text-white">3-5点</span>情绪波动较大，建议适当休息</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex items-center justify-between mt-4 pt-3 border-t border-white/20">
+              <span class="text-[12px] text-white/80">查看完整分析报告</span>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-white/80"></i>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Mood Patterns Section -->
+      <section class="px-4 pb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-[16px] font-semibold text-foreground" style="font-family: var(--mh-font-display);">情绪规律</h2>
+          <button class="text-[12px] text-primary">查看更多</button>
+        </div>
+        
+        <div class="space-y-3">
+          <!-- Pattern Card 1: 高频情绪 -->
+          <div class="bg-card rounded-xl p-4 shadow-sm" style="box-shadow: var(--mh-shadow-sm);">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background: var(--mh-primary-soft);">
+                <i data-lucide="zap" class="w-5 h-5" style="color: var(--mh-primary);"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-[14px] font-semibold text-foreground mb-0.5 truncate">高频情绪</h3>
+                <p class="text-[12px] text-muted-foreground line-clamp-1">本月出现最多的情绪是「开心」，共记录10次</p>
+              </div>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-muted-foreground shrink-0"></i>
+            </div>
+          </div>
+          
+          <!-- Pattern Card 2: 触发因素 -->
+          <div class="bg-card rounded-xl p-4 shadow-sm" style="box-shadow: var(--mh-shadow-sm);">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background: var(--mh-risk-medium-soft);">
+                <i data-lucide="flame" class="w-5 h-5" style="color: var(--mh-mental-stressed);"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-[14px] font-semibold text-foreground mb-0.5 truncate">触发因素</h3>
+                <p class="text-[12px] text-muted-foreground line-clamp-1">工作压力是导致焦虑的主要原因，占比42%</p>
+              </div>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-muted-foreground shrink-0"></i>
+            </div>
+          </div>
+          
+          <!-- Pattern Card 3: 改善建议 -->
+          <div class="bg-card rounded-xl p-4 shadow-sm" style="box-shadow: var(--mh-shadow-sm);">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background: var(--mh-risk-low-soft);">
+                <i data-lucide="heart" class="w-5 h-5" style="color: var(--mh-secondary);"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-[14px] font-semibold text-foreground mb-0.5 truncate">改善建议</h3>
+                <p class="text-[12px] text-muted-foreground line-clamp-1">尝试午间冥想，有助于稳定下午情绪波动</p>
+              </div>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-muted-foreground shrink-0"></i>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Tab Navigation -->
+      <nav data-mobile-nav="global" class="fixed bottom-0 left-0 right-0 h-[60px] bg-[var(--mh-card)] border-t border-[var(--mh-border)] z-30 pb-[env(safe-area-inset-bottom)]">
+        <div class="w-full max-w-md mx-auto grid grid-cols-5 h-full">
+          <button data-dom-id="nav-home" data-nav-key="home" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-text-light)]">
+            <i data-lucide="home" class="w-5 h-5 shrink-0"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">首页</span>
+          </button>
+          <button data-dom-id="nav-mood" data-nav-key="mood" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-primary)]">
+            <i data-lucide="heart" class="w-5 h-5 shrink-0 fill-current"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate font-medium">情绪</span>
+          </button>
+          <button data-dom-id="nav-relax" data-nav-key="relax" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-text-light)]">
+            <i data-lucide="leaf" class="w-5 h-5 shrink-0"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">放松</span>
+          </button>
+          <button data-dom-id="nav-treehole" data-nav-key="treehole" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-text-light)]">
+            <i data-lucide="trees" class="w-5 h-5 shrink-0"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">树洞</span>
+          </button>
+          <button data-dom-id="nav-profile" data-nav-key="profile" class="min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 h-full text-[11px] text-[var(--mh-text-light)]">
+            <i data-lucide="user" class="w-5 h-5 shrink-0"></i>
+            <span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">我的</span>
+          </button>
+        </div>
+      </nav>
+    </main>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

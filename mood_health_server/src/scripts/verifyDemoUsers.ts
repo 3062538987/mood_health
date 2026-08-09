@@ -1,10 +1,11 @@
-const fetch = require('node-fetch')
 import { rolePermissions } from '../middleware/auth'
 import type { PermissionCode } from '../middleware/auth'
 
+type DemoUserRole = 'super_admin' | 'admin' | 'user'
+
 interface DemoAccount {
   username: string
-  expectedRole: 'super_admin' | 'admin' | 'user'
+  expectedRole: DemoUserRole
 }
 
 interface LoginResponse {
@@ -19,6 +20,139 @@ interface LoginResponse {
 const BASE_URL =
   process.env.API_BASE_URL || process.env.DEMO_API_BASE_URL || 'http://localhost:3000'
 const PASSWORD = process.argv[2] || process.env.DEMO_USER_PASSWORD || '123456'
+const TIMEOUT_VALUE = process.env.DEMO_API_TIMEOUT_MS
+const DEFAULT_TIMEOUT_MS = 10_000
+const MAX_TIMEOUT_MS = 30_000
+const MAX_RESPONSE_BYTES = 1024 * 1024
+
+class SafeDemoUserVerificationError extends Error {}
+
+const configurationError = () =>
+  new SafeDemoUserVerificationError('Invalid demo user verification configuration')
+
+const parseBaseUrl = (value: string): URL => {
+  let parsed: URL
+  try {
+    parsed = new URL(value)
+  } catch {
+    throw configurationError()
+  }
+
+  if (
+    (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') ||
+    parsed.username !== '' ||
+    parsed.password !== ''
+  ) {
+    throw configurationError()
+  }
+
+  return parsed
+}
+
+const parseTimeout = (value?: string): number => {
+  if (value === undefined) {
+    return DEFAULT_TIMEOUT_MS
+  }
+
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw configurationError()
+  }
+
+  return Math.min(parsed, MAX_TIMEOUT_MS)
+}
+
+const readBoundedResponseBody = async (response: Response): Promise<string> => {
+  const declaredLength = Number(response.headers.get('content-length'))
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_RESPONSE_BYTES) {
+    throw new SafeDemoUserVerificationError('Demo user login response exceeds 1 MiB')
+  }
+
+  if (!response.body) {
+    return ''
+  }
+
+  const reader = response.body.getReader()
+  const chunks: Uint8Array[] = []
+  let totalBytes = 0
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) {
+      break
+    }
+
+    totalBytes += value.byteLength
+    if (totalBytes > MAX_RESPONSE_BYTES) {
+      await reader.cancel().catch(() => undefined)
+      throw new SafeDemoUserVerificationError('Demo user login response exceeds 1 MiB')
+    }
+    chunks.push(value)
+  }
+
+  return Buffer.concat(chunks, totalBytes).toString('utf8')
+}
+
+const isDemoUserRole = (value: unknown): value is DemoUserRole =>
+  value === 'super_admin' || value === 'admin' || value === 'user'
+
+export const createDemoUserLoginClient = (baseUrl: string, timeoutValue?: string) => {
+  const parsedBaseUrl = parseBaseUrl(baseUrl)
+  const timeoutMs = parseTimeout(timeoutValue)
+  const loginUrl = new URL('/api/auth/login', parsedBaseUrl).toString()
+
+  return {
+    login: async (username: string, password: string): Promise<DemoUserRole> => {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), timeoutMs)
+
+      try {
+        const response = await fetch(loginUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+          redirect: 'error',
+          signal: controller.signal,
+        })
+
+        if (!response.ok) {
+          throw new SafeDemoUserVerificationError('Demo user login request was rejected')
+        }
+
+        const responseText = await readBoundedResponseBody(response)
+        let body: LoginResponse
+        try {
+          body = JSON.parse(responseText) as LoginResponse
+        } catch {
+          throw new SafeDemoUserVerificationError('Demo user login response is invalid')
+        }
+
+        if (body.code !== 0) {
+          throw new SafeDemoUserVerificationError('Demo user login was rejected')
+        }
+
+        const role = body.data?.user?.role
+        if (!isDemoUserRole(role)) {
+          throw new SafeDemoUserVerificationError('Demo user login returned an invalid role')
+        }
+
+        return role
+      } catch (error: unknown) {
+        if (error instanceof SafeDemoUserVerificationError) {
+          throw error
+        }
+        if (controller.signal.aborted) {
+          throw new SafeDemoUserVerificationError('Demo user login request timed out')
+        }
+        throw new SafeDemoUserVerificationError('Demo user login request failed')
+      } finally {
+        clearTimeout(timeout)
+      }
+    },
+  }
+}
 
 const demoAccounts: DemoAccount[] = [
   { username: 'super_admin_test1', expectedRole: 'super_admin' },
@@ -33,7 +167,7 @@ const demoAccounts: DemoAccount[] = [
   { username: 'student_test4', expectedRole: 'user' },
 ]
 
-const hasPermission = (role: 'super_admin' | 'admin' | 'user', permission: PermissionCode) => {
+const hasPermission = (role: DemoUserRole, permission: PermissionCode) => {
   const conf = rolePermissions[role]
   if (conf.forbidden.includes(permission)) {
     return false
@@ -41,7 +175,7 @@ const hasPermission = (role: 'super_admin' | 'admin' | 'user', permission: Permi
   return conf.granted.includes(permission)
 }
 
-const runPermissionChecks = () => {
+export const runPermissionChecks = () => {
   const failures: string[] = []
 
   const superAdminRequired: PermissionCode[] = [
@@ -71,10 +205,7 @@ const runPermissionChecks = () => {
   })
 
   if (failures.length > 0) {
-    return {
-      ok: false,
-      logs: failures,
-    }
+    return { ok: false, logs: failures }
   }
 
   return {
@@ -86,42 +217,17 @@ const runPermissionChecks = () => {
   }
 }
 
-const login = async (username: string, password: string) => {
-  const response = await fetch(`${BASE_URL}/api/auth/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ username, password }),
-  })
-
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`)
-  }
-
-  const body = (await response.json()) as LoginResponse
-  if (body.code !== 0) {
-    throw new Error(`业务码异常: ${body.code}`)
-  }
-
-  return body
-}
-
 const main = async () => {
-  console.log(`开始校验演示账号，API: ${BASE_URL}`)
+  const loginClient = createDemoUserLoginClient(BASE_URL, TIMEOUT_VALUE)
+  console.log(`开始校验演示账号，API: ${new URL(BASE_URL).origin}`)
   console.log('校验内容: 账号登录 + 角色一致性 + 权限边界')
 
   const failures: string[] = []
-  const roleStats = {
-    super_admin: 0,
-    admin: 0,
-    user: 0,
-  }
+  const roleStats = { super_admin: 0, admin: 0, user: 0 }
 
   for (const account of demoAccounts) {
     try {
-      const body = await login(account.username, PASSWORD)
-      const actualRole = (body.data?.user?.role || 'user') as 'super_admin' | 'admin' | 'user'
+      const actualRole = await loginClient.login(account.username, PASSWORD)
       if (actualRole !== account.expectedRole) {
         failures.push(
           `${account.username}: 角色不匹配，期望 ${account.expectedRole}，实际 ${actualRole}`
@@ -131,11 +237,11 @@ const main = async () => {
       }
 
       roleStats[actualRole] += 1
-
       console.log(`✅ ${account.username} 登录成功，角色 ${actualRole}`)
-    } catch (error: any) {
-      failures.push(`${account.username}: 登录失败 (${error?.message || '未知错误'})`)
-      console.log(`❌ ${account.username} 登录失败: ${error?.message || '未知错误'}`)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : '未知错误'
+      failures.push(`${account.username}: 登录失败 (${message})`)
+      console.log(`❌ ${account.username} 登录失败: ${message}`)
     }
   }
 
@@ -178,4 +284,6 @@ const main = async () => {
   console.log('校验结果: 全部通过')
 }
 
-void main()
+if (require.main === module) {
+  void main()
+}

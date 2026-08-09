@@ -1,5 +1,6 @@
 import request from '@/utils/request'
 import axios from 'axios'
+import type { SafeResult } from '@/types/api'
 
 export interface AdviceHistoryItem {
   id: number
@@ -15,10 +16,6 @@ export interface SaveAdviceRequest {
   analysis: string
   suggestions: string[]
 }
-
-export type AdviceApiResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; message: string; status?: number }
 
 const resolveAdviceError = (
   error: unknown,
@@ -47,7 +44,7 @@ export const saveAdvice = (data: SaveAdviceRequest) => {
   })
 }
 
-export const saveAdviceSafe = async (data: SaveAdviceRequest): Promise<AdviceApiResult<null>> => {
+export const saveAdviceSafe = async (data: SaveAdviceRequest): Promise<SafeResult<null>> => {
   try {
     await saveAdvice(data)
     return { ok: true, data: null }
@@ -68,7 +65,7 @@ export const getAdviceHistory = (params?: { page?: number; pageSize?: number }) 
 export const getAdviceHistorySafe = async (params?: {
   page?: number
   pageSize?: number
-}): Promise<AdviceApiResult<{ list: AdviceHistoryItem[]; total: number }>> => {
+}): Promise<SafeResult<{ list: AdviceHistoryItem[]; total: number }>> => {
   try {
     const data = await getAdviceHistory(params)
     return { ok: true, data }

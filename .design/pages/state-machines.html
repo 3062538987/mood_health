@@ -1,0 +1,1952 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>状态机与状态转换总览 · 情绪健康管理平台</title>
+    <style id="theme-vars">
+/* =========================================================
+   Mood Health Platform - Flow Diagram Theme
+   ========================================================= */
+
+:root {
+  /* Brand colors - calm, therapeutic palette */
+  --color-primary: #4F7DF5;
+  --color-primary-light: #E8EEFD;
+  --color-primary-dark: #3A5FC9;
+
+  --color-secondary: #7C9EFF;
+  --color-accent: #67E8F9;
+  --color-accent-warm: #FCD34D;
+
+  /* Status / semantic */
+  --color-success: #34D399;
+  --color-success-bg: #D1FAE5;
+  --color-warning: #FBBF24;
+  --color-warning-bg: #FEF3C7;
+  --color-danger: #F87171;
+  --color-danger-bg: #FEE2E2;
+  --color-info: #60A5FA;
+  --color-info-bg: #DBEAFE;
+
+  /* Module colors */
+  --color-mood: #8B5CF6;
+  --color-mood-bg: #EDE9FE;
+  --color-relax: #10B981;
+  --color-relax-bg: #D1FAE5;
+  --color-improve: #F59E0B;
+  --color-improve-bg: #FEF3C7;
+  --color-counseling: #EC4899;
+  --color-counseling-bg: #FCE7F3;
+  --color-admin: #6366F1;
+  --color-admin-bg: #E0E7FF;
+  --color-user: #06B6D4;
+  --color-user-bg: #CFFAFE;
+
+  /* Neutrals */
+  --color-bg: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-border-soft: #F1F5F9;
+
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #94A3B8;
+  --color-text-muted: #CBD5E1;
+
+  /* Semantic theme aliases (required by fill-html-head.mjs) */
+  --color-foreground: #0F172A;
+  --color-card: #FFFFFF;
+  --color-muted: #94A3B8;
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 22px;
+  --text-3xl: 28px;
+  --text-4xl: 36px;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* Radius semantic aliases (required by fill-html-head.mjs) */
+  --color-radius-sm: 6px;
+  --color-radius-md: 10px;
+  --color-radius-lg: 16px;
+
+  /* Shadow */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --shadow-xl: 0 16px 40px rgba(15, 23, 42, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: var(--color-text-primary);
+  background: var(--color-bg);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-foreground: var(--color-foreground);
+    --color-card: var(--color-card);
+    --color-primary: var(--color-primary);
+    --color-secondary: var(--color-secondary);
+    --color-muted: var(--color-muted);
+    --color-accent: var(--color-accent);
+    --color-border: var(--color-border);
+    --color-background: var(--color-bg);
+    --radius-sm: var(--color-radius-sm);
+    --radius-md: var(--color-radius-md);
+    --radius-lg: var(--color-radius-lg);
+  }
+  @layer base {
+    body { background: var(--color-bg); color: var(--color-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-foreground { background-color: var(--color-foreground); }
+      .text-foreground { color: var(--color-foreground); }
+      .border-foreground { border-color: var(--color-foreground); }
+      .ring-foreground { --tw-ring-color: var(--color-foreground); }
+      .bg-card { background-color: var(--color-card); }
+      .text-card { color: var(--color-card); }
+      .border-card { border-color: var(--color-card); }
+      .ring-card { --tw-ring-color: var(--color-card); }
+      .bg-primary { background-color: var(--color-primary); }
+      .text-primary { color: var(--color-primary); }
+      .border-primary { border-color: var(--color-primary); }
+      .ring-primary { --tw-ring-color: var(--color-primary); }
+      .bg-secondary { background-color: var(--color-secondary); }
+      .text-secondary { color: var(--color-secondary); }
+      .border-secondary { border-color: var(--color-secondary); }
+      .ring-secondary { --tw-ring-color: var(--color-secondary); }
+      .bg-muted { background-color: var(--color-muted); }
+      .text-muted { color: var(--color-muted); }
+      .border-muted { border-color: var(--color-muted); }
+      .ring-muted { --tw-ring-color: var(--color-muted); }
+      .bg-accent { background-color: var(--color-accent); }
+      .text-accent { color: var(--color-accent); }
+      .border-accent { border-color: var(--color-accent); }
+      .ring-accent { --tw-ring-color: var(--color-accent); }
+      .bg-border { background-color: var(--color-border); }
+      .text-border { color: var(--color-border); }
+      .border-border { border-color: var(--color-border); }
+      .ring-border { --tw-ring-color: var(--color-border); }
+      .bg-background { background-color: var(--color-bg); }
+      .text-background { color: var(--color-bg); }
+      .border-background { border-color: var(--color-bg); }
+      .ring-background { --tw-ring-color: var(--color-bg); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body>
+  <div class="page-container">
+
+    <!-- ========== Header ========== -->
+    <header class="diagram-header">
+      <h1>状态机与状态转换总览</h1>
+      <p class="subtitle">基于代码现状的核心业务状态机梳理</p>
+      <div class="stats-row">
+        <div class="stat-item">
+          <span class="stat-number">11</span>
+          <span class="stat-label">状态机</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">37</span>
+          <span class="stat-label">状态节点</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">48</span>
+          <span class="stat-label">转换路径</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ========== Legend ========== -->
+    <section class="legend-section">
+      <div class="legend-title">图例说明</div>
+      <div class="legend-grid">
+        <div class="legend-item">
+          <div class="legend-icon">
+            <div class="legend-dot-initial"></div>
+          </div>
+          <span class="legend-label">初始状态</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-icon">
+            <div class="legend-dot-terminal"></div>
+          </div>
+          <span class="legend-label">终止状态</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-icon">
+            <div class="legend-pill"></div>
+          </div>
+          <span class="legend-label">中间状态</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-icon">
+            <div class="legend-arrow-happy"></div>
+          </div>
+          <span class="legend-label">主路径 (实线)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-icon">
+            <div class="legend-arrow-error"></div>
+          </div>
+          <span class="legend-label">错误路径 (红色虚线)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-icon">
+            <div class="legend-arrow-dashed"></div>
+          </div>
+          <span class="legend-label">可选路径 (灰色虚线)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== Category 1: Core Business ========== -->
+    <section class="category-section">
+      <div class="category-header">
+        <span class="category-badge">CATEGORY 01</span>
+        <span class="category-title">核心业务状态机</span>
+        <div class="category-divider"></div>
+      </div>
+
+      <div class="machines-grid">
+
+        <!-- 1. Case Status -->
+        <div class="machine-card machine-counseling">
+          <div class="machine-header">
+            <span class="machine-name">个案状态机 · Case Status</span>
+            <span class="machine-count">5 状态</span>
+          </div>
+          <div class="machine-source">caseRepository.ts · caseService.ts</div>
+          <div class="machine-diagram">
+            <svg viewBox="0 0 520 180" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker id="arrow-counseling" class="arrowhead arrowhead-main" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+                <marker id="arrow-alt-counseling" class="arrowhead arrowhead-alt" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+                <marker id="arrow-err-counseling" class="arrowhead arrowhead-error" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+              </defs>
+              <!-- Main path: open -> assigned -> in_progress -> referred -> closed -->
+              <path class="transition-path main" d="M 75 55 L 145 55" marker-end="url(#arrow-counseling)"/>
+              <path class="transition-path main" d="M 205 55 L 275 55" marker-end="url(#arrow-counseling)"/>
+              <path class="transition-path main" d="M 335 55 L 405 55" marker-end="url(#arrow-counseling)"/>
+              <path class="transition-path main" d="M 465 55 L 495 55" marker-end="url(#arrow-counseling)"/>
+              <!-- Direct closure: open -> closed (bottom arc) -->
+              <path class="transition-path alternate" d="M 50 75 Q 50 140 490 140 Q 500 140 500 75" marker-end="url(#arrow-alt-counseling)"/>
+              <!-- in_progress -> closed -->
+              <path class="transition-path alternate" d="M 252 75 Q 350 110 490 75" marker-end="url(#arrow-alt-counseling)"/>
+              <!-- State: open (initial) -->
+              <g class="state-node initial">
+                <rect x="10" y="35" width="70" height="40"/>
+                <text class="state-label" x="45" y="52">待处理</text>
+                <text class="state-code" x="45" y="66">open</text>
+              </g>
+              <!-- State: assigned -->
+              <g class="state-node">
+                <rect x="145" y="35" width="70" height="40"/>
+                <text class="state-label" x="180" y="52">已分配</text>
+                <text class="state-code" x="180" y="66">assigned</text>
+              </g>
+              <!-- State: in_progress -->
+              <g class="state-node">
+                <rect x="275" y="35" width="70" height="40"/>
+                <text class="state-label" x="310" y="52">进行中</text>
+                <text class="state-code" x="310" y="66">in_progress</text>
+              </g>
+              <!-- State: referred -->
+              <g class="state-node">
+                <rect x="405" y="35" width="70" height="40"/>
+                <text class="state-label" x="440" y="52">已转介</text>
+                <text class="state-code" x="440" y="66">referred</text>
+              </g>
+              <!-- State: closed (terminal) -->
+              <g class="state-node terminal">
+                <rect x="495" y="35" width="65" height="40"/>
+                <text class="state-label" x="527" y="52">已结案</text>
+                <text class="state-code" x="527" y="66">closed</text>
+              </g>
+              <!-- Trigger labels -->
+              <text class="transition-label" x="110" y="48">assign</text>
+              <text class="transition-label" x="240" y="48">start</text>
+              <text class="transition-label" x="370" y="48">refer</text>
+              <text class="transition-label" x="468" y="48">close</text>
+              <text class="transition-label" x="260" y="132">directClose</text>
+              <text class="transition-label" x="370" y="95">closeCase</text>
+            </svg>
+          </div>
+          <div class="machine-table">
+            <div class="machine-table-title">状态定义</div>
+            <table class="state-table">
+              <thead>
+                <tr>
+                  <th style="width: 28%;">状态</th>
+                  <th style="width: 36%;">说明</th>
+                  <th>触发动作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="state-name-cell">open</td>
+                  <td class="state-desc-cell">待处理，个案刚创建未分配</td>
+                  <td class="state-triggers-cell">createCase</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">assigned</td>
+                  <td class="state-desc-cell">已分配咨询师，待开始干预</td>
+                  <td class="state-triggers-cell">assignCounselor</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">in_progress</td>
+                  <td class="state-desc-cell">干预进行中</td>
+                  <td class="state-triggers-cell">startIntervention</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">referred</td>
+                  <td class="state-desc-cell">已转介至外部资源</td>
+                  <td class="state-triggers-cell">referCase</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">closed</td>
+                  <td class="state-desc-cell">已结案，个案流程结束</td>
+                  <td class="state-triggers-cell">closeCase</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 2. Analysis Job Status -->
+        <div class="machine-card machine-mood">
+          <div class="machine-header">
+            <span class="machine-name">分析任务状态机 · Analysis Job</span>
+            <span class="machine-count">6 状态</span>
+          </div>
+          <div class="machine-source">migrations/002_create_analysis_jobs.sql</div>
+          <div class="machine-diagram">
+            <svg viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker id="arrow-mood" class="arrowhead arrowhead-main" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+                <marker id="arrow-err-mood" class="arrowhead arrowhead-error" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+                <marker id="arrow-alt-mood" class="arrowhead arrowhead-alt" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+              </defs>
+              <!-- Main path: pending -> processing -> succeeded -->
+              <path class="transition-path main" d="M 75 55 L 145 55" marker-end="url(#arrow-mood)"/>
+              <path class="transition-path happy" d="M 265 55 L 335 55" marker-end="url(#arrow-mood)"/>
+              <!-- Error path: processing -> retryable_failed -->
+              <path class="transition-path error" d="M 210 75 L 210 125" marker-end="url(#arrow-err-mood)"/>
+              <!-- Retry: retryable_failed -> processing (loop back) -->
+              <path class="transition-path alternate" d="M 245 125 Q 290 100 260 75" marker-end="url(#arrow-alt-mood)"/>
+              <!-- Final failure: retryable_failed -> failed_final -->
+              <path class="transition-path error" d="M 275 145 L 385 145" marker-end="url(#arrow-err-mood)"/>
+              <!-- Superseded: pending -> superseded -->
+              <path class="transition-path alternate" d="M 45 75 Q 20 160 420 160 L 440 75" marker-end="url(#arrow-alt-mood)"/>
+              <!-- State: pending (initial) -->
+              <g class="state-node initial">
+                <rect x="10" y="35" width="70" height="40"/>
+                <text class="state-label" x="45" y="52">待处理</text>
+                <text class="state-code" x="45" y="66">pending</text>
+              </g>
+              <!-- State: processing -->
+              <g class="state-node">
+                <rect x="145" y="35" width="80" height="40"/>
+                <text class="state-label" x="185" y="52">处理中</text>
+                <text class="state-code" x="185" y="66">processing</text>
+              </g>
+              <!-- State: succeeded (terminal) -->
+              <g class="state-node terminal">
+                <rect x="335" y="35" width="80" height="40"/>
+                <text class="state-label" x="375" y="52">成功</text>
+                <text class="state-code" x="375" y="66">succeeded</text>
+              </g>
+              <!-- State: retryable_failed -->
+              <g class="state-node">
+                <rect x="135" y="125" width="110" height="40"/>
+                <text class="state-label" x="190" y="142">可重试失败</text>
+                <text class="state-code" x="190" y="156">retryable_failed</text>
+              </g>
+              <!-- State: failed_final (terminal) -->
+              <g class="state-node terminal">
+                <rect x="385" y="125" width="110" height="40"/>
+                <text class="state-label" x="440" y="142">最终失败</text>
+                <text class="state-code" x="440" y="156">failed_final</text>
+              </g>
+              <!-- State: superseded (terminal) -->
+              <g class="state-node terminal">
+                <rect x="440" y="35" width="75" height="40"/>
+                <text class="state-label" x="477" y="52">被取代</text>
+                <text class="state-code" x="477" y="66">superseded</text>
+              </g>
+              <!-- Labels -->
+              <text class="transition-label" x="100" y="48">pick</text>
+              <text class="transition-label" x="288" y="48">success</text>
+              <text class="transition-label" x="218" y="105">fail</text>
+              <text class="transition-label" x="268" y="108">retry</text>
+              <text class="transition-label" x="310" y="138">maxRetry</text>
+              <text class="transition-label" x="230" y="175">newerJob</text>
+            </svg>
+          </div>
+          <div class="machine-table">
+            <div class="machine-table-title">状态定义</div>
+            <table class="state-table">
+              <thead>
+                <tr>
+                  <th style="width: 30%;">状态</th>
+                  <th style="width: 36%;">说明</th>
+                  <th>触发条件</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="state-name-cell">pending</td>
+                  <td class="state-desc-cell">任务已创建，等待处理</td>
+                  <td class="state-triggers-cell">job_created</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">processing</td>
+                  <td class="state-desc-cell">正在执行分析任务</td>
+                  <td class="state-triggers-cell">worker_pick</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">succeeded</td>
+                  <td class="state-desc-cell">分析成功完成</td>
+                  <td class="state-triggers-cell">analysis_ok</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">retryable_failed</td>
+                  <td class="state-desc-cell">可重试的失败，等待重试</td>
+                  <td class="state-triggers-cell">transient_error</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">failed_final</td>
+                  <td class="state-desc-cell">最终失败，超过重试次数</td>
+                  <td class="state-triggers-cell">max_retries_exceeded</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">superseded</td>
+                  <td class="state-desc-cell">被新任务取代，无需执行</td>
+                  <td class="state-triggers-cell">newer_job_created</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 3. Mood Analysis Versions -->
+        <div class="machine-card machine-analysis">
+          <div class="machine-header">
+            <span class="machine-name">情绪分析版本 · Mood Analysis Versions</span>
+            <span class="machine-count">5 状态</span>
+          </div>
+          <div class="machine-source">migrations/007_create_mood_analysis_versions.sql</div>
+          <div class="machine-diagram">
+            <svg viewBox="0 0 520 180" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker id="arrow-analysis" class="arrowhead arrowhead-main" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+                <marker id="arrow-err-analysis" class="arrowhead arrowhead-error" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+                <marker id="arrow-alt-analysis" class="arrowhead arrowhead-alt" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+              </defs>
+              <!-- Main: pending -> processing -> completed -->
+              <path class="transition-path main" d="M 75 55 L 145 55" marker-end="url(#arrow-analysis)"/>
+              <path class="transition-path happy" d="M 265 55 L 335 55" marker-end="url(#arrow-analysis)"/>
+              <!-- Error: processing -> failed -->
+              <path class="transition-path error" d="M 210 75 L 210 125" marker-end="url(#arrow-err-analysis)"/>
+              <!-- Stale: completed -> stale -->
+              <path class="transition-path alternate" d="M 415 75 Q 445 110 415 125" marker-end="url(#arrow-alt-analysis)"/>
+              <!-- State: pending (initial) -->
+              <g class="state-node initial">
+                <rect x="10" y="35" width="70" height="40"/>
+                <text class="state-label" x="45" y="52">待处理</text>
+                <text class="state-code" x="45" y="66">pending</text>
+              </g>
+              <!-- State: processing -->
+              <g class="state-node">
+                <rect x="145" y="35" width="80" height="40"/>
+                <text class="state-label" x="185" y="52">处理中</text>
+                <text class="state-code" x="185" y="66">processing</text>
+              </g>
+              <!-- State: completed -->
+              <g class="state-node">
+                <rect x="335" y="35" width="80" height="40"/>
+                <text class="state-label" x="375" y="52">已完成</text>
+                <text class="state-code" x="375" y="66">completed</text>
+              </g>
+              <!-- State: failed (terminal) -->
+              <g class="state-node terminal">
+                <rect x="155" y="125" width="80" height="40"/>
+                <text class="state-label" x="195" y="142">失败</text>
+                <text class="state-code" x="195" y="156">failed</text>
+              </g>
+              <!-- State: stale (terminal) -->
+              <g class="state-node terminal">
+                <rect x="375" y="125" width="80" height="40"/>
+                <text class="state-label" x="415" y="142">已过期</text>
+                <text class="state-code" x="415" y="156">stale</text>
+              </g>
+              <!-- Labels -->
+              <text class="transition-label" x="100" y="48">start</text>
+              <text class="transition-label" x="288" y="48">complete</text>
+              <text class="transition-label" x="218" y="105">fail</text>
+              <text class="transition-label" x="420" y="108">dataChanged</text>
+            </svg>
+          </div>
+          <div class="machine-table">
+            <div class="machine-table-title">状态定义</div>
+            <table class="state-table">
+              <thead>
+                <tr>
+                  <th style="width: 28%;">状态</th>
+                  <th style="width: 36%;">说明</th>
+                  <th>触发条件</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="state-name-cell">pending</td>
+                  <td class="state-desc-cell">分析版本待处理</td>
+                  <td class="state-triggers-cell">version_created</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">processing</td>
+                  <td class="state-desc-cell">分析进行中</td>
+                  <td class="state-triggers-cell">analysis_started</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">completed</td>
+                  <td class="state-desc-cell">分析成功完成</td>
+                  <td class="state-triggers-cell">analysis_completed</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">failed</td>
+                  <td class="state-desc-cell">分析失败</td>
+                  <td class="state-triggers-cell">analysis_failed</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">stale</td>
+                  <td class="state-desc-cell">底层数据变更，版本已过期</td>
+                  <td class="state-triggers-cell">underlying_data_changed</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========== Category 2: Assessment & Audit ========== -->
+    <section class="category-section">
+      <div class="category-header">
+        <span class="category-badge">CATEGORY 02</span>
+        <span class="category-title">测评与审核状态机</span>
+        <div class="category-divider"></div>
+      </div>
+
+      <div class="machines-grid">
+
+        <!-- 4. Assessment Session -->
+        <div class="machine-card machine-improve">
+          <div class="machine-header">
+            <span class="machine-name">测评会话 · Assessment Session</span>
+            <span class="machine-count">3 状态</span>
+          </div>
+          <div class="machine-source">migrations/0140_create_assessment_sessions.up.sql</div>
+          <div class="machine-diagram">
+            <svg viewBox="0 0 520 160" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker id="arrow-improve" class="arrowhead arrowhead-main" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+                <marker id="arrow-err-improve" class="arrowhead arrowhead-error" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+              </defs>
+              <!-- Main: started -> submitted -->
+              <path class="transition-path main" d="M 125 55 L 215 55" marker-end="url(#arrow-improve)"/>
+              <!-- Error: started -> voided -->
+              <path class="transition-path error" d="M 85 75 Q 150 130 380 130 L 420 75" marker-end="url(#arrow-err-improve)"/>
+              <!-- State: started (initial) -->
+              <g class="state-node initial">
+                <rect x="30" y="35" width="80" height="40"/>
+                <text class="state-label" x="70" y="52">开始</text>
+                <text class="state-code" x="70" y="66">started</text>
+              </g>
+              <!-- State: submitted (terminal) -->
+              <g class="state-node terminal">
+                <rect x="215" y="35" width="80" height="40"/>
+                <text class="state-label" x="255" y="52">已提交</text>
+                <text class="state-code" x="255" y="66">submitted</text>
+              </g>
+              <!-- State: voided (terminal) -->
+              <g class="state-node terminal">
+                <rect x="420" y="35" width="80" height="40"/>
+                <text class="state-label" x="460" y="52">已作废</text>
+                <text class="state-code" x="460" y="66">voided</text>
+              </g>
+              <!-- Labels -->
+              <text class="transition-label" x="158" y="48">submit</text>
+              <text class="transition-label" x="240" y="122">void</text>
+            </svg>
+          </div>
+          <div class="machine-table">
+            <div class="machine-table-title">状态定义</div>
+            <table class="state-table">
+              <thead>
+                <tr>
+                  <th style="width: 28%;">状态</th>
+                  <th style="width: 36%;">说明</th>
+                  <th>触发条件</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="state-name-cell">started</td>
+                  <td class="state-desc-cell">测评会话已开始，用户答题中</td>
+                  <td class="state-triggers-cell">session_started</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">submitted</td>
+                  <td class="state-desc-cell">测评已提交完成</td>
+                  <td class="state-triggers-cell">submit_assessment</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">voided</td>
+                  <td class="state-desc-cell">会话已作废，结果无效</td>
+                  <td class="state-triggers-cell">void_session</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 5. Assessment Instrument -->
+        <div class="machine-card machine-orange">
+          <div class="machine-header">
+            <span class="machine-name">测评工具 · Assessment Instrument</span>
+            <span class="machine-count">4 状态</span>
+          </div>
+          <div class="machine-source">migrations/0110_create_assessment_instruments.up.sql · 003_add_assessment_approval.sql</div>
+          <div class="machine-diagram">
+            <svg viewBox="0 0 520 180" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker id="arrow-orange" class="arrowhead arrowhead-main" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+                <marker id="arrow-alt-orange" class="arrowhead arrowhead-alt" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+              </defs>
+              <!-- Main: draft -> approved -> active -> retired -->
+              <path class="transition-path main" d="M 75 55 L 145 55" marker-end="url(#arrow-orange)"/>
+              <path class="transition-path main" d="M 245 55 L 315 55" marker-end="url(#arrow-orange)"/>
+              <path class="transition-path main" d="M 415 55 L 445 55" marker-end="url(#arrow-orange)"/>
+              <!-- Direct: draft -> retired -->
+              <path class="transition-path alternate" d="M 45 75 Q 40 140 455 140 Q 490 140 490 75" marker-end="url(#arrow-alt-orange)"/>
+              <!-- State: draft (initial) -->
+              <g class="state-node initial">
+                <rect x="10" y="35" width="70" height="40"/>
+                <text class="state-label" x="45" y="52">草稿</text>
+                <text class="state-code" x="45" y="66">draft</text>
+              </g>
+              <!-- State: approved -->
+              <g class="state-node">
+                <rect x="145" y="35" width="75" height="40"/>
+                <text class="state-label" x="182" y="52">已批准</text>
+                <text class="state-code" x="182" y="66">approved</text>
+              </g>
+              <!-- State: active -->
+              <g class="state-node">
+                <rect x="315" y="35" width="75" height="40"/>
+                <text class="state-label" x="352" y="52">启用中</text>
+                <text class="state-code" x="352" y="66">active</text>
+              </g>
+              <!-- State: retired (terminal) -->
+              <g class="state-node terminal">
+                <rect x="445" y="35" width="70" height="40"/>
+                <text class="state-label" x="480" y="52">已停用</text>
+                <text class="state-code" x="480" y="66">retired</text>
+              </g>
+              <!-- Labels -->
+              <text class="transition-label" x="92" y="48">approve</text>
+              <text class="transition-label" x="268" y="48">activate</text>
+              <text class="transition-label" x="438" y="48">retire</text>
+              <text class="transition-label" x="240" y="132">directRetire</text>
+            </svg>
+          </div>
+          <div class="machine-table">
+            <div class="machine-table-title">状态定义</div>
+            <table class="state-table">
+              <thead>
+                <tr>
+                  <th style="width: 28%;">状态</th>
+                  <th style="width: 36%;">说明</th>
+                  <th>触发条件</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="state-name-cell">draft</td>
+                  <td class="state-desc-cell">草稿状态，编辑中</td>
+                  <td class="state-triggers-cell">create_instrument</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">approved</td>
+                  <td class="state-desc-cell">已通过审核，待启用</td>
+                  <td class="state-triggers-cell">approve_instrument</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">active</td>
+                  <td class="state-desc-cell">启用中，用户可使用</td>
+                  <td class="state-triggers-cell">activate_instrument</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">retired</td>
+                  <td class="state-desc-cell">已停用，不再可用</td>
+                  <td class="state-triggers-cell">retire_instrument</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 6. Post Status -->
+        <div class="machine-card machine-cyan">
+          <div class="machine-header">
+            <span class="machine-name">帖子审核 · Post Status</span>
+            <span class="machine-count">3 状态</span>
+          </div>
+          <div class="machine-source">migrations/006_add_soft_delete.sql · 0230_create_posts.up.sql</div>
+          <div class="machine-diagram">
+            <svg viewBox="0 0 520 160" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker id="arrow-cyan" class="arrowhead arrowhead-main" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+                <marker id="arrow-err-cyan" class="arrowhead arrowhead-error" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+              </defs>
+              <!-- Main: pending -> published -->
+              <path class="transition-path happy" d="M 155 55 L 245 55" marker-end="url(#arrow-cyan)"/>
+              <!-- Rejected: pending -> rejected -->
+              <path class="transition-path error" d="M 155 75 Q 200 130 380 130 L 410 75" marker-end="url(#arrow-err-cyan)"/>
+              <!-- State: pending (initial) -->
+              <g class="state-node initial">
+                <rect x="60" y="35" width="80" height="40"/>
+                <text class="state-label" x="100" y="52">待审核</text>
+                <text class="state-code" x="100" y="66">pending=0</text>
+              </g>
+              <!-- State: published (terminal) -->
+              <g class="state-node terminal">
+                <rect x="245" y="35" width="80" height="40"/>
+                <text class="state-label" x="285" y="52">已发布</text>
+                <text class="state-code" x="285" y="66">published=1</text>
+              </g>
+              <!-- State: rejected (terminal) -->
+              <g class="state-node terminal">
+                <rect x="410" y="35" width="80" height="40"/>
+                <text class="state-label" x="450" y="52">已拒绝</text>
+                <text class="state-code" x="450" y="66">rejected=2</text>
+              </g>
+              <!-- Labels -->
+              <text class="transition-label" x="185" y="48">approve</text>
+              <text class="transition-label" x="270" y="122">reject</text>
+            </svg>
+          </div>
+          <div class="machine-table">
+            <div class="machine-table-title">状态定义</div>
+            <table class="state-table">
+              <thead>
+                <tr>
+                  <th style="width: 28%;">状态</th>
+                  <th style="width: 36%;">说明</th>
+                  <th>触发条件</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="state-name-cell">pending</td>
+                  <td class="state-desc-cell">待审核，刚提交的帖子</td>
+                  <td class="state-triggers-cell">post_created</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">published</td>
+                  <td class="state-desc-cell">已发布，对用户可见</td>
+                  <td class="state-triggers-cell">approve_post</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">rejected</td>
+                  <td class="state-desc-cell">已拒绝，内容不合规</td>
+                  <td class="state-triggers-cell">reject_post</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 7. Security Status -->
+        <div class="machine-card machine-red">
+          <div class="machine-header">
+            <span class="machine-name">AI分析安全审查 · Security Status</span>
+            <span class="machine-count">3 状态</span>
+          </div>
+          <div class="machine-source">migrations/005_add_ai_history_fields.sql</div>
+          <div class="machine-diagram">
+            <svg viewBox="0 0 520 160" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker id="arrow-red" class="arrowhead arrowhead-main" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+                <marker id="arrow-err-red" class="arrowhead arrowhead-error" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+              </defs>
+              <!-- passed -> flagged -->
+              <path class="transition-path main" d="M 145 55 L 215 55" marker-end="url(#arrow-red)"/>
+              <!-- flagged -> blocked -->
+              <path class="transition-path error" d="M 345 55 L 415 55" marker-end="url(#arrow-err-red)"/>
+              <!-- flagged -> passed (review cleared) -->
+              <path class="transition-path alternate" d="M 280 75 Q 210 110 150 75" marker-end="url(#arrow-red)"/>
+              <!-- State: passed (initial/default) -->
+              <g class="state-node initial">
+                <rect x="40" y="35" width="80" height="40"/>
+                <text class="state-label" x="80" y="52">通过</text>
+                <text class="state-code" x="80" y="66">passed</text>
+              </g>
+              <!-- State: flagged -->
+              <g class="state-node">
+                <rect x="215" y="35" width="80" height="40"/>
+                <text class="state-label" x="255" y="52">标记</text>
+                <text class="state-code" x="255" y="66">flagged</text>
+              </g>
+              <!-- State: blocked (terminal) -->
+              <g class="state-node terminal">
+                <rect x="415" y="35" width="80" height="40"/>
+                <text class="state-label" x="455" y="52">拦截</text>
+                <text class="state-code" x="455" y="66">blocked</text>
+              </g>
+              <!-- Labels -->
+              <text class="transition-label" x="168" y="48">flag</text>
+              <text class="transition-label" x="368" y="48">confirm</text>
+              <text class="transition-label" x="195" y="100">clear</text>
+            </svg>
+          </div>
+          <div class="machine-table">
+            <div class="machine-table-title">状态定义</div>
+            <table class="state-table">
+              <thead>
+                <tr>
+                  <th style="width: 28%;">状态</th>
+                  <th style="width: 36%;">说明</th>
+                  <th>触发条件</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="state-name-cell">passed</td>
+                  <td class="state-desc-cell">安全审查通过（默认状态）</td>
+                  <td class="state-triggers-cell">default / clear_review</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">flagged</td>
+                  <td class="state-desc-cell">检测到可疑内容，待人工复核</td>
+                  <td class="state-triggers-cell">suspicious_detected</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">blocked</td>
+                  <td class="state-desc-cell">确认有害内容，已拦截</td>
+                  <td class="state-triggers-cell">harmful_confirmed</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========== Category 3: Frontend & Activity ========== -->
+    <section class="category-section">
+      <div class="category-header">
+        <span class="category-badge">CATEGORY 03</span>
+        <span class="category-title">前端与活动状态机</span>
+        <div class="category-divider"></div>
+      </div>
+
+      <div class="machines-grid">
+
+        <!-- 8. Activity Status -->
+        <div class="machine-card machine-relax">
+          <div class="machine-header">
+            <span class="machine-name">活动状态机 · Activity Status</span>
+            <span class="machine-count">4 状态</span>
+          </div>
+          <div class="machine-source">src/utils/activityStatus.ts</div>
+          <div class="machine-diagram">
+            <svg viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker id="arrow-relax" class="arrowhead arrowhead-main" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+                <marker id="arrow-alt-relax" class="arrowhead arrowhead-alt" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+              </defs>
+              <!-- Time-based: upcoming -> ongoing -> ended -->
+              <path class="transition-path main" d="M 75 55 L 145 55" marker-end="url(#arrow-relax)"/>
+              <path class="transition-path main" d="M 275 55 L 345 55" marker-end="url(#arrow-relax)"/>
+              <!-- Capacity: upcoming -> full -->
+              <path class="transition-path alternate" d="M 50 75 Q 40 150 420 150 L 440 75" marker-end="url(#arrow-alt-relax)"/>
+              <!-- Capacity: ongoing -> full -->
+              <path class="transition-path alternate" d="M 230 75 Q 280 110 440 75" marker-end="url(#arrow-alt-relax)"/>
+              <!-- Priority note -->
+              <text class="transition-label" x="180" y="185" style="font-style: italic;">优先级: full &gt; ended &gt; ongoing &gt; upcoming</text>
+              <!-- State: upcoming (initial) -->
+              <g class="state-node initial">
+                <rect x="10" y="35" width="75" height="40"/>
+                <text class="state-label" x="47" y="52">即将开始</text>
+                <text class="state-code" x="47" y="66">upcoming</text>
+              </g>
+              <!-- State: ongoing -->
+              <g class="state-node">
+                <rect x="145" y="35" width="75" height="40"/>
+                <text class="state-label" x="182" y="52">进行中</text>
+                <text class="state-code" x="182" y="66">ongoing</text>
+              </g>
+              <!-- State: ended (terminal) -->
+              <g class="state-node terminal">
+                <rect x="345" y="35" width="75" height="40"/>
+                <text class="state-label" x="382" y="52">已结束</text>
+                <text class="state-code" x="382" y="66">ended</text>
+              </g>
+              <!-- State: full -->
+              <g class="state-node">
+                <rect x="440" y="35" width="75" height="40"/>
+                <text class="state-label" x="477" y="52">已满</text>
+                <text class="state-code" x="477" y="66">full</text>
+              </g>
+              <!-- Labels -->
+              <text class="transition-label" x="92" y="48">start</text>
+              <text class="transition-label" x="300" y="48">end</text>
+              <text class="transition-label" x="230" y="142">capacity_full</text>
+              <text class="transition-label" x="330" y="82">full</text>
+            </svg>
+          </div>
+          <div class="machine-table">
+            <div class="machine-table-title">状态定义</div>
+            <table class="state-table">
+              <thead>
+                <tr>
+                  <th style="width: 28%;">状态</th>
+                  <th style="width: 36%;">说明</th>
+                  <th>判定条件</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="state-name-cell">upcoming</td>
+                  <td class="state-desc-cell">活动尚未开始</td>
+                  <td class="state-triggers-cell">now &lt; start_time</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">ongoing</td>
+                  <td class="state-desc-cell">活动进行中</td>
+                  <td class="state-triggers-cell">start &lt; now &lt; end</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">ended</td>
+                  <td class="state-desc-cell">活动已结束</td>
+                  <td class="state-triggers-cell">now &gt; end_time</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">full</td>
+                  <td class="state-desc-cell">报名已满（优先级最高）</td>
+                  <td class="state-triggers-cell">participants &gt;= capacity</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 9. AI Advice Request (Frontend) -->
+        <div class="machine-card machine-mood">
+          <div class="machine-header">
+            <span class="machine-name">AI建议请求 · AI Advice Request (FE)</span>
+            <span class="machine-count">5 状态</span>
+          </div>
+          <div class="machine-source">src/stores/moodRecordStore.ts</div>
+          <div class="machine-diagram">
+            <svg viewBox="0 0 520 220" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker id="arrow-fe-mood" class="arrowhead arrowhead-main" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+                <marker id="arrow-err-fe-mood" class="arrowhead arrowhead-error" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+                <marker id="arrow-alt-fe-mood" class="arrowhead arrowhead-alt" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+              </defs>
+              <!-- Main: idle -> loading -> success -->
+              <path class="transition-path main" d="M 75 55 L 145 55" marker-end="url(#arrow-fe-mood)"/>
+              <path class="transition-path happy" d="M 265 55 L 335 55" marker-end="url(#arrow-fe-mood)"/>
+              <!-- Error: loading -> failed -->
+              <path class="transition-path error" d="M 210 75 L 210 125" marker-end="url(#arrow-err-fe-mood)"/>
+              <!-- Cooldown: failed -> cooldown -->
+              <path class="transition-path error" d="M 250 145 L 360 145" marker-end="url(#arrow-err-fe-mood)"/>
+              <!-- Cooldown -> idle -->
+              <path class="transition-path alternate" d="M 400 125 Q 470 80 400 55" marker-end="url(#arrow-alt-fe-mood)"/>
+              <!-- success -> idle (new request) -->
+              <path class="transition-path alternate" d="M 375 75 Q 220 30 110 45" marker-end="url(#arrow-alt-fe-mood)"/>
+              <!-- State: idle (initial) -->
+              <g class="state-node initial">
+                <rect x="10" y="35" width="70" height="40"/>
+                <text class="state-label" x="45" y="52">空闲</text>
+                <text class="state-code" x="45" y="66">idle</text>
+              </g>
+              <!-- State: loading -->
+              <g class="state-node">
+                <rect x="145" y="35" width="80" height="40"/>
+                <text class="state-label" x="185" y="52">请求中</text>
+                <text class="state-code" x="185" y="66">loading</text>
+              </g>
+              <!-- State: success -->
+              <g class="state-node">
+                <rect x="335" y="35" width="80" height="40"/>
+                <text class="state-label" x="375" y="52">成功</text>
+                <text class="state-code" x="375" y="66">success</text>
+              </g>
+              <!-- State: failed -->
+              <g class="state-node">
+                <rect x="145" y="125" width="80" height="40"/>
+                <text class="state-label" x="185" y="142">失败</text>
+                <text class="state-code" x="185" y="156">failed</text>
+              </g>
+              <!-- State: cooldown -->
+              <g class="state-node">
+                <rect x="360" y="125" width="90" height="40"/>
+                <text class="state-label" x="405" y="142">冷却中</text>
+                <text class="state-code" x="405" y="156">cooldown</text>
+              </g>
+              <!-- Labels -->
+              <text class="transition-label" x="92" y="48">request</text>
+              <text class="transition-label" x="288" y="48">ok</text>
+              <text class="transition-label" x="218" y="105">fail</text>
+              <text class="transition-label" x="280" y="138">3xFail</text>
+              <text class="transition-label" x="448" y="100">2min</text>
+              <text class="transition-label" x="220" y="28">newReq</text>
+              <!-- Failure codes -->
+              <text x="10" y="205" class="transition-label" style="font-style: italic;">失败码: EMPTY_INPUT / LOADING / COOLDOWN / REQUEST_FAILED</text>
+            </svg>
+          </div>
+          <div class="machine-table">
+            <div class="machine-table-title">状态定义</div>
+            <table class="state-table">
+              <thead>
+                <tr>
+                  <th style="width: 28%;">状态</th>
+                  <th style="width: 36%;">说明</th>
+                  <th>触发条件</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="state-name-cell">idle</td>
+                  <td class="state-desc-cell">空闲，可发起新请求</td>
+                  <td class="state-triggers-cell">initial / cooldown_end</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">loading</td>
+                  <td class="state-desc-cell">AI 请求进行中</td>
+                  <td class="state-triggers-cell">request_advice</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">success</td>
+                  <td class="state-desc-cell">请求成功，返回建议</td>
+                  <td class="state-triggers-cell">response_ok</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">failed</td>
+                  <td class="state-desc-cell">请求失败</td>
+                  <td class="state-triggers-cell">response_error</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">cooldown</td>
+                  <td class="state-desc-cell">连续失败3次后进入冷却</td>
+                  <td class="state-triggers-cell">consecutive_fail &gt;= 3</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 10. FastAPI Analysis Task -->
+        <div class="machine-card machine-blue">
+          <div class="machine-header">
+            <span class="machine-name">AI服务任务 · FastAPI Analysis Task</span>
+            <span class="machine-count">4 状态</span>
+          </div>
+          <div class="machine-source">mood_health_ai_service/app/repositories/analysis_task_repository.py</div>
+          <div class="machine-diagram">
+            <svg viewBox="0 0 520 180" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker id="arrow-blue" class="arrowhead arrowhead-main" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+                <marker id="arrow-err-blue" class="arrowhead arrowhead-error" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+              </defs>
+              <!-- Main: pending -> running -> completed -->
+              <path class="transition-path main" d="M 75 55 L 145 55" marker-end="url(#arrow-blue)"/>
+              <path class="transition-path happy" d="M 275 55 L 345 55" marker-end="url(#arrow-blue)"/>
+              <!-- Error: running -> failed -->
+              <path class="transition-path error" d="M 210 75 L 210 125" marker-end="url(#arrow-err-blue)"/>
+              <!-- State: pending (initial) -->
+              <g class="state-node initial">
+                <rect x="10" y="35" width="70" height="40"/>
+                <text class="state-label" x="45" y="52">待处理</text>
+                <text class="state-code" x="45" y="66">pending</text>
+              </g>
+              <!-- State: running -->
+              <g class="state-node">
+                <rect x="145" y="35" width="80" height="40"/>
+                <text class="state-label" x="185" y="52">运行中</text>
+                <text class="state-code" x="185" y="66">running</text>
+              </g>
+              <!-- State: completed (terminal) -->
+              <g class="state-node terminal">
+                <rect x="345" y="35" width="80" height="40"/>
+                <text class="state-label" x="385" y="52">已完成</text>
+                <text class="state-code" x="385" y="66">completed</text>
+              </g>
+              <!-- State: failed (terminal) -->
+              <g class="state-node terminal">
+                <rect x="145" y="125" width="80" height="40"/>
+                <text class="state-label" x="185" y="142">失败</text>
+                <text class="state-code" x="185" y="156">failed</text>
+              </g>
+              <!-- Labels -->
+              <text class="transition-label" x="92" y="48">start</text>
+              <text class="transition-label" x="298" y="48">complete</text>
+              <text class="transition-label" x="218" y="105">fail</text>
+            </svg>
+          </div>
+          <div class="machine-table">
+            <div class="machine-table-title">状态定义</div>
+            <table class="state-table">
+              <thead>
+                <tr>
+                  <th style="width: 28%;">状态</th>
+                  <th style="width: 36%;">说明</th>
+                  <th>触发条件</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="state-name-cell">pending</td>
+                  <td class="state-desc-cell">任务已创建，等待执行</td>
+                  <td class="state-triggers-cell">create_task</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">running</td>
+                  <td class="state-desc-cell">AI 模型正在分析</td>
+                  <td class="state-triggers-cell">worker_pickup</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">completed</td>
+                  <td class="state-desc-cell">分析任务完成</td>
+                  <td class="state-triggers-cell">analysis_finished</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">failed</td>
+                  <td class="state-desc-cell">分析任务失败</td>
+                  <td class="state-triggers-cell">analysis_error</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 11. User Status -->
+        <div class="machine-card machine-slate">
+          <div class="machine-header">
+            <span class="machine-name">用户状态机 · User Status</span>
+            <span class="machine-count">2 状态</span>
+          </div>
+          <div class="machine-source">migrations/0040_create_users.up.sql · userRepository.ts</div>
+          <div class="machine-diagram">
+            <svg viewBox="0 0 520 160" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker id="arrow-slate" class="arrowhead arrowhead-main" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+                <marker id="arrow-alt-slate" class="arrowhead arrowhead-alt" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7"/>
+                </marker>
+              </defs>
+              <!-- active -> disabled -->
+              <path class="transition-path main" d="M 165 55 L 265 55" marker-end="url(#arrow-slate)"/>
+              <!-- disabled -> active (re-enable) -->
+              <path class="transition-path alternate" d="M 265 85 Q 215 115 165 85" marker-end="url(#arrow-alt-slate)"/>
+              <!-- State: active (initial) -->
+              <g class="state-node initial">
+                <rect x="60" y="35" width="90" height="40"/>
+                <text class="state-label" x="105" y="52">活跃</text>
+                <text class="state-code" x="105" y="66">active</text>
+              </g>
+              <!-- State: disabled -->
+              <g class="state-node">
+                <rect x="265" y="35" width="90" height="40"/>
+                <text class="state-label" x="310" y="52">禁用</text>
+                <text class="state-code" x="310" y="66">disabled</text>
+              </g>
+              <!-- Labels -->
+              <text class="transition-label" x="200" y="48">disable</text>
+              <text class="transition-label" x="195" y="105">re-enable</text>
+            </svg>
+          </div>
+          <div class="machine-table">
+            <div class="machine-table-title">状态定义</div>
+            <table class="state-table">
+              <thead>
+                <tr>
+                  <th style="width: 28%;">状态</th>
+                  <th style="width: 36%;">说明</th>
+                  <th>触发条件</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="state-name-cell">active</td>
+                  <td class="state-desc-cell">用户活跃，可正常使用</td>
+                  <td class="state-triggers-cell">user_registered / re_enable</td>
+                </tr>
+                <tr>
+                  <td class="state-name-cell">disabled</td>
+                  <td class="state-desc-cell">用户已被禁用</td>
+                  <td class="state-triggers-cell">admin_disable</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========== Footer ========== -->
+    <footer class="diagram-footer">
+      <div class="footer-info">
+        <span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+          大学生情绪健康管理平台
+        </span>
+        <span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <path d="M9 9h6v6H9z"/>
+          </svg>
+          11 个状态机 · 37 个节点
+        </span>
+        <span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+          守护每一份情绪
+        </span>
+      </div>
+      <p class="copyright">状态机与状态转换总览 · v1.0 · 基于代码现状自动梳理</p>
+    </footer>
+
+  </div>
+
+    <style>
+    /* =========================================================
+       State Machines Diagram - Custom Styles
+       ========================================================= */
+
+    body {
+      background: linear-gradient(135deg, var(--color-bg) 0%, #EEF2FF 100%);
+      min-height: 100vh;
+      padding: var(--space-8) var(--space-6);
+    }
+
+    .page-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* ---------- Header ---------- */
+    .diagram-header {
+      text-align: center;
+      margin-bottom: var(--space-8);
+    }
+
+    .diagram-header h1 {
+      font-size: var(--text-4xl);
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin-bottom: var(--space-2);
+      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-mood) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .diagram-header .subtitle {
+      font-size: var(--text-lg);
+      color: var(--color-text-secondary);
+      font-weight: 400;
+    }
+
+    .diagram-header .stats-row {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-6);
+      margin-top: var(--space-6);
+      flex-wrap: wrap;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      background: var(--color-surface);
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--color-border-soft);
+    }
+
+    .stat-item .stat-number {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .stat-item .stat-label {
+      font-size: var(--text-sm);
+      color: var(--color-text-secondary);
+    }
+
+    /* ---------- Legend ---------- */
+    .legend-section {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      padding: var(--space-6);
+      margin-bottom: var(--space-8);
+      border: 1px solid var(--color-border-soft);
+    }
+
+    .legend-title {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: var(--space-4);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .legend-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 20px;
+      background: linear-gradient(180deg, var(--color-primary), var(--color-mood));
+      border-radius: 2px;
+    }
+
+    .legend-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-3);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-sm);
+      transition: background 0.2s;
+    }
+
+    .legend-item:hover {
+      background: var(--color-border-soft);
+    }
+
+    .legend-icon {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .legend-label {
+      font-size: var(--text-sm);
+      color: var(--color-text-secondary);
+    }
+
+    .legend-dot-initial {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--color-success);
+      border: 2px solid white;
+      box-shadow: 0 0 0 2px var(--color-success);
+    }
+
+    .legend-dot-terminal {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--color-danger);
+      border: 2px solid white;
+      box-shadow: 0 0 0 2px var(--color-danger);
+    }
+
+    .legend-pill {
+      width: 32px;
+      height: 16px;
+      border-radius: 8px;
+      background: var(--color-primary-light);
+      border: 1.5px solid var(--color-primary);
+    }
+
+    .legend-arrow-happy {
+      width: 32px;
+      height: 2px;
+      background: var(--color-success);
+      position: relative;
+    }
+
+    .legend-arrow-happy::after {
+      content: '';
+      position: absolute;
+      right: -1px;
+      top: -3px;
+      width: 0;
+      height: 0;
+      border-left: 6px solid var(--color-success);
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+    }
+
+    .legend-arrow-error {
+      width: 32px;
+      height: 2px;
+      background: repeating-linear-gradient(90deg, var(--color-danger) 0, var(--color-danger) 4px, transparent 4px, transparent 7px);
+      position: relative;
+    }
+
+    .legend-arrow-error::after {
+      content: '';
+      position: absolute;
+      right: -1px;
+      top: -3px;
+      width: 0;
+      height: 0;
+      border-left: 6px solid var(--color-danger);
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+    }
+
+    .legend-arrow-dashed {
+      width: 32px;
+      height: 2px;
+      background: repeating-linear-gradient(90deg, var(--color-text-tertiary) 0, var(--color-text-tertiary) 4px, transparent 4px, transparent 7px);
+      position: relative;
+    }
+
+    .legend-arrow-dashed::after {
+      content: '';
+      position: absolute;
+      right: -1px;
+      top: -3px;
+      width: 0;
+      height: 0;
+      border-left: 6px solid var(--color-text-tertiary);
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+    }
+
+    /* ---------- Category Section ---------- */
+    .category-section {
+      margin-bottom: var(--space-10);
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-6);
+    }
+
+    .category-badge {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--color-primary);
+      background: var(--color-primary-light);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      letter-spacing: 0.5px;
+    }
+
+    .category-title {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+
+    .category-divider {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--color-border) 0%, transparent 100%);
+    }
+
+    /* ---------- State Machine Grid ---------- */
+    .machines-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+      gap: var(--space-6);
+    }
+
+    /* ---------- State Machine Card ---------- */
+    .machine-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-border-soft);
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .machine-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .machine-header {
+      padding: var(--space-3) var(--space-5);
+      color: white;
+      font-weight: 600;
+      font-size: var(--text-base);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .machine-header .machine-name {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .machine-header .machine-count {
+      background: rgba(255, 255, 255, 0.25);
+      padding: 2px 10px;
+      border-radius: 10px;
+      font-size: var(--text-xs);
+      font-weight: 500;
+    }
+
+    .machine-source {
+      padding: var(--space-2) var(--space-5);
+      background: var(--color-border-soft);
+      font-size: var(--text-xs);
+      color: var(--color-text-tertiary);
+      font-family: var(--font-mono);
+      border-bottom: 1px solid var(--color-border-soft);
+    }
+
+    .machine-diagram {
+      padding: var(--space-5);
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border-soft);
+      flex-shrink: 0;
+    }
+
+    .machine-diagram svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .machine-table {
+      padding: var(--space-4) var(--space-5) var(--space-5);
+    }
+
+    .machine-table-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--space-3);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .machine-table-title::before {
+      content: '';
+      display: inline-block;
+      width: 3px;
+      height: 14px;
+      background: var(--color-border);
+      border-radius: 2px;
+    }
+
+    .state-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--text-xs);
+    }
+
+    .state-table th {
+      text-align: left;
+      font-weight: 600;
+      color: var(--color-text-tertiary);
+      padding: var(--space-2) var(--space-2);
+      border-bottom: 1px solid var(--color-border-soft);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .state-table td {
+      padding: var(--space-2) var(--space-2);
+      border-bottom: 1px solid var(--color-border-soft);
+      color: var(--color-text-secondary);
+      vertical-align: top;
+    }
+
+    .state-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .state-table .state-name-cell {
+      font-weight: 500;
+      color: var(--color-text-primary);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .state-table .state-desc-cell {
+      font-size: var(--text-xs);
+    }
+
+    .state-table .state-triggers-cell {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--color-text-tertiary);
+    }
+
+    /* SVG state node styles */
+    .state-node rect {
+      rx: 10;
+      ry: 10;
+      stroke-width: 1.5;
+      fill: white;
+    }
+
+    .state-node .state-label {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 600;
+      fill: var(--color-text-primary);
+      text-anchor: middle;
+    }
+
+    .state-node .state-code {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      fill: var(--color-text-tertiary);
+      text-anchor: middle;
+    }
+
+    .state-initial circle {
+      fill: var(--color-success);
+    }
+
+    .state-terminal circle {
+      fill: var(--color-danger);
+    }
+
+    .transition-path {
+      fill: none;
+      stroke-width: 1.5;
+      stroke-dasharray: none;
+    }
+
+    .transition-path.happy {
+      stroke: var(--color-success);
+    }
+
+    .transition-path.error {
+      stroke: var(--color-danger);
+      stroke-dasharray: 5 3;
+    }
+
+    .transition-path.alternate {
+      stroke: var(--color-text-tertiary);
+      stroke-dasharray: 5 3;
+    }
+
+    .transition-path.main {
+      stroke: var(--color-primary);
+    }
+
+    .transition-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      fill: var(--color-text-tertiary);
+    }
+
+    .arrowhead {
+      stroke-width: 0;
+    }
+
+    .arrowhead-happy { fill: var(--color-success); }
+    .arrowhead-error { fill: var(--color-danger); }
+    .arrowhead-alt { fill: var(--color-text-tertiary); }
+    .arrowhead-main { fill: var(--color-primary); }
+
+    /* ---------- Footer ---------- */
+    .diagram-footer {
+      text-align: center;
+      padding: var(--space-6) 0;
+      color: var(--color-text-tertiary);
+      font-size: var(--text-sm);
+    }
+
+    .diagram-footer .footer-info {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-6);
+      flex-wrap: wrap;
+      margin-bottom: var(--space-3);
+    }
+
+    .diagram-footer .footer-info span {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .diagram-footer .copyright {
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+    }
+
+    /* ---------- Machine color variants ---------- */
+    .machine-counseling .machine-header { background: #EC4899; }
+    .machine-mood .machine-header { background: #8B5CF6; }
+    .machine-analysis .machine-header { background: #6366F1; }
+    .machine-improve .machine-header { background: #F59E0B; }
+    .machine-orange .machine-header { background: #F97316; }
+    .machine-cyan .machine-header { background: #06B6D4; }
+    .machine-red .machine-header { background: #EF4444; }
+    .machine-relax .machine-header { background: #10B981; }
+    .machine-blue .machine-header { background: #3B82F6; }
+    .machine-slate .machine-header { background: #64748B; }
+
+    .machine-counseling .state-node rect { stroke: #EC4899; }
+    .machine-counseling .state-node.initial rect { fill: #FCE7F3; stroke: #EC4899; }
+    .machine-counseling .state-node.terminal rect { fill: #FCE7F3; stroke: #EC4899; }
+    .machine-counseling .state-node .state-code { fill: #EC4899; opacity: 0.7; }
+    .machine-counseling .transition-path.main { stroke: #EC4899; }
+    .machine-counseling .arrowhead-main { fill: #EC4899; }
+    .machine-counseling .machine-table-title::before { background: #EC4899; }
+
+    .machine-mood .state-node rect { stroke: #8B5CF6; }
+    .machine-mood .state-node.initial rect { fill: #EDE9FE; stroke: #8B5CF6; }
+    .machine-mood .state-node.terminal rect { fill: #EDE9FE; stroke: #8B5CF6; }
+    .machine-mood .state-node .state-code { fill: #8B5CF6; opacity: 0.7; }
+    .machine-mood .transition-path.main { stroke: #8B5CF6; }
+    .machine-mood .arrowhead-main { fill: #8B5CF6; }
+    .machine-mood .machine-table-title::before { background: #8B5CF6; }
+
+    .machine-analysis .state-node rect { stroke: #6366F1; }
+    .machine-analysis .state-node.initial rect { fill: #E0E7FF; stroke: #6366F1; }
+    .machine-analysis .state-node.terminal rect { fill: #E0E7FF; stroke: #6366F1; }
+    .machine-analysis .state-node .state-code { fill: #6366F1; opacity: 0.7; }
+    .machine-analysis .transition-path.main { stroke: #6366F1; }
+    .machine-analysis .arrowhead-main { fill: #6366F1; }
+    .machine-analysis .machine-table-title::before { background: #6366F1; }
+
+    .machine-improve .state-node rect { stroke: #F59E0B; }
+    .machine-improve .state-node.initial rect { fill: #FEF3C7; stroke: #F59E0B; }
+    .machine-improve .state-node.terminal rect { fill: #FEF3C7; stroke: #F59E0B; }
+    .machine-improve .state-node .state-code { fill: #F59E0B; opacity: 0.7; }
+    .machine-improve .transition-path.main { stroke: #F59E0B; }
+    .machine-improve .arrowhead-main { fill: #F59E0B; }
+    .machine-improve .machine-table-title::before { background: #F59E0B; }
+
+    .machine-orange .state-node rect { stroke: #F97316; }
+    .machine-orange .state-node.initial rect { fill: #FFEDD5; stroke: #F97316; }
+    .machine-orange .state-node.terminal rect { fill: #FFEDD5; stroke: #F97316; }
+    .machine-orange .state-node .state-code { fill: #F97316; opacity: 0.7; }
+    .machine-orange .transition-path.main { stroke: #F97316; }
+    .machine-orange .arrowhead-main { fill: #F97316; }
+    .machine-orange .machine-table-title::before { background: #F97316; }
+
+    .machine-cyan .state-node rect { stroke: #06B6D4; }
+    .machine-cyan .state-node.initial rect { fill: #CFFAFE; stroke: #06B6D4; }
+    .machine-cyan .state-node.terminal rect { fill: #CFFAFE; stroke: #06B6D4; }
+    .machine-cyan .state-node .state-code { fill: #06B6D4; opacity: 0.7; }
+    .machine-cyan .transition-path.main { stroke: #06B6D4; }
+    .machine-cyan .arrowhead-main { fill: #06B6D4; }
+    .machine-cyan .machine-table-title::before { background: #06B6D4; }
+
+    .machine-red .state-node rect { stroke: #EF4444; }
+    .machine-red .state-node.initial rect { fill: #FEE2E2; stroke: #EF4444; }
+    .machine-red .state-node.terminal rect { fill: #FEE2E2; stroke: #EF4444; }
+    .machine-red .state-node .state-code { fill: #EF4444; opacity: 0.7; }
+    .machine-red .transition-path.main { stroke: #EF4444; }
+    .machine-red .arrowhead-main { fill: #EF4444; }
+    .machine-red .machine-table-title::before { background: #EF4444; }
+
+    .machine-relax .state-node rect { stroke: #10B981; }
+    .machine-relax .state-node.initial rect { fill: #D1FAE5; stroke: #10B981; }
+    .machine-relax .state-node.terminal rect { fill: #D1FAE5; stroke: #10B981; }
+    .machine-relax .state-node .state-code { fill: #10B981; opacity: 0.7; }
+    .machine-relax .transition-path.main { stroke: #10B981; }
+    .machine-relax .arrowhead-main { fill: #10B981; }
+    .machine-relax .machine-table-title::before { background: #10B981; }
+
+    .machine-blue .state-node rect { stroke: #3B82F6; }
+    .machine-blue .state-node.initial rect { fill: #DBEAFE; stroke: #3B82F6; }
+    .machine-blue .state-node.terminal rect { fill: #DBEAFE; stroke: #3B82F6; }
+    .machine-blue .state-node .state-code { fill: #3B82F6; opacity: 0.7; }
+    .machine-blue .transition-path.main { stroke: #3B82F6; }
+    .machine-blue .arrowhead-main { fill: #3B82F6; }
+    .machine-blue .machine-table-title::before { background: #3B82F6; }
+
+    .machine-slate .state-node rect { stroke: #64748B; }
+    .machine-slate .state-node.initial rect { fill: #F1F5F9; stroke: #64748B; }
+    .machine-slate .state-node.terminal rect { fill: #F1F5F9; stroke: #64748B; }
+    .machine-slate .state-node .state-code { fill: #64748B; opacity: 0.7; }
+    .machine-slate .transition-path.main { stroke: #64748B; }
+    .machine-slate .arrowhead-main { fill: #64748B; }
+    .machine-slate .machine-table-title::before { background: #64748B; }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 1024px) {
+      .machines-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: var(--space-4) var(--space-3);
+      }
+
+      .diagram-header h1 {
+        font-size: var(--text-3xl);
+      }
+
+      .stats-row {
+        gap: var(--space-3);
+      }
+
+      .stat-item {
+        padding: var(--space-2) var(--space-3);
+      }
+
+      .machine-diagram {
+        padding: var(--space-4);
+      }
+
+      .machine-table {
+        padding: var(--space-3) var(--space-4) var(--space-4);
+      }
+
+      .legend-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</body>
+</html>

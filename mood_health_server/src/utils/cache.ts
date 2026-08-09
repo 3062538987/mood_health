@@ -1,6 +1,8 @@
 import redisClient from "./redis.client";
+import logger from "./logger";
 
-const activityCacheKeys = new Set<string>();
+const activityCacheKeys = new Set<string>()
+const MAX_ACTIVITY_CACHE_KEYS = 5000
 
 export const setCache = async (
   key: string,
@@ -9,9 +11,14 @@ export const setCache = async (
 ): Promise<void> => {
   try {
     await redisClient.set(key, JSON.stringify(value), ttl);
+    // 缓存 key 有上限，防止 Set 无限增长
+    if (activityCacheKeys.size >= MAX_ACTIVITY_CACHE_KEYS) {
+      activityCacheKeys.clear()
+      logger.warn('活动缓存 key 集合达到上限，已清空')
+    }
     activityCacheKeys.add(key);
   } catch (error) {
-    console.warn("Redis缓存设置失败:", error);
+    logger.warn("Redis缓存设置失败:", { error: (error as Error).message, key });
   }
 };
 
@@ -23,7 +30,7 @@ export const getCache = async <T = unknown>(key: string): Promise<T | null> => {
     }
     return null;
   } catch (error) {
-    console.warn("Redis缓存获取失败:", error);
+    logger.warn("Redis缓存获取失败:", { error: (error as Error).message, key });
     return null;
   }
 };
@@ -38,10 +45,10 @@ export const clearActivityCache = async (): Promise<void> => {
   try {
     if (keys.length > 0) {
       await redisClient.del(...keys);
-      console.log(`已清除 ${keys.length} 个活动缓存键`);
+      logger.info(`已清除 ${keys.length} 个活动缓存键`);
     }
   } catch (error) {
-    console.warn("Redis缓存清除失败:", error);
+    logger.warn("Redis缓存清除失败:", { error: (error as Error).message, keyCount: keys.length });
   } finally {
     activityCacheKeys.clear();
   }
@@ -52,7 +59,7 @@ export const deleteCache = async (key: string): Promise<void> => {
     await redisClient.del(key);
     activityCacheKeys.delete(key);
   } catch (error) {
-    console.warn("Redis缓存删除失败:", error);
+    logger.warn("Redis缓存删除失败:", { error: (error as Error).message, key });
   }
 };
 
@@ -91,14 +98,16 @@ export const clearMoodCache = async (userId: number): Promise<void> => {
 
   try {
     for (const pattern of patterns) {
-      const keys = await redisClient.keys(pattern);
-      if (keys && keys.length > 0) {
-        await redisClient.del(...keys);
-        console.log(`已清除用户 ${userId} 的情绪缓存: ${keys.length} 个键`);
+      // 使用 SCAN 替代 KEYS 避免阻塞 Redis
+      const keysToDelete = await redisClient.scan(pattern, 100);
+
+      if (keysToDelete.length > 0) {
+        await redisClient.del(...keysToDelete);
+        logger.info(`已清除用户 ${userId} 的情绪缓存: ${keysToDelete.length} 个键`);
       }
     }
   } catch (error) {
-    console.warn("清除情绪缓存失败:", error);
+    logger.warn("清除情绪缓存失败:", { error: (error as Error).message, userId });
   }
 };
 
@@ -124,7 +133,12 @@ export const getOrSetMoodCache = async <T>(
     return cached;
   }
 
-  const data = await fetchFn();
-  await setMoodCache(key, data);
-  return data;
+  try {
+    const data = await fetchFn();
+    await setMoodCache(key, data);
+    return data;
+  } catch (error) {
+    logger.error(`缓存回填失败 (${key}):`, { error: error instanceof Error ? error.message : String(error), key });
+    throw error;
+  }
 };

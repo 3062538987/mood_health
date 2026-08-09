@@ -1,26 +1,30 @@
 /**
  * 情绪记录接口
  * @interface MoodRecord
- * @property {string} id - 情绪记录ID
- * @property {string} userId - 用户ID
- * @property {number} intensity - 情绪强度(1-10)
- * @property {string[]} moodType - 情绪类型，支持多选
- * @property {number[]} moodRatio - 情绪占比
- * @property {string} event - 触发事件
- * @property {string[]} tags - 事件标签
- * @property {string} trigger - 触发因素
- * @property {string} createTime - 记录时间
  */
 export interface MoodRecord {
   id: string
   userId: string
-  intensity: number // 情绪强度(1-10)
-  moodType: string[] // 情绪类型，支持多选
-  moodRatio: number[] // 情绪占比
-  event: string // 触发事件
-  tags: string[] // 事件标签
-  trigger: string // 触发因素
-  createTime: string // 记录时间
+  intensity: number
+  moodType: string[]
+  moodRatio: number[]
+  event: string
+  tags: string[]
+  trigger: string
+  createTime: string
+}
+
+/**
+ * 创建情绪记录的输入参数
+ * 与 MoodRecord 分离，避免将响应模型用作输入类型
+ */
+export interface CreateMoodRecordInput {
+  moodType: string[]
+  moodRatio: number[]
+  intensity: number
+  event: string
+  tags: string[]
+  trigger: string
 }
 
 /**
@@ -32,6 +36,13 @@ export interface MoodRecord {
 export interface MoodListResponse {
   list: MoodRecord[] // 接口返回的列表数据
   total: number // 补充总条数字段
+  page: number
+  limit: number
+}
+
+export interface MoodListParams {
+  page: number
+  size: number
 }
 
 /**

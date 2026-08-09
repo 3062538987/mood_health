@@ -12,12 +12,12 @@ export class AppError extends Error {
   public isOperational: boolean;
   public path: string;
   public timestamp: string;
-  public data: any;
+  public data: unknown;
 
   constructor(
     message: string,
     statusCode: number,
-    data: any = null,
+    data: unknown = null,
     path: string = "",
   ) {
     super(message);
@@ -38,7 +38,7 @@ export class AppError extends Error {
  * throw new BusinessError("用户名已存在", null, "/api/auth/register");
  */
 export class BusinessError extends AppError {
-  constructor(message: string, data: any = null, path: string = "") {
+  constructor(message: string, data: unknown = null, path: string = "") {
     super(message, 400, data, path);
   }
 }
@@ -53,7 +53,7 @@ export class HttpException extends AppError {
   constructor(
     message: string,
     statusCode: number,
-    data: any = null,
+    data: unknown = null,
     path: string = "",
   ) {
     super(message, statusCode, data, path);
@@ -67,9 +67,9 @@ export class HttpException extends AppError {
  * throw new DatabaseError("数据库连接失败", error);
  */
 export class DatabaseError extends AppError {
-  public originalError: any;
+  public originalError: unknown;
 
-  constructor(message: string, originalError: any, path: string = "") {
+  constructor(message: string, originalError: unknown, path: string = "") {
     super(message, 500, null, path);
     this.originalError = originalError;
   }
@@ -82,9 +82,9 @@ export class DatabaseError extends AppError {
  * throw new RedisError("Redis 命令执行失败", error);
  */
 export class RedisError extends AppError {
-  public originalError: any;
+  public originalError: unknown;
 
-  constructor(message: string, originalError: any, path: string = "") {
+  constructor(message: string, originalError: unknown, path: string = "") {
     super(message, 500, null, path);
     this.originalError = originalError;
   }
@@ -97,12 +97,12 @@ export class RedisError extends AppError {
  * throw new ApiError("API 调用失败", error, "https://api.example.com/data");
  */
 export class ApiError extends AppError {
-  public originalError: any;
+  public originalError: unknown;
   public apiUrl: string;
 
   constructor(
     message: string,
-    originalError: any,
+    originalError: unknown,
     apiUrl: string,
     path: string = "",
   ) {
@@ -119,12 +119,12 @@ export class ApiError extends AppError {
  * throw new AiServiceError("AI 服务调用失败", error, "OpenAI");
  */
 export class AiServiceError extends AppError {
-  public originalError: any;
+  public originalError: unknown;
   public serviceName: string;
 
   constructor(
     message: string,
-    originalError: any,
+    originalError: unknown,
     serviceName: string,
     path: string = "",
   ) {

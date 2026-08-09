@@ -6,26 +6,38 @@
 
 - 前端：Vue 3 + TypeScript + Vite
 - 后端：Node.js + Express + TypeScript
-- AI 服务：Python + FastAPI（可接入本地模型/Ollama）
+- AI 服务：Python + FastAPI（接入 DeepSeek 云端 API，兼容 OpenAI 协议；**非** Ollama 本地模型）
 - 缓存：Redis（可选，但建议启用）
+
+## ⚠️ 架构更正（2026-08-06 核对）
+
+> 原 README 多处已过时，以下为实测真实结构，**以本段为准**：
+> - **真正的 AI 服务目录是 `mood_health_ai_service/`**（FastAPI 入口 `app/main.py`），**不是** `mood_health_server/main.py`（该目录无 Python 代码）。
+> - **AI 服务端口是 8001**（不是 8000）。
+> - **AI 模型用 DeepSeek 云端 API**（兼容 OpenAI 协议），未使用本地 Ollama。
+> - 向量库为 ChromaDB（RAG 知识库）。
+> - `agent_app/` 为独立的 Streamlit + LangChain 实验原型，未接入主系统，可单独演示。
 
 ## 目录结构（核心）
 
 ```text
 mood-health-web/
-├── src/                        # 前端源码
-├── mood_health_server/         # 后端与 AI 服务
+├── src/                        # 前端源码（Vue3 + TS + Vite）
+├── mood_health_server/         # 后端（Node + Express + TS），仅 Node 代码
 │   ├── src/                    # Node API 代码
-│   ├── main.py                 # Python AI 服务入口
-│   ├── ecosystem.config.js     # PM2 进程编排
-│   └── requirements.txt        # Python 依赖
+│   ├── ecosystem.config.cjs    # PM2 进程编排
+│   └── package.json
+├── mood_health_ai_service/     # AI 服务（Python + FastAPI），独立目录
+│   ├── app/main.py             # 真实 AI 入口（端口 8001）
+│   ├── requirements.txt        # Python 依赖
+│   └── .env.example
 ├── scripts/
 │   ├── doctor.mjs              # 环境/端口/依赖自检
 │   └── demo-init.mjs           # 演示数据初始化
 ├── docs/
 │   ├── API.md                  # API 文档（权威）
 │   └── TESTING.md              # 测试与压测文档
-├── DEPLOYMENT.md               # 部署指南
+├── DEPLOYMENT.md               # 部署指南（见本仓库根）
 ├── start-project.ps1           # 一键启动（Windows）
 └── package.json                # 根命令入口
 ```
@@ -70,8 +82,8 @@ mood-health-web/
 │   ├── user_auth/                      # Python 鉴权依赖
 │   ├── tests/                          # 后端测试
 │   ├── scripts/                        # SQL/Lua/脚本
-│   ├── data/                           # SQLite 与测试数据库
-│   ├── main.py                         # Python AI 入口
+│   ├── data/                           # 旧 SQLite 离线留存（不参与 R0 运行）
+│   ├── main.py                         # （说明已废弃）真实 AI 入口见 mood_health_ai_service/app/main.py
 │   ├── ecosystem.config.js             # PM2 编排
 │   ├── package.json
 │   └── requirements.txt
@@ -79,8 +91,6 @@ mood-health-web/
 │   ├── doctor.mjs
 │   ├── dev-all.mjs
 │   ├── demo-init.mjs
-│   ├── sqlite-preflight.ps1
-│   ├── sqlite-db-status.ps1
 │   └── release-smoke.ps1
 ├── docs/                               # 文档中心
 │   ├── API.md
@@ -109,19 +119,20 @@ mood-health-web/
 
 - 前端开发服务：3001
 - Node API：3000
-- Python AI API：8000
+- Python AI API：8001
 - Redis：6379
 - Ollama（可选）：11434
 
  说明：当前以 `vite.config.ts` 与 `scripts/doctor.mjs` 为准，前端开发端口为 3001。若看到历史文档中的 5173，请以本 README 与项目配置为准。
 
- 后端 SQLite 运行时需要 Node.js 22+，因为它直接使用内置的 `node:sqlite`。
+ 后端运行时使用 MySQL；旧 SQLite 文件只作离线留存，不参与启动或演示数据初始化。
 
 ## 启动顺序（部署建议）
 
-1. 先启动 Redis（6379），确保缓存可用。
-2. 启动后端与 AI 服务（PM2 管理，端口 3000/8000）。
-3. 最后启动前端开发服务（3001）。
+1. 先通过 Docker Compose 启动 MySQL 与 Redis。
+2. 执行 MySQL Migration 和所需 Seed。
+3. 启动后端与 AI 服务（PM2 管理，端口 3000 / AI 服务 8001）。
+4. 最后启动前端开发服务（3001）。
 
 ## 环境依赖清单
 
@@ -161,7 +172,7 @@ npm run setup
 # 2) 安装 Python 依赖（根据你的虚拟环境）
 python -m venv .venv
 source .venv/bin/activate
-pip install -r mood_health_server/requirements.txt
+pip install -r mood_health_ai_service/requirements.txt
 
 # 3) 自检
 npm run doctor
@@ -207,14 +218,14 @@ npm run dev:all
 
 ### 演示数据
 
-- `npm run demo:init`：初始化基础演示数据
-- `npm run demo:init:all`：初始化 + 账号验证
+- `npm run demo:init`：执行 MySQL Reference + Demo Seed
+- `npm run demo:init:all`：执行 MySQL Reference + Demo + Test Seed
 - `npm run db:init`：别名，等价于 `demo:init:all`
 
 可通过环境变量覆盖默认演示密码：
 
 ```powershell
-$env:DEMO_USER_PASSWORD="123456"
+$env:DEMO_PASSWORD="请设置本地演示密码"
 npm run demo:init:all
 ```
 
@@ -224,8 +235,9 @@ npm run demo:init:all
 npm --prefix mood_health_server run dev
 npm --prefix mood_health_server run build
 npm --prefix mood_health_server run test
-npm --prefix mood_health_server run seed:demo -- 123456
-npm --prefix mood_health_server run seed:demo:all
+npm --prefix mood_health_server run db:migrate
+npm --prefix mood_health_server run db:seed:demo
+npm --prefix mood_health_server run db:seed:all
 ```
 
 ## 文档索引
@@ -240,7 +252,7 @@ npm --prefix mood_health_server run seed:demo:all
 
 ## 常见问题
 
-1. `doctor` 报告 `dist/app.js missing`
+1. `doctor` 报告 `dist/server.js missing`
 
 - 执行 `npm --prefix mood_health_server run build`
 

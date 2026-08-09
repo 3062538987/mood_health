@@ -1,0 +1,1 @@
+ALTER TABLE moods DROP COLUMN include_note;

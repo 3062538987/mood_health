@@ -1,12 +1,15 @@
+import { HTTP_STATUS } from '../utils/httpStatus'
 import { Response } from 'express'
-import sql from 'mssql'
-import pool from '../config/database'
-import { isSqliteClient } from '../config/database'
-import { sqliteAll, sqliteRun } from '../config/sqlite'
 import type { AuthRequest } from '../middleware/auth'
 import { logOperation } from '../utils/operationLogger'
-import { decryptField } from '../utils/encryption'
-import { deleteUserById, findUserById, isValidUserRole, updateUserRole } from '../models/userModel'
+import { apiFailure, apiSuccess } from '../utils/apiResponse'
+import logger from '../utils/logger'
+import { createManagementService } from '../services/managementService'
+import { createAssessmentService } from '../services/assessmentService'
+import { isValidUserRole, checkRoleChangeAuthorization } from '../utils/roleAuthorization'
+
+const managementService = createManagementService()
+const assessmentService = createAssessmentService()
 
 interface AdminUserItem {
   id: number
@@ -22,8 +25,6 @@ interface AdminMoodRecordItem {
   username: string
   moodType: string[]
   intensity: number
-  note: string
-  trigger: string
   createdAt: string
 }
 
@@ -76,66 +77,17 @@ const parseAdminMoodListQuery = (req: AuthRequest): AdminMoodListQuery => {
 
 export const userManageHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const { targetUserId, action } = req.body
-
-    await logOperation(
-      req.user!.userId,
-      req.user!.role,
-      'user.manage',
-      'USER_MANAGE',
-      targetUserId ? String(targetUserId) : null,
-      `action=${action || 'unknown'}`,
-      'success',
-      getClientIp(req)
-    )
-
-    res.status(200).json({ code: 0, message: '用户管理操作已记录' })
+    // TODO: 实现实际的用户管理操作（禁用/启用/角色变更等）
+    // 当前仅记录审计日志，实际管理操作通过独立的管理接口完成
+    res.status(HTTP_STATUS.OK).json(apiSuccess(null, '用户管理操作已记录'))
   } catch (error) {
-    res.status(500).json({ code: 500, message: '用户管理操作失败' })
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '用户管理操作失败'))
   }
 }
 
 export const adminUsersListHandler = async (req: AuthRequest, res: Response) => {
   try {
-    let users: AdminUserItem[] = []
-
-    if (isSqliteClient) {
-      const rows = sqliteAll(
-        `
-        SELECT id, username, email, role, created_at
-        FROM users
-        ORDER BY id DESC
-        `
-      ) as Array<{
-        id: number
-        username: string
-        email: string
-        role: string
-        created_at: string
-      }>
-
-      users = rows.map((row) => ({
-        id: Number(row.id),
-        username: String(row.username),
-        email: String(row.email),
-        role: isValidUserRole(row.role) ? row.role : 'user',
-        createdAt: String(row.created_at || ''),
-      }))
-    } else {
-      const result = await pool.request().query(`
-        SELECT id, username, email, role, created_at
-        FROM users
-        ORDER BY id DESC
-      `)
-
-      users = (result.recordset || []).map((row: any) => ({
-        id: Number(row.id),
-        username: String(row.username),
-        email: String(row.email),
-        role: isValidUserRole(row.role) ? row.role : 'user',
-        createdAt: row.created_at ? new Date(row.created_at).toISOString() : '',
-      }))
-    }
+    const users: AdminUserItem[] = await managementService.listAdminUsers()
 
     await logOperation(
       req.user!.userId,
@@ -148,9 +100,9 @@ export const adminUsersListHandler = async (req: AuthRequest, res: Response) => 
       getClientIp(req)
     )
 
-    return res.status(200).json({ code: 0, data: { list: users } })
+    return res.status(HTTP_STATUS.OK).json(apiSuccess({ list: users }, '获取用户列表成功'))
   } catch (error) {
-    return res.status(500).json({ code: 500, message: '获取用户列表失败' })
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '获取用户列表失败'))
   }
 }
 
@@ -159,18 +111,38 @@ export const adminUsersUpdateRoleHandler = async (req: AuthRequest, res: Respons
     const { userId, targetRole } = req.body
 
     if (!Number.isInteger(userId) || userId <= 0) {
-      return res.status(400).json({ code: 400, message: 'userId 必须是正整数' })
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(400, 'userId 必须是正整数'))
     }
 
     if (!isValidUserRole(targetRole)) {
       return res
         .status(400)
-        .json({ code: 400, message: 'targetRole 非法，仅支持 user/admin/super_admin' })
+        .json(apiFailure(400, 'targetRole 非法，仅支持 user/admin/super_admin'))
     }
 
-    const updateResult = await updateUserRole(userId, targetRole)
+    // 角色变更硬约束（R2 修复：防 admin 自我提权 / 禁止自变更）
+    const deny = checkRoleChangeAuthorization({
+      caller: { userId: req.user!.userId, role: req.user!.role },
+      targetUserId: userId,
+      targetRole,
+    })
+    if (deny) {
+      await logOperation(
+        req.user!.userId,
+        req.user!.role,
+        'user.manage',
+        'USER_ROLE_UPDATE',
+        String(userId),
+        `targetRole=${targetRole}; reason=${deny.message}`,
+        'failed',
+        getClientIp(req)
+      )
+      return res.status(deny.status).json(apiFailure(deny.status, deny.message))
+    }
 
-    if ((updateResult.rowsAffected?.[0] || 0) === 0) {
+    const updated = await managementService.updateUserRole(userId, targetRole)
+
+    if (!updated) {
       await logOperation(
         req.user!.userId,
         req.user!.role,
@@ -182,7 +154,7 @@ export const adminUsersUpdateRoleHandler = async (req: AuthRequest, res: Respons
         getClientIp(req)
       )
 
-      return res.status(404).json({ code: 404, message: '目标用户不存在' })
+      return res.status(HTTP_STATUS.NOT_FOUND).json(apiFailure(404, '目标用户不存在'))
     }
 
     await logOperation(
@@ -196,9 +168,44 @@ export const adminUsersUpdateRoleHandler = async (req: AuthRequest, res: Respons
       getClientIp(req)
     )
 
-    return res.status(200).json({ code: 0, message: '用户角色更新成功' })
+    return res.status(HTTP_STATUS.OK).json(apiSuccess(null, '用户角色更新成功'))
   } catch (error) {
-    return res.status(500).json({ code: 500, message: '更新用户角色失败' })
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '更新用户角色失败'))
+  }
+}
+
+export const adminUsersDisableHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = Number(req.params.id)
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(400, 'userId 必须是正整数'))
+    }
+
+    if (req.user?.userId === userId) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(400, '不能停用当前登录用户'))
+    }
+
+    const disabled = await managementService.disableUser(userId)
+
+    if (!disabled) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json(apiFailure(404, '目标用户不存在或已停用'))
+    }
+
+    await logOperation(
+      req.user!.userId,
+      req.user!.role,
+      'user.manage',
+      'USER_DISABLE',
+      String(userId),
+      'status=disabled',
+      'success',
+      getClientIp(req)
+    )
+
+    return res.status(HTTP_STATUS.OK).json(apiSuccess(null, '用户已停用'))
+  } catch (error) {
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '停用用户失败'))
   }
 }
 
@@ -207,14 +214,14 @@ export const adminUsersDeleteHandler = async (req: AuthRequest, res: Response) =
     const userId = Number(req.params.id)
 
     if (!Number.isInteger(userId) || userId <= 0) {
-      return res.status(400).json({ code: 400, message: 'userId 必须是正整数' })
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(400, 'userId 必须是正整数'))
     }
 
     if (req.user?.userId === userId) {
-      return res.status(400).json({ code: 400, message: '不能删除当前登录用户' })
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(400, '不能删除当前登录用户'))
     }
 
-    const targetUser = await findUserById(userId)
+    const targetUser = await managementService.findAdminUserById(userId)
     if (!targetUser) {
       await logOperation(
         req.user!.userId,
@@ -227,16 +234,16 @@ export const adminUsersDeleteHandler = async (req: AuthRequest, res: Response) =
         getClientIp(req)
       )
 
-      return res.status(404).json({ code: 404, message: '目标用户不存在' })
+      return res.status(HTTP_STATUS.NOT_FOUND).json(apiFailure(404, '目标用户不存在'))
     }
 
     if (targetUser.role === 'super_admin') {
-      return res.status(403).json({ code: 403, message: '不能删除超级管理员' })
+      return res.status(HTTP_STATUS.FORBIDDEN).json(apiFailure(403, '不能删除超级管理员'))
     }
 
-    const deleteResult = await deleteUserById(userId)
+    const deleted = await managementService.deleteUserById(userId)
 
-    if ((deleteResult.rowsAffected?.[0] || 0) === 0) {
+    if (!deleted) {
       await logOperation(
         req.user!.userId,
         req.user!.role,
@@ -248,7 +255,7 @@ export const adminUsersDeleteHandler = async (req: AuthRequest, res: Response) =
         getClientIp(req)
       )
 
-      return res.status(404).json({ code: 404, message: '目标用户不存在' })
+      return res.status(HTTP_STATUS.NOT_FOUND).json(apiFailure(404, '目标用户不存在'))
     }
 
     await logOperation(
@@ -262,9 +269,9 @@ export const adminUsersDeleteHandler = async (req: AuthRequest, res: Response) =
       getClientIp(req)
     )
 
-    return res.status(200).json({ code: 0, message: '用户删除成功' })
+    return res.status(HTTP_STATUS.OK).json(apiSuccess(null, '用户删除成功'))
   } catch (error) {
-    return res.status(500).json({ code: 500, message: '删除用户失败' })
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '删除用户失败'))
   }
 }
 
@@ -273,17 +280,37 @@ export const roleManageHandler = async (req: AuthRequest, res: Response) => {
     const { targetUserId, targetRole } = req.body
 
     if (!Number.isInteger(targetUserId) || targetUserId <= 0) {
-      return res.status(400).json({ code: 400, message: 'targetUserId 必须是正整数' })
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(400, 'targetUserId 必须是正整数'))
     }
 
     if (!isValidUserRole(targetRole)) {
       return res
         .status(400)
-        .json({ code: 400, message: 'targetRole 非法，仅支持 user/admin/super_admin' })
+        .json(apiFailure(400, 'targetRole 非法，仅支持 user/admin/super_admin'))
     }
 
-    const updateResult = await updateUserRole(targetUserId, targetRole)
-    if ((updateResult.rowsAffected?.[0] || 0) === 0) {
+    // 角色变更硬约束（R2 修复：防 admin 自我提权 / 禁止自变更）
+    const deny = checkRoleChangeAuthorization({
+      caller: { userId: req.user!.userId, role: req.user!.role },
+      targetUserId: targetUserId,
+      targetRole,
+    })
+    if (deny) {
+      await logOperation(
+        req.user!.userId,
+        req.user!.role,
+        'role.manage',
+        'ROLE_MANAGE',
+        String(targetUserId),
+        `targetRole=${targetRole}; reason=${deny.message}`,
+        'failed',
+        getClientIp(req)
+      )
+      return res.status(deny.status).json(apiFailure(deny.status, deny.message))
+    }
+
+    const updated = await managementService.updateUserRole(targetUserId, targetRole)
+    if (!updated) {
       await logOperation(
         req.user!.userId,
         req.user!.role,
@@ -295,7 +322,7 @@ export const roleManageHandler = async (req: AuthRequest, res: Response) => {
         getClientIp(req)
       )
 
-      return res.status(404).json({ code: 404, message: '目标用户不存在' })
+      return res.status(HTTP_STATUS.NOT_FOUND).json(apiFailure(404, '目标用户不存在'))
     }
 
     await logOperation(
@@ -309,9 +336,9 @@ export const roleManageHandler = async (req: AuthRequest, res: Response) => {
       getClientIp(req)
     )
 
-    res.status(200).json({ code: 0, message: '用户角色更新成功' })
+    res.status(HTTP_STATUS.OK).json(apiSuccess(null, '用户角色更新成功'))
   } catch (error) {
-    res.status(500).json({ code: 500, message: '角色管理操作失败' })
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '角色管理操作失败'))
   }
 }
 
@@ -330,113 +357,9 @@ export const systemConfigHandler = async (req: AuthRequest, res: Response) => {
       getClientIp(req)
     )
 
-    res.status(200).json({ code: 0, message: '系统配置操作已记录' })
+    res.status(HTTP_STATUS.OK).json(apiSuccess(null, '系统配置操作已记录'))
   } catch (error) {
-    res.status(500).json({ code: 500, message: '系统配置操作失败' })
-  }
-}
-
-export const incidentFixHandler = async (req: AuthRequest, res: Response) => {
-  try {
-    const { issueDescription, fixContent, result = 'success' } = req.body
-
-    if (isSqliteClient) {
-      sqliteRun(
-        `
-          INSERT INTO incident_fix_list (fixer_id, fixer_role, issue_description, fix_content, result)
-          VALUES (?, ?, ?, ?, ?)
-        `,
-        [req.user!.userId, req.user!.role, issueDescription, fixContent, result]
-      )
-    } else {
-      await pool
-        .request()
-        .input('fixerId', sql.Int, req.user!.userId)
-        .input('fixerRole', sql.NVarChar(20), req.user!.role)
-        .input('issueDescription', sql.NVarChar(sql.MAX), issueDescription)
-        .input('fixContent', sql.NVarChar(sql.MAX), fixContent)
-        .input('result', sql.NVarChar(20), result).query(`
-          INSERT INTO incident_fix_list (fixer_id, fixer_role, issue_description, fix_content, result)
-          VALUES (@fixerId, @fixerRole, @issueDescription, @fixContent, @result)
-        `)
-    }
-
-    await logOperation(
-      req.user!.userId,
-      req.user!.role,
-      'incident.fix',
-      'INCIDENT_FIX',
-      null,
-      `issue=${String(issueDescription || '').slice(0, 120)}`,
-      'success',
-      getClientIp(req)
-    )
-
-    res.status(200).json({ code: 0, message: '修复清单已记录' })
-  } catch (error) {
-    await logOperation(
-      req.user!.userId,
-      req.user!.role,
-      'incident.fix',
-      'INCIDENT_FIX',
-      null,
-      '修复清单记录失败',
-      'failed',
-      getClientIp(req)
-    )
-    res.status(500).json({ code: 500, message: '修复清单记录失败' })
-  }
-}
-
-export const feedbackHandleHandler = async (req: AuthRequest, res: Response) => {
-  try {
-    const { feedbackId, handleContent, closeStatus = 'closed' } = req.body
-
-    if (isSqliteClient) {
-      sqliteRun(
-        `
-          INSERT INTO feedback_close_list (handler_id, handler_role, feedback_id, handle_content, close_status)
-          VALUES (?, ?, ?, ?, ?)
-        `,
-        [req.user!.userId, req.user!.role, String(feedbackId || ''), handleContent, closeStatus]
-      )
-    } else {
-      await pool
-        .request()
-        .input('handlerId', sql.Int, req.user!.userId)
-        .input('handlerRole', sql.NVarChar(20), req.user!.role)
-        .input('feedbackId', sql.NVarChar(100), String(feedbackId || ''))
-        .input('handleContent', sql.NVarChar(sql.MAX), handleContent)
-        .input('closeStatus', sql.NVarChar(20), closeStatus).query(`
-          INSERT INTO feedback_close_list (handler_id, handler_role, feedback_id, handle_content, close_status)
-          VALUES (@handlerId, @handlerRole, @feedbackId, @handleContent, @closeStatus)
-        `)
-    }
-
-    await logOperation(
-      req.user!.userId,
-      req.user!.role,
-      'feedback.handle',
-      'FEEDBACK_HANDLE',
-      feedbackId ? String(feedbackId) : null,
-      `closeStatus=${closeStatus}`,
-      'success',
-      getClientIp(req)
-    )
-
-    res.status(200).json({ code: 0, message: '反馈闭环记录已写入' })
-  } catch (error) {
-    await logOperation(
-      req.user!.userId,
-      req.user!.role,
-      'feedback.handle',
-      'FEEDBACK_HANDLE',
-      null,
-      '反馈闭环记录失败',
-      'failed',
-      getClientIp(req)
-    )
-    res.status(500).json({ code: 500, message: '反馈闭环记录失败' })
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '系统配置操作失败'))
   }
 }
 
@@ -444,214 +367,141 @@ export const adminMoodsListHandler = async (req: AuthRequest, res: Response) => 
   try {
     const { page, pageSize, userId, username, startDate, endDate, moodType } =
       parseAdminMoodListQuery(req)
-    const offset = (page - 1) * pageSize
+    const { list, total } = await managementService.listAdminMoods({
+      page,
+      pageSize,
+      userId,
+      username,
+      startDate,
+      endDate,
+      moodType,
+    })
 
-    let list: AdminMoodRecordItem[] = []
-    let total = 0
+    return res
+      .status(200)
+      .json(apiSuccess({ list, total, page, pageSize }, '获取情绪统计成功'))
+  } catch (error) {
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '获取情绪统计失败'))
+  }
+}
 
-    if (isSqliteClient) {
-      const conditions: string[] = []
-      const params: Array<string | number> = []
+export const adminAssessmentsListHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1
+    const pageSize = parseInt(req.query.pageSize as string) || 20
+    const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined
+    const instrumentId = req.query.instrumentId ? parseInt(req.query.instrumentId as string) : undefined
+    const riskLevel = req.query.riskLevel as string | undefined
+    const startDate = req.query.startDate as string | undefined
+    const endDate = req.query.endDate as string | undefined
 
-      if (userId) {
-        conditions.push('m.user_id = ?')
-        params.push(userId)
-      }
-      if (username) {
-        conditions.push('u.username LIKE ?')
-        params.push(`%${username}%`)
-      }
-      if (startDate) {
-        conditions.push('date(m.record_date) >= date(?)')
-        params.push(startDate)
-      }
-      if (endDate) {
-        conditions.push('date(m.record_date) <= date(?)')
-        params.push(endDate)
-      }
-      if (moodType) {
-        conditions.push('(m.mood_type LIKE ? OR et.name LIKE ?)')
-        params.push(`%${moodType}%`, `%${moodType}%`)
-      }
+    const { list, total } = await assessmentService.listAllSessions({
+      page, pageSize, userId, instrumentId, riskLevel, startDate, endDate,
+    })
 
-      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+    return res.status(HTTP_STATUS.OK).json(apiSuccess({ list, total, page, pageSize }, '获取测评列表成功'))
+  } catch (error) {
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '获取测评列表失败'))
+  }
+}
 
-      const countRows = sqliteAll(
-        `
-          SELECT COUNT(DISTINCT m.id) as total
-          FROM moods m
-          JOIN users u ON u.id = m.user_id
-          LEFT JOIN mood_emotions me ON me.mood_id = m.id
-          LEFT JOIN emotion_types et ON et.id = me.emotion_type_id
-          ${whereClause}
-        `,
-        params
-      ) as Array<{ total: number }>
+export const adminAssessmentDetailHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = parseInt(req.params.id as string)
+    const detail = await assessmentService.getSessionDetailAdmin(id)
 
-      total = Number(countRows[0]?.total || 0)
-
-      const rows = sqliteAll(
-        `
-          SELECT
-            m.id,
-            m.user_id as userId,
-            u.username,
-            m.mood_type as moodTypeRaw,
-            m.intensity,
-            COALESCE(m.note_encrypted, '') as note,
-            COALESCE(m.trigger, '') as trigger,
-            m.created_at as createdAt,
-            GROUP_CONCAT(DISTINCT et.name) as relationMoodTypes
-          FROM moods m
-          JOIN users u ON u.id = m.user_id
-          LEFT JOIN mood_emotions me ON me.mood_id = m.id
-          LEFT JOIN emotion_types et ON et.id = me.emotion_type_id
-          ${whereClause}
-          GROUP BY m.id, m.user_id, u.username, m.mood_type, m.intensity, m.note_encrypted, m.trigger, m.created_at
-          ORDER BY m.created_at DESC
-          LIMIT ? OFFSET ?
-        `,
-        [...params, pageSize, offset]
-      ) as Array<{
-        id: number
-        userId: number
-        username: string
-        moodTypeRaw: string
-        relationMoodTypes?: string
-        intensity: number
-        note: string
-        trigger: string
-        createdAt: string
-      }>
-
-      list = rows.map((row) => {
-        const relationMoodTypes = row.relationMoodTypes
-          ? String(row.relationMoodTypes)
-              .split(',')
-              .map((item) => item.trim())
-              .filter(Boolean)
-          : []
-        const fallbackMoodTypes = row.moodTypeRaw
-          ? String(row.moodTypeRaw)
-              .split(',')
-              .map((item) => item.trim())
-              .filter(Boolean)
-          : []
-
-        return {
-          id: Number(row.id),
-          userId: Number(row.userId),
-          username: String(row.username || ''),
-          moodType: relationMoodTypes.length > 0 ? relationMoodTypes : fallbackMoodTypes,
-          intensity: Number(row.intensity || 0),
-          note: decryptField(String(row.note || '')) || '',
-          trigger: String(row.trigger || ''),
-          createdAt: String(row.createdAt || ''),
-        }
-      })
-    } else {
-      const countRequest = pool.request()
-      const listRequest = pool.request()
-      const conditions: string[] = []
-
-      if (userId) {
-        conditions.push('m.user_id = @userId')
-        countRequest.input('userId', sql.Int, userId)
-        listRequest.input('userId', sql.Int, userId)
-      }
-      if (username) {
-        conditions.push('u.username LIKE @username')
-        countRequest.input('username', sql.NVarChar(100), `%${username}%`)
-        listRequest.input('username', sql.NVarChar(100), `%${username}%`)
-      }
-      if (startDate) {
-        conditions.push('CONVERT(date, m.record_date) >= @startDate')
-        countRequest.input('startDate', sql.Date, startDate)
-        listRequest.input('startDate', sql.Date, startDate)
-      }
-      if (endDate) {
-        conditions.push('CONVERT(date, m.record_date) <= @endDate')
-        countRequest.input('endDate', sql.Date, endDate)
-        listRequest.input('endDate', sql.Date, endDate)
-      }
-      if (moodType) {
-        conditions.push('(m.mood_type LIKE @moodType OR et.name LIKE @moodType)')
-        countRequest.input('moodType', sql.NVarChar(100), `%${moodType}%`)
-        listRequest.input('moodType', sql.NVarChar(100), `%${moodType}%`)
-      }
-
-      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
-
-      const countResult = await countRequest.query(`
-        SELECT COUNT(DISTINCT m.id) as total
-        FROM moods m
-        JOIN users u ON u.id = m.user_id
-        LEFT JOIN mood_emotions me ON me.mood_id = m.id
-        LEFT JOIN emotion_types et ON et.id = me.emotion_type_id
-        ${whereClause}
-      `)
-      total = Number(countResult.recordset[0]?.total || 0)
-
-      listRequest.input('offset', sql.Int, offset)
-      listRequest.input('pageSize', sql.Int, pageSize)
-      const listResult = await listRequest.query(`
-        SELECT
-          m.id,
-          m.user_id as userId,
-          u.username,
-          m.mood_type as moodTypeRaw,
-          m.intensity,
-          m.note_encrypted as note,
-          m.trigger as trigger,
-          m.created_at as createdAt,
-          STRING_AGG(et.name, ',') as relationMoodTypes
-        FROM moods m
-        JOIN users u ON u.id = m.user_id
-        LEFT JOIN mood_emotions me ON me.mood_id = m.id
-        LEFT JOIN emotion_types et ON et.id = me.emotion_type_id
-        ${whereClause}
-        GROUP BY m.id, m.user_id, u.username, m.mood_type, m.intensity, m.note_encrypted, m.trigger, m.created_at
-        ORDER BY m.created_at DESC
-        OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY
-      `)
-
-      list = (listResult.recordset || []).map((row: any) => {
-        const relationMoodTypes = row.relationMoodTypes
-          ? String(row.relationMoodTypes)
-              .split(',')
-              .map((item: string) => item.trim())
-              .filter(Boolean)
-          : []
-        const fallbackMoodTypes = row.moodTypeRaw
-          ? String(row.moodTypeRaw)
-              .split(',')
-              .map((item: string) => item.trim())
-              .filter(Boolean)
-          : []
-
-        return {
-          id: Number(row.id),
-          userId: Number(row.userId),
-          username: String(row.username || ''),
-          moodType: relationMoodTypes.length > 0 ? relationMoodTypes : fallbackMoodTypes,
-          intensity: Number(row.intensity || 0),
-          note: decryptField(String(row.note || '')) || '',
-          trigger: String(row.trigger || ''),
-          createdAt: row.createdAt ? new Date(row.createdAt).toISOString() : '',
-        }
-      })
+    if (!detail) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json(apiFailure(404, '测评会话不存在'))
     }
 
-    return res.status(200).json({
-      code: 0,
-      data: {
-        list,
-        total,
-        page,
-        pageSize,
-      },
-    })
+    return res.status(HTTP_STATUS.OK).json(apiSuccess(detail, '获取测评详情成功'))
   } catch (error) {
-    return res.status(500).json({ code: 500, message: '获取情绪记录失败' })
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '获取测评详情失败'))
+  }
+}
+
+// ==================== 数据分析接口 ====================
+
+export const getKpiStatsHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const { startDate, endDate } = req.query as { startDate?: string; endDate?: string }
+    const stats = await managementService.getKpiStats(startDate, endDate)
+    return res.status(HTTP_STATUS.OK).json(apiSuccess(stats, '获取 KPI 统计成功'))
+  } catch (error) {
+    logger.error('[getKpiStats] Error:', error)
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '获取 KPI 统计失败'))
+  }
+}
+
+export const getMoodTrendHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const { startDate, endDate, granularity } = req.query as {
+      startDate?: string; endDate?: string; granularity?: 'day' | 'week'
+    }
+    if (!startDate || !endDate) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(1001, '缺少 startDate 或 endDate 参数'))
+    }
+    const trend = await managementService.getMoodTrend(startDate, endDate, granularity || 'day')
+    return res.status(HTTP_STATUS.OK).json(apiSuccess(trend, '获取情绪趋势成功'))
+  } catch (error) {
+    logger.error('[getMoodTrend] Error:', error)
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '获取情绪趋势失败'))
+  }
+}
+
+export const getMoodDistributionHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const { startDate, endDate } = req.query as { startDate?: string; endDate?: string }
+    if (!startDate || !endDate) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(1001, '缺少 startDate 或 endDate 参数'))
+    }
+    const distribution = await managementService.getMoodDistribution(startDate, endDate)
+    return res.status(HTTP_STATUS.OK).json(apiSuccess(distribution, '获取情绪分布成功'))
+  } catch (error) {
+    logger.error('[getMoodDistribution] Error:', error)
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '获取情绪分布失败'))
+  }
+}
+
+export const getAssessmentDistributionHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const { startDate, endDate, instrumentId } = req.query as {
+      startDate?: string; endDate?: string; instrumentId?: string
+    }
+    if (!startDate || !endDate) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(1001, '缺少 startDate 或 endDate 参数'))
+    }
+    const distribution = await managementService.getAssessmentDistribution(
+      startDate, endDate, instrumentId ? parseInt(instrumentId) : undefined,
+    )
+    return res.status(HTTP_STATUS.OK).json(apiSuccess(distribution, '获取测评分布成功'))
+  } catch (error) {
+    logger.error('[getAssessmentDistribution] Error:', error)
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '获取测评分布失败'))
+  }
+}
+
+export const getModuleUsageHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const { startDate, endDate } = req.query as { startDate?: string; endDate?: string }
+    if (!startDate || !endDate) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(1001, '缺少 startDate 或 endDate 参数'))
+    }
+    const usage = await managementService.getModuleUsage(startDate, endDate)
+    return res.status(HTTP_STATUS.OK).json(apiSuccess(usage, '获取模块使用统计成功'))
+  } catch (error) {
+    logger.error('[getModuleUsage] Error:', error)
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '获取模块使用统计失败'))
+  }
+}
+
+export const getAiUsageStatsHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const { startDate, endDate } = req.query as { startDate?: string; endDate?: string }
+    const stats = await managementService.getAiUsageStats(startDate, endDate)
+    return res.status(HTTP_STATUS.OK).json(apiSuccess(stats, '获取 AI 使用统计成功'))
+  } catch (error) {
+    logger.error('[getAiUsageStats] Error:', error)
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '获取 AI 使用统计失败'))
   }
 }

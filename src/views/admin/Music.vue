@@ -5,8 +5,8 @@
       <button :disabled="loading" @click="load">刷新</button>
     </div>
 
-    <div v-if="loading" class="state">加载中...</div>
-    <div v-else-if="musicList.length === 0" class="state">暂无音乐</div>
+    <div v-if="loading" class="state">正在加载音乐列表...</div>
+    <div v-else-if="musicList.length === 0" class="state">还没有音乐</div>
 
     <table v-else class="table">
       <thead>

@@ -1,11 +1,5 @@
 import { Router } from 'express'
-import {
-  getMusicList,
-  getMusicById,
-  createMusic,
-  updateMusic,
-  deleteMusic,
-} from '../controllers/musicController'
+import { getMusicList, getMusicById, updateMusic } from '../controllers/musicController'
 import { authenticate, requirePermission } from '../middleware/auth'
 import { auditOperation } from '../utils/operationLogger'
 
@@ -16,13 +10,7 @@ router.get('/', getMusicList)
 router.get('/:id', getMusicById)
 
 // 需要认证的路由（管理员功能）
-router.post(
-  '/',
-  authenticate,
-  requirePermission('music.manage'),
-  auditOperation({ permissionCode: 'music.manage', operationType: 'MUSIC_CREATE' }),
-  createMusic
-)
+// 音乐新增/删除统一走管理后台审批，此处仅暴露公开浏览 + 编辑（PUT）端点
 router.put(
   '/:id',
   authenticate,
@@ -33,17 +21,6 @@ router.put(
     getTargetId: (req) => (typeof req.params.id === 'string' ? req.params.id : null),
   }),
   updateMusic
-)
-router.delete(
-  '/:id',
-  authenticate,
-  requirePermission('music.manage'),
-  auditOperation({
-    permissionCode: 'music.manage',
-    operationType: 'MUSIC_DELETE',
-    getTargetId: (req) => (typeof req.params.id === 'string' ? req.params.id : null),
-  }),
-  deleteMusic
 )
 
 export default router

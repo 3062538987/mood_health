@@ -1,3 +1,13 @@
+import request from '@/utils/request'
+import type {
+  AnalysisPeriod,
+  AnalysisStatus,
+  AiAnalysisResult,
+  AnalysisJob,
+  AnalysisHistoryItem,
+  AnalysisDataScope,
+} from '@/types/moodAnalysis'
+
 export interface MoodAnalysisRequest {
   content: string
   mood_level: number
@@ -6,140 +16,185 @@ export interface MoodAnalysisRequest {
 export interface MoodAnalysisResponse {
   analysis: string
   suggestions: string[]
-  mood_score?: number
-  risk_level?: string
-  mood: string
+  mood?: string
 }
 
-const DEFAULT_FALLBACK_RESPONSE: MoodAnalysisResponse = {
-  mood: '未知',
-  analysis: '暂时无法分析您的情绪，请稍后重试',
-  suggestions: ['请确保情绪描述内容清晰', '稍后再次尝试分析', '如问题持续，请联系客服'],
-}
-
-const getLocalFallbackMood = (content: string): MoodAnalysisResponse => {
-  const happyKeywords = ['开心', '快乐', '高兴', '兴奋', '喜悦']
-  const anxiousKeywords = ['焦虑', '紧张', '担心', '害怕', '恐惧']
-  const depressedKeywords = ['抑郁', '难过', '伤心', '悲伤', '绝望']
-  const angryKeywords = ['愤怒', '生气', '恼火', '烦躁']
-  const tiredKeywords = ['疲惫', '累', '疲劳', '困']
-  const excitedKeywords = ['兴奋', '激动', '期待']
-
-  let mood = '平静'
-  let maxScore = 0
-
-  const keywords = [
-    { mood: '开心', words: happyKeywords },
-    { mood: '焦虑', words: anxiousKeywords },
-    { mood: '抑郁', words: depressedKeywords },
-    { mood: '愤怒', words: angryKeywords },
-    { mood: '疲惫', words: tiredKeywords },
-    { mood: '兴奋', words: excitedKeywords },
-  ]
-
-  keywords.forEach(({ mood: moodName, words }) => {
-    const score = words.filter((keyword) => content.includes(keyword)).length
-    if (score > maxScore) {
-      maxScore = score
-      mood = moodName
-    }
-  })
-
-  const suggestions = {
-    开心: ['保持积极的心态', '与朋友分享你的快乐', '记录下美好的时刻'],
-    焦虑: ['尝试深呼吸放松', '制定合理的计划', '适当运动缓解压力'],
-    抑郁: ['多与朋友交流', '适当户外活动', '必要时寻求专业帮助'],
-    平静: ['保持当前的良好状态', '享受宁静的时光', '继续积极生活'],
-    愤怒: ['冷静下来深呼吸', '找到合适的发泄方式', '分析愤怒的原因'],
-    疲惫: ['保证充足睡眠', '适当休息放松', '注意劳逸结合'],
-    兴奋: ['保持热情', '合理规划时间', '注意休息避免过度'],
-    未知: ['请详细描述您的情绪', '稍后再次尝试', '如问题持续请联系客服'],
+export interface MoodInsightResponse {
+  data?: {
+    content: string
+    trend?: Array<{ label: string; level: number }>
   }
+  content: string
+  trend?: Array<{ label: string; level: number }>
+  suggestions?: string[]
+  [key: string]: unknown
+}
 
-  return {
-    mood,
-    analysis: `根据您的描述，您当前的情绪状态为${mood}。`,
-    suggestions: suggestions[mood as keyof typeof suggestions] || suggestions.未知,
+export interface CreateAnalysisParams {
+  period: AnalysisPeriod
+  dataScope?: AnalysisDataScope
+  useJournal?: boolean
+}
+
+export interface AnalysisResponse {
+  id: string
+  period: AnalysisPeriod
+  status: AnalysisStatus
+  result?: AiAnalysisResult
+  job?: AnalysisJob
+  createdAt: string
+  updatedAt: string
+}
+
+const validateMoodAnalysisRequest = (data: MoodAnalysisRequest): void => {
+  if (!data.content || !data.content.trim()) {
+    throw new Error('情绪描述不能为空')
+  }
+  if (data.mood_level < 1 || data.mood_level > 10) {
+    throw new Error('情绪强度必须在1-10之间')
   }
 }
 
 export const analyzeMood = async (data: MoodAnalysisRequest): Promise<MoodAnalysisResponse> => {
-  if (!data.content || !data.content.trim()) {
-    throw new Error('情绪描述不能为空')
-  }
-
-  if (!data.mood_level || data.mood_level < 1 || data.mood_level > 10) {
-    throw new Error('情绪强度必须在1-10之间')
-  }
-
-  try {
-    return getLocalFallbackMood(data.content.trim())
-  } catch {
-    return DEFAULT_FALLBACK_RESPONSE
-  }
+  validateMoodAnalysisRequest(data)
+  return request<MoodAnalysisResponse>({
+    url: '/api/ai/context/analyze',
+    method: 'post',
+    data: {
+      message: data.content,
+      mood: data.mood_level,
+    },
+  })
 }
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
-let latestRequest: MoodAnalysisRequest | null = null
-let pendingResolvers: Array<{
-  resolve: (value: MoodAnalysisResponse) => void
-  reject: (reason?: unknown) => void
-}> = []
 
-export const debouncedAnalyzeMood = (data: MoodAnalysisRequest): Promise<MoodAnalysisResponse> => {
-  latestRequest = data
-
+export const debouncedAnalyzeMood = async (
+  data: MoodAnalysisRequest,
+  delay: number = 300
+): Promise<MoodAnalysisResponse> => {
   if (debounceTimer) {
     clearTimeout(debounceTimer)
   }
 
-  return new Promise<MoodAnalysisResponse>((resolve, reject) => {
-    pendingResolvers.push({ resolve, reject })
-
+  return new Promise((resolve, reject) => {
     debounceTimer = setTimeout(async () => {
-      const resolvers = pendingResolvers
-      const request = latestRequest
-
-      pendingResolvers = []
-      latestRequest = null
-      debounceTimer = null
-
-      if (!request) {
-        const error = new Error('无可用的情绪分析请求')
-        resolvers.forEach((item) => item.reject(error))
-        return
-      }
-
       try {
-        const result = await analyzeMood(request)
-        resolvers.forEach((item) => item.resolve(result))
+        const result = await analyzeMood(data)
+        resolve(result)
       } catch (error) {
-        resolvers.forEach((item) => item.reject(error))
+        reject(error)
       }
-    }, 500)
+    }, delay)
   })
 }
 
 export const analyzeMoodWithRetry = async (
   data: MoodAnalysisRequest,
-  maxRetries = 2
+  retries: number = 2,
+  delay: number = 1000
 ): Promise<MoodAnalysisResponse> => {
-  let lastError: Error | null = null
+  try {
+    return await analyzeMood(data)
+  } catch (error: unknown) {
+    if (retries > 0 && shouldRetry(error)) {
+      await new Promise((resolve) => setTimeout(resolve, delay))
+      return analyzeMoodWithRetry(data, retries - 1, delay * 2)
+    }
+    throw error
+  }
+}
 
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      return await analyzeMood(data)
-    } catch (error: any) {
-      lastError = error
-
-      if (attempt < maxRetries) {
-        const delay = Math.pow(2, attempt) * 1000
-        console.log(`分析失败，${delay}ms后重试 (${attempt + 1}/${maxRetries})`)
-        await new Promise((resolve) => setTimeout(resolve, delay))
-      }
+const shouldRetry = (error: unknown): boolean => {
+  const err = error as { response?: { status?: number }; code?: string; message?: string }
+  if (err.response) {
+    const status = err.response.status
+    if (status !== undefined && (status >= 500 || status === 429)) {
+      return true
     }
   }
+  if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') {
+    return true
+  }
+  if (err.message && err.message.includes('Network Error')) {
+    return true
+  }
+  return false
+}
 
-  console.error('所有重试均失败，使用本地fallback方案')
-  return getLocalFallbackMood(data.content)
+// 注意：后端在「该周期内无情绪记录」(NO_RECORDS) 时返回 apiSuccess(null)，
+// 因此此处返回类型必须允许 null，调用方需做空值守卫，避免 created.id 崩溃。
+export const createAnalysis = (params: CreateAnalysisParams) => {
+  return request<AnalysisResponse | null>({
+    url: '/api/mood-analyses',
+    method: 'post',
+    data: params,
+  })
+}
+
+export const getAnalysis = (id: string) => {
+  return request<AnalysisResponse>({
+    url: `/api/mood-analyses/${id}`,
+    method: 'get',
+  })
+}
+
+export const getAnalysisStatus = (id: string) => {
+  return request<{ status: AnalysisStatus; job?: AnalysisJob }>({
+    url: `/api/mood-analyses/${id}`,
+    method: 'get',
+  })
+}
+
+export const getAnalysisHistory = (params?: {
+  period?: string
+  page?: number
+  pageSize?: number
+}) => {
+  return request<{
+    data: AnalysisHistoryItem[]
+    total: number
+    page: number
+    pageSize: number
+  }>({
+    url: '/api/mood-analyses',
+    method: 'get',
+    params,
+  })
+}
+
+export const deleteAnalysis = (id: string) => {
+  return request<void>({
+    url: `/api/mood-analyses/${id}`,
+    method: 'delete',
+  })
+}
+
+export const retryAnalysis = (id: string) => {
+  return request<AnalysisResponse>({
+    url: `/api/mood-analyses/${id}`,
+    method: 'post',
+    // 触发分析会同步阻塞等待 AI（后端最长约 60s），必须放宽超时，
+    // 否则默认 10s 会把请求砍掉，导致前端永远拿不到结果。
+    timeout: 70000,
+  })
+}
+
+export const getLatestAnalysis = (period: AnalysisPeriod) => {
+  return request<AnalysisResponse | null>({
+    url: '/api/mood-analyses/latest',
+    method: 'get',
+    params: { period },
+  })
+}
+
+/**
+ * 获取 AI 情绪洞察
+ */
+export function getMoodInsight(data: { period: string }) {
+  return request<MoodInsightResponse>({
+    url: '/api/ai/insight',
+    method: 'post',
+    data,
+  })
 }

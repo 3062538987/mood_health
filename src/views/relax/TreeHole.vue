@@ -8,24 +8,33 @@
       <button class="refresh-btn" @click="refreshPosts"><i class="fas fa-redo"></i> 刷新</button>
     </div>
 
+    <!-- 错误状态 -->
+    <el-empty
+      v-if="error"
+      description="加载失败，请稍后重试"
+    >
+      <el-button type="primary" @click="refreshPosts">重试</el-button>
+    </el-empty>
+
     <!-- 帖子列表 -->
-    <div v-if="loading" class="loading-skeleton" aria-label="加载中">
+    <div v-if="!error && loading" class="loading-skeleton" aria-label="加载中">
       <div v-for="index in 3" :key="index" class="skeleton-row"></div>
     </div>
     <transition name="empty-fade" mode="out-in">
       <RelaxEmptyState
-        v-if="!loading && posts.length === 0"
+        v-if="!error && !loading && posts.length === 0"
         key="treehole-empty"
         type="treehole"
         action-text="去解压中心放松一下"
         action-to="/relax/center"
       />
       <PostList
-        v-else
+        v-else-if="!error"
         key="treehole-list"
         :posts="posts"
         @view-detail="goToDetail"
         @like-updated="handleLikeUpdated"
+        @delete="handleDeletePost"
       />
     </transition>
 
@@ -41,9 +50,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import PostForm from '@/components/treehole/PostForm.vue'
 import PostList from '@/components/treehole/PostList.vue'
 import RelaxEmptyState from '@/components/relax/RelaxEmptyState.vue'
@@ -51,7 +60,8 @@ import { usePosts } from '@/composables/usePosts'
 import type { CreatePostData } from '@/types/post'
 
 const router = useRouter()
-const { posts, currentPage, pageSize, loading, loadPosts, createNewPost } = usePosts()
+const { posts, currentPage, pageSize, loading, loadPosts, createNewPost, deletePostById } = usePosts()
+const error = ref(false)
 
 const handleSubmitPost = async (post: CreatePostData) => {
   const success = await createNewPost(post)
@@ -73,7 +83,12 @@ const changePage = async (page: number) => {
 }
 
 const refreshPosts = async () => {
-  await loadPosts(currentPage.value)
+  try {
+    error.value = false
+    await loadPosts(currentPage.value)
+  } catch {
+    error.value = true
+  }
 }
 
 const handleLikeUpdated = (postId: number, likes: number, liked: boolean) => {
@@ -84,7 +99,31 @@ const handleLikeUpdated = (postId: number, likes: number, liked: boolean) => {
   }
 }
 
-onMounted(loadPosts)
+const handleDeletePost = async (postId: number) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这条帖子吗？此操作不可撤销。', '确认删除', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
+  const success = await deletePostById(postId)
+  if (success) {
+    ElMessage.success('帖子已删除')
+  } else {
+    ElMessage.error('删除失败，请稍后重试')
+  }
+}
+
+onMounted(async () => {
+  try {
+    await loadPosts()
+  } catch {
+    error.value = true
+  }
+})
 </script>
 
 <style scoped lang="scss">

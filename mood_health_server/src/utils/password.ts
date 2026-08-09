@@ -1,4 +1,6 @@
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
+import logger from "./logger";
 
 /**
  * 密码工具函数模块
@@ -22,7 +24,7 @@ export const hashPassword = async (
   try {
     return await bcrypt.hash(password, saltRounds);
   } catch (error) {
-    console.error("密码加密失败:", error);
+    logger.error("密码加密失败:", error);
     throw new Error("密码加密失败");
   }
 };
@@ -43,7 +45,7 @@ export const comparePassword = async (
   try {
     return await bcrypt.compare(password, hashedPassword);
   } catch (error) {
-    console.error("密码比对失败:", error);
+    logger.error("密码比对失败:", error instanceof Error ? error.message : String(error));
     return false;
   }
 };
@@ -57,11 +59,15 @@ export const comparePassword = async (
  * const password = generateRandomPassword(16);
  */
 export const generateRandomPassword = (length: number = 12): string => {
+  if (length <= 0) {
+    throw new Error("密码长度必须大于0");
+  }
   const chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
+  const bytes = crypto.randomBytes(length);
   let password = "";
   for (let i = 0; i < length; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
+    password += chars.charAt(bytes[i] % chars.length);
   }
   return password;
 };
@@ -87,7 +93,7 @@ export const getPasswordStrength = (
   if (/\d/.test(password)) score++; // 包含数字
   if (/[a-z]/.test(password)) score++; // 包含小写字母
   if (/[A-Z]/.test(password)) score++; // 包含大写字母
-  if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++; // 包含特殊字符
+  if (/[!@#$%^&*(),.?":{}|<>_`\[\]\\;'\-+=~\/]/.test(password)) score++; // 包含特殊字符
 
   // 根据得分返回密码强度等级
   if (score <= 2) return "weak"; // 得分<=2：弱密码

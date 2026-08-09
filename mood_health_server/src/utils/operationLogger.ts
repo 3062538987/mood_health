@@ -1,13 +1,14 @@
-import sql from 'mssql'
 import winston from 'winston'
+import fs from 'fs'
+import path from 'path'
 import { NextFunction, Response } from 'express'
-import pool from '../config/database'
-import { isSqliteClient } from '../config/database'
-import { sqliteRun } from '../config/sqlite'
 import logger, { sanitizeForLogs, summarizeRequestBody } from './logger'
 import type { AuthRequest } from '../middleware/auth'
+import { createAuditService } from '../services/auditService'
 
 export type OperationResult = 'success' | 'failed'
+
+const auditService = createAuditService()
 
 /**
  * 通用操作审计记录函数
@@ -39,61 +40,18 @@ export const logOperation = async (
 
   // 2) 写入数据库审计表
   try {
-    if (isSqliteClient) {
-      sqliteRun(
-        `
-          INSERT INTO operation_logs (
-            operator_id,
-            operator_role,
-            permission_code,
-            operation_type,
-            target_id,
-            content,
-            ip_address,
-            operation_result
-          )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `,
-        [userId, userRole, permissionCode, operationType, targetId, content, ip, result]
-      )
-      return
-    }
-
-    if (!pool.connected) {
-      await pool.connect()
-    }
-
-    await pool
-      .request()
-      .input('operatorId', sql.Int, userId)
-      .input('operatorRole', sql.NVarChar(20), userRole)
-      .input('permissionCode', sql.NVarChar(100), permissionCode)
-      .input('operationType', sql.NVarChar(100), operationType)
-      .input('targetId', sql.NVarChar(100), targetId)
-      .input('content', sql.NVarChar(sql.MAX), content)
-      .input('ipAddress', sql.NVarChar(64), ip)
-      .input('operationResult', sql.NVarChar(20), result).query(`
-        INSERT INTO operation_logs (
-          operator_id,
-          operator_role,
-          permission_code,
-          operation_type,
-          target_id,
-          content,
-          ip_address,
-          operation_result
-        )
-        VALUES (
-          @operatorId,
-          @operatorRole,
-          @permissionCode,
-          @operationType,
-          @targetId,
-          @content,
-          @ipAddress,
-          @operationResult
-        )
-      `)
+    await auditService.record({
+      actorUserId: userId,
+      actorRoleCode: userRole,
+      permissionCode,
+      action: operationType,
+      targetType: null,
+      targetId,
+      result,
+      summary: content,
+      ipAddress: ip,
+      requestId: null,
+    })
   } catch (error) {
     logger.error('写入操作审计日志失败', {
       error,
@@ -102,17 +60,45 @@ export const logOperation = async (
   }
 }
 
+// test 环境或日志文件被占用/无权限时，不写文件日志，避免进程退出。
+// 先探测目标文件是否可写，可写才创建 File 传输；否则降级为仅控制台。
+// 运行时若仍发生 logs/ 下的写入异常，由 logger 的作用域化进程守卫兜底（不杀进程）。
+const OPERATION_LOG_FILE = 'logs/operation.log'
+const operationFileTransports: winston.transport[] = []
+if (process.env.NODE_ENV !== 'test') {
+  let writable = false
+  try {
+    fs.mkdirSync(path.dirname(OPERATION_LOG_FILE), { recursive: true })
+    const fd = fs.openSync(OPERATION_LOG_FILE, 'a')
+    fs.closeSync(fd)
+    writable = true
+  } catch {
+    writable = false
+  }
+  if (writable) {
+    try {
+      operationFileTransports.push(
+        new winston.transports.File({
+          filename: OPERATION_LOG_FILE,
+          level: 'info',
+          maxsize: 20 * 1024 * 1024,
+          maxFiles: 10,
+        })
+      )
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[operationLogger] 操作日志文件打开失败（已降级为仅控制台）:', (err as Error).message)
+    }
+  } else {
+    // eslint-disable-next-line no-console
+    console.warn('[operationLogger] 操作日志文件不可写，已降级为仅控制台:', path.resolve(OPERATION_LOG_FILE))
+  }
+}
+
 const operationFileLogger = winston.createLogger({
   level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
   format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
-  transports: [
-    new winston.transports.File({
-      filename: 'logs/operation.log',
-      level: 'info',
-      maxsize: 20 * 1024 * 1024,
-      maxFiles: 10,
-    }),
-  ],
+  transports: operationFileTransports,
 })
 
 interface AuditOptions {

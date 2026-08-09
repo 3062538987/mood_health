@@ -28,7 +28,28 @@ const joinBaseAndPath = (
   return `${base}${normalizedPath}`
 }
 
-export const getApiBaseUrl = () => trimTrailingSlash(import.meta.env.VITE_API_BASE_URL)
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '::1'])
+
+export const getApiBaseUrl = () => {
+  const configuredBase = trimTrailingSlash(import.meta.env.VITE_API_BASE_URL)
+  if (!configuredBase || typeof window === 'undefined') {
+    return configuredBase
+  }
+
+  try {
+    const configuredUrl = new URL(configuredBase)
+    if (
+      LOOPBACK_HOSTS.has(configuredUrl.hostname) &&
+      configuredUrl.hostname !== window.location.hostname
+    ) {
+      return ''
+    }
+  } catch {
+    // Relative API bases are already same-origin safe.
+  }
+
+  return configuredBase
+}
 
 export const buildApiUrl = (path: string) =>
   joinBaseAndPath(import.meta.env.VITE_API_BASE_URL, path, ['/api'])

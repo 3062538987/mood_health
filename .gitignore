@@ -2,15 +2,28 @@ node_modules/
 __pycache__/
 *.pyc
 .env
+.env.*
+!.env.example
+!.env*.example
+.env.production
+.env.production.local
 .venv/
 venv/
 venv.backup/
 dist/
+# 临时构建产物（环境文件锁导致无法写入 dist/ 时的替代输出目录）
+dist_run*/
+coverage/
+**/coverage/
+logs/
+**/logs/
+.trae/
 .DS_Store
 Thumbs.db
 *.log
 
 # Local databases and runtime state
+.codex-kimi-finished-triggered
 *.db
 *.db-wal
 *.db-shm
@@ -30,7 +43,36 @@ tmp/
 test-results/
 playwright-report/
 screenshots/
+# vite/playwright 临时配置快照
+vite.*.timestamp-*.mjs
+
+# 沙箱 E2E 运行产生的临时目录（非项目源码）
+dist_build/
+.pw-browsers/
+playwright-report_bak/
+
+# Local credential screenshots and bundled Windows Redis binaries/docs
+tasks/deepseek-key.jpg
+docs/deepseekapi2.jpg
+Redis on Windows*.docx
+Windows Service Documentation.docx
+redis/*.exe
+redis/*.pdb
+redis/*.dll
+/redis/
 
 # Prevent accidental nested duplicate directories
 health/health/
 mood_health_server/mood_health_server/
+
+# AI runtime vector store (regenerable, do not commit)
+mood_health_ai_service/data/
+
+# Temp setup/scratch scripts
+.tmp*.ps1
+
+# Agent working memory (internal notes, not project source)
+.workbuddy/
+
+# 回收站（非破坏性清理的暂存，可手动永久删除）
+.trash-unsorted/

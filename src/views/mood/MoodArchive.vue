@@ -240,7 +240,7 @@ import { useRouter } from 'vue-router'
 import SoftEmptyState from '@/components/shared/SoftEmptyState.vue'
 import SoftLoadingState from '@/components/shared/SoftLoadingState.vue'
 
-import { getMoodRecordList } from '@/api/mood'
+import { deleteMoodRecord, getMoodRecordList } from '@/api/mood'
 import { EMOTION_MAP, EMOTION_OPTIONS } from '@/constants/emotions'
 import { MoodRecord } from '@/types/mood'
 
@@ -698,9 +698,20 @@ const confirmDeleteRecord = (record: MoodRecord) => {
   })
     .then(async () => {
       try {
+        const moodId = Number(record.id)
+        if (!Number.isInteger(moodId) || moodId <= 0) {
+          throw new Error('Invalid mood record id')
+        }
+
+        await deleteMoodRecord(moodId)
         const index = moodRecords.value.findIndex((r) => r.id === record.id)
         if (index > -1) {
           moodRecords.value.splice(index, 1)
+          totalRecords.value = Math.max(0, totalRecords.value - 1)
+        }
+        if (selectedRecord.value?.id === record.id) {
+          selectedRecord.value = null
+          showDetailDialog.value = false
         }
         ElMessage.success('记录删除成功！')
       } catch (error) {
@@ -725,9 +736,9 @@ onMounted(() => {
 .mood-archive {
   padding: 24px 20px 28px;
   background:
-    radial-gradient(circle at top left, rgba(255, 209, 102, 0.15), transparent 28%),
-    radial-gradient(circle at top right, rgba(106, 176, 165, 0.14), transparent 30%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(248, 245, 242, 0.92));
+    radial-gradient(ellipse at top left, rgba(240, 184, 96, 0.12), transparent 40%),
+    radial-gradient(ellipse at top right, rgba(232, 131, 74, 0.08), transparent 35%),
+    var(--bg-color);
 
   .container {
     max-width: 1200px;
@@ -757,6 +768,7 @@ onMounted(() => {
     font-size: 28px;
     font-weight: 800;
     color: var(--text-color);
+    font-family: var(--font-display);
   }
 
   .archive-copy {
@@ -1023,7 +1035,7 @@ onMounted(() => {
   }
 
   .action-btn {
-    border: none;
+    border: 1px solid transparent;
     border-radius: 999px;
     padding: 8px 12px;
     font-size: 12px;
@@ -1032,11 +1044,20 @@ onMounted(() => {
     transition:
       transform 0.25s ease,
       opacity 0.25s ease,
+      border-color 0.25s ease,
+      background 0.25s ease,
+      color 0.25s ease,
       box-shadow 0.25s ease;
 
     &:hover {
       transform: translateY(-1px);
       opacity: 0.96;
+    }
+
+    &:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+      box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9);
     }
   }
 
@@ -1046,8 +1067,15 @@ onMounted(() => {
   }
 
   .delete-btn {
-    background: rgba(239, 71, 111, 0.12);
-    color: var(--mood-angry);
+    background: var(--surface);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+
+    &:hover {
+      background: var(--danger);
+      color: var(--white);
+      box-shadow: 0 10px 20px rgba(239, 71, 111, 0.22);
+    }
   }
 
   .mood-tags {
@@ -1166,7 +1194,7 @@ onMounted(() => {
         gap: 16px;
         padding: 12px;
         background: rgba(255, 255, 255, 0.5);
-        border-radius: $border-radius-md;
+        border-radius: $radius-md;
       }
 
       .emotion-dot-large {
@@ -1202,7 +1230,7 @@ onMounted(() => {
         padding: 6px 14px;
         background: rgba(106, 176, 165, 0.15);
         color: var(--primary-color);
-        border-radius: $border-radius-full;
+        border-radius: $radius-full;
         font-size: $font-size-sm;
         font-weight: 500;
       }

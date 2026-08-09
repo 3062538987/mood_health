@@ -1,101 +1,222 @@
-/* 主题颜色变量 */
-$primary-color: #6ab0a5; // 主色：柔和蓝绿色
-$primary-light: #8bc4b9; // 主色浅色版本
-$secondary-color: #f3a683; // 辅助色：暖橙色
-$accent-color: #e76f51; // 强调色：珊瑚红
-$success-color: #06d6a0; // 成功色：绿色
-$success-light: #4cd964; // 成功色浅色版本
-$warning-color: #ffd166; // 警告色：黄色
-$danger-color: #ef476f; // 危险色：红色
-$text-color: #4a4a4a; // 正文色
-$text-light-color: #7d7d7d; // 次要文字色
-$bg-color: #f8f5f2; // 背景色：暖白
-$bg-light: #f1ede9; // 浅背景色
-$white: #ffffff; // 白色
-$border-color: #e9e6e3; // 边框色
+/* ========================================
+   日落花园 · 暖光治愈 — 主题变量系统
+   ======================================== */
 
-/* 情绪色彩系统 */
-$mood-happy: #ffd166; // 快乐：暖黄
-$mood-sad: #06d6a0; // 悲伤：深蓝绿色
-$mood-angry: #ef476f; // 愤怒：红色
-$mood-anxious: #118ab2; // 焦虑：蓝色
-$mood-calm: #073b4c; // 平静：深蓝
-$mood-neutral: #8d99ae; // 中性：灰色
+// ── 主色调：焦糖橙 ──
+$primary-color: #e8834a;
+$primary-light: #f5c5a3;
+$primary-hover: #d4723a;
+$primary-soft: #fdf0e6;
 
-/* 深色模式颜色变量 */
-$dark-bg-color: #1a1e24; // 深色背景
-$dark-text-color: #e0e0e0; // 深色文字
-$dark-text-light-color: #a0a0a0; // 深色次要文字
-$dark-primary-color: #8ab3a0; // 深色主色
-$dark-secondary-color: #f5b69b; // 深色辅助色
-$dark-accent-color: #f08a72; // 深色强调色
-$dark-bg-light: #252a30; // 深色浅背景
-$dark-border-color: #3a4048; // 深色边框
+// ── 辅助色：鼠尾草绿 ──
+$secondary-color: #8aab7c;
+$secondary-light: #b8d0a8;
+$secondary-hover: #7a9b6c;
 
-/* 文本样式变量 */
+// ── 强调色：日落金 ──
+$accent-color: #f0b860;
+$accent-light: #f8d898;
+$accent-hover: #e0a848;
+
+// ── 功能色 ──
+$success-color: #7cb89a;
+$warning-color: #f0c060;
+$danger-color: #e0556a;
+
+// ── 语义状态色（心理安全友好） ──
+$status-info: #7ba5c4;
+$status-success: #7cb89a;
+$status-warning: #f0b860;
+$status-caution: #d2a35f;
+$status-danger: #e0556a;
+$status-emergency: #cf6b7f;
+
+// ── 风险等级色（避免纯红绿表达，使用温暖色系） ──
+$risk-low: #8aab7c;
+$risk-low-soft: rgba(138, 171, 124, 0.12);
+$risk-medium: #d2a35f;
+$risk-medium-soft: rgba(210, 163, 95, 0.12);
+$risk-high: #cf6b7f;
+$risk-high-soft: rgba(207, 107, 127, 0.12);
+
+// ── 心理状态色 ──
+$mental-calm: #8aab7c;
+$mental-neutral: #b0a69c;
+$mental-anxious: #c090d0;
+$mental-stressed: #d2a35f;
+$mental-distressed: #cf6b7f;
+
+// ── 文字色 ──
+$text-color: #4a3f38;
+$text-light-color: #8c8078;
+$text-muted: #b0a69c;
+
+// ── 背景与表面 ──
+$bg-color: #fef8f2;
+$bg-warm: #fdf2e8;
+$surface-color: #fffdf9;
+$surface-muted: #faf5ee;
+$border-color: #e8ddd0;
+$white: #fffdf9;
+
+// ── 焦点 ──
+$focus-color: #c06830;
+$focus-ring: rgba(232, 131, 74, 0.35);
+
+// ── 情绪色彩系统 ──
+$mood-happy: #f0b860;
+$mood-sad: #7ba5c4;
+$mood-angry: #e0556a;
+$mood-anxious: #c090d0;
+$mood-calm: #8aab7c;
+$mood-neutral: #b0a69c;
+$mood-theme-low: #c4b0a0;
+$mood-theme-calm: #b8d0a8;
+$mood-theme-high: #f8d898;
+
+// ── 深色模式 ──
+$dark-bg-color: #1e1b18;
+$dark-bg-warm: #25211d;
+$dark-surface-color: #2a2520;
+$dark-surface-muted: #2f2a24;
+$dark-text-color: #e8ddd0;
+$dark-text-light-color: #b0a69c;
+$dark-text-muted: #8c8078;
+$dark-primary-color: #f0a070;
+$dark-primary-hover: #f5b890;
+$dark-secondary-color: #a8c898;
+$dark-accent-color: #f8c878;
+$dark-border-color: #3d3630;
+$dark-focus-color: #f5b890;
+$dark-focus-ring: rgba(240, 160, 112, 0.35);
+
+// ── 字体 ──
+$font-display: 'Noto Serif SC', 'Georgia', 'Songti SC', serif;
+$font-body: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 $font-size-xs: 10px;
 $font-size-sm: 12px;
 $font-size-md: 14px;
 $font-size-lg: 16px;
 $font-size-xl: 20px;
 $font-size-xxl: 24px;
+$font-size-huge: 32px;
 
-/* 阴影样式 */
-$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
-$shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
-$shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
-$dark-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
-$dark-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-$dark-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+// ── 圆角 ──
+$radius-sm: 6px;
+$radius-md: 10px;
+$radius-lg: 16px;
+$radius-xl: 24px;
+$radius-full: 50%;
 
-/* 圆角样式 */
-$border-radius-sm: 4px;
-$border-radius-md: 8px;
-$border-radius-lg: 12px;
-$border-radius-full: 50%;
+// ── 阴影（暖色调替代灰色） ──
+$shadow-sm: 0 2px 8px rgba(180, 140, 100, 0.12);
+$shadow-md: 0 4px 16px rgba(180, 140, 100, 0.16);
+$shadow-lg: 0 8px 32px rgba(180, 140, 100, 0.2);
+$shadow-glow: 0 0 40px rgba(240, 184, 96, 0.15);
+$dark-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+$dark-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+$dark-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
 
-/* CSS 自定义属性（变量） */
+// ── CSS 自定义属性 ──
 :root {
   --primary-color: #{$primary-color};
+  --primary: #{$primary-color};
   --primary-light: #{$primary-light};
+  --primary-hover: #{$primary-hover};
+  --primary-soft: #{$primary-soft};
   --secondary-color: #{$secondary-color};
+  --secondary: #{$secondary-color};
+  --secondary-light: #{$secondary-light};
   --accent-color: #{$accent-color};
+  --accent: #{$accent-color};
+  --accent-light: #{$accent-light};
   --success-color: #{$success-color};
-  --success-light: #{$success-light};
   --warning-color: #{$warning-color};
   --danger-color: #{$danger-color};
+  --danger: #{$danger-color};
   --text-color: #{$text-color};
   --text-light-color: #{$text-light-color};
+  --text-muted: #{$text-muted};
+  --muted: #{$text-muted};
   --bg-color: #{$bg-color};
-  --bg-light: #{$bg-light};
-  --white: #{$white};
+  --bg-warm: #{$bg-warm};
+  --surface: #{$surface-color};
+  --surface-muted: #{$surface-muted};
   --border-color: #{$border-color};
+  --focus: #{$focus-color};
+  --focus-ring: #{$focus-ring};
+  --primary-soft-bg: #{$primary-soft};
   --shadow-sm: #{$shadow-sm};
   --shadow-md: #{$shadow-md};
   --shadow-lg: #{$shadow-lg};
+  --shadow-glow: #{$shadow-glow};
+  --radius-sm: #{$radius-sm};
+  --radius-md: #{$radius-md};
+  --radius-lg: #{$radius-lg};
+  --radius-xl: #{$radius-xl};
+  --font-display: #{$font-display};
+  --font-body: #{$font-body};
 
-  /* 情绪色彩变量 */
+  // 语义状态色
+  --status-info: #{$status-info};
+  --status-success: #{$status-success};
+  --status-warning: #{$status-warning};
+  --status-caution: #{$status-caution};
+  --status-danger: #{$status-danger};
+  --status-emergency: #{$status-emergency};
+
+  // 风险等级色
+  --risk-low: #{$risk-low};
+  --risk-low-soft: #{$risk-low-soft};
+  --risk-medium: #{$risk-medium};
+  --risk-medium-soft: #{$risk-medium-soft};
+  --risk-high: #{$risk-high};
+  --risk-high-soft: #{$risk-high-soft};
+
+  // 心理状态色
+  --mental-calm: #{$mental-calm};
+  --mental-neutral: #{$mental-neutral};
+  --mental-anxious: #{$mental-anxious};
+  --mental-stressed: #{$mental-stressed};
+  --mental-distressed: #{$mental-distressed};
+
+  // 情绪色
   --mood-happy: #{$mood-happy};
   --mood-sad: #{$mood-sad};
   --mood-angry: #{$mood-angry};
   --mood-anxious: #{$mood-anxious};
   --mood-calm: #{$mood-calm};
   --mood-neutral: #{$mood-neutral};
+  --mood-theme-low: #{$mood-theme-low};
+  --mood-theme-calm: #{$mood-theme-calm};
+  --mood-theme-high: #{$mood-theme-high};
 }
 
+// ── 深色模式 ──
 @media (prefers-color-scheme: dark) {
   :root {
     --primary-color: #{$dark-primary-color};
+    --primary: #{$dark-primary-color};
+    --primary-hover: #{$dark-primary-hover};
+    --primary-soft: #{rgba(240, 160, 112, 0.12)};
     --secondary-color: #{$dark-secondary-color};
+    --secondary: #{$dark-secondary-color};
     --accent-color: #{$dark-accent-color};
+    --accent: #{$dark-accent-color};
     --text-color: #{$dark-text-color};
     --text-light-color: #{$dark-text-light-color};
+    --text-muted: #{$dark-text-muted};
+    --muted: #{$dark-text-muted};
     --bg-color: #{$dark-bg-color};
-    --bg-light: #{$dark-bg-light};
-    --white: #{$dark-bg-light};
+    --bg-warm: #{$dark-bg-warm};
+    --surface: #{$dark-surface-color};
+    --surface-muted: #{$dark-surface-muted};
     --border-color: #{$dark-border-color};
+    --focus: #{$dark-focus-color};
+    --focus-ring: #{$dark-focus-ring};
     --shadow-sm: #{$dark-shadow-sm};
     --shadow-md: #{$dark-shadow-md};
     --shadow-lg: #{$dark-shadow-lg};
+    --shadow-glow: 0 0 40px rgba(240, 160, 112, 0.08);
   }
 }

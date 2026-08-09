@@ -1,0 +1,102 @@
+{
+  "root": {
+    "nodeId": "gen-project-shell",
+    "kind": "project-shell",
+    "pageIds": ["page-home", "page-mood-record", "page-mood-insight", "page-ai-counseling", "page-relax", "page-treehole", "page-improve", "page-profile"],
+    "output": "partials/project-shell.html",
+    "sharedRegions": ["mobile-status-bar", "page-header", "bottom-navigation", "global-background", "brand-styling"],
+    "privateRegions": ["page-content"],
+    "mutableSlots": ["page-title", "active-nav-item", "content-area"],
+    "status": "planned",
+    "children": [
+      {
+        "nodeId": "gen-page-home",
+        "kind": "page-leaf",
+        "pageIds": ["page-home"],
+        "output": "pages/home.html",
+        "sharedRegions": [],
+        "privateRegions": ["home-hero", "today-mood", "quick-actions", "insight-preview"],
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-mood-record",
+        "kind": "page-leaf",
+        "pageIds": ["page-mood-record"],
+        "output": "pages/mood-record.html",
+        "sharedRegions": [],
+        "privateRegions": ["mood-selector", "intensity-slider", "tag-selector", "note-input", "submit-area"],
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-mood-insight",
+        "kind": "page-leaf",
+        "pageIds": ["page-mood-insight"],
+        "output": "pages/mood-insight.html",
+        "sharedRegions": [],
+        "privateRegions": ["overview-stats", "mood-chart", "emotion-breakdown", "ai-insight-card", "period-tabs"],
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-ai-counseling",
+        "kind": "page-leaf",
+        "pageIds": ["page-ai-counseling"],
+        "output": "pages/ai-counseling.html",
+        "sharedRegions": [],
+        "privateRegions": ["chat-header", "message-list", "quick-replies", "input-area"],
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-relax",
+        "kind": "page-leaf",
+        "pageIds": ["page-relax"],
+        "output": "pages/relax.html",
+        "sharedRegions": [],
+        "privateRegions": ["feature-grid", "music-player", "breathing-guide", "mini-games"],
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-treehole",
+        "kind": "page-leaf",
+        "pageIds": ["page-treehole"],
+        "output": "pages/treehole.html",
+        "sharedRegions": [],
+        "privateRegions": ["post-list", "post-card", "create-fab", "filter-tabs"],
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-improve",
+        "kind": "page-leaf",
+        "pageIds": ["page-improve"],
+        "output": "pages/improve.html",
+        "sharedRegions": [],
+        "privateRegions": ["category-tabs", "course-list", "questionnaire-card", "activity-card"],
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-profile",
+        "kind": "page-leaf",
+        "pageIds": ["page-profile"],
+        "output": "pages/profile.html",
+        "sharedRegions": [],
+        "privateRegions": ["profile-header", "stats-row", "menu-list", "settings-area"],
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      }
+    ]
+  }
+}

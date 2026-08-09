@@ -14,7 +14,7 @@
             <p class="setting-description">设置每日情绪记录提醒时间</p>
           </div>
           <div class="setting-control">
-            <select v-model="reminderTime" class="time-select" @change="saveSettings">
+            <select :value="reminderTime" class="time-select" @change="updateReminderTime">
               <option v-for="time in timeOptions" :key="time" :value="time">
                 {{ time }}
               </option>
@@ -30,7 +30,7 @@
           </div>
           <div class="setting-control">
             <label class="toggle-switch">
-              <input v-model="weeklyReport" type="checkbox" @change="saveSettings" />
+              <input :checked="weeklyReport" type="checkbox" @change="updateWeeklyReport" />
               <span class="toggle-slider"></span>
             </label>
           </div>
@@ -44,7 +44,7 @@
           </div>
           <div class="setting-control">
             <label class="toggle-switch">
-              <input v-model="gameSound" type="checkbox" @change="saveSettings" />
+              <input :checked="gameSound" type="checkbox" @change="updateGameSound" />
               <span class="toggle-slider"></span>
             </label>
           </div>
@@ -64,9 +64,9 @@
           <div class="setting-control">
             <label class="toggle-switch">
               <input
-                v-model="notifications.emotionReminder"
+                :checked="notifications.emotionReminder"
                 type="checkbox"
-                @change="saveNotifications"
+                @change="updateNotification('emotionReminder', $event)"
               />
               <span class="toggle-slider"></span>
             </label>
@@ -82,9 +82,9 @@
           <div class="setting-control">
             <label class="toggle-switch">
               <input
-                v-model="notifications.weeklyReport"
+                :checked="notifications.weeklyReport"
                 type="checkbox"
-                @change="saveNotifications"
+                @change="updateNotification('weeklyReport', $event)"
               />
               <span class="toggle-slider"></span>
             </label>
@@ -100,9 +100,9 @@
           <div class="setting-control">
             <label class="toggle-switch">
               <input
-                v-model="notifications.groupActivity"
+                :checked="notifications.groupActivity"
                 type="checkbox"
-                @change="saveNotifications"
+                @change="updateNotification('groupActivity', $event)"
               />
               <span class="toggle-slider"></span>
             </label>
@@ -118,9 +118,9 @@
           <div class="setting-control">
             <label class="toggle-switch">
               <input
-                v-model="notifications.treeHoleReply"
+                :checked="notifications.treeHoleReply"
                 type="checkbox"
-                @change="saveNotifications"
+                @change="updateNotification('treeHoleReply', $event)"
               />
               <span class="toggle-slider"></span>
             </label>
@@ -136,9 +136,9 @@
           <div class="setting-control">
             <label class="toggle-switch">
               <input
-                v-model="notifications.featureUpdate"
+                :checked="notifications.featureUpdate"
                 type="checkbox"
-                @change="saveNotifications"
+                @change="updateNotification('featureUpdate', $event)"
               />
               <span class="toggle-slider"></span>
             </label>
@@ -165,7 +165,7 @@
         <div class="setting-item danger">
           <div class="setting-info">
             <h4 class="setting-title">账号注销</h4>
-            <p class="setting-description">注销后所有个人数据将在7个工作日内永久删除</p>
+            <p class="setting-description">注销成功后，账号和个人数据会立即删除</p>
           </div>
           <div class="setting-control">
             <button class="action-btn danger-btn" @click="showDeleteAccountConfirm">注销</button>
@@ -188,7 +188,7 @@
 
           <h4>存储期限</h4>
           <p>1. 个人数据将在用户使用期间持续存储。</p>
-          <p>2. 账号注销后，所有个人数据将在7个工作日内永久删除。</p>
+          <p>2. 账号注销成功后，账号和个人数据会立即删除。</p>
 
           <h4>删除权限</h4>
           <p>1. 用户有权随时要求删除个人数据。</p>
@@ -210,11 +210,13 @@
         <div class="modal-body">
           <div class="warning-icon">⚠️</div>
           <p class="warning-text">确定要注销账号吗？</p>
-          <p>注销后，所有个人数据将在7个工作日内永久删除，此操作不可恢复。</p>
+          <p>注销成功后，账号和个人数据会立即删除，此操作不可恢复。</p>
         </div>
         <div class="modal-footer">
-          <button class="cancel-btn" @click="showDeleteConfirmModal = false">取消</button>
-          <button class="confirm-btn danger-btn" @click="deleteAccount">确认注销</button>
+          <button class="cancel-btn" :disabled="isDeletingAccount" @click="showDeleteConfirmModal = false">取消</button>
+          <button class="confirm-btn danger-btn" :disabled="isDeletingAccount" @click="deleteAccount">
+            {{ isDeletingAccount ? '注销中...' : '确认注销' }}
+          </button>
         </div>
       </div>
     </div>
@@ -222,9 +224,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { nextTick, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
+import { deleteCurrentAccount } from '@/api/auth'
+import { useUserStore } from '@/stores/userStore'
 import soundManager from '@/utils/sound'
+
+const router = useRouter()
+const userStore = useUserStore()
 
 // 个性化设置状态
 const reminderTime = ref('20:00') // 情绪记录提醒时间
@@ -232,7 +240,21 @@ const weeklyReport = ref(true) // 周报推送开关
 const gameSound = ref(true) // 解压游戏音效开关
 
 // 消息通知设置
-const notifications = ref({
+interface NotificationSettings {
+  emotionReminder: boolean
+  weeklyReport: boolean
+  groupActivity: boolean
+  treeHoleReply: boolean
+  featureUpdate: boolean
+}
+
+interface PreferenceSettings {
+  reminderTime: string
+  weeklyReport: boolean
+  gameSound: boolean
+}
+
+const notifications = ref<NotificationSettings>({
   emotionReminder: true, // 情绪记录提醒
   weeklyReport: true, // 周报生成通知
   groupActivity: true, // 团体辅导活动提醒
@@ -243,6 +265,13 @@ const notifications = ref({
 // 弹窗状态
 const showPrivacyModal = ref(false)
 const showDeleteConfirmModal = ref(false)
+const isDeletingAccount = ref(false)
+const lastSavedSettings = ref<PreferenceSettings>({
+  reminderTime: reminderTime.value,
+  weeklyReport: weeklyReport.value,
+  gameSound: gameSound.value,
+})
+const lastSavedNotifications = ref<NotificationSettings>({ ...notifications.value })
 
 // 时间选项（每小时一个选项）
 const timeOptions = ref<string[]>([])
@@ -281,20 +310,91 @@ onMounted(() => {
   if (savedNotifications) {
     notifications.value = JSON.parse(savedNotifications)
   }
+
+  lastSavedSettings.value = {
+    reminderTime: reminderTime.value,
+    weeklyReport: weeklyReport.value,
+    gameSound: gameSound.value,
+  }
+  lastSavedNotifications.value = { ...notifications.value }
 })
 
 // 保存个性化设置
-const saveSettings = () => {
-  localStorage.setItem('reminderTime', reminderTime.value)
-  localStorage.setItem('weeklyReport', JSON.stringify(weeklyReport.value))
-  localStorage.setItem('gameSound', JSON.stringify(gameSound.value))
-  // 更新音效管理器状态
-  soundManager.setSoundEnabled(gameSound.value)
+const saveSettings = async () => {
+  const nextSettings = {
+    reminderTime: reminderTime.value,
+    weeklyReport: weeklyReport.value,
+    gameSound: gameSound.value,
+  }
+
+  try {
+    localStorage.setItem('reminderTime', nextSettings.reminderTime)
+    localStorage.setItem('weeklyReport', JSON.stringify(nextSettings.weeklyReport))
+    localStorage.setItem('gameSound', JSON.stringify(nextSettings.gameSound))
+    lastSavedSettings.value = { ...nextSettings }
+    // 更新音效管理器状态
+    soundManager.setSoundEnabled(nextSettings.gameSound)
+    ElMessage.success('设置已保存')
+  } catch (error) {
+    console.error('保存个性化设置失败', error)
+    await nextTick()
+    reminderTime.value = lastSavedSettings.value.reminderTime
+    weeklyReport.value = lastSavedSettings.value.weeklyReport
+    gameSound.value = lastSavedSettings.value.gameSound
+    try {
+      localStorage.setItem('reminderTime', lastSavedSettings.value.reminderTime)
+      localStorage.setItem('weeklyReport', JSON.stringify(lastSavedSettings.value.weeklyReport))
+      localStorage.setItem('gameSound', JSON.stringify(lastSavedSettings.value.gameSound))
+    } catch {
+      // localStorage may remain unavailable; UI state has already been restored.
+    }
+    soundManager.setSoundEnabled(lastSavedSettings.value.gameSound)
+    ElMessage.error('设置保存失败，已恢复原值')
+  }
+}
+
+const updateReminderTime = (event: Event) => {
+  reminderTime.value = (event.target as HTMLSelectElement).value
+  void saveSettings()
+}
+
+const updateWeeklyReport = (event: Event) => {
+  weeklyReport.value = (event.target as HTMLInputElement).checked
+  void saveSettings()
+}
+
+const updateGameSound = (event: Event) => {
+  gameSound.value = (event.target as HTMLInputElement).checked
+  void saveSettings()
 }
 
 // 保存消息通知设置
-const saveNotifications = () => {
-  localStorage.setItem('notifications', JSON.stringify(notifications.value))
+const saveNotifications = async () => {
+  const nextNotifications = { ...notifications.value }
+
+  try {
+    localStorage.setItem('notifications', JSON.stringify(nextNotifications))
+    lastSavedNotifications.value = { ...nextNotifications }
+    ElMessage.success('通知设置已保存')
+  } catch (error) {
+    console.error('保存通知设置失败', error)
+    await nextTick()
+    notifications.value = { ...lastSavedNotifications.value }
+    try {
+      localStorage.setItem('notifications', JSON.stringify(lastSavedNotifications.value))
+    } catch {
+      // localStorage may remain unavailable; UI state has already been restored.
+    }
+    ElMessage.error('通知设置保存失败，已恢复原值')
+  }
+}
+
+const updateNotification = (key: keyof NotificationSettings, event: Event) => {
+  notifications.value = {
+    ...notifications.value,
+    [key]: (event.target as HTMLInputElement).checked,
+  }
+  void saveNotifications()
 }
 
 // 显示隐私声明
@@ -308,10 +408,24 @@ const showDeleteAccountConfirm = () => {
 }
 
 // 账号注销
-const deleteAccount = () => {
-  localStorage.clear()
-  showDeleteConfirmModal.value = false
-  ElMessage.success('账号注销申请已提交，所有个人数据将在7个工作日内永久删除。')
+const deleteAccount = async () => {
+  if (isDeletingAccount.value) {
+    return
+  }
+
+  isDeletingAccount.value = true
+  try {
+    await deleteCurrentAccount()
+    showDeleteConfirmModal.value = false
+    userStore.logout()
+    ElMessage.success('账号已注销')
+    router.push('/login')
+  } catch (error) {
+    console.error('账号注销失败', error)
+    ElMessage.error('账号注销失败，请稍后再试')
+  } finally {
+    isDeletingAccount.value = false
+  }
 }
 </script>
 
@@ -406,7 +520,8 @@ const deleteAccount = () => {
   }
 
   &:focus {
-    outline: none;
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
     border-color: #42b983;
     box-shadow: 0 0 0 2px rgba(66, 185, 131, 0.1);
   }

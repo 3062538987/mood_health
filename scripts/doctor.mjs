@@ -136,6 +136,24 @@ function checkPort(host, port) {
   })
 }
 
+async function checkRagReadiness(baseUrl) {
+  try {
+    const parsed = new URL(baseUrl)
+    const readinessUrl = new URL('/api/health/ready', parsed)
+    const response = await fetch(readinessUrl, { signal: AbortSignal.timeout(2000) })
+    const payload = await response.json()
+    if (response.ok && payload?.checks?.rag === true) {
+      ok(`FastAPI RAG is ready at ${parsed.origin}`)
+      return
+    }
+    warn(`FastAPI RAG is not ready at ${parsed.origin} (status ${response.status})`)
+  } catch (error) {
+    warn(
+      `FastAPI RAG readiness could not be reached (${error instanceof Error ? error.message : String(error)})`,
+    )
+  }
+}
+
 async function run() {
   console.log('Mood Health Doctor')
   console.log('==================')
@@ -151,7 +169,7 @@ async function run() {
   checkFile('mood_health_server/.env', false)
   checkDir('node_modules', false)
   checkDir('mood_health_server/node_modules', false)
-  checkFile('mood_health_server/dist/app.js', false)
+  checkFile('mood_health_server/dist/server.js', false)
   if (process.platform === 'win32') {
     checkFile('start-project.ps1', true)
     checkFile('start-project.sh', false)
@@ -166,6 +184,8 @@ async function run() {
 
   const backendEnv = readEnvFromFile('mood_health_server/.env')
   const redisRequired = parseBoolean(process.env.REDIS_REQUIRED ?? backendEnv.REDIS_REQUIRED, false)
+  const aiServiceBaseUrl =
+    process.env.AI_SERVICE_BASE_URL ?? backendEnv.AI_SERVICE_BASE_URL ?? 'http://127.0.0.1:8001'
 
   const ports = [
     { name: 'Frontend dev', port: 3001 },
@@ -186,6 +206,8 @@ async function run() {
       warn(`${item.name} port ${item.port} is not reachable`)
     }
   }
+
+  await checkRagReadiness(aiServiceBaseUrl)
 
   console.log('')
   console.log(`Summary: ${errors} error(s), ${warnings} warning(s)`)

@@ -7,6 +7,7 @@ import {
   getQuestionnaireDetail,
   getQuestionnaireQuestions,
   submitAssessment,
+  getAssessmentDetail,
   getUserAssessmentHistoryController,
 } from '../controllers/questionnaireController'
 
@@ -25,13 +26,17 @@ router.get('/history', getUserAssessmentHistoryController)
 router.post(
   '/assessments',
   [
-    body('questionnaire_id').isInt().withMessage('量表 ID 必须是整数'),
-    body('answers').isArray().withMessage('答案必须是数组'),
-    body('answers.*').isInt({ min: 0, max: 3 }).withMessage('答案必须是 0-3 之间的整数'),
+    body('questionnaire_id').isInt({ min: 1 }).withMessage('量表ID必须是正整数'),
+    body('answers').isArray({ min: 1 }).withMessage('答案数组不能为空'),
+    body('answers.*.itemId').isInt({ min: 1 }).withMessage('题目ID必须是正整数'),
+    body('answers.*.score').isInt({ min: 0, max: 4 }).withMessage('答案分数必须是0-4之间的整数'),
   ],
   validateRequest,
   submitAssessment
 )
+
+// 获取测评结果详情
+router.get('/assessments/:id', getAssessmentDetail)
 
 // 获取量表问题列表
 router.get('/:id/questions', getQuestionnaireQuestions)

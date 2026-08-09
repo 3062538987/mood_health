@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI分析与用户认证业务逻辑流程图</title>
+    <style id="theme-vars">
+:root {
+  --color-primary: #4F46E5;
+  --color-primary-light: #EEF2FF;
+  --color-primary-dark: #4338CA;
+  --color-secondary: #0EA5E9;
+  --color-accent: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-background: #F8FAFC;
+  --color-foreground: #111827;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #111827;
+  --color-muted: #6B7280;
+  --color-muted-foreground: #6B7280;
+  --color-border: #E5E7EB;
+  --color-ring: #4F46E5;
+  --color-radius-sm: 6px;
+  --color-radius-md: 8px;
+  --color-radius-lg: 12px;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--color-background);
+    --color-foreground: var(--color-foreground);
+    --color-card: var(--color-card);
+    --color-card-foreground: var(--color-card-foreground);
+    --color-primary: var(--color-primary);
+    --color-secondary: var(--color-secondary);
+    --color-muted: var(--color-muted);
+    --color-muted-foreground: var(--color-muted-foreground);
+    --color-accent: var(--color-accent);
+    --color-border: var(--color-border);
+    --color-ring: var(--color-ring);
+    --radius-sm: var(--color-radius-sm);
+    --radius-md: var(--color-radius-md);
+    --radius-lg: var(--color-radius-lg);
+  }
+  @layer base {
+    body { background: var(--color-background); color: var(--color-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--color-background); }
+      .text-background { color: var(--color-background); }
+      .border-background { border-color: var(--color-background); }
+      .ring-background { --tw-ring-color: var(--color-background); }
+      .bg-foreground { background-color: var(--color-foreground); }
+      .text-foreground { color: var(--color-foreground); }
+      .border-foreground { border-color: var(--color-foreground); }
+      .ring-foreground { --tw-ring-color: var(--color-foreground); }
+      .bg-card { background-color: var(--color-card); }
+      .text-card { color: var(--color-card); }
+      .border-card { border-color: var(--color-card); }
+      .ring-card { --tw-ring-color: var(--color-card); }
+      .bg-card-foreground { background-color: var(--color-card-foreground); }
+      .text-card-foreground { color: var(--color-card-foreground); }
+      .border-card-foreground { border-color: var(--color-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--color-card-foreground); }
+      .bg-primary { background-color: var(--color-primary); }
+      .text-primary { color: var(--color-primary); }
+      .border-primary { border-color: var(--color-primary); }
+      .ring-primary { --tw-ring-color: var(--color-primary); }
+      .bg-secondary { background-color: var(--color-secondary); }
+      .text-secondary { color: var(--color-secondary); }
+      .border-secondary { border-color: var(--color-secondary); }
+      .ring-secondary { --tw-ring-color: var(--color-secondary); }
+      .bg-muted { background-color: var(--color-muted); }
+      .text-muted { color: var(--color-muted); }
+      .border-muted { border-color: var(--color-muted); }
+      .ring-muted { --tw-ring-color: var(--color-muted); }
+      .bg-muted-foreground { background-color: var(--color-muted-foreground); }
+      .text-muted-foreground { color: var(--color-muted-foreground); }
+      .border-muted-foreground { border-color: var(--color-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--color-muted-foreground); }
+      .bg-accent { background-color: var(--color-accent); }
+      .text-accent { color: var(--color-accent); }
+      .border-accent { border-color: var(--color-accent); }
+      .ring-accent { --tw-ring-color: var(--color-accent); }
+      .bg-border { background-color: var(--color-border); }
+      .text-border { color: var(--color-border); }
+      .border-border { border-color: var(--color-border); }
+      .ring-border { --tw-ring-color: var(--color-border); }
+      .bg-ring { background-color: var(--color-ring); }
+      .text-ring { color: var(--color-ring); }
+      .border-ring { border-color: var(--color-ring); }
+      .ring-ring { --tw-ring-color: var(--color-ring); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body>
+
+<div class="page-container">
+
+  <!-- Header -->
+  <header class="page-header">
+    <div class="badge">
+      <span class="dot"></span>
+      业务逻辑流程图谱
+    </div>
+    <h1>AI分析与用户认证业务逻辑流程图</h1>
+    <p class="subtitle">智能增强模块 · 安全认证体系</p>
+    <div class="meta">
+      <div class="meta-item">
+        <span class="label">模块</span>
+        <span class="value">3 个核心流程</span>
+      </div>
+      <div class="meta-item">
+        <span class="label">版本</span>
+        <span class="value">V1.1</span>
+      </div>
+      <div class="meta-item">
+        <span class="label">类型</span>
+        <span class="value">业务逻辑流程图</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Legend -->
+  <div class="legend-section">
+    <div class="legend-item">
+      <div class="legend-swatch ai"></div>
+      <span>AI 智能模块</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch auth"></div>
+      <span>认证授权模块</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch security"></div>
+      <span>安全防护模块</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch decision"></div>
+      <span>决策判断节点</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch success"></div>
+      <span>成功路径</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch failure"></div>
+      <span>失败/错误路径</span>
+    </div>
+  </div>
+
+  <!-- Section 1: User Login Authentication Flow -->
+  <section class="flow-section auth-section">
+    <div class="section-header">
+      <div class="section-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+      </div>
+      <div class="section-title-wrap">
+        <h2 class="section-title">用户登录认证流程</h2>
+        <p class="section-desc">基于 JWT + Redis 的安全登录认证机制，含失败次数限制与账号锁定策略</p>
+      </div>
+      <span class="section-tag">认证模块</span>
+    </div>
+
+    <div class="mermaid-container">
+      <div class="mermaid">
+flowchart TD
+    subgraph INPUT["用户输入"]
+        A[用户输入用户名密码] --> B[提交登录请求]
+    end
+
+    subgraph REDIS_CHECK["Redis 安全检查"]
+        B --> C{账号是否被锁定?}
+        C -->|是 - 失败次数超限| D[返回 429 错误<br/>提示 15 分钟后再试]
+    end
+
+    subgraph USER_VERIFY["用户身份校验"]
+        C -->|否| E[查询用户信息]
+        E --> F{用户是否存在?}
+        F -->|不存在| G[记录失败次数 +1]
+        G --> H{失败次数≥5?}
+        H -->|是| I[锁定账号 15 分钟<br/>写入 Redis]
+        I --> J[返回 401 错误<br/>提示账号或密码错误]
+        H -->|否| J
+    end
+
+    subgraph PASSWORD_VERIFY["密码校验"]
+        F -->|存在| K[密码校验<br/>bcrypt 比对]
+        K --> L{密码是否正确?}
+        L -->|错误| M[记录失败次数 +1]
+        M --> N{失败次数≥5?}
+        N -->|是| O[锁定账号 15 分钟<br/>写入 Redis]
+        O --> P[返回 401 错误<br/>提示账号或密码错误]
+        N -->|否| P
+    end
+
+    subgraph TOKEN_GEN["Token 生成与返回"]
+        L -->|正确| Q[清除失败计数<br/>重置 Redis]
+        Q --> R[更新最后登录时间]
+        R --> S[生成 JWT Token<br/>有效期 7 天<br/>payload: userId/username/role]
+        S --> T[返回 Token 和用户信息]
+    end
+
+    style D fill:#FEF2F2,stroke:#EF4444,color:#991B1B
+    style J fill:#FEF2F2,stroke:#EF4444,color:#991B1B
+    style P fill:#FEF2F2,stroke:#EF4444,color:#991B1B
+    style T fill:#ECFDF5,stroke:#10B981,color:#065F46
+    style I fill:#FFFBEB,stroke:#F59E0B,color:#92400E
+    style O fill:#FFFBEB,stroke:#F59E0B,color:#92400E
+    style C fill:#FEF3C7,stroke:#F59E0B,color:#92400E
+    style F fill:#FEF3C7,stroke:#F59E0B,color:#92400E
+    style H fill:#FEF3C7,stroke:#F59E0B,color:#92400E
+    style L fill:#FEF3C7,stroke:#F59E0B,color:#92400E
+    style N fill:#FEF3C7,stroke:#F59E0B,color:#92400E
+    style S fill:#EEF2FF,stroke:#6366F1,color:#3730A3
+    style INPUT fill:#F9FAFB,stroke:#E5E7EB
+    style REDIS_CHECK fill:#FFFBEB,stroke:#FCD34D
+    style USER_VERIFY fill:#F9FAFB,stroke:#E5E7EB
+    style PASSWORD_VERIFY fill:#F9FAFB,stroke:#E5E7EB
+    style TOKEN_GEN fill:#ECFDF5,stroke:#6EE7B7
+      </div>
+    </div>
+
+    <div class="flow-details">
+      <div class="detail-card">
+        <h4>安全防护</h4>
+        <p>连续 5 次登录失败自动锁定账号 15 分钟，有效防止暴力破解攻击。</p>
+      </div>
+      <div class="detail-card">
+        <h4>密码安全</h4>
+        <p>使用 bcrypt 算法进行密码哈希存储，比对时进行恒定时间比较防时序攻击。</p>
+      </div>
+      <div class="detail-card">
+        <h4>JWT 凭证</h4>
+        <p>Token 有效期 7 天，payload 包含 userId、username、role 三要素。</p>
+      </div>
+      <div class="detail-card">
+        <h4>Redis 计数</h4>
+        <p>失败次数与锁定状态存储于 Redis，独立于数据库，性能更高、过期自动清理。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: AI Mood Report Generation Flow -->
+  <section class="flow-section ai-section">
+    <div class="section-header">
+      <div class="section-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"></path><path d="M12 6v6l4 2"></path><path d="M22 2 12 12"></path></svg>
+      </div>
+      <div class="section-title-wrap">
+        <h2 class="section-title">AI 情绪报告生成流程</h2>
+        <p class="section-desc">从数据采集、Prompt 构建到 AI 生成与安全审核的完整智能报告链路</p>
+      </div>
+      <span class="section-tag">AI 模块</span>
+    </div>
+
+    <div class="mermaid-container">
+      <div class="mermaid">
+flowchart TD
+    subgraph REQUEST["请求入口"]
+        A[用户请求 AI 报告<br/>周报 / 月报] --> B{AI 服务是否启用?<br/>AI_ENABLED 环境变量}
+        B -->|未启用| C[返回错误提示<br/>AI 服务暂不可用]
+    end
+
+    subgraph DATA_PREP["数据准备"]
+        B -->|已启用| D[查询情绪统计数据]
+        D --> D1[记录总数]
+        D --> D2[主导情绪分布]
+        D --> D3[平均情绪强度]
+        D --> D4[情绪趋势变化]
+    end
+
+    subgraph PROMPT_BUILD["Prompt 构建"]
+        D --> E[加载 Prompt 模板<br/>prompt_templates 表]
+        E --> F[填充模板变量]
+        F --> F1[用户名称]
+        F --> F2[时间范围]
+        F --> F3[情绪统计数据]
+        F --> F4[个性化建议参数]
+    end
+
+    subgraph AI_CALL["AI 生成"]
+        F --> G[调用 AI API<br/>OpenAI 兼容接口]
+        G --> H{API 调用成功?}
+        H -->|失败| I[记录错误日志<br/>返回友好错误提示]
+        H -->|成功| J[接收 AI 生成内容]
+    end
+
+    subgraph SAFETY_AUDIT["安全审核与存储"]
+        J --> K[安全审核<br/>内容安全检查]
+        K --> L{内容是否合规?}
+        L -->|不合规| M[过滤/替换敏感内容<br/>记录安全事件]
+        L -->|合规| N[保存 AI 历史记录<br/>ai_analysis_history 表]
+        M --> N
+    end
+
+    subgraph RESPONSE["结果返回"]
+        N --> O[返回 AI 报告内容<br/>含情绪洞察与建议]
+    end
+
+    style C fill:#FEF2F2,stroke:#EF4444,color:#991B1B
+    style I fill:#FEF2F2,stroke:#EF4444,color:#991B1B
+    style O fill:#ECFDF5,stroke:#10B981,color:#065F46
+    style B fill:#EEF2FF,stroke:#6366F1,color:#3730A3
+    style H fill:#FEF3C7,stroke:#F59E0B,color:#92400E
+    style L fill:#FFFBEB,stroke:#F59E0B,color:#92400E
+    style K fill:#FFFBEB,stroke:#F59E0B,color:#92400E
+    style G fill:#EEF2FF,stroke:#6366F1,color:#3730A3
+    style REQUEST fill:#F9FAFB,stroke:#E5E7EB
+    style DATA_PREP fill:#EEF2FF,stroke:#C7D2FE
+    style PROMPT_BUILD fill:#F9FAFB,stroke:#E5E7EB
+    style AI_CALL fill:#EEF2FF,stroke:#C7D2FE
+    style SAFETY_AUDIT fill:#FFFBEB,stroke:#FCD34D
+    style RESPONSE fill:#ECFDF5,stroke:#6EE7B7
+      </div>
+    </div>
+
+    <div class="flow-details">
+      <div class="detail-card">
+        <h4>特性开关</h4>
+        <p>通过 AI_ENABLED 环境变量统一控制 AI 服务启停，便于降级与调试。</p>
+      </div>
+      <div class="detail-card">
+        <h4>模板化 Prompt</h4>
+        <p>Prompt 模板存储于数据库，支持热更新与多场景模板切换，无需重新部署。</p>
+      </div>
+      <div class="detail-card">
+        <h4>内容安全</h4>
+        <p>AI 生成内容必经安全审核层，过滤敏感信息，确保心理健康建议的专业性。</p>
+      </div>
+      <div class="detail-card">
+        <h4>历史追溯</h4>
+        <p>所有 AI 报告均保存历史记录，支持用户查看、对比与反馈收集。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: RBAC Permission Check Flow -->
+  <section class="flow-section rbac-section">
+    <div class="section-header">
+      <div class="section-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
+      </div>
+      <div class="section-title-wrap">
+        <h2 class="section-title">RBAC 权限校验流程</h2>
+        <p class="section-desc">基于角色的访问控制体系，覆盖路由级与数据级双层权限校验</p>
+      </div>
+      <span class="section-tag">权限模块</span>
+    </div>
+
+    <div class="mermaid-container">
+      <div class="mermaid">
+flowchart TD
+    subgraph REQUEST_ENTRY["请求入口"]
+        A[API 请求到达] --> B[JWT 认证中间件]
+    end
+
+    subgraph TOKEN_VERIFY["Token 验证"]
+        B --> C{Token 是否有效?}
+        C -->|无效/过期| D[返回 401 未授权]
+        C -->|有效| E[解析用户角色和权限]
+    end
+
+    subgraph ROUTE_PERM["路由级权限校验"]
+        E --> F{路由类型?}
+        F -->|公开路由| G[放行 → 进入 Controller]
+        F -->|需要特定权限| H{用户是否拥有该权限?}
+        H -->|无权限| I[返回 403 禁止访问]
+        H -->|有权限| G
+    end
+
+    subgraph DATA_PERM["数据级权限校验 (Service 层)"]
+        G --> J[数据级权限校验]
+        J --> K{用户角色?}
+        K -->|学生| L[只能访问自己的数据<br/>mood / profile / records]
+        K -->|咨询师| M[只能访问分配给自己的个案<br/>cases / counseling]
+        K -->|super_admin| N[可访问所有数据<br/>全量管理权限]
+        L --> O[返回查询结果]
+        M --> O
+        N --> O
+    end
+
+    subgraph RESULT["结果返回"]
+        O --> P[业务处理完成 → 返回响应]
+    end
+
+    style D fill:#FEF2F2,stroke:#EF4444,color:#991B1B
+    style I fill:#FEF2F2,stroke:#EF4444,color:#991B1B
+    style P fill:#ECFDF5,stroke:#10B981,color:#065F46
+    style C fill:#FEF3C7,stroke:#F59E0B,color:#92400E
+    style F fill:#FEF3C7,stroke:#F59E0B,color:#92400E
+    style H fill:#FEF3C7,stroke:#F59E0B,color:#92400E
+    style K fill:#FEF3C7,stroke:#F59E0B,color:#92400E
+    style B fill:#FFFBEB,stroke:#F59E0B,color:#92400E
+    style J fill:#FFFBEB,stroke:#F59E0B,color:#92400E
+    style REQUEST_ENTRY fill:#F9FAFB,stroke:#E5E7EB
+    style TOKEN_VERIFY fill:#FFFBEB,stroke:#FCD34D
+    style ROUTE_PERM fill:#EEF2FF,stroke:#C7D2FE
+    style DATA_PERM fill:#ECFDF5,stroke:#6EE7B7
+    style RESULT fill:#F9FAFB,stroke:#E5E7EB
+      </div>
+    </div>
+
+    <div class="flow-details">
+      <div class="detail-card">
+        <h4>双层校验</h4>
+        <p>路由级权限由中间件统一处理，数据级权限下沉到 Service 层，各司其职、边界清晰。</p>
+      </div>
+      <div class="detail-card">
+        <h4>角色体系</h4>
+        <p>支持 student（学生）、counselor（咨询师）、super_admin（超级管理员）三级角色体系。</p>
+      </div>
+      <div class="detail-card">
+        <h4>数据隔离</h4>
+        <p>学生仅可见自身数据，咨询师仅可见分配个案，超级管理员拥有全量数据访问权限。</p>
+      </div>
+      <div class="detail-card">
+        <h4>权限矩阵</h4>
+        <p>通过 roles / permissions / role_permissions 三表关联，支持灵活的权限分配与扩展。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="page-footer">
+    <p>大学生心理健康平台 · AI分析与用户认证业务逻辑流程图 · V1.1</p>
+  </footer>
+
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#EEF2FF',
+      primaryTextColor: '#3730A3',
+      primaryBorderColor: '#6366F1',
+      lineColor: '#9CA3AF',
+      secondaryColor: '#ECFDF5',
+      secondaryTextColor: '#065F46',
+      secondaryBorderColor: '#10B981',
+      tertiaryColor: '#FFFBEB',
+      tertiaryTextColor: '#92400E',
+      tertiaryBorderColor: '#F59E0B',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif',
+      fontSize: '14px',
+      noteBkgColor: '#FFFBEB',
+      noteTextColor: '#92400E',
+      noteBorderColor: '#F59E0B',
+      errorBkgColor: '#FEF2F2',
+      errorTextColor: '#991B1B',
+    },
+    flowchart: {
+      useMaxWidth: true,
+      htmlLabels: true,
+      curve: 'basis',
+      padding: 20,
+      nodeSpacing: 50,
+      rankSpacing: 60,
+    },
+    securityLevel: 'loose',
+  });
+</script>
+
+
+    <style>
+  :root {
+    --primary: #6366F1;
+    --primary-light: #EEF2FF;
+    --primary-dark: #4F46E5;
+    --secondary: #10B981;
+    --secondary-light: #ECFDF5;
+    --secondary-dark: #059669;
+    --accent: #F59E0B;
+    --accent-light: #FFFBEB;
+    --accent-dark: #D97706;
+    --danger: #EF4444;
+    --danger-light: #FEF2F2;
+    --danger-dark: #DC2626;
+    --text-primary: #1F2937;
+    --text-secondary: #6B7280;
+    --text-light: #9CA3AF;
+    --bg-page: #F9FAFB;
+    --bg-card: #FFFFFF;
+    --border: #E5E7EB;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 48px 32px 80px;
+  }
+
+  /* Header */
+  .page-header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+
+  .page-header .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    background: linear-gradient(135deg, var(--primary-light), var(--secondary-light));
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--primary-dark);
+    margin-bottom: 20px;
+    border: 1px solid rgba(99, 102, 241, 0.15);
+  }
+
+  .page-header .badge .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--primary);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .page-header h1 {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+  }
+
+  .page-header .subtitle {
+    font-size: 18px;
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+
+  .page-header .meta {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .meta-item .label {
+    font-size: 12px;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .meta-item .value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  /* Legend */
+  .legend-section {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    padding: 20px 28px;
+    margin-bottom: 40px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 32px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .legend-swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1px solid rgba(0,0,0,0.1);
+  }
+
+  .legend-swatch.ai { background: var(--primary); }
+  .legend-swatch.auth { background: var(--secondary); }
+  .legend-swatch.security { background: var(--accent); }
+  .legend-swatch.success { background: #34D399; }
+  .legend-swatch.failure { background: #F87171; }
+  .legend-swatch.decision { background: #FCD34D; }
+
+  /* Section Card */
+  .flow-section {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    margin-bottom: 40px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .flow-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+  }
+
+  .flow-section.auth-section::before {
+    background: linear-gradient(90deg, var(--secondary), #34D399);
+  }
+
+  .flow-section.ai-section::before {
+    background: linear-gradient(90deg, var(--primary), #818CF8);
+  }
+
+  .flow-section.rbac-section::before {
+    background: linear-gradient(90deg, var(--accent), #FBBF24);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .auth-section .section-icon {
+    background: var(--secondary-light);
+    color: var(--secondary-dark);
+  }
+
+  .ai-section .section-icon {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+  }
+
+  .rbac-section .section-icon {
+    background: var(--accent-light);
+    color: var(--accent-dark);
+  }
+
+  .section-title-wrap {
+    flex: 1;
+  }
+
+  .section-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .section-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .section-tag {
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .auth-section .section-tag {
+    background: var(--secondary-light);
+    color: var(--secondary-dark);
+  }
+
+  .ai-section .section-tag {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+  }
+
+  .rbac-section .section-tag {
+    background: var(--accent-light);
+    color: var(--accent-dark);
+  }
+
+  /* Mermaid container */
+  .mermaid-container {
+    background: #FAFBFC;
+    border-radius: var(--radius-md);
+    padding: 32px;
+    border: 1px solid var(--border);
+    overflow-x: auto;
+  }
+
+  .mermaid {
+    display: flex;
+    justify-content: center;
+  }
+
+  /* Step descriptions */
+  .flow-details {
+    margin-top: 28px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .detail-card {
+    padding: 16px 20px;
+    background: var(--bg-page);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--primary);
+  }
+
+  .auth-section .detail-card {
+    border-left-color: var(--secondary);
+  }
+
+  .ai-section .detail-card {
+    border-left-color: var(--primary);
+  }
+
+  .rbac-section .detail-card {
+    border-left-color: var(--accent);
+  }
+
+  .detail-card h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .detail-card p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  /* Footer */
+  .page-footer {
+    text-align: center;
+    padding-top: 40px;
+    margin-top: 20px;
+    border-top: 1px solid var(--border);
+    color: var(--text-light);
+    font-size: 13px;
+  }
+
+  /* Mermaid theme overrides */
+  .mermaid .node rect,
+  .mermaid .node circle,
+  .mermaid .node polygon,
+  .mermaid .node ellipse {
+    stroke-width: 1.5px;
+  }
+
+  .mermaid .edgePath .path {
+    stroke-width: 1.5px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .page-container {
+      padding: 24px 16px 48px;
+    }
+    .page-header h1 {
+      font-size: 26px;
+    }
+    .page-header .subtitle {
+      font-size: 15px;
+    }
+    .flow-section {
+      padding: 24px 20px;
+    }
+    .section-title {
+      font-size: 18px;
+    }
+    .mermaid-container {
+      padding: 16px;
+    }
+    .legend-section {
+      gap: 16px;
+      padding: 16px 20px;
+    }
+  }
+</style>
+</body>
+</html>

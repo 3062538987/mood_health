@@ -1,0 +1,22 @@
+CREATE TABLE mood_analysis_versions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  period VARCHAR(5) NOT NULL DEFAULT '7d',
+  data_version VARCHAR(32) NOT NULL DEFAULT '',
+  input_hash VARCHAR(32) NOT NULL DEFAULT '',
+  record_ids JSON NOT NULL DEFAULT ('[]'),
+  record_count INT NOT NULL DEFAULT 0,
+  data_range_start DATE NOT NULL,
+  data_range_end DATE NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending',
+  analysis_content JSON DEFAULT NULL,
+  error_message TEXT DEFAULT NULL,
+  is_stale TINYINT(1) NOT NULL DEFAULT 0,
+  stale_reason VARCHAR(255) DEFAULT NULL,
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  CONSTRAINT fk_mav_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_mav_user_period (user_id, period),
+  INDEX idx_mav_user_period_version (user_id, period, data_version),
+  INDEX idx_mav_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

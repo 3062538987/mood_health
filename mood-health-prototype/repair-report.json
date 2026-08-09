@@ -1,0 +1,42 @@
+{
+  "success": false,
+  "repairedPages": [],
+  "skippedPages": [],
+  "failedPages": [
+    {
+      "htmlSrc": "pages/home.html",
+      "reason": "canonicalHtmlByKey.home is empty"
+    },
+    {
+      "htmlSrc": "pages/mood-record.html",
+      "reason": "canonicalHtmlByKey.mood is empty"
+    },
+    {
+      "htmlSrc": "pages/mood-insight.html",
+      "reason": "canonicalHtmlByKey.mood is empty"
+    },
+    {
+      "htmlSrc": "pages/ai-counseling.html",
+      "reason": "mobileNavigationActiveKey is missing"
+    },
+    {
+      "htmlSrc": "pages/relax.html",
+      "reason": "canonicalHtmlByKey.relax is empty"
+    },
+    {
+      "htmlSrc": "pages/treehole.html",
+      "reason": "canonicalHtmlByKey.treehole is empty"
+    },
+    {
+      "htmlSrc": "pages/improve.html",
+      "reason": "canonicalHtmlByKey.profile is empty"
+    },
+    {
+      "htmlSrc": "pages/profile.html",
+      "reason": "canonicalHtmlByKey.profile is empty"
+    }
+  ],
+  "repairCount": 0,
+  "previousFailedReportDetected": true,
+  "checkedAt": "2026-07-18T15:34:22.930Z"
+}

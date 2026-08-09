@@ -3,13 +3,13 @@ import { defineStore } from 'pinia'
 import { ElMessage } from 'element-plus'
 import { useDebounceFn } from '@vueuse/core'
 import {
-  analyzeMoodWithRetry,
   getMoodAdviceHistory,
+  getMoodTypeEnum,
   saveMoodAdvice,
   submitMoodRecord,
-  type AnalyzeMoodResponse,
   type MoodAdviceHistoryItem,
 } from '@/api/mood'
+import { analyzeMoodWithRetry, type MoodAnalysisResponse } from '@/api/moodAnalysis'
 
 const DRAFT_KEY = 'mood-record-draft-v2'
 const DRAFT_EXPIRE_HOURS = 24
@@ -272,7 +272,7 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
   const triggerInput = ref('')
   const selectedTriggers = ref<string[]>([])
   const selectedTags = ref<string[]>([])
-  const aiResult = ref<AnalyzeMoodResponse | null>(null)
+  const aiResult = ref<MoodAnalysisResponse | null>(null)
   const aiLoading = ref(false)
   const aiHistory = ref<MoodAdviceHistoryItem[]>([])
   const historyLoading = ref(false)
@@ -282,6 +282,23 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
   const initialized = ref(false)
   const isSubmitting = ref(false)
   const isSubmittingSuccess = ref(false)
+
+  // 情绪code到emotionTypeId的映射表
+  const emotionTypeIdMap = ref<Record<string, number>>({})
+
+  const mapEmotionCodesToIds = (codes: string[]): number[] => {
+    return codes.map((code) => emotionTypeIdMap.value[code] ?? 0).filter((id) => id > 0)
+  }
+
+  const fetchEmotionTypeIdMap = async () => {
+    const types = await getMoodTypeEnum()
+    const map: Record<string, number> = {}
+    for (const t of types) {
+      // 后端返回 { id, name, icon, category }，name 是 code
+      map[t.label] = (t as { id?: number }).id ?? 0
+    }
+    emotionTypeIdMap.value = map
+  }
   const aiFailureCount = ref(0)
   const aiDisabledUntil = ref<number | null>(null)
   const aiServiceMessage = ref('')
@@ -323,6 +340,14 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
   })
 
   const canAskAi = computed(() => characterCount.value >= 6 && !isAiTemporarilyDisabled.value)
+
+  const hasValidIntensity = computed(
+    () => Number.isFinite(intensity.value) && intensity.value >= 1 && intensity.value <= 10
+  )
+
+  const canSubmit = computed(
+    () => !isSubmitting.value && selectedMoodTypes.value.length > 0 && hasValidIntensity.value
+  )
 
   const currentAiMoodMeta = computed(() => {
     const moodLabel = aiResult.value?.mood || '未知'
@@ -757,14 +782,24 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
   }
 
   const submitRecord = async () => {
+    if (isSubmitting.value) {
+      return false
+    }
+
+    if (selectedMoodTypes.value.length === 0) {
+      ElMessage.error('请选择至少一种情绪类型')
+      return false
+    }
+
+    if (!hasValidIntensity.value) {
+      ElMessage.error('请选择 1-10 之间的情绪强度')
+      return false
+    }
+
     isSubmitting.value = true
     try {
-      const safeMoodTypes =
-        selectedMoodTypes.value.length > 0 ? [...selectedMoodTypes.value] : ['neutral']
-      const normalizedIntensity = Number.isFinite(intensity.value)
-        ? Math.min(10, Math.max(1, Math.round(intensity.value)))
-        : 5
-      const safeIntensity = normalizedIntensity || 5
+      const safeMoodTypes = [...selectedMoodTypes.value]
+      const safeIntensity = Math.round(intensity.value)
       // Backend currently reads moodRatio[0] as intensity and validates 1-10.
       // Keep combined mood types, but always submit a 1-10 ratio payload to avoid 400.
       const safeMoodRatio = [safeIntensity]
@@ -775,13 +810,21 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
         tags: Array.from(new Set([...selectedTags.value, ...selectedTriggers.value])),
         trigger: selectedTriggers.value.join(','),
         intensity: safeIntensity,
+        includeNote: true,
       }
 
-      console.log('提交情绪记录 payload:', payload)
+      if (import.meta.env.DEV) {
+        console.log('提交情绪记录 payload:', payload)
+      }
 
       await submitMoodRecord(payload)
+      const recordId = 0
+      const analysisJob = null as { id: number; status: string } | null
 
       ElMessage.success('这次心情已经好好存下来了')
+      if (analysisJob) {
+        ElMessage.info('7 天分析任务已创建，完成后将自动通知你')
+      }
       isSubmittingSuccess.value = true
       setTimeout(() => {
         isSubmittingSuccess.value = false
@@ -820,9 +863,9 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
       hasDraft.value = false
     }
 
+    await fetchEmotionTypeIdMap()
     refreshAutoRecommendations()
     initialized.value = true
-    await fetchAdviceHistory()
   }
 
   return {
@@ -849,6 +892,7 @@ export const useMoodRecordStore = defineStore('mood-record', () => {
     characterCount,
     formProgress,
     canAskAi,
+    canSubmit,
     isAiTemporarilyDisabled,
     aiCooldownSeconds,
     aiServiceMessage,

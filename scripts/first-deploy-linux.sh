@@ -7,7 +7,6 @@ ENV_TEMPLATE="$SCRIPT_DIR/mood_health_server/.env.production.no-ai.example"
 PUBLIC_HOST="${PUBLIC_HOST:-47.94.91.72}"
 PUBLIC_ORIGIN="http://${PUBLIC_HOST}"
 LOCAL_FRONTEND_URLS="$PUBLIC_ORIGIN,http://127.0.0.1:4173,http://127.0.0.1:3001,http://localhost:4173,http://localhost:3001"
-SQLITE_DB_PATH="$SCRIPT_DIR/mood_health_server/data/mood-health.db"
 
 cd "$SCRIPT_DIR"
 
@@ -39,8 +38,6 @@ set_env_value() {
 set_env_value "NODE_ENV" "production"
 set_env_value "PORT" "3000"
 set_env_value "HOST" "127.0.0.1"
-set_env_value "DB_CLIENT" "sqlite"
-set_env_value "SQLITE_DB_PATH" "$SQLITE_DB_PATH"
 set_env_value "AI_ENABLED" "false"
 set_env_value "FRONTEND_URL" "$LOCAL_FRONTEND_URLS"
 

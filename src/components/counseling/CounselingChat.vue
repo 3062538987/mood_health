@@ -177,9 +177,9 @@ const sendMessage = async () => {
         duration: 5000,
       })
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     ElMessage({
-      message: error.message || '发送失败，请稍后重试',
+      message: error instanceof Error ? error.message : '发送失败，请稍后重试',
       type: 'error',
     })
   } finally {

@@ -1,18 +1,17 @@
 import crypto from "crypto";
-
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
-
-if (!ENCRYPTION_KEY) {
-  throw new Error("ENCRYPTION_KEY environment variable is required");
-}
+import logger from "./logger";
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16;
 const AUTH_TAG_LENGTH = 16;
 const KEY_LENGTH = 32;
 
-function getKey(): Buffer {
-  const key = Buffer.from(ENCRYPTION_KEY!, "hex");
+function getKey(keyHex?: string): Buffer {
+  const ENCRYPTION_KEY = keyHex ?? process.env.ENCRYPTION_KEY;
+  if (!ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY environment variable is required");
+  }
+  const key = Buffer.from(ENCRYPTION_KEY, "hex");
   if (key.length !== KEY_LENGTH) {
     throw new Error(
       `Invalid encryption key length. Expected ${KEY_LENGTH} bytes, got ${key.length} bytes`,
@@ -27,12 +26,12 @@ export interface EncryptedData {
   authTag: string;
 }
 
-export function encrypt(text: string): string {
+export function encrypt(text: string, keyHex?: string): string {
   if (!text) return text;
 
   try {
     const iv = crypto.randomBytes(IV_LENGTH);
-    const cipher = crypto.createCipheriv(ALGORITHM, getKey(), iv);
+    const cipher = crypto.createCipheriv(ALGORITHM, getKey(keyHex), iv);
 
     let encrypted = cipher.update(text, "utf8", "hex");
     encrypted += cipher.final("hex");
@@ -47,12 +46,12 @@ export function encrypt(text: string): string {
 
     return JSON.stringify(result);
   } catch (error) {
-    console.error("Encryption error:", error);
+    logger.error("Encryption error:", error);
     throw new Error("Failed to encrypt data");
   }
 }
 
-export function decrypt(encryptedData: string): string {
+export function decrypt(encryptedData: string, keyHex?: string): string {
   if (!encryptedData) return encryptedData;
 
   if (!encryptedData.startsWith("{")) {
@@ -64,7 +63,7 @@ export function decrypt(encryptedData: string): string {
 
     const decipher = crypto.createDecipheriv(
       ALGORITHM,
-      getKey(),
+      getKey(keyHex),
       Buffer.from(data.iv, "hex"),
     );
 
@@ -75,19 +74,26 @@ export function decrypt(encryptedData: string): string {
 
     return decrypted;
   } catch (error) {
-    console.error("Decryption error:", error);
-    return encryptedData;
+    // 解密失败必须抛出，绝不能把密文原样返回给调用方（曾静默返回密文，存在信息泄露风险）
+    logger.error("Decryption error:", error);
+    throw new Error(`解密失败: ${(error as Error).message}`);
   }
 }
 
-export function encryptField(value: string | null | undefined): string | null {
+export function encryptField(value: string | null | undefined, keyHex?: string): string | null {
   if (value === null || value === undefined) return null;
-  return encrypt(value);
+  return encrypt(value, keyHex);
 }
 
-export function decryptField(value: string | null | undefined): string | null {
+export function decryptField(value: string | null | undefined, keyHex?: string): string | null {
   if (value === null || value === undefined) return null;
-  return decrypt(value);
+  try {
+    return decrypt(value, keyHex);
+  } catch (error) {
+    // 字段级解密失败回退为 null（字段可为空），但记录日志以便排查密钥/数据损坏
+    logger.error("decryptField failed", error);
+    return null;
+  }
 }
 
 export function generateEncryptionKey(): string {

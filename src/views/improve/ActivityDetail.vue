@@ -15,8 +15,8 @@
       </div>
 
       <!-- 错误提示 -->
-      <el-empty v-else-if="error" description="加载失败，请稍后重试" :image-size="200">
-        <el-button type="primary" @click="loadActivityDetail">重新加载</el-button>
+      <el-empty v-else-if="error" description="活动信息加载出现问题，请再试一次" :image-size="200">
+        <el-button type="primary" @click="loadActivityDetail">再试一次</el-button>
       </el-empty>
 
       <!-- 活动详情内容 -->
@@ -116,6 +116,17 @@
                     >
                       {{ isEnded ? '活动已结束' : '取消报名' }}
                     </el-button>
+                    <el-button
+                      v-if="!isEnded"
+                      :type="hasReminder ? 'warning' : 'primary'"
+                      size="large"
+                      plain
+                      :loading="reminding"
+                      @click="hasReminder ? handleCancelReminder() : handleSetReminder()"
+                    >
+                      <el-icon><Bell /></el-icon>
+                      {{ hasReminder ? '已设置提醒' : '设置提醒' }}
+                    </el-button>
                   </template>
                   <el-button v-else-if="isFull || isEnded" type="info" size="large" disabled>
                     {{ isFull ? '名额已满' : '活动已结束' }}
@@ -131,6 +142,58 @@
                   </el-button>
                 </template>
               </div>
+            </el-card>
+
+            <!-- 活动反馈 -->
+            <el-card v-if="isEnded && isJoined" class="feedback-card" shadow="hover">
+              <template #header>
+                <div class="card-header">
+                  <span class="card-title">
+                    <el-icon><Star /></el-icon>
+                    活动反馈
+                  </span>
+                </div>
+              </template>
+
+              <template v-if="myFeedback || feedbackSubmitted">
+                <div class="feedback-submitted">
+                  <el-result icon="success" title="感谢您的反馈！">
+                    <template #sub-title>
+                      <el-rate v-model="myFeedback!.rating" disabled show-score />
+                      <p v-if="myFeedback!.comment" class="feedback-comment-display">
+                        {{ myFeedback!.comment }}
+                      </p>
+                    </template>
+                  </el-result>
+                </div>
+              </template>
+
+              <template v-else>
+                <div class="feedback-form">
+                  <div class="rating-section">
+                    <span class="rating-label">评分</span>
+                    <el-rate v-model="feedbackRating" :max="5" show-score />
+                  </div>
+                  <div class="comment-section">
+                    <el-input
+                      v-model="feedbackComment"
+                      type="textarea"
+                      :rows="3"
+                      placeholder="分享您的活动体验（可选）"
+                      maxlength="500"
+                      show-word-limit
+                    />
+                  </div>
+                  <el-button
+                    type="primary"
+                    :loading="feedbackSubmitting"
+                    :disabled="feedbackRating === 0"
+                    @click="handleSubmitFeedback"
+                  >
+                    提交反馈
+                  </el-button>
+                </div>
+              </template>
             </el-card>
           </div>
 
@@ -218,7 +281,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   ArrowLeft,
   Picture,
@@ -230,6 +293,8 @@ import {
   User,
   UserFilled,
   DataLine,
+  Bell,
+  Star,
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/userStore'
 import type { Activity } from '@/types/activity'
@@ -239,6 +304,11 @@ import {
   getActivityDetailWithParticipants,
   joinActivity,
   deleteActivity,
+  setActivityReminder,
+  cancelActivityReminder,
+  getReminderStatus,
+  submitActivityFeedback,
+  getUserActivityFeedback,
 } from '@/api/activityApi'
 import { getActivityStatus } from '@/utils/activityStatus'
 
@@ -258,6 +328,15 @@ const joining = ref(false)
 const cancelling = ref(false)
 const deleting = ref(false)
 const showDeleteModal = ref(false)
+const hasReminder = ref(false)
+const reminding = ref(false)
+
+// 反馈状态
+const feedbackRating = ref(0)
+const feedbackComment = ref('')
+const feedbackSubmitting = ref(false)
+const myFeedback = ref<{ rating: number; comment: string | null } | null>(null)
+const feedbackSubmitted = ref(false)
 
 // 计算属性
 const statusConfig = computed(() => {
@@ -314,6 +393,14 @@ const loadActivityDetail = async () => {
     const response = await getActivityDetailWithParticipants(id)
     activity.value = response.activity
     participants.value = response.participants
+    // 加载提醒状态
+    if (isLoggedIn.value && isJoined.value) {
+      loadReminderStatus()
+    }
+    // 加载已有反馈
+    if (isLoggedIn.value && isJoined.value && isEnded.value) {
+      loadMyFeedback()
+    }
   } catch {
     error.value = true
   } finally {
@@ -321,9 +408,88 @@ const loadActivityDetail = async () => {
   }
 }
 
+// 加载提醒状态
+const loadReminderStatus = async () => {
+  if (!activity.value || !isLoggedIn.value) return
+  try {
+    hasReminder.value = await getReminderStatus(activity.value.id)
+  } catch {
+    hasReminder.value = false
+  }
+}
+
+// 设置提醒
+const handleSetReminder = async () => {
+  if (!activity.value || reminding.value) return
+  reminding.value = true
+  try {
+    await setActivityReminder(activity.value.id)
+    hasReminder.value = true
+    ElMessage.success('提醒设置成功，活动开始前30分钟将提醒您')
+  } catch {
+    // 错误已由拦截器处理
+  } finally {
+    reminding.value = false
+  }
+}
+
+// 取消提醒
+const handleCancelReminder = async () => {
+  if (!activity.value || reminding.value) return
+  reminding.value = true
+  try {
+    await cancelActivityReminder(activity.value.id)
+    hasReminder.value = false
+    ElMessage.success('已取消提醒')
+  } catch {
+    // 错误已由拦截器处理
+  } finally {
+    reminding.value = false
+  }
+}
+
+// 加载我的反馈
+const loadMyFeedback = async () => {
+  if (!activity.value || !isLoggedIn.value) return
+  try {
+    const feedback = await getUserActivityFeedback(activity.value.id)
+    if (feedback) {
+      myFeedback.value = { rating: feedback.rating, comment: feedback.comment }
+    }
+  } catch {
+    // ignore
+  }
+}
+
+// 提交反馈
+const handleSubmitFeedback = async () => {
+  if (!activity.value || feedbackSubmitting.value || feedbackRating.value === 0) return
+  feedbackSubmitting.value = true
+  try {
+    await submitActivityFeedback(activity.value.id, feedbackRating.value, feedbackComment.value || undefined)
+    myFeedback.value = { rating: feedbackRating.value, comment: feedbackComment.value || null }
+    feedbackSubmitted.value = true
+    ElMessage.success('感谢您的反馈！')
+  } catch {
+    // 错误已由拦截器处理
+  } finally {
+    feedbackSubmitting.value = false
+  }
+}
+
 // 报名
 const handleJoin = async () => {
   if (!activity.value || joining.value) return
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要报名参加「${activity.value.title}」吗？`,
+      '确认报名',
+      { confirmButtonText: '确定报名', cancelButtonText: '取消', type: 'info' }
+    )
+  } catch {
+    return
+  }
 
   joining.value = true
   try {
@@ -350,6 +516,16 @@ const editActivity = () => {
 
 const handleCancelJoin = async () => {
   if (!activity.value || cancelling.value) return
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要取消报名「${activity.value.title}」吗？`,
+      '确认取消报名',
+      { confirmButtonText: '确定取消', cancelButtonText: '返回', type: 'warning' }
+    )
+  } catch {
+    return
+  }
 
   cancelling.value = true
   try {
@@ -583,6 +759,52 @@ const formatDate = (dateStr: string) => {
   .el-button {
     flex: 1;
   }
+}
+
+// 活动反馈
+.feedback-card {
+  border-radius: 16px;
+  margin-top: 20px;
+
+  .card-header {
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #303133;
+
+      .el-icon {
+        color: #e6a23c;
+      }
+    }
+  }
+}
+
+.feedback-form {
+  .rating-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+
+    .rating-label {
+      font-size: 14px;
+      color: #606266;
+    }
+  }
+
+  .comment-section {
+    margin-bottom: 16px;
+  }
+}
+
+.feedback-comment-display {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #606266;
+  line-height: 1.6;
 }
 
 // 侧边栏

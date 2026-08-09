@@ -9,6 +9,7 @@ export const useMoodStore = defineStore('mood', () => {
   const weeklyReport = ref<MoodWeeklyReport | null>(null)
   const loading = ref(false)
   const error = ref('')
+  const hasFetchedMoodList = ref(false)
 
   const submitRecord = async (data: Omit<MoodRecord, 'id' | 'userId' | 'createTime'>) => {
     loading.value = true
@@ -39,6 +40,7 @@ export const useMoodStore = defineStore('mood', () => {
       }
       error.value = errorResponse.response?.data?.message || '获取列表失败'
     } finally {
+      hasFetchedMoodList.value = true
       loading.value = false
     }
   }
@@ -79,6 +81,7 @@ export const useMoodStore = defineStore('mood', () => {
     weeklyReport,
     loading,
     error,
+    hasFetchedMoodList,
     submitRecord,
     fetchMoodList,
     fetchWeeklyReport,

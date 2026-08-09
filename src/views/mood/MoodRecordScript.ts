@@ -486,23 +486,29 @@ const handleGetAdvice = async () => {
       ElMessage.warning('建议生成成功，但保存失败')
       console.error('保存 AI 建议失败:', saveError)
     }
-  } catch (error: any) {
-    if (error.response) {
-      if (error.response.status === 429) {
+  } catch (error: unknown) {
+    const err = error as {
+      response?: { status?: number; data?: { detail?: string; message?: string } }
+      code?: string
+      message?: string
+    }
+    if (err.response) {
+      const status = err.response.status
+      if (status !== undefined && status === 429) {
         ElMessage.error('请求太频繁，请稍后再试')
-      } else if (error.response.status >= 500) {
+      } else if (status !== undefined && status >= 500) {
         ElMessage.error('服务器繁忙，请稍后重试')
       } else {
         ElMessage.error(
-          `获取建议失败: ${error.response.data?.detail || error.response.data?.message || '未知错误'}`
+          `获取建议失败: ${err.response.data?.detail || err.response.data?.message || '未知错误'}`
         )
       }
-    } else if (error.code === 'ECONNABORTED') {
+    } else if (err.code === 'ECONNABORTED') {
       ElMessage.error('请求超时，请检查网络')
-    } else if (error.message && error.message.includes('Network Error')) {
+    } else if (err.message && err.message.includes('Network Error')) {
       ElMessage.error('网络连接失败，请检查网络设置')
-    } else if (error.message) {
-      ElMessage.error(error.message)
+    } else if (err.message) {
+      ElMessage.error(err.message)
     } else {
       ElMessage.error('获取建议失败，请稍后重试')
     }

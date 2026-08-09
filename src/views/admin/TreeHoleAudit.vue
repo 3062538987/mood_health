@@ -112,14 +112,15 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getPendingPosts, getPostAuditStats, auditPost } from '@/api/post'
+import type { Post } from '@/types/post'
 
-const posts = ref<any[]>([])
+const posts = ref<Post[]>([])
 const loading = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const statusFilter = ref(0)
 const showRejectModal = ref(false)
-const currentPost = ref<any | null>(null)
+const currentPost = ref<Post | null>(null)
 const rejectRemark = ref('')
 
 const pendingCount = ref(0)
@@ -186,7 +187,7 @@ const formatTime = (date?: string) => {
   return d.toLocaleDateString('zh-CN')
 }
 
-const getStatusText = (status: number) => {
+const getStatusText = (status: number | undefined) => {
   switch (status) {
     case 0:
       return '待审核'
@@ -199,7 +200,7 @@ const getStatusText = (status: number) => {
   }
 }
 
-const showRejectDialog = (post: any) => {
+const showRejectDialog = (post: Post) => {
   currentPost.value = post
   rejectRemark.value = ''
   showRejectModal.value = true
@@ -585,7 +586,8 @@ onMounted(loadData)
         margin-bottom: 15px;
 
         &:focus {
-          outline: none;
+          outline: 3px solid var(--focus);
+          outline-offset: 2px;
           border-color: $primary-color;
         }
       }

@@ -2,6 +2,27 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import relaxAPI, { type RelaxRecord, type RelaxStatistics } from '@/api/relax'
 import storageUtil from '@/utils/storageUtil'
+import { useUserStore } from '@/stores/userStore'
+
+const OFFLINE_QUEUE_KEY = 'relaxOfflineQueue'
+const CLIENT_ID_KEY = 'relaxClientId'
+
+const generateClientId = (): string => {
+  const existing = storageUtil.getItem<string>(CLIENT_ID_KEY)
+  if (existing) return existing
+  const id = `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+  storageUtil.setItem(CLIENT_ID_KEY, id)
+  return id
+}
+
+const getClientId = (): string => generateClientId()
+
+interface OfflineRecord {
+  record: Omit<RelaxRecord, 'id' | 'userId'>
+  clientId: string
+  clientTimestamp: number
+  retryCount: number
+}
 
 const useRelaxStore = defineStore('relax', () => {
   // 状态
@@ -30,20 +51,21 @@ const useRelaxStore = defineStore('relax', () => {
   // 方法
   /**
 /**
-   * 保存放松记录
+   * 保存放松记录（支持离线）
    */
   async function saveRecord(record: Omit<RelaxRecord, 'id' | 'userId'>) {
     isLoading.value = true
     error.value = null
+    const userStore = useUserStore()
 
     try {
-      const userId = 'current-user-id' // 临时值，实际应从用户状态获取
-
-      if (userId) {
-        // 已登录，直接保存到后端
+      if (userStore.isLoggedIn) {
+        const clientId = getClientId()
         const savedResult = await relaxAPI.saveRecordSafe({
           ...record,
-          userId,
+          userId: String(userStore.user?.id || ''),
+          clientId,
+          clientTimestamp: Date.now(),
         })
         if (!savedResult.ok) {
           throw new Error(savedResult.message)
@@ -52,29 +74,41 @@ const useRelaxStore = defineStore('relax', () => {
         records.value.unshift(savedRecord)
         return savedRecord
       } else {
-        // 未登录，暂存到localStorage
-        const pendingRecord = {
-          ...record,
-          userId: 'anonymous',
-        }
-        pendingRecords.value.push(pendingRecord)
-        storageUtil.setItem('pendingRelaxRecords', pendingRecords.value)
+        // 未登录，暂存到离线队列
+        enqueueOffline(record)
+        const pendingRecord: RelaxRecord = { ...record, id: `local-${Date.now()}`, userId: 'anonymous' }
+        records.value.unshift(pendingRecord)
         return pendingRecord
       }
     } catch (err) {
       error.value = '保存记录失败'
       console.error('保存放松记录失败:', err)
-      const fallbackRecord = {
+      // 离线保存：网络不可用时暂存到本地
+      enqueueOffline(record)
+      const fallbackRecord: RelaxRecord = {
         ...record,
         id: `local-${Date.now()}`,
         userId: 'anonymous',
       }
-      pendingRecords.value.push(fallbackRecord)
-      storageUtil.setItem('pendingRelaxRecords', pendingRecords.value)
+      records.value.unshift(fallbackRecord)
       return fallbackRecord
     } finally {
       isLoading.value = false
     }
+  }
+
+  /**
+   * 添加记录到离线队列
+   */
+  function enqueueOffline(record: Omit<RelaxRecord, 'id' | 'userId'>) {
+    const queue = storageUtil.getItem<OfflineRecord[]>(OFFLINE_QUEUE_KEY) || []
+    queue.push({
+      record,
+      clientId: getClientId(),
+      clientTimestamp: Date.now(),
+      retryCount: 0,
+    })
+    storageUtil.setItem(OFFLINE_QUEUE_KEY, queue)
   }
 
   /**
@@ -89,7 +123,8 @@ const useRelaxStore = defineStore('relax', () => {
     error.value = null
 
     try {
-      const userId = 'current-user-id' // 临时值，实际应从用户状态获取
+      const userStore = useUserStore()
+      const userId = userStore.user?.id ?? null  // 从用户状态获取真实 id，移除硬编码占位
 
       if (userId) {
         const response = await relaxAPI.getRecordsSafe(params)
@@ -127,7 +162,8 @@ const useRelaxStore = defineStore('relax', () => {
     error.value = null
 
     try {
-      const userId = 'current-user-id' // 临时值，实际应从用户状态获取
+      const userStore = useUserStore()
+      const userId = userStore.user?.id ?? null  // 从用户状态获取真实 id，移除硬编码占位
 
       if (userId) {
         const result = await relaxAPI.getStatisticsSafe(params)
@@ -185,7 +221,7 @@ const useRelaxStore = defineStore('relax', () => {
     )
 
     const activityBreakdown = Object.entries(activityCounts).map(([type, count]) => {
-      const typeRecords = filteredRecords.filter((r) => r.activityType === (type as any))
+      const typeRecords = filteredRecords.filter((r) => r.activityType === (type as RelaxRecord['activityType']))
       const duration = typeRecords.reduce((total, record) => {
         const start = new Date(record.startTime).getTime()
         const end = new Date(record.endTime).getTime()
@@ -234,27 +270,79 @@ const useRelaxStore = defineStore('relax', () => {
   }
 
   /**
-   * 同步未登录时的暂存记录
+   * 同步离线队列中的记录
    */
   async function syncPendingRecords() {
-    const storedPendingRecords = storageUtil.getItem<RelaxRecord[]>('pendingRelaxRecords') || []
-    const userId = 'current-user-id' // 临时值，实际应从用户状态获取
+    const userStore = useUserStore()
+    if (!userStore.isLoggedIn) return
 
-    if (userId && storedPendingRecords.length > 0) {
-      for (const record of storedPendingRecords) {
-        try {
-          await relaxAPI.saveRecord({
-            ...record,
-            userId,
-          })
-        } catch (err) {
-          console.error('同步暂存记录失败:', err)
-        }
+    const queue = storageUtil.getItem<OfflineRecord[]>(OFFLINE_QUEUE_KEY) || []
+    if (queue.length === 0) return
+
+    const MAX_RETRIES = 3
+    const remaining: OfflineRecord[] = []
+
+    for (const item of queue) {
+      if (item.retryCount >= MAX_RETRIES) {
+        // 超过最大重试次数，丢弃
+        continue
       }
 
-      // 清空暂存记录
-      storageUtil.removeItem('pendingRelaxRecords')
-      pendingRecords.value = []
+      try {
+        await relaxAPI.saveRecord({
+          ...item.record,
+          userId: String(userStore.user?.id || ''),
+          clientId: item.clientId,
+          clientTimestamp: item.clientTimestamp,
+        })
+      } catch {
+        // 同步失败，增加重试计数并保留
+        remaining.push({
+          ...item,
+          retryCount: item.retryCount + 1,
+        })
+      }
+    }
+
+    if (remaining.length > 0) {
+      storageUtil.setItem(OFFLINE_QUEUE_KEY, remaining)
+    } else {
+      storageUtil.removeItem(OFFLINE_QUEUE_KEY)
+    }
+    pendingRecords.value = []
+  }
+
+  /**
+   * 手动重试同步
+   */
+  async function retrySync() {
+    const userStore = useUserStore()
+    if (!userStore.isLoggedIn) {
+      error.value = '请先登录后再同步'
+      return
+    }
+    isLoading.value = true
+    try {
+      await syncPendingRecords()
+      await fetchRecords()
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * 设置网络状态监听
+   */
+  function setupNetworkListeners() {
+    if (typeof window === 'undefined') return
+
+    const handleOnline = () => {
+      syncPendingRecords()
+    }
+
+    window.addEventListener('online', handleOnline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
     }
   }
 
@@ -279,6 +367,8 @@ const useRelaxStore = defineStore('relax', () => {
     fetchRecords,
     fetchStatistics,
     syncPendingRecords,
+    retrySync,
+    setupNetworkListeners,
     init,
   }
 })

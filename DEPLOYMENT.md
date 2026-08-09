@@ -1,244 +1,77 @@
-# 部署指南
+# 部署指南 (DEPLOYMENT.md)
 
-本文档用于将项目部署到生产或准生产环境。当前仓库包含三个核心服务：
+> 本文档为「大学生情绪健康管理平台」的部署说明，与 `README.txt` 保持一致。
+> 关键端口：**前端 3001（dev）/ 由 nginx 托管 dist**，**后端 3000**，**AI 服务 8001**，**MySQL 3316**，**Redis 6379**。
 
-- 前端静态站点（Vite 构建产物）
-- Node API 服务（mood_health_server/dist/app.js）
-- Python AI 服务（mood_health_server/main.py）
+## 1. 前置条件
 
-命令以 `docs/COMMANDS.md` 为统一索引；本文件仅保留部署场景下最关键命令，避免多处重复维护。
+- Node.js >= 22（后端 / 前端构建）
+- Python >= 3.10（AI 服务）
+- MySQL（实例端口 **3316**）、Redis（6379）
+- Docker（推荐用 `compose.yaml` 起 MySQL/Redis）
+- 生产环境证书：`/etc/nginx/certs/{fullchain.pem,privkey.pem}`（见 `nginx.linux.conf`）
 
-## 1. 前置依赖
-
-- Node.js 22+
-- Python 3.8+
-- Redis（建议）
-- SQLite（推荐，低配主机优先）
-- SQL Server（可选，兼容模式）
-- PM2（可选，推荐用于常驻）
-- Nginx（可选，用于反向代理）
-
-## 2. 配置文件
-
-项目中提供了可直接复制的环境模板，请按实际环境创建：
-
-- 根目录 `.env`（前端 Vite 变量）
-- `mood_health_server/.env`（后端与 AI 服务变量）
-
-可参考模板：
-
-- `.env.production.example`（前端生产）
-- `mood_health_server/.env.production.no-ai.example`（后端 2核2G 无 AI 推理）
-- `mood_health_server/.env.example`（后端通用示例）
-
-建议至少校验以下变量：
-
-- `VITE_API_BASE_URL`
-- `NODE_ENV`
-- `FRONTEND_URL`
-- `DB_CLIENT`（推荐 `sqlite`）
-- `SQLITE_DB_PATH`（建议绝对路径）
-- `DB_SERVER`、`DB_USER`、`DB_PASSWORD`、`DB_NAME`（仅 SQL Server 模式需要）
-- `JWT_SECRET`、`ENCRYPTION_KEY`
-- `REDIS_URL`
-- `AI_ENABLED`（2核2G 建议 `false`）
-- `AI_SERVICE_BASE_URL`（仅 `AI_ENABLED=true` 时需要）
-- `OLLAMA_URL`、`OLLAMA_MODEL`
-
-## 3. 安装与构建
-
-在仓库根目录执行：
+## 2. 环境变量初始化
 
 ```bash
-npm run setup
-npm run build:all
+# 1) 根环境（前端 + 后端共用）
+cp .env.example .env
+#    生成强随机令牌并替换占位（上线前务必重生成）：
+#      AI_SERVICE_INTERNAL_TOKEN=$(openssl rand -hex 32)
+#      ENCRYPTION_KEY=$(openssl rand -hex 32)
+#    填入真实 MYSQL_PASSWORD / REDIS_PASSWORD / AI_API_KEY
+#    确认 MYSQL_PORT=3316（与运行实例一致）
+
+# 2) AI 服务环境（与根 .env 同源：令牌/端口/MySQL 必须一致）
+cp mood_health_ai_service/.env.example mood_health_ai_service/.env
+#    确认 AI_SERVICE_INTERNAL_TOKEN 与根 .env 完全相同
+#    确认 MYSQL_PORT=3316
 ```
 
-如果你要直接做首发部署，Linux 上建议优先用一键脚本：
+> **铁律**：真实 `.env`、证书、私钥**永不入库**（`.gitignore` 已含 `.env`）。
+> CI 中敏感值通过 GitHub Actions Encrypted Secrets 注入，不落文件。
+
+## 3. 启动顺序
 
 ```bash
-npm run deploy:linux
+# 1) 基础设施
+docker compose up -d mysql redis
+
+# 2) 数据库迁移与种子
+cd mood_health_server && npm run db:migrate && npm run db:seed:demo
+
+# 3) AI 服务（端口 8001）
+cd mood_health_ai_service && uvicorn app.main:app --port 8001
+#    AI 服务在启动时会校验 AI_SERVICE_INTERNAL_TOKEN 非空（空令牌直接拒绝启动）
+
+# 4) 后端（端口 3000）
+cd mood_health_server && npm run build && npm start
+
+# 5) 前端构建，由 nginx 托管 dist
+npm run build
 ```
 
-这个脚本会做下面几件事：
+## 4. 反向代理（nginx）
 
-- 如果 `mood_health_server/.env` 不存在，就先从 `mood_health_server/.env.production.no-ai.example` 复制
-- 自动生成 `JWT_SECRET` 和 `ENCRYPTION_KEY`
-- 把 SQLite 路径改成当前仓库目录下的绝对路径
-- 安装依赖、构建前后端、启动 PM2、检查 `http://127.0.0.1:3000/health`
+- 开发：`nginx.conf`（Windows 双 server，含安全头与限流；`/ai/` 限本机）
+- 生产：`nginx.linux.conf`（**仅 80→443 跳转 + 443 TLS/HSTS**，`ai_backend` 指向 8001，`/ai/` 内网白名单）
 
-安装 Python 依赖：
+验证配置：
 
 ```bash
-# Linux/macOS
-python -m venv .venv
-source .venv/bin/activate
-pip install -r mood_health_server/requirements.txt
-
-# Windows（可选脚本）
-npm run setup:python
+nginx -t -c /path/to/nginx.linux.conf
 ```
 
-## 4. 数据初始化
+## 5. 验证
 
 ```bash
-# 基础演示数据
-npm run demo:init
-
-# 全量演示数据 + 校验
-npm run demo:init:all
+curl -f https://<host>/health            # 后端健康（应见安全响应头 / HSTS）
+curl -f http://127.0.0.1:8001/health     # AI 服务健康（仅内网可达）
+curl -i https://<host>/api/auth/login -X POST   # 高频请求应出现 429（限流生效）
 ```
 
-可通过环境变量设置密码：
+## 6. 安全注意事项
 
-```bash
-# Linux/macOS
-export DEMO_USER_PASSWORD=123456
-
-# Windows PowerShell
-$env:DEMO_USER_PASSWORD="123456"
-```
-
-## 5. 生产启动
-
-### 方案 A：PM2（推荐）
-
-Windows 下可直接使用：
-
-```powershell
-npm run start-all:check
-npm run start-all:no-ai
-```
-
-Linux/macOS 下可使用：
-
-```bash
-chmod +x ./start-project.sh
-npm run start-all:linux
-npm run start-all:linux:no-ai
-```
-
-如果你是第一次上线，建议先执行：
-
-```bash
-npm run deploy:linux
-```
-
-这会先执行 `doctor`，再启动 `mood-health-server`，并根据 `AI_ENABLED` 决定是否启动 `mood-ai-server`。
-
-当前仓库内置启动脚本仅托管 `mood-health-server`（Node API）。
-
-- `-NoAi` / `--no-ai`：将 `AI_ENABLED=false` 注入进程环境（推荐 2核2G）
-- `-WithAi` / `--with-ai`：将 `AI_ENABLED=true` 注入进程环境（需额外部署 Python AI 服务）
-
-命令行也可显式覆盖：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File ./start-project.ps1 -NoAi
-powershell -ExecutionPolicy Bypass -File ./start-project.ps1 -WithAi
-```
-
-```bash
-bash ./start-project.sh --no-ai
-bash ./start-project.sh --with-ai
-```
-
-如需启用 AI，请单独常驻 Python 服务（例如 systemd/PM2/supervisor），并确保 `AI_SERVICE_BASE_URL` 可达。
-
-常用命令：
-
-```bash
-npm run pm2:status
-npm run pm2:logs
-npm run pm2:stop
-```
-
-### 方案 B：手动启动
-
-```bash
-# 终端 1：Node API
-npm --prefix mood_health_server run build
-npm --prefix mood_health_server run start
-
-# 终端 2：Python AI
-cd mood_health_server
-python main.py
-
-# 终端 3：前端（开发或静态服务）
-npm run dev
-# 或将 dist/ 交由 Nginx 托管
-```
-
-## 6. 健康检查
-
-```bash
-npm run doctor
-```
-
-`doctor` 会检查：
-
-- node/npm/python/pm2 可用性
-- 关键文件与目录存在性
-- 端口 5173/3000/8000/6379 连通性
-
-说明：后端 SQLite 运行时依赖 Node.js 内置 `node:sqlite`，因此服务器需要 Node 22+。
-
-可使用严格模式：
-
-```bash
-npm run doctor:strict
-```
-
-## 7. Nginx 反向代理（示例）
-
-可参考仓库根目录 `nginx.conf`、`nginx.linux.conf` 与 `mood_health_server/nginx.conf.example`。
-
-典型策略：
-
-- `/` -> 前端静态文件
-- `/api` -> Node API（3000）
-- `/ai` 或对应路径 -> Python AI（8000）
-
-## 8. 更新与回滚
-
-### 更新
-
-```bash
-git pull
-npm run setup
-npm run build:all
-bash ./start-project.sh --no-ai
-curl -fsS http://127.0.0.1:3000/health
-```
-
-### 回滚
-
-```bash
-git revert <commit>
-npm run build:all
-npm run start-all
-```
-
-## 9. 故障排查
-
-1. `doctor` 报 `dist/app.js missing`
-
-- 执行 `npm --prefix mood_health_server run build`
-- 如果 `mood_health_server/.env` 不存在，先复制 `mood_health_server/.env.production.no-ai.example` 到 `mood_health_server/.env`
-
-2. 启动脚本提示 `Environment file missing`
-
-- 执行 `cp mood_health_server/.env.production.no-ai.example mood_health_server/.env`
-- 然后检查 `JWT_SECRET` 和 `ENCRYPTION_KEY` 是否已经填好
-
-3. AI 服务读取 `.env` 报编码错误（Windows）
-
-- 设置 `PYTHONUTF8=1`，`start-project.ps1` 已自动设置
-
-4. PM2 频繁重启
-
-- 检查 3000/8000 端口占用、Python 模型加载内存、`.env` 配置
-
-5. Redis 不可达
-
-- 服务可降级运行，但缓存与部分性能能力会受影响
+- AI 服务 `analyze`/`chat` 路由要求 HMAC 内部鉴权；后端 `fastApiClient` / `aiClient` 已自动签名，需两端 `AI_SERVICE_INTERNAL_TOKEN` 配置一致。
+- 生产 `AI_ENABLED` 默认 `false`，需要 AI 时在 `.env` 显式置 `true`。
+- 泄露的密钥（DeepSeek Key、DB 口令）须立即轮换并迁入密钥管理，AI 不自动处理真实凭证。

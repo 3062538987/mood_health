@@ -31,7 +31,7 @@
 - `/api/moods/list`：通过 / 失败
 - `/api/moods/trend`：通过 / 失败
 - `/api/moods/weekly-report`：通过 / 失败
-- `/api/moods/analysis`：通过 / 失败
+- `/api/mood-analyses`：通过 / 失败
 
 ## 5. 落库验证
 

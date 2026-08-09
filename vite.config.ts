@@ -9,12 +9,8 @@ const __dirname = path.dirname(__filename)
 
 const vendorChunkGroups = [
   {
-    name: 'vendor-vue',
-    packages: ['vue', 'vue-router', 'pinia', '@vueuse/core'],
-  },
-  {
-    name: 'vendor-element-plus',
-    packages: ['element-plus', '@element-plus'],
+    name: 'vendor-ui',
+    packages: ['vue', 'vue-router', 'pinia', '@vueuse/core', 'element-plus', '@element-plus'],
   },
   {
     name: 'vendor-echarts',
@@ -74,36 +70,12 @@ export default defineConfig(({ mode }) => {
       open: true,
       allowedHosts: devAllowedHosts,
       proxy: {
-        '/api/auth': {
-          target: 'http://localhost:3000',
-          changeOrigin: true,
-        },
-        '/api/moods': {
-          target: 'http://localhost:3000',
-          changeOrigin: true,
-        },
-        '/api/activities': {
-          target: 'http://localhost:3000',
-          changeOrigin: true,
-        },
-        '/api/posts': {
-          target: 'http://localhost:3000',
-          changeOrigin: true,
-        },
-        '/api/questionnaires': {
-          target: 'http://localhost:3000',
-          changeOrigin: true,
-        },
-        '/api/music': {
-          target: 'http://localhost:3000',
-          changeOrigin: true,
-        },
-        '/api/courses': {
+        '/api': {
           target: 'http://localhost:3000',
           changeOrigin: true,
         },
         '/ai': {
-          target: 'http://localhost:8000',
+          target: 'http://localhost:8001',  // N2/T5：统一为 AI 服务端口 8001
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/ai/, '/api'),
         },

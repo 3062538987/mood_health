@@ -15,6 +15,11 @@
           {{ isPlaying ? '⏸' : '▶' }}
         </button>
 
+        <!-- 音频可视化 -->
+        <div class="visualizer" :class="{ active: isPlaying }">
+          <span v-for="i in 5" :key="i" class="bar" :style="{ animationDelay: i * 0.12 + 's' }"></span>
+        </div>
+
         <div class="volume-control">
           <span class="volume-icon">🔊</span>
           <input
@@ -26,15 +31,8 @@
             @input="adjustVolume"
           />
         </div>
-
-        <div class="loop-control">
-          <input id="loop" v-model="isLoop" type="checkbox" @change="toggleLoop" />
-          <label for="loop">循环播放</label>
-        </div>
       </div>
     </div>
-
-    <audio ref="audioElement" class="audio-element" @ended="handleEnded"></audio>
   </div>
 </template>
 
@@ -42,62 +40,44 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import useRelaxStore from '@/stores/relaxStore'
 import useAchievementStore from '@/stores/achievementStore'
+import { audioGenerator } from '@/utils/audioGenerator'
 
-const audioElement = ref<HTMLAudioElement | null>(null)
 const selectedAudio = ref('rain')
 const isPlaying = ref(false)
 const volume = ref(50)
-const isLoop = ref(true)
 const startTime = ref(new Date().toISOString())
 
 const relaxStore = useRelaxStore()
 const achievementStore = useAchievementStore()
 
-const audioFiles = {
-  rain: '/audio/rain.mp3',
-  ocean: '/audio/ocean.mp3',
-  fire: '/audio/fire.mp3',
+const changeAudio = () => {
+  if (isPlaying.value) {
+    playAudio()
+  }
 }
 
-const changeAudio = () => {
-  if (audioElement.value) {
-    audioElement.value.src = audioFiles[selectedAudio.value as keyof typeof audioFiles]
-    if (isPlaying.value) {
-      audioElement.value.play().catch((err) => console.error('播放失败:', err))
-    }
+const playAudio = () => {
+  switch (selectedAudio.value) {
+    case 'rain': audioGenerator.playRain(); break
+    case 'ocean': audioGenerator.playOcean(); break
+    case 'fire': audioGenerator.playFire(); break
   }
+  audioGenerator.setVolume(volume.value / 100)
 }
 
 const togglePlay = async () => {
-  if (audioElement.value) {
-    if (isPlaying.value) {
-      audioElement.value.pause()
-      await saveRelaxRecord()
-    } else {
-      startTime.value = new Date().toISOString() // 重置开始时间
-      audioElement.value.play().catch((err) => console.error('播放失败:', err))
-    }
-    isPlaying.value = !isPlaying.value
+  if (isPlaying.value) {
+    audioGenerator.stop()
+    await saveRelaxRecord()
+  } else {
+    startTime.value = new Date().toISOString()
+    playAudio()
   }
+  isPlaying.value = !isPlaying.value
 }
 
 const adjustVolume = () => {
-  if (audioElement.value) {
-    audioElement.value.volume = volume.value / 100
-  }
-}
-
-const toggleLoop = () => {
-  if (audioElement.value) {
-    audioElement.value.loop = isLoop.value
-  }
-}
-
-const handleEnded = async () => {
-  if (!isLoop.value) {
-    isPlaying.value = false
-    await saveRelaxRecord()
-  }
+  audioGenerator.setVolume(volume.value / 100)
 }
 
 const saveRelaxRecord = async () => {
@@ -109,26 +89,13 @@ const saveRelaxRecord = async () => {
     metrics: {
       audioType: selectedAudio.value,
       volume: volume.value,
-      isLoop: isLoop.value,
     },
   })
-  // 检查成就
   await achievementStore.checkAchievements()
 }
 
-onMounted(() => {
-  if (audioElement.value) {
-    audioElement.value.src = audioFiles[selectedAudio.value as keyof typeof audioFiles]
-    audioElement.value.volume = volume.value / 100
-    audioElement.value.loop = isLoop.value
-  }
-})
-
-onUnmounted(async () => {
-  if (audioElement.value && isPlaying.value) {
-    audioElement.value.pause()
-    await saveRelaxRecord()
-  }
+onUnmounted(() => {
+  audioGenerator.stop()
 })
 </script>
 
@@ -180,7 +147,8 @@ onUnmounted(async () => {
         }
 
         &:focus {
-          outline: none;
+          outline: 3px solid var(--focus);
+          outline-offset: 2px;
           border-color: #42b983;
           box-shadow: 0 0 0 3px rgba(66, 185, 131, 0.1);
         }
@@ -188,110 +156,117 @@ onUnmounted(async () => {
     }
 
     .playback-controls {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-
-      @media (max-width: 768px) {
-        justify-content: space-between;
-      }
-
-      .play-btn {
-        width: 40px;
-        height: 40px;
-        border: none;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #42b983 0%, #35495e 100%);
-        color: white;
-        font-size: 16px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-
-        &:hover {
-          transform: scale(1.1);
-          box-shadow: 0 4px 15px rgba(66, 185, 131, 0.4);
-        }
-
-        &:active {
-          transform: scale(0.95);
-        }
-      }
-
-      .volume-control {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 16px;
 
-        .volume-icon {
-          font-size: 16px;
+        @media (max-width: 768px) {
+          justify-content: space-between;
         }
 
-        .volume-slider {
-          width: 100px;
-          height: 4px;
-          -webkit-appearance: none;
-          appearance: none;
-          background: #e4e8ec;
-          border-radius: 2px;
-          outline: none;
+        .play-btn {
+          width: 40px;
+          height: 40px;
+          border: none;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #42b983 0%, #35495e 100%);
+          color: white;
+          font-size: 16px;
           cursor: pointer;
+          transition: all 0.3s ease;
 
-          &::-webkit-slider-thumb {
+          &:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(66, 185, 131, 0.4);
+          }
+
+          &:active {
+            transform: scale(0.95);
+          }
+        }
+
+        .visualizer {
+          display: flex;
+          align-items: flex-end;
+          gap: 3px;
+          height: 28px;
+          padding: 0 4px;
+
+          .bar {
+            width: 4px;
+            height: 6px;
+            background: #d0d0d0;
+            border-radius: 2px;
+            transition: background 0.3s;
+          }
+
+          &.active .bar {
+            background: #42b983;
+            animation: visualize 0.8s ease-in-out infinite alternate;
+          }
+        }
+
+        @keyframes visualize {
+          0% { height: 6px; }
+          100% { height: 24px; }
+        }
+
+        .volume-control {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .volume-icon {
+            font-size: 16px;
+          }
+
+          .volume-slider {
+            width: 100px;
+            height: 4px;
             -webkit-appearance: none;
             appearance: none;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #42b983;
+            background: #e4e8ec;
+            border-radius: 2px;
             cursor: pointer;
-            transition: all 0.3s ease;
 
-            &:hover {
-              transform: scale(1.2);
-              box-shadow: 0 0 10px rgba(66, 185, 131, 0.5);
+            &:focus-visible {
+              outline: 3px solid var(--focus);
+              outline-offset: 2px;
             }
-          }
 
-          &::-moz-range-thumb {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #42b983;
-            cursor: pointer;
-            border: none;
-            transition: all 0.3s ease;
+            &::-webkit-slider-thumb {
+              -webkit-appearance: none;
+              appearance: none;
+              width: 16px;
+              height: 16px;
+              border-radius: 50%;
+              background: #42b983;
+              cursor: pointer;
+              transition: all 0.3s ease;
 
-            &:hover {
-              transform: scale(1.2);
-              box-shadow: 0 0 10px rgba(66, 185, 131, 0.5);
+              &:hover {
+                transform: scale(1.2);
+                box-shadow: 0 0 10px rgba(66, 185, 131, 0.5);
+              }
+            }
+
+            &::-moz-range-thumb {
+              width: 16px;
+              height: 16px;
+              border-radius: 50%;
+              background: #42b983;
+              cursor: pointer;
+              border: none;
+              transition: all 0.3s ease;
+
+              &:hover {
+                transform: scale(1.2);
+                box-shadow: 0 0 10px rgba(66, 185, 131, 0.5);
+              }
             }
           }
         }
       }
-
-      .loop-control {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-
-        input[type='checkbox'] {
-          width: 16px;
-          height: 16px;
-          cursor: pointer;
-          accent-color: #42b983;
-        }
-
-        label {
-          font-size: 14px;
-          color: #2c3e50;
-          cursor: pointer;
-        }
-      }
-    }
-  }
-
-  .audio-element {
-    display: none;
   }
 }
 

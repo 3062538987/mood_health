@@ -18,18 +18,28 @@ const rolePermissions: Record<UserRole, readonly string[]> = {
     'audit.record.view_all',
     'post.audit',
     'post.audit.pending.read',
+    'activity.manage',
     'course.manage',
     'music.manage',
+    'report.view',
+    'feedback.handle',
     'mood.record.read',
+    'questionnaire.submit',
+    'auth.profile.read',
   ],
   admin: [
     'user.manage',
     'post.audit',
     'post.audit.pending.read',
+    'activity.manage',
     'course.manage',
     'music.manage',
+    'report.view',
+    'feedback.handle',
     'audit.record.view_all',
     'mood.record.read',
+    'questionnaire.submit',
+    'auth.profile.read',
   ],
   user: [],
 }
@@ -37,6 +47,9 @@ const rolePermissions: Record<UserRole, readonly string[]> = {
 const normalizeRole = (role: string | undefined): UserRole => {
   if (role === 'admin' || role === 'super_admin') {
     return role
+  }
+  if (role === 'student' || role === 'counselor') {
+    return 'user'
   }
   return 'user'
 }
@@ -55,8 +68,8 @@ export const requirePermission = (userStore: UserStore, permission?: string): bo
 }
 
 export const initializeUserState = async (userStore: UserStore) => {
-  if (userStore.token && !userStore.user) {
-    await userStore.fetchUserInfo()
+  if (!userStore.authInitialized) {
+    await userStore.trySessionRestore()
   }
 }
 

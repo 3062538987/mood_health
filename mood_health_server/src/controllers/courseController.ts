@@ -1,12 +1,9 @@
+import { HTTP_STATUS } from '../utils/httpStatus'
 import { Request, Response, NextFunction } from "express";
-import {
-  getCourses as getCoursesModel,
-  getCourseById as getCourseByIdModel,
-  createCourse as createCourseModel,
-  updateCourse as updateCourseModel,
-  deleteCourse as deleteCourseModel,
-  incrementStudyCount,
-} from "../models/courseModel";
+import { createCourseRepository } from "../repositories/courseRepository";
+import { apiSuccess, apiFailure, API_ERROR_CODES } from "../utils/apiResponse";
+
+const courseRepo = createCourseRepository();
 
 // 获取课程列表
 export const getCourses = async (
@@ -16,8 +13,8 @@ export const getCourses = async (
 ): Promise<void> => {
   try {
     const { category } = req.query;
-    const courses = await getCoursesModel(category as string);
-    res.json(courses);
+    const courses = await courseRepo.findAll(category as string | undefined);
+    res.json(apiSuccess(courses));
   } catch (error) {
     next(error);
   }
@@ -31,17 +28,17 @@ export const getCourseById = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const course = await getCourseByIdModel(parseInt(id as string));
+    const course = await courseRepo.findById(parseInt(id as string));
 
     if (!course) {
-      res.status(404).json({ error: "Course not found" });
+      res.status(HTTP_STATUS.NOT_FOUND).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '课程不存在'));
       return;
     }
 
     // 增加学习人数
-    await incrementStudyCount(parseInt(id as string));
+    await courseRepo.incrementStudyCount(parseInt(id as string));
 
-    res.json(course);
+    res.json(apiSuccess(course));
   } catch (error) {
     next(error);
   }
@@ -56,7 +53,7 @@ export const createCourse = async (
   try {
     const { title, description, coverUrl, content, category, type } = req.body;
 
-    const courseId = await createCourseModel({
+    const newCourse = await courseRepo.create({
       title,
       description,
       coverUrl,
@@ -65,8 +62,7 @@ export const createCourse = async (
       type,
     });
 
-    const newCourse = await getCourseByIdModel(courseId);
-    res.status(201).json(newCourse);
+    res.status(HTTP_STATUS.CREATED).json(apiSuccess(newCourse));
   } catch (error) {
     next(error);
   }
@@ -82,7 +78,7 @@ export const updateCourse = async (
     const { id } = req.params;
     const { title, description, coverUrl, content, category, type } = req.body;
 
-    const updated = await updateCourseModel(parseInt(id as string), {
+    const updated = await courseRepo.update(parseInt(id as string), {
       title,
       description,
       coverUrl,
@@ -92,12 +88,11 @@ export const updateCourse = async (
     });
 
     if (!updated) {
-      res.status(404).json({ error: "Course not found" });
+      res.status(HTTP_STATUS.NOT_FOUND).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '课程不存在'));
       return;
     }
 
-    const updatedCourse = await getCourseByIdModel(parseInt(id as string));
-    res.json(updatedCourse);
+    res.json(apiSuccess(updated));
   } catch (error) {
     next(error);
   }
@@ -112,14 +107,14 @@ export const deleteCourse = async (
   try {
     const { id } = req.params;
 
-    const deleted = await deleteCourseModel(parseInt(id as string));
+    const deleted = await courseRepo.remove(parseInt(id as string));
 
     if (!deleted) {
-      res.status(404).json({ error: "Course not found" });
+      res.status(HTTP_STATUS.NOT_FOUND).json(apiFailure(API_ERROR_CODES.NOT_FOUND, '课程不存在'));
       return;
     }
 
-    res.json({ message: "Course deleted successfully" });
+    res.json(apiSuccess({ message: "Course deleted successfully" }));
   } catch (error) {
     next(error);
   }
