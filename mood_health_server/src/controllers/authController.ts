@@ -70,6 +70,7 @@ export const getMe = async (req: AuthRequest, res: Response) => {
   }
 }
 
+// 有意预留端点 handler（前端注销入口待补）：当前登录用户注销账号（DELETE /api/auth/me）
 export const deleteMe = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user) {

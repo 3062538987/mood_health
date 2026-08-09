@@ -54,6 +54,7 @@ router.delete('/admin/users/:id', authenticate, requirePermission('user.manage')
 
 router.put('/admin/users/:id/disable', authenticate, requirePermission('user.manage'), adminUsersDisableHandler)
 
+// 有意预留（真实后端能力，前端管理页入口待补）：管理员查看测评会话列表 / 详情
 router.get('/admin/assessments', authenticate, requirePermission('user.manage'), adminAssessmentsListHandler)
 router.get('/admin/assessments/:id', authenticate, requirePermission('user.manage'), adminAssessmentDetailHandler)
 

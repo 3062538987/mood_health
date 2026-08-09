@@ -108,6 +108,7 @@ router.post('/logout', logout)
  * @returns {Object} 401 - 未登录
  * @returns {Object} 404 - 用户不存在
  * @returns {Object} 500 - 服务器错误
+ * @note 有意预留：真实账号注销能力（隐私相关），当前前端无注销入口，待补管理/设置页按钮
  */
 router.delete('/me', authenticate, deleteMe)
 

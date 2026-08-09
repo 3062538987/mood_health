@@ -287,6 +287,7 @@ export const adminMoodsListHandler = async (req: AuthRequest, res: Response) => 
   }
 }
 
+// 有意预留端点 handler（前端管理页入口待补）：管理员测评会话列表
 export const adminAssessmentsListHandler = async (req: AuthRequest, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1

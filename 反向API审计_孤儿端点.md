@@ -22,16 +22,16 @@
 | 5 | `POST /api/counseling/sessions` | createSessionHandler | **已删除（2026-08-09 晚·本轮）**：前端从不显式建会话→删路由 + handler；`generateSessionId` 保留（`/send` 仍用）。 |
 | 6 | `GET /api/audit/all` | getOperationLogsHandler | **与 `/api/audit/operation-logs` 完全相同 handler 的重复端点**（冗余）。 |
 | 7 | `POST /api/users/manage` | userManageHandler | **已删除（2026-08-09 续·本轮清理）**：纯空壳 stub（仅记日志返回"已记录"），真实用户管理走 `/api/admin/users` 系列；删路由 + handler。 |
-| 8 | `POST /api/roles/manage` | roleManageHandler | **已删除（2026-08-09 续·本轮清理）**：与 `PUT /api/admin/users`（user.manage）角色变更能力完全重复；删路由 + handler；`role.manage` 权限定义保留（RBAC 模型未动）。 |
-| 9 | `POST /api/system/config` | systemConfigHandler | **已删除（2026-08-09 续·本轮清理）**：纯空壳 stub（仅记 configKey 日志，无任何读写）；删路由 + handler；`system.config` 权限定义保留。 |
-| 10 | `GET /api/admin/assessments` | adminAssessmentsListHandler | **保留（真正实现，缺前端入口）**：调用 `assessmentService.listAllSessions` 查真实测评数据。 |
-| 11 | `GET /api/admin/assessments/:id` | adminAssessmentDetailHandler | **保留（真正实现，缺前端入口）**：调用 `assessmentService.getSessionDetailAdmin`。 |
+| 8 | `POST /api/roles/manage` | roleManageHandler | **已删除（2026-08-09 续·本轮清理）**：与 `PUT /api/admin/users`（user.manage）角色变更能力完全重复；删路由 + handler；`role.manage` 权限定义保留（RBAC 模型未动）→ **已于 2026-08-09 末 option A 清理移除**。 |
+| 9 | `POST /api/system/config` | systemConfigHandler | **已删除（2026-08-09 续·本轮清理）**：纯空壳 stub（仅记 configKey 日志，无任何读写）；删路由 + handler；`system.config` 权限定义保留 → **已于 2026-08-09 末 option A 清理移除**。 |
+| 10 | `GET /api/admin/assessments` | adminAssessmentsListHandler | **保留·有意预留（已实现，前端入口待补）**：调用 `assessmentService.listAllSessions` 查真实测评数据；代码已加注释标注为「有意预留」。 |
+| 11 | `GET /api/admin/assessments/:id` | adminAssessmentDetailHandler | **保留·有意预留（已实现，前端入口待补）**：调用 `assessmentService.getSessionDetailAdmin`；代码已加注释标注为「有意预留」。 |
 | 12 | `GET /api/posts/admin/audit-logs/:id` | getPostAuditLogsHandler | **已删除（2026-08-09 晚·本轮）**：前端 audit-logs 页走 `getAdminAuditLogs`（`@/api/admin`），与此 handler 无关→删路由 + handler；`auditService` 保留（`auditPostHandler` 仍用）。 |
 | 13 | `GET /api/feedback/stats` | getFeedbackStats | **已删除（2026-08-09 晚）**：反馈统计管理前端无入口；删除路由 + `getFeedbackStats` handler + `feedbackService.getStats()` + `FeedbackStats` 类型。`POST /api/feedback`（用户提交反馈，前端在用）保留。 |
 | 14 | `GET /api/feedback/list` | getFeedbackList | **已删除（2026-08-09 晚）**：反馈列表管理前端无入口；删除路由 + `getFeedbackList` handler + `feedbackService.getList()`。 |
 | 15 | `POST /api/cases/auto-create` | autoCreateCase | **已删除（2026-08-09 晚·本轮）**：前端无入口→删路由 + handler + `validateAutoCreateCase` + `caseService.autoCreateCase` + 孤儿 `getAssessmentRepo`/导入；同步 `caseRoutesPermission.test.ts`。 |
 | 16 | `GET /api/recommend/content` | getContentRecommendations | **已删除（2026-08-09 晚·本轮）**：整模块孤儿→删 `recommendRoutes.ts` + `recommendController.ts` + `utils/ai/recommendService.ts` + app.ts 挂载 `/api/recommend`。 |
-| 17 | `DELETE /api/auth/me` | deleteMe | **保留（真正实现，隐私相关）**：`authService.deleteMe`→`repository.deleteUser`，真实账号注销；前端生产代码无调用（仅 `auth.test.ts` 引用），建议后续补前端入口。 |
+| 17 | `DELETE /api/auth/me` | deleteMe | **保留·有意预留（已实现，前端入口待补）**：`authService.deleteMe`→`repository.deleteUser`，真实账号注销；前端生产代码无调用（仅 `auth.test.ts` 引用）；代码已加注释标注为「有意预留」。 |
 
 ### B 类：整模块未接线（前端零调用）
 | # | 路径 | 说明 |
