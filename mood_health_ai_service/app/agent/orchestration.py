@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import importlib
 import json
 import logging
+from operator import add
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from typing import Annotated, Any, Literal, NotRequired, Protocol, TypedDict, cast
@@ -21,8 +23,14 @@ from app.agent.tavily_gateway import (
     WebSearchEvidence,
     WebSearchResult,
 )
+from app.agent.duckduckgo_gateway import build_web_gateway
 from app.config import Settings, get_settings
-from app.models.contracts import AssistantResponse, AssistantResponseRequest, RagSource
+from app.models.contracts import (
+    AssistantResponse,
+    AssistantResponseRequest,
+    RagSource,
+    ReasoningStep,
+)
 from app.providers.openai_compatible import OpenAICompatibleProvider
 from app.rag.retriever import RetrievedKnowledge, retrieve_knowledge
 
@@ -46,6 +54,9 @@ it for emotional support, general coping guidance, or facts already supported by
 Return no explanation: either call the tool once or make no tool call."""
 
 WebSearchStatus = Literal["not_requested", "not_needed", "used", "failed"]
+
+# 长程记忆：保留最近若干轮原文，更早的对话压缩为摘要，避免长时间对话丢失上下文
+RECENT_HISTORY_K = 6
 
 
 class DecisionModel(Protocol):
@@ -77,6 +88,7 @@ class AgentDependencies:
     decision_model_factory: DecisionModelFactory
     final_provider: FinalProvider
     web_gateway: WebGateway
+    web_available: bool = False
 
 
 class AgentState(TypedDict):
@@ -86,6 +98,7 @@ class AgentState(TypedDict):
     web_evidence: list[WebSearchEvidence]
     web_sources: list[RagSource]
     web_status: WebSearchStatus
+    reasoning_steps: Annotated[list[ReasoningStep], add]
     response: NotRequired[AssistantResponse]
 
 
@@ -145,12 +158,14 @@ def _runtime_decision_model_factory(settings: Settings) -> DecisionModelFactory:
 
 def build_runtime_dependencies(settings: Settings | None = None) -> AgentDependencies:
     resolved_settings = settings or get_settings()
+    web_gateway, web_available = build_web_gateway(resolved_settings)
     return AgentDependencies(
         settings=resolved_settings,
         retrieve=retrieve_knowledge,
         decision_model_factory=_runtime_decision_model_factory(resolved_settings),
         final_provider=OpenAICompatibleProvider(resolved_settings),
-        web_gateway=TavilySearchGateway(settings=resolved_settings),
+        web_gateway=web_gateway,
+        web_available=web_available,
     )
 
 
@@ -258,24 +273,83 @@ def _final_user_prompt(state: AgentState) -> str:
     return "\n\n".join(sections)
 
 
+def _build_history_digest(history: list[AssistantHistoryMessage]) -> str:
+    """把早期历史拼成可读文本（LLM 摘要失败时的确定性降级）。"""
+    return "\n".join(f"{item.role}: {item.content}" for item in history)
+
+
+async def compress_history(
+    history: list[AssistantHistoryMessage],
+    recent_k: int,
+    provider: FinalProvider,
+) -> tuple[list[AssistantHistoryMessage], str | None]:
+    """长程记忆压缩：保留最近 recent_k 轮原文，更早的对话用 LLM 压成摘要。
+
+    返回 (近期原文, 摘要或 None)。历史不超过窗口或摘要失败时摘要为 None，
+    此时回落为「不压缩」（仍把全部历史原文带入）。
+    """
+    if len(history) <= recent_k:
+        return history, None
+    recent = history[-recent_k:]
+    older = history[:-recent_k]
+    digest = _build_history_digest(older)
+    summary_prompt = [
+        {
+            "role": "system",
+            "content": (
+                "把以下多轮心理咨询对话压缩成不超过120字的中文摘要，"
+                "保留用户的主要困扰、情绪与已给出的关键建议，不要新增信息。"
+            ),
+        },
+        {"role": "user", "content": digest},
+    ]
+    try:
+        summary, _model, _usage = await provider.chat(
+            messages=summary_prompt,
+            temperature=0.3,
+            max_tokens=200,
+        )
+        summary = summary.strip()
+    except Exception as error:
+        logger.warning(
+            "历史摘要压缩失败，降级为原文召回 type=%s", type(error).__name__
+        )
+        summary = digest
+    return recent, (summary or None)
+
+
 def build_assistant_graph(dependencies: AgentDependencies) -> Any:
     """Compile a one-shot graph without persistence or a checkpointer."""
     web_tool = _build_web_tool(dependencies.web_gateway)
     tool_node = ToolNode([web_tool])
 
-    def safety_gate(state: AgentState) -> dict[str, WebSearchStatus]:
+    def safety_gate(state: AgentState) -> dict[str, object]:
         request = state["request"]
         if request.riskDetected:
             status: WebSearchStatus = (
                 "not_needed" if request.allowWebSearch else "not_requested"
             )
-            return {"web_status": status}
-        return {"web_status": "not_requested"}
+            return {
+                "web_status": status,
+                "reasoning_steps": [
+                    ReasoningStep(
+                        phase="safety",
+                        label="已识别风险信号，进入安全优先模式",
+                        detail="跳过联网检索，优先引导你寻求身边支持与专业帮助",
+                    )
+                ],
+            }
+        return {
+            "web_status": "not_requested",
+            "reasoning_steps": [
+                ReasoningStep(phase="safety", label="常规模式，开始检索可信证据")
+            ],
+        }
 
     def route_after_safety(state: AgentState) -> Literal["retrieve", "final_answer"]:
         return "final_answer" if state["request"].riskDetected else "retrieve"
 
-    def retrieve(state: AgentState) -> dict[str, list[RetrievedKnowledge]]:
+    def retrieve(state: AgentState) -> dict[str, object]:
         request = state["request"]
         try:
             records = _relevant_records(
@@ -289,19 +363,47 @@ def build_assistant_graph(dependencies: AgentDependencies) -> Any:
                 type(error).__name__,
             )
             records = []
-        return {"records": records}
+        if records:
+            step = ReasoningStep(
+                phase="retrieve",
+                label=f"从本地心理知识库检索到 {len(records)} 条相关资料",
+            )
+        else:
+            step = ReasoningStep(
+                phase="retrieve",
+                label="本地知识库未匹配到高度相关的内容",
+            )
+        return {"records": records, "reasoning_steps": [step]}
 
-    def web_gate(state: AgentState) -> dict[str, WebSearchStatus]:
+    def web_gate(state: AgentState) -> dict[str, object]:
         request = state["request"]
         if not request.allowWebSearch:
-            return {"web_status": "not_requested"}
-        if not dependencies.settings.TAVILY_API_KEY.strip():
-            return {"web_status": "failed"}
-        return {"web_status": "not_needed"}
+            return {
+                "web_status": "not_requested",
+                "reasoning_steps": [
+                    ReasoningStep(phase="web", label="本次未开启联网检索")
+                ],
+            }
+        if not dependencies.web_available:
+            return {
+                "web_status": "failed",
+                "reasoning_steps": [
+                    ReasoningStep(
+                        phase="web",
+                        label="未配置可用的联网检索（Tavily/DuckDuckGo），仅使用本地知识",
+                    )
+                ],
+            }
+        return {
+            "web_status": "not_needed",
+            "reasoning_steps": [
+                ReasoningStep(phase="web", label="已具备联网条件，进入是否需要检索的判断")
+            ],
+        }
 
     def route_after_web_gate(state: AgentState) -> Literal["decision", "final_answer"]:
         request = state["request"]
-        configured = bool(dependencies.settings.TAVILY_API_KEY.strip())
+        configured = dependencies.web_available
         return "decision" if request.allowWebSearch and configured else "final_answer"
 
     async def decision(state: AgentState) -> dict[str, object]:
@@ -311,22 +413,52 @@ def build_assistant_graph(dependencies: AgentDependencies) -> Any:
             if not isinstance(raw_message, AIMessage):
                 raise TypeError("decision model returned a non-AI message")
             if raw_message.invalid_tool_calls:
-                return {"messages": [], "web_status": "failed"}
+                return {
+                    "messages": [],
+                    "web_status": "failed",
+                    "reasoning_steps": [
+                        ReasoningStep(phase="decision", label="联网决策模型返回异常，仅依据本地证据")
+                    ],
+                }
             tool_calls = raw_message.tool_calls[:1]
             if not tool_calls:
-                return {"messages": [], "web_status": "not_needed"}
+                return {
+                    "messages": [],
+                    "web_status": "not_needed",
+                    "reasoning_steps": [
+                        ReasoningStep(phase="decision", label="判断：本地证据已足够，无需联网")
+                    ],
+                }
             first_call = tool_calls[0]
             if first_call.get("name") != PUBLIC_WEB_TOOL_NAME:
-                return {"messages": [], "web_status": "failed"}
+                return {
+                    "messages": [],
+                    "web_status": "failed",
+                    "reasoning_steps": [
+                        ReasoningStep(phase="decision", label="联网决策异常，仅依据本地证据")
+                    ],
+                }
             sanitized_message = AIMessage(content="", tool_calls=[first_call])
-            return {"messages": [sanitized_message], "web_status": "not_needed"}
+            return {
+                "messages": [sanitized_message],
+                "web_status": "not_needed",
+                "reasoning_steps": [
+                    ReasoningStep(phase="decision", label="判断：需要联网检索最新信息")
+                ],
+            }
         except Exception as error:
             logger.warning(
                 "Assistant web decision unavailable requestId=%s type=%s",
                 state["request"].requestId,
                 type(error).__name__,
             )
-            return {"messages": [], "web_status": "failed"}
+            return {
+                "messages": [],
+                "web_status": "failed",
+                "reasoning_steps": [
+                    ReasoningStep(phase="decision", label="联网判断暂不可用，仅依据本地证据")
+                ],
+            }
 
     def route_after_decision(state: AgentState) -> Literal["tools", "final_answer"]:
         last_message = state["messages"][-1] if state["messages"] else None
@@ -336,17 +468,39 @@ def build_assistant_graph(dependencies: AgentDependencies) -> Any:
 
     def collect_tool_result(state: AgentState) -> dict[str, object]:
         status, evidence, sources = _parse_tool_message(state["messages"])
+        if status == "used":
+            step = ReasoningStep(
+                phase="web_search",
+                label=f"已联网检索，获得 {len(sources)} 条网页证据",
+            )
+        else:
+            step = ReasoningStep(
+                phase="web_search",
+                label="未执行联网检索（或检索不可用）",
+            )
         return {
             "web_status": status,
             "web_evidence": evidence,
             "web_sources": sources,
+            "reasoning_steps": [step],
         }
 
     async def final_answer(state: AgentState) -> dict[str, AssistantResponse]:
+        raw_history = state["request"].history
+        recent_history, history_summary = await compress_history(
+            raw_history, RECENT_HISTORY_K, dependencies.final_provider
+        )
         messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPT}]
+        if history_summary:
+            messages.append(
+                {
+                    "role": "system",
+                    "content": f"[更早对话的压缩摘要，供参考]\n{history_summary}",
+                }
+            )
         messages.extend(
             {"role": item.role, "content": item.content}
-            for item in state["request"].history[-10:]
+            for item in recent_history
         )
         messages.append({"role": "user", "content": _final_user_prompt(state)})
         grounded = bool(state["records"] or state["web_evidence"])
@@ -357,6 +511,19 @@ def build_assistant_graph(dependencies: AgentDependencies) -> Any:
         )
         if not answer.strip():
             raise RuntimeError("AI provider returned an empty assistant response")
+        # 在已有推理轨迹后追加记忆压缩与「综合生成」两步，形成完整时间线
+        full_reasoning: list[ReasoningStep] = [*state["reasoning_steps"]]
+        if history_summary:
+            full_reasoning.append(
+                ReasoningStep(
+                    phase="memory",
+                    label=(
+                        f"已把更早的 {len(raw_history) - len(recent_history)} 轮对话"
+                        "压缩为摘要，保留长期记忆"
+                    ),
+                )
+            )
+        full_reasoning.append(ReasoningStep(phase="synthesis", label="综合证据生成回复"))
         response = AssistantResponse(
             answer=answer.strip(),
             sources=_public_sources(state),
@@ -367,6 +534,7 @@ def build_assistant_graph(dependencies: AgentDependencies) -> Any:
             model=model,
             usage=usage,
             fallbackUsed=False,
+            reasoningSteps=full_reasoning,
         )
         return {"response": response}
 
@@ -403,6 +571,7 @@ async def run_assistant_agent(
         "web_evidence": [],
         "web_sources": [],
         "web_status": "not_requested",
+        "reasoning_steps": [],
     }
     result = await graph.ainvoke(initial_state)
     response = result.get("response")

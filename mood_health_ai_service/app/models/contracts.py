@@ -163,7 +163,7 @@ class AssistantResponseRequest(BaseModel):
 
     query: str = Field(..., min_length=1, max_length=1000)
     requestId: str = Field(..., min_length=1, max_length=128)
-    history: list[AssistantHistoryMessage] = Field(default_factory=list, max_length=10)
+    history: list[AssistantHistoryMessage] = Field(default_factory=list, max_length=30)
     riskDetected: bool = False
     allowWebSearch: StrictBool = False
 
@@ -176,6 +176,14 @@ class AssistantResponseRequest(BaseModel):
         return stripped
 
 
+class ReasoningStep(BaseModel):
+    """单步推理轨迹 —— 用于前端「AI 是怎么想的」可解释面板。"""
+
+    phase: str
+    label: str
+    detail: str | None = None
+
+
 class AssistantResponse(BaseModel):
     answer: str
     sources: list[RagSource] = Field(default_factory=list, max_length=3)
@@ -186,3 +194,4 @@ class AssistantResponse(BaseModel):
     model: str
     usage: dict[str, int] | None = None
     fallbackUsed: Literal[False] = False
+    reasoningSteps: list[ReasoningStep] = Field(default_factory=list)

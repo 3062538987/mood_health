@@ -8,6 +8,8 @@ openai>=1.55.0
 langgraph==1.2.9
 langchain-openai==1.4.0
 langchain-tavily==0.2.18
+# 免费联网检索兜底（无 Tavily Key 时使用）；缺失时优雅降级为「仅本地知识」，不影响主流程
+duckduckgo-search>=6.0.0
 mysql-connector-python>=9.0.0
 redis[hiredis]>=5.2.0
 typing-extensions>=4.12.0
