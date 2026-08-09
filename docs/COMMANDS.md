@@ -45,8 +45,8 @@ npm run pm2:status
 | 严格自检                   | `npm run doctor:strict`         | Warning 也视为失败                                     |
 | 开发（前端）               | `npm run dev`                   | 启动 Vite 开发服务                                     |
 | 开发（前后端并行）         | `npm run dev:all`               | 同时启动前端 Vite 和后端 nodemon                       |
-| 开发重置并启动（Windows）  | `npm run dev:reset`             | 清理 3001/3000/8000 占用并启动 `dev:all`               |
-| 仅清理开发端口（Windows）  | `npm run dev:reset:clean`       | 仅清理 3001/3000/8000 占用，不启动服务                 |
+| 开发重置并启动（Windows）  | `npm run dev:reset`             | 清理 3001/3000/8001 占用并启动 `dev:all`               |
+| 仅清理开发端口（Windows）  | `npm run dev:reset:clean`       | 仅清理 3001/3000/8001 占用，不启动服务                 |
 | 构建（前端）               | `npm run build`                 | 前端构建                                               |
 | 构建（前后端）             | `npm run build:all`             | 前端 + 后端构建                                        |
 | 测试（前端 watch）         | `npm run test`                  | Vitest watch 模式                                      |

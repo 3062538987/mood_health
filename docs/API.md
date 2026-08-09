@@ -108,7 +108,7 @@
 
 ### 1. 记录情绪
 
-**接口**：`POST /moods`
+**接口**：`POST /api/moods/record`
 
 **描述**：记录新的情绪
 
@@ -145,7 +145,7 @@
 
 ### 2. 获取情绪列表
 
-**接口**：`GET /moods`
+**接口**：`GET /api/moods/list`
 
 **描述**：获取用户的情绪记录列表
 
@@ -210,33 +210,9 @@
 }
 ```
 
-### 4. 更新情绪记录
+### 4. 更新情绪记录（已移除）
 
-**接口**：`PUT /moods/:id`
-
-**描述**：更新指定的情绪记录
-
-**认证**：需要
-
-**请求体**：
-
-```json
-{
-  "moodType": "happy",
-  "moodLevel": 4,
-  "content": "今天心情不错",
-  "tags": ["工作"]
-}
-```
-
-**响应**：
-
-```json
-{
-  "code": 0,
-  "message": "更新成功"
-}
-```
+> ⚠️ **文档修正（2026-08-09）**：当前版本**未提供**更新情绪记录的接口（`PUT /api/moods/:id` 不存在）。情绪记录创建后如需更正，请删除（`DELETE /api/moods/:id`）后重新记录。
 
 ### 5. 删除情绪记录
 
@@ -312,35 +288,23 @@
 
 ## AI 情绪分析接口
 
-### 1. AI 情绪分析
+### 1. AI 能力端点总览
 
-**接口**：`POST /api/analyze-mood`
+> ⚠️ **文档修正（2026-08-09）**：原「`POST /api/analyze-mood` @ `localhost:8000`（无需认证）」已不准确。
+> 实际所有 AI 能力**经 Node 网关暴露且必须 JWT 认证**；Python FastAPI 服务仅监听 **8001**，由 Node 通过内部 HMAC（`AI_SERVICE_INTERNAL_TOKEN`）调用，**浏览器不直接访问 8001**。
 
-**描述**：使用 AI 分析用户情绪
+**统一前缀与鉴权**：
 
-**认证**：不需要（由限流保护）
+| 前缀 | 鉴权 | 说明 |
+|---|---|---|
+| `/api/ai` | JWT 必需 | 测评解读 / 情绪报告 / 心理咨询 / 树洞回复 / 上下文分析 / 洞察（`/interpret` `/report` `/counseling` `/treehole/gentle-reply` `/context/analyze` `/insight`） |
+| `/api/mood-analyses` | JWT 必需 | 情绪 AI 分析版本（创建 / 查询 / 删除 / 触发分析） |
+| `/api/counseling` | JWT 必需 | AI 心理咨询会话 |
+| `/api/knowledge-assistant` | JWT 必需 | RAG 心理知识助手 |
 
-**基础 URL**：`http://localhost:8000`
+**限流**：上述 AI 前缀均受 AI 限流器约束（每客户端 **20 次 / 分钟**，超限返回 `429`）。
 
-**请求体**：
-
-```json
-{
-  "content": "今天心情很好，完成了很多工作",
-  "mood_level": 5
-}
-```
-
-**响应**：
-
-```json
-{
-  "analysis": "用户情绪积极，工作成就感强，建议保持这种良好的状态。",
-  "suggestions": ["继续保持积极的工作态度", "适当奖励自己的努力", "与朋友分享你的成就"]
-}
-```
-
-**限流**：每个客户端每分钟最多 10 次请求
+**完整字段契约（权威、与代码对齐）**：见 `docs/tech-design/04-api-inventory.md`。
 
 ### 2. 保存 AI 建议
 
@@ -679,8 +643,9 @@
 
 ## 限流说明
 
-- **AI 分析接口**：每个客户端每分钟最多 10 次请求
-- **其他接口**：每个客户端每分钟最多 100 次请求
+- **登录接口**（`POST /api/auth/login`）：生产环境每客户端 20 次 / 15 分钟，开发环境 100 次 / 15 分钟（防暴力破解）。
+- **AI 类接口**（`/api/ai`、`/api/mood-analyses`、`/api/counseling`、`/api/knowledge-assistant`）：每客户端 20 次 / 分钟，超限返回 `429`。
+- 其余普通业务接口当前未设全局速率限制，依靠 nginx（生产）与登录限流做纵深防护。
 
 ## API 文档访问
 
@@ -688,8 +653,8 @@
 
 AI 服务使用 FastAPI，提供自动生成的 API 文档：
 
-- Swagger UI：`http://localhost:8000/docs`
-- ReDoc：`http://localhost:8000/redoc`
+- Swagger UI：`http://localhost:8001/docs`（FastAPI 仅服务端 / 开发可达；生产经 Node 网关与 HMAC 鉴权，浏览器不直接访问 8001）
+- ReDoc：`http://localhost:8001/redoc`（同上）
 
 ### Node.js API 文档
 

@@ -64,29 +64,28 @@ mood-health-web/
 │   ├── utils/
 │   ├── views/
 │   └── __tests__/
-├── mood_health_server/                 # 后端 Node + Python AI
+├── mood_health_server/                 # 后端（Node + Express + TypeScript，纯 Node）
 │   ├── src/                            # Node API 主代码
-│   │   ├── config/
-│   │   ├── controllers/
-│   │   ├── middleware/
-│   │   ├── models/
-│   │   ├── routes/
-│   │   ├── scripts/
-│   │   ├── types/
-│   │   └── utils/
-│   ├── api_response/                   # Python API 响应模型
-│   ├── assessment/                     # 评测相关 Python 模块
-│   ├── common/                         # Python 公共工具
-│   ├── db/                             # Python DB/缓存封装
-│   ├── treehole/                       # 树洞相关 Python 模块
-│   ├── user_auth/                      # Python 鉴权依赖
-│   ├── tests/                          # 后端测试
-│   ├── scripts/                        # SQL/Lua/脚本
-│   ├── data/                           # 旧 SQLite 离线留存（不参与 R0 运行）
-│   ├── main.py                         # （说明已废弃）真实 AI 入口见 mood_health_ai_service/app/main.py
+│   │   ├── config/                     # MySQL / Redis / AI 等配置
+│   │   ├── controllers/                # 请求处理（含 AI 网关转发）
+│   │   ├── middleware/                 # 鉴权 / CSRF / 限流 / 错误处理
+│   │   ├── models/                     # 类型与数据模型
+│   │   ├── routes/                     # 路由定义（由 app.ts 统一挂载）
+│   │   ├── scripts/                    # 脚本
+│   │   ├── types/                      # TS 类型
+│   │   └── utils/                      # 工具（日志 / Redis / AI 客户端等）
+│   ├── migrations/                     # SQL 迁移（MySQL）
+│   ├── tests/                          # 后端测试（jest）
+│   ├── scripts/                        # 运维 / SQL 脚本
 │   ├── ecosystem.config.js             # PM2 编排
 │   ├── package.json
-│   └── requirements.txt
+│   └── requirements.txt                # （历史遗留；AI 依赖已迁至 mood_health_ai_service）
+├── mood_health_ai_service/             # AI 服务（Python + FastAPI，端口 8001）
+│   ├── app/main.py                     # 真实 AI 入口
+│   ├── app/routers/                    # FastAPI 路由（analyze / rag / counseling 等）
+│   ├── app/rag/                        # RAG 知识库检索
+│   ├── requirements.txt
+│   └── .env.example
 ├── scripts/                            # 根级运维与联调脚本
 │   ├── doctor.mjs
 │   ├── dev-all.mjs
@@ -121,7 +120,7 @@ mood-health-web/
 - Node API：3000
 - Python AI API：8001
 - Redis：6379
-- Ollama（可选）：11434
+- Ollama：未使用（AI 模型走 DeepSeek 云端 API，非本地 Ollama；详见「架构更正」段）
 
  说明：当前以 `vite.config.ts` 与 `scripts/doctor.mjs` 为准，前端开发端口为 3001。若看到历史文档中的 5173，请以本 README 与项目配置为准。
 

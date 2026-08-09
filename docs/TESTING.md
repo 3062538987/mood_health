@@ -98,7 +98,7 @@ locust -f locustfile.py --host=http://localhost:3000
 
 ```bash
 locust -f locustfile.py --host=http://localhost:3000 --headless -u 50 -r 5 -t 120s --only-summary
-locust -f locustfile.py --host=http://localhost:8000 --headless -u 10 -r 2 -t 60s --only-summary AIAnalysisUser
+locust -f locustfile.py --host=http://localhost:8001 --headless -u 10 -r 2 -t 60s --only-summary AIAnalysisUser
 ```
 
 ### wrk
