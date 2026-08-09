@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto'
 import {
   callAssistantResponse,
   AssistantSource,
+  ReasoningStep,
   WebSearchStatus,
 } from './fastApiClient'
 import { loadSession, saveMessagePair } from './counselingSessionService'
@@ -38,6 +39,7 @@ export interface UnifiedAssistantResult {
   model: string | null
   fallbackUsed: boolean
   webSearchStatus: WebSearchStatus
+  reasoningSteps: ReasoningStep[]
 }
 
 export const containsRiskContent = (message: string): boolean =>
@@ -50,7 +52,7 @@ export async function generateUnifiedAssistantResponse(
   allowWebSearch: boolean
 ): Promise<UnifiedAssistantResult> {
   const hasRiskContent = containsRiskContent(message)
-  const history = (await loadSession(userId, sessionId, 10))
+  const history = (await loadSession(userId, sessionId, 30))
     .filter((item) => item.role === 'user' || item.role === 'assistant')
     .map((item) => ({
       role: item.role as 'user' | 'assistant',
@@ -66,6 +68,7 @@ export async function generateUnifiedAssistantResponse(
   let model: string | null = null
   let fallbackUsed = false
   let webSearchStatus: WebSearchStatus = allowWebSearch ? 'failed' : 'not_requested'
+  let reasoningSteps: ReasoningStep[] = []
 
   try {
     const result = await callAssistantResponse({
@@ -82,6 +85,7 @@ export async function generateUnifiedAssistantResponse(
     model = result.model
     responseRequestId = result.requestId
     webSearchStatus = result.webSearchStatus
+    reasoningSteps = result.reasoningSteps ?? []
   } catch (error) {
     fallbackUsed = true
     response = hasRiskContent ? RISK_FALLBACK : NORMAL_FALLBACK
@@ -119,5 +123,6 @@ export async function generateUnifiedAssistantResponse(
     model,
     fallbackUsed,
     webSearchStatus,
+    reasoningSteps,
   }
 }

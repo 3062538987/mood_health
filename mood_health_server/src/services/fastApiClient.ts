@@ -199,8 +199,9 @@ async function requestJsonAttempt<T>(
         );
         const parsed = errBody?.requestId ?? errBody?.request_id;
         if (typeof parsed === 'string') requestId = parsed;
-      } catch (readErr) {
-        if (readErr instanceof FastApiClientError) throw readErr;
+      } catch {
+        // 读取错误响应体失败（非 JSON / 超限等）——忽略，继续以 HTTP 状态码报错，
+        // 既避免泄露原始响应体，也避免 invalid_json 掩盖真实的 HTTP 状态。
       }
       throw new FastApiClientError(
         response.status,
@@ -303,6 +304,12 @@ export interface AssistantResponseRequest {
 
 export type WebSearchStatus = 'not_requested' | 'not_needed' | 'used' | 'failed'
 
+export interface ReasoningStep {
+  phase: string
+  label: string
+  detail?: string | null
+}
+
 export interface AssistantResponse {
   answer: string
   sources: AssistantSource[]
@@ -313,6 +320,7 @@ export interface AssistantResponse {
   usage?: Record<string, number> | null
   fallbackUsed: false
   webSearchStatus: WebSearchStatus
+  reasoningSteps?: ReasoningStep[]
 }
 
 export interface ChatCompletionMessage {
