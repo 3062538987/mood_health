@@ -351,7 +351,94 @@ export const createActivityRepository = (db: ActivityDatabase = getMysqlPool()) 
     return result.affectedRows > 0
   }
 
-  return { findAll, count, findById, hasUserJoined, join, cancelJoin, getUserJoinedActivities, create, update, remove, getParticipants, createReminder, hasReminder, cancelReminder }
+  // 活动效果统计（管理端）—— 聚合查询统一收口到 Repository，避免 controller 越层直连 DB（R15 修复）
+  const getStats = async (
+    startDate?: string,
+    endDate?: string
+  ): Promise<{
+    totalActivities: number
+    totalParticipants: number
+    averageParticipants: number
+    totalFeedback: number
+    averageRating: number
+    ratingDistribution: { 1: number; 2: number; 3: number; 4: number; 5: number }
+  }> => {
+    const dateConditions: string[] = []
+    const params: unknown[] = []
+    if (startDate) {
+      dateConditions.push('a.start_time >= ?')
+      params.push(startDate)
+    }
+    if (endDate) {
+      dateConditions.push('a.start_time <= ?')
+      params.push(endDate)
+    }
+    const whereClause = dateConditions.length
+      ? `WHERE ${dateConditions.join(' AND ')}`
+      : ''
+
+    const [
+      [totalRows],
+      [joinRows],
+      [feedbackStatsRows],
+      [ratingDistRows],
+    ] = await Promise.all([
+      db.query<RowDataPacket[]>(
+        `SELECT COUNT(*) as total FROM activities a ${whereClause}`,
+        params
+      ),
+      db.query<RowDataPacket[]>(
+        `SELECT COUNT(*) as total FROM activity_participants ap
+         JOIN activities a ON ap.activity_id = a.id ${whereClause}`,
+        params
+      ),
+      db.query<RowDataPacket[]>(
+        `SELECT
+           COUNT(*) as total,
+           COALESCE(AVG(af.rating), 0) as avg_rating
+         FROM activity_feedback af
+         JOIN activities a ON af.activity_id = a.id ${whereClause}`,
+        params
+      ),
+      db.query<RowDataPacket[]>(
+        `SELECT
+           SUM(CASE WHEN af.rating = 1 THEN 1 ELSE 0 END) as r1,
+           SUM(CASE WHEN af.rating = 2 THEN 1 ELSE 0 END) as r2,
+           SUM(CASE WHEN af.rating = 3 THEN 1 ELSE 0 END) as r3,
+           SUM(CASE WHEN af.rating = 4 THEN 1 ELSE 0 END) as r4,
+           SUM(CASE WHEN af.rating = 5 THEN 1 ELSE 0 END) as r5
+         FROM activity_feedback af
+         JOIN activities a ON af.activity_id = a.id ${whereClause}`,
+        params
+      ),
+    ])
+
+    const totalActivities = Number(totalRows[0]?.total ?? 0)
+    const totalParticipants = Number(joinRows[0]?.total ?? 0)
+    const averageParticipants =
+      totalActivities > 0
+        ? Math.round((totalParticipants / (totalActivities || 1)) * 100) / 100
+        : 0
+    const totalFeedback = Number(feedbackStatsRows[0]?.total ?? 0)
+    const averageRating = Math.round(Number(feedbackStatsRows[0]?.avg_rating) * 10) / 10
+
+    return {
+      totalActivities,
+      totalParticipants,
+      averageParticipants,
+      totalFeedback,
+      averageRating,
+      ratingDistribution: {
+        1: Number(ratingDistRows[0]?.r1 ?? 0),
+        2: Number(ratingDistRows[0]?.r2 ?? 0),
+        3: Number(ratingDistRows[0]?.r3 ?? 0),
+        4: Number(ratingDistRows[0]?.r4 ?? 0),
+        5: Number(ratingDistRows[0]?.r5 ?? 0),
+      },
+    }
+  }
+
+  return { findAll, count, findById, hasUserJoined, join, cancelJoin, getUserJoinedActivities, create, update, remove, getParticipants, createReminder, hasReminder, cancelReminder, getStats }
 }
 
 export type ActivityRepository = ReturnType<typeof createActivityRepository>
