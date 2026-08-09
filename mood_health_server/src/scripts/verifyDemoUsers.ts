@@ -180,8 +180,6 @@ export const runPermissionChecks = () => {
 
   const superAdminRequired: PermissionCode[] = [
     'user.manage',
-    'role.manage',
-    'system.config',
     'incident.fix',
     'audit.record.view_all',
   ]
@@ -194,8 +192,6 @@ export const runPermissionChecks = () => {
 
   const adminDenied: PermissionCode[] = [
     'user.manage',
-    'role.manage',
-    'system.config',
     'incident.fix',
   ]
   adminDenied.forEach((permission) => {
@@ -211,8 +207,8 @@ export const runPermissionChecks = () => {
   return {
     ok: true,
     logs: [
-      'super_admin 权限校验通过（user.manage/role.manage/system.config/incident.fix/audit.record.view_all）',
-      'admin 权限边界校验通过（无法访问 user.manage/role.manage/system.config/incident.fix）',
+      'super_admin 权限校验通过（user.manage/incident.fix/audit.record.view_all）',
+      'admin 权限边界校验通过（无法访问 user.manage/incident.fix）',
     ],
   }
 }

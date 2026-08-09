@@ -76,3 +76,6 @@ mood_health_ai_service/data/
 
 # 回收站（非破坏性清理的暂存，可手动永久删除）
 .trash-unsorted/
+
+# 含敏感口令的安全交接文档（本地留存，勿提交 git / 外发）
+SECURITY_HANDOFF_2026-08-09.md

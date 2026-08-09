@@ -434,15 +434,15 @@ const main = async () => {
 
     {
       const { response, usedPath } = await requestWithFallback(
-        'POST',
-        ['/api/roles', '/api/roles/manage'],
+        'GET',
+        ['/api/admin/users'],
         {
-          headers: operationHeaders(admin.token),
-          data: { targetUserId: user.userId || 1, targetRole: 'admin' },
+          headers: operationHeaders(user.token),
+          params: { page: 1, pageSize: 20 },
         }
       )
       results.push({
-        scenario: '场景1：admin 访问 /api/roles（role.manage）',
+        scenario: '场景1：user 访问 GET /api/admin/users（缺 user.manage 权限）',
         expected: '403 错误',
         actual: `status=${response.status}, path=${usedPath}`,
         passed: response.status === 403,
@@ -451,11 +451,11 @@ const main = async () => {
 
     {
       const { response, usedPath } = await requestWithFallback(
-        'POST',
-        ['/api/users/update-role', '/api/users/manage'],
+        'GET',
+        ['/api/admin/users'],
         {
           headers: operationHeaders(superAdmin.token),
-          data: { targetUserId: admin.userId || 1, action: 'smoke_update_role' },
+          params: { page: 1, pageSize: 20 },
         }
       )
 
@@ -470,7 +470,7 @@ const main = async () => {
           Array.isArray(list) && list.some((item) => item.permission_code === 'user.manage')
       }
       results.push({
-        scenario: '场景2：super_admin 调用 /api/users/update-role（user.manage）',
+        scenario: '场景2：super_admin 调用 GET /api/admin/users（user.manage）',
         expected: '操作成功并记录日志',
         actual: `status=${response.status}, path=${usedPath}, logRecorded=${logRecorded}`,
         passed: response.status >= 200 && response.status < 300 && logRecorded,

@@ -480,9 +480,6 @@
 | PUT | `/api/admin/users` | 是 | admin | 更新用户角色 |
 | DELETE | `/api/admin/users/:id` | 是 | admin | 删除用户 |
 | PUT | `/api/admin/users/:id/disable` | 是 | admin | 禁用/启用用户 |
-| POST | `/api/users/manage` | 是 | admin | 用户管理（兼容） |
-| POST | `/api/roles/manage` | 是 | admin | 角色管理（兼容） |
-| POST | `/api/system/config` | 是 | admin | 系统配置（兼容） |
 
 #### GET /api/admin/users
 

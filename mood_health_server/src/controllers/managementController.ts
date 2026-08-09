@@ -75,16 +75,6 @@ const parseAdminMoodListQuery = (req: AuthRequest): AdminMoodListQuery => {
   }
 }
 
-export const userManageHandler = async (req: AuthRequest, res: Response) => {
-  try {
-    // TODO: 实现实际的用户管理操作（禁用/启用/角色变更等）
-    // 当前仅记录审计日志，实际管理操作通过独立的管理接口完成
-    res.status(HTTP_STATUS.OK).json(apiSuccess(null, '用户管理操作已记录'))
-  } catch (error) {
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '用户管理操作失败'))
-  }
-}
-
 export const adminUsersListHandler = async (req: AuthRequest, res: Response) => {
   try {
     const users: AdminUserItem[] = await managementService.listAdminUsers()
@@ -272,94 +262,6 @@ export const adminUsersDeleteHandler = async (req: AuthRequest, res: Response) =
     return res.status(HTTP_STATUS.OK).json(apiSuccess(null, '用户删除成功'))
   } catch (error) {
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '删除用户失败'))
-  }
-}
-
-export const roleManageHandler = async (req: AuthRequest, res: Response) => {
-  try {
-    const { targetUserId, targetRole } = req.body
-
-    if (!Number.isInteger(targetUserId) || targetUserId <= 0) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json(apiFailure(400, 'targetUserId 必须是正整数'))
-    }
-
-    if (!isValidUserRole(targetRole)) {
-      return res
-        .status(400)
-        .json(apiFailure(400, 'targetRole 非法，仅支持 user/admin/super_admin'))
-    }
-
-    // 角色变更硬约束（R2 修复：防 admin 自我提权 / 禁止自变更）
-    const deny = checkRoleChangeAuthorization({
-      caller: { userId: req.user!.userId, role: req.user!.role },
-      targetUserId: targetUserId,
-      targetRole,
-    })
-    if (deny) {
-      await logOperation(
-        req.user!.userId,
-        req.user!.role,
-        'role.manage',
-        'ROLE_MANAGE',
-        String(targetUserId),
-        `targetRole=${targetRole}; reason=${deny.message}`,
-        'failed',
-        getClientIp(req)
-      )
-      return res.status(deny.status).json(apiFailure(deny.status, deny.message))
-    }
-
-    const updated = await managementService.updateUserRole(targetUserId, targetRole)
-    if (!updated) {
-      await logOperation(
-        req.user!.userId,
-        req.user!.role,
-        'role.manage',
-        'ROLE_MANAGE',
-        String(targetUserId),
-        `targetRole=${targetRole}; reason=target_user_not_found`,
-        'failed',
-        getClientIp(req)
-      )
-
-      return res.status(HTTP_STATUS.NOT_FOUND).json(apiFailure(404, '目标用户不存在'))
-    }
-
-    await logOperation(
-      req.user!.userId,
-      req.user!.role,
-      'role.manage',
-      'ROLE_MANAGE',
-      targetUserId ? String(targetUserId) : null,
-      `targetRole=${targetRole}`,
-      'success',
-      getClientIp(req)
-    )
-
-    res.status(HTTP_STATUS.OK).json(apiSuccess(null, '用户角色更新成功'))
-  } catch (error) {
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '角色管理操作失败'))
-  }
-}
-
-export const systemConfigHandler = async (req: AuthRequest, res: Response) => {
-  try {
-    const { configKey } = req.body
-
-    await logOperation(
-      req.user!.userId,
-      req.user!.role,
-      'system.config',
-      'SYSTEM_CONFIG',
-      configKey ? String(configKey) : null,
-      `configKey=${configKey || 'unknown'}`,
-      'success',
-      getClientIp(req)
-    )
-
-    res.status(HTTP_STATUS.OK).json(apiSuccess(null, '系统配置操作已记录'))
-  } catch (error) {
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '系统配置操作失败'))
   }
 }
 

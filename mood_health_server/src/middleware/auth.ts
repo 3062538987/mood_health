@@ -11,8 +11,6 @@ dotenv.config()
 export type PermissionCode =
   | 'user.delete'
   | 'user.manage'
-  | 'role.manage'
-  | 'system.config'
   | 'incident.fix'
   | 'audit.record.view_all'
   | 'post.audit'
@@ -114,8 +112,6 @@ export const rolePermissions: Record<UserRole, RolePermissionConfig> = {
       'course.manage',
       'music.manage',
       'user.manage',
-      'role.manage',
-      'system.config',
       'incident.fix',
       'audit.record.view_all',
       'feedback.handle',
@@ -134,8 +130,6 @@ export const rolePermissions: Record<UserRole, RolePermissionConfig> = {
     ],
     forbidden: [
       'user.manage',
-      'role.manage',
-      'system.config',
       'incident.fix',
       'auth.register.role_assign',
       'activity.manage',
@@ -148,8 +142,6 @@ export const rolePermissions: Record<UserRole, RolePermissionConfig> = {
       'user.manage',
       'user.delete',
       'prompt.manage',
-      'role.manage',
-      'system.config',
       'incident.fix',
       'audit.record.view_all',
       'post.audit.pending.read',
@@ -180,7 +172,7 @@ export const rolePermissions: Record<UserRole, RolePermissionConfig> = {
       'user.manage',
       'auth.profile.read',
     ],
-    forbidden: ['role.manage', 'system.config', 'incident.fix', 'auth.register.role_assign'],
+    forbidden: ['incident.fix', 'auth.register.role_assign'],
   },
   user: {
     granted: [
@@ -206,8 +198,6 @@ export const rolePermissions: Record<UserRole, RolePermissionConfig> = {
       'course.manage',
       'music.manage',
       'user.manage',
-      'role.manage',
-      'system.config',
       'incident.fix',
       'audit.record.view_all',
       'feedback.handle',
