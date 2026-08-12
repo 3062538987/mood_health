@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getMusicList, getMusicById, updateMusic } from '../controllers/musicController'
+import { createMusic, getMusicList, getMusicById, updateMusic } from '../controllers/musicController'
 import { authenticate, requirePermission } from '../middleware/auth'
 import { auditOperation } from '../utils/operationLogger'
 
@@ -7,6 +7,17 @@ const router = Router()
 
 // 公开路由
 router.get('/', getMusicList)
+
+router.post(
+  '/',
+  authenticate,
+  requirePermission('music.manage'),
+  auditOperation({
+    permissionCode: 'music.manage',
+    operationType: 'MUSIC_CREATE',
+  }),
+  createMusic
+)
 router.get('/:id', getMusicById)
 
 // 需要认证的路由（管理员功能）

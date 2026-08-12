@@ -1,4 +1,4 @@
-import { getMusicList, updateMusic } from '../../../src/controllers/musicController'
+import { createMusic, getMusicList, updateMusic } from '../../../src/controllers/musicController'
 import { createMusicRepository } from '../../../src/repositories/musicRepository'
 
 jest.mock('../../../src/repositories/musicRepository', () => ({
@@ -6,12 +6,14 @@ jest.mock('../../../src/repositories/musicRepository', () => ({
     findAll: jest.fn(),
     findById: jest.fn(),
     update: jest.fn(),
+    create: jest.fn(),
   })),
 }))
 
 const repository = (createMusicRepository as jest.Mock).mock.results[0].value as {
   findAll: jest.Mock
   update: jest.Mock
+  create: jest.Mock
 }
 
 const makeResponse = () => {
@@ -28,6 +30,7 @@ describe('musicController API contract', () => {
   beforeEach(() => {
     repository.findAll.mockReset()
     repository.update.mockReset()
+    repository.create.mockReset()
   })
 
   it('returns the standard success envelope for the music list', async () => {
@@ -66,5 +69,54 @@ describe('musicController API contract', () => {
       data: music,
       message: '更新音乐成功',
     })
+  })
+
+  it('creates a complete music record for an administrator', async () => {
+    const music = { id: 2, title: '森林呼吸', artist: 'Mood Health' }
+    repository.create.mockResolvedValue(music)
+    const response = makeResponse()
+
+    await createMusic(
+      {
+        body: {
+          title: ' 森林呼吸 ',
+          artist: ' Mood Health ',
+          url: 'https://example.com/forest.mp3',
+          duration: '05:20',
+          category: '自然声音',
+          cover: '',
+        },
+      } as unknown as Parameters<typeof createMusic>[0],
+      response as unknown as Parameters<typeof createMusic>[1]
+    )
+
+    expect(repository.create).toHaveBeenCalledWith({
+      title: '森林呼吸',
+      artist: 'Mood Health',
+      url: 'https://example.com/forest.mp3',
+      duration: '05:20',
+      category: '自然声音',
+      cover: null,
+    })
+    expect(response.status).toHaveBeenCalledWith(201)
+  })
+
+  it('rejects non-HTTPS media links instead of persisting unsafe URLs', async () => {
+    const response = makeResponse()
+    await createMusic(
+      {
+        body: {
+          title: '不安全音乐',
+          artist: '作者',
+          url: 'javascript:alert(1)',
+          duration: '03:00',
+          category: '其他',
+        },
+      } as unknown as Parameters<typeof createMusic>[0],
+      response as unknown as Parameters<typeof createMusic>[1]
+    )
+
+    expect(repository.create).not.toHaveBeenCalled()
+    expect(response.status).toHaveBeenCalledWith(400)
   })
 })

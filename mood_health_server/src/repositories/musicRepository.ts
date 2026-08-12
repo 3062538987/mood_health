@@ -74,6 +74,17 @@ export const createMusicRepository = (db: MusicDatabase = getMysqlPool()) => {
     return rows[0] ? mapMusic(rows[0]) : null
   }
 
+  const create = async (input: CreateMusicInput): Promise<MusicDto> => {
+    const [result] = await db.query<ResultSetHeader>(
+      `INSERT INTO musics (title, artist, url, duration, category, cover)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [input.title, input.artist, input.url, input.duration, input.category, input.cover ?? null]
+    )
+    const created = await findById(Number(result.insertId))
+    if (!created) throw new Error('创建后的音乐记录不存在')
+    return created
+  }
+
   const update = async (id: number, input: Partial<CreateMusicInput>): Promise<MusicDto | null> => {
     const [existing] = await db.query<MusicRow[]>(
       'SELECT * FROM musics WHERE id = ? LIMIT 1',
@@ -98,7 +109,7 @@ export const createMusicRepository = (db: MusicDatabase = getMysqlPool()) => {
     return findById(id)
   }
 
-  return { findAll, findById, update }
+  return { findAll, findById, create, update }
 }
 
 export type MusicRepository = ReturnType<typeof createMusicRepository>

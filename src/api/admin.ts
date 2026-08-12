@@ -34,7 +34,20 @@ export interface AdminMusic {
   id: number
   title: string
   artist?: string
+  url?: string
+  duration?: string
+  category?: string
+  cover?: string | null
   updatedAt?: string
+}
+
+export interface AdminMusicPayload {
+  title: string
+  artist: string
+  url: string
+  duration: string
+  category: string
+  cover: string
 }
 
 export interface AdminAuditLog {
@@ -183,6 +196,14 @@ export const updateAdminMusic = async (id: number, payload: Record<string, unkno
   return request<AdminMusic>({
     url: `/api/music/${id}`,
     method: 'put',
+    data: payload,
+  })
+}
+
+export const createAdminMusic = async (payload: AdminMusicPayload) => {
+  return request<AdminMusic>({
+    url: '/api/music',
+    method: 'post',
     data: payload,
   })
 }
