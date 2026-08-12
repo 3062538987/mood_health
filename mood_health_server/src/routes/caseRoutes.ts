@@ -21,13 +21,13 @@ const router = Router()
 router.use(authenticate)
 
 // 获取当前用户的个案列表
-router.get('/', requirePermission('case.read_own'), listMyCases)
+router.get('/', requirePermission('case.read_assigned'), listMyCases)
 
 // 创建个案
 router.post('/', requirePermission('case.create'), validateCreateCase, validateRequest, createCase)
 
 // 获取个案详情
-router.get('/:id', requirePermission('case.read_own'), getCaseDetail)
+router.get('/:id', requirePermission('case.read_assigned'), getCaseDetail)
 
 // 分配咨询师
 router.put('/:id/assign', requirePermission('case.assign'), validateAssignCase, validateRequest, assignCase)

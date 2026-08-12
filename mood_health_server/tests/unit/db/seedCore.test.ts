@@ -1,4 +1,9 @@
-import { seedReferenceData, REFERENCE_PERMISSIONS, REFERENCE_ROLES } from '../../../src/db/seeds/coreSeed'
+import {
+  seedReferenceData,
+  REFERENCE_PERMISSIONS,
+  REFERENCE_ROLES,
+  ROLE_PERMISSION_CODES,
+} from '../../../src/db/seeds/coreSeed'
 
 class FakeSeedDatabase {
   public readonly queries: Array<{ sql: string; params: unknown[] }> = []
@@ -16,8 +21,8 @@ describe('core seed', () => {
     const result = await seedReferenceData(db)
 
     expect(result.roles).toBe(4)
-    expect(result.permissions).toBe(45)
-    expect(result.rolePermissions).toBe(49)
+    expect(result.permissions).toBe(REFERENCE_PERMISSIONS.length)
+    expect(result.rolePermissions).toBe(Object.values(ROLE_PERMISSION_CODES).flat().length)
     expect(REFERENCE_ROLES.map((role) => role.code)).toEqual([
       'student',
       'counselor',
@@ -37,6 +42,18 @@ describe('core seed', () => {
         'post.audit',
         'activity.manage',
       ])
+    )
+    expect(ROLE_PERMISSION_CODES.admin).toEqual(
+      expect.arrayContaining([
+        'case.read_assigned',
+        'case.assign',
+        'case.intervene',
+        'case.refer',
+        'case.close',
+      ])
+    )
+    expect(ROLE_PERMISSION_CODES.super_admin).toEqual(
+      expect.arrayContaining(['case.read_assigned', 'case.create', 'case.assign'])
     )
   })
 

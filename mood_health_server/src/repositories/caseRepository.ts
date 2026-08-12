@@ -138,6 +138,11 @@ export const createCaseRepository = (db: CaseDatabase = getMysqlPool()) => {
     return rows[0] ? mapCase(rows[0]) : null
   }
 
+  const findAll = async (): Promise<CaseDto[]> => {
+    const [rows] = await db.query<CaseRow[]>('SELECT * FROM cases ORDER BY created_at DESC')
+    return rows.map(mapCase)
+  }
+
   const findByStudentId = async (studentUserId: number, status?: CaseStatus): Promise<CaseDto[]> => {
     const params: unknown[] = [studentUserId]
     let sql = 'SELECT * FROM cases WHERE student_user_id = ?'
@@ -230,6 +235,7 @@ export const createCaseRepository = (db: CaseDatabase = getMysqlPool()) => {
   return {
     createCase,
     findById,
+    findAll,
     findByStudentId,
     findByCounselorId,
     findByStatus,

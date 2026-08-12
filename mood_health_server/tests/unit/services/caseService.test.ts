@@ -24,6 +24,7 @@ const makeFakeRepo = (): CaseRepository => {
       return c
     },
     findById: async (id) => cases.find((c) => c.id === id) ?? null,
+    findAll: async () => [...cases].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     findByStudentId: async (studentUserId, status) => {
       let result = cases.filter((c) => c.studentUserId === studentUserId)
       if (status) result = result.filter((c) => c.status === status)
@@ -167,6 +168,18 @@ describe('CaseService', () => {
 
       const cases = await service.listMyCases(300, 'counselor')
       expect(cases).toHaveLength(1)
+    })
+
+    it.each(['admin', 'super_admin'])('%s sees cases in every status', async (roleCode) => {
+      const openCase = await service.createCase({ studentUserId: 100 })
+      const closedCase = await service.createCase({ studentUserId: 200 })
+      await repo.updateStatus(closedCase.id, 'closed')
+
+      const cases = await service.listMyCases(999, roleCode)
+
+      expect(cases.map((item) => item.id)).toEqual(
+        expect.arrayContaining([openCase.id, closedCase.id])
+      )
     })
   })
 

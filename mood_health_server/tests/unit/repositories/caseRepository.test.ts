@@ -87,6 +87,41 @@ describe('CaseRepository', () => {
     })
   })
 
+  describe('findAll', () => {
+    it('returns every status ordered by created_at DESC', async () => {
+      pool.queueResult([
+        {
+          id: 2,
+          student_user_id: 200,
+          assigned_counselor_id: 300,
+          source_session_id: null,
+          status: 'closed',
+          risk_level: 'high',
+          summary: 'closed case',
+          created_at: '2026-02-01T00:00:00.000Z',
+          updated_at: '2026-02-02T00:00:00.000Z',
+        },
+        {
+          id: 1,
+          student_user_id: 100,
+          assigned_counselor_id: null,
+          source_session_id: null,
+          status: 'open',
+          risk_level: 'moderate',
+          summary: 'open case',
+          created_at: '2026-01-01T00:00:00.000Z',
+          updated_at: '2026-01-01T00:00:00.000Z',
+        },
+      ])
+
+      const cases = await repo.findAll()
+
+      expect(cases.map((item) => item.status)).toEqual(['closed', 'open'])
+      expect(pool.getCalls()[0].sql).toBe('SELECT * FROM cases ORDER BY created_at DESC')
+      expect(pool.getCalls()[0].params).toEqual([])
+    })
+  })
+
   describe('findByStudentId', () => {
     it('returns cases ordered by created_at DESC', async () => {
       pool.queueResult([

@@ -26,5 +26,15 @@ describe('auth middleware role boundary', () => {
     expect(rolePermissions.student.granted).toContain('auth.profile.read')
     expect(rolePermissions.counselor.granted).toContain('auth.profile.read')
     expect(rolePermissions.super_admin.granted).toContain('user.manage')
+    expect(rolePermissions.super_admin.granted).toContain('case.read_assigned')
+    expect(rolePermissions.admin.granted).toEqual(
+      expect.arrayContaining([
+        'case.read_assigned',
+        'case.assign',
+        'case.intervene',
+        'case.refer',
+        'case.close',
+      ])
+    )
   })
 })

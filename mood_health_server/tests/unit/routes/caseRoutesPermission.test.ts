@@ -11,9 +11,9 @@ describe('case routes', () => {
 
     expect(source).toContain('authenticate')
     expect(source).toContain('requirePermission')
-    expect(source).toContain("router.get('/', requirePermission('case.read_own'), listMyCases)")
+    expect(source).toContain("router.get('/', requirePermission('case.read_assigned'), listMyCases)")
     expect(source).toContain("router.post('/', requirePermission('case.create'), validateCreateCase, validateRequest, createCase)")
-    expect(source).toContain("router.get('/:id', requirePermission('case.read_own'), getCaseDetail)")
+    expect(source).toContain("router.get('/:id', requirePermission('case.read_assigned'), getCaseDetail)")
     expect(source).toContain("router.put('/:id/assign', requirePermission('case.assign'), validateAssignCase, validateRequest, assignCase)")
     expect(source).toContain("router.post('/:id/interventions', requirePermission('case.intervene'), validateAddIntervention, validateRequest, addIntervention)")
     expect(source).toContain("router.put('/:id/refer', requirePermission('case.refer'), validateReferCase, validateRequest, referCase)")

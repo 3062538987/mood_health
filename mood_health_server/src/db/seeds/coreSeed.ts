@@ -132,6 +132,12 @@ export const ROLE_PERMISSION_CODES: Record<ReferenceRole['code'], string[]> = {
     'feedback.handle',
     'mood.record.read',
     'questionnaire.submit',
+    'case.read_assigned',
+    'case.create',
+    'case.assign',
+    'case.intervene',
+    'case.refer',
+    'case.close',
   ],
   admin: [
     'auth.profile.read',
@@ -146,6 +152,12 @@ export const ROLE_PERMISSION_CODES: Record<ReferenceRole['code'], string[]> = {
     'mood.record.read',
     'questionnaire.submit',
     'user.manage',
+    'case.read_assigned',
+    'case.create',
+    'case.assign',
+    'case.intervene',
+    'case.refer',
+    'case.close',
   ],
 }
 

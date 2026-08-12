@@ -125,8 +125,10 @@ export const createCaseService = (dependencies: CaseServiceDependencies = {}) =>
     if (roleCode === 'counselor') {
       return repository.findByCounselorId(userId)
     }
-    // super_admin sees all cases
-    return repository.findByStatus('open')
+    if (roleCode === 'admin' || roleCode === 'super_admin') {
+      return repository.findAll()
+    }
+    return []
   }
 
   const getCaseDetail = async (caseId: number): Promise<{

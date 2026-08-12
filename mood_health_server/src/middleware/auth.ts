@@ -36,6 +36,13 @@ export type PermissionCode =
   | 'achievement.read'
   | 'auth.profile.read'
   | 'auth.register.role_assign'
+  | 'case.read_assigned'
+  | 'case.read_own'
+  | 'case.create'
+  | 'case.assign'
+  | 'case.intervene'
+  | 'case.refer'
+  | 'case.close'
 
 interface RolePermissionConfig {
   granted: readonly PermissionCode[]
@@ -154,6 +161,12 @@ export const rolePermissions: Record<UserRole, RolePermissionConfig> = {
       'mood.record.read',
       'questionnaire.submit',
       'auth.profile.read',
+      'case.read_assigned',
+      'case.create',
+      'case.assign',
+      'case.intervene',
+      'case.refer',
+      'case.close',
     ],
     forbidden: ['auth.register.role_assign'],
   },
@@ -171,6 +184,12 @@ export const rolePermissions: Record<UserRole, RolePermissionConfig> = {
       'questionnaire.submit',
       'user.manage',
       'auth.profile.read',
+      'case.read_assigned',
+      'case.create',
+      'case.assign',
+      'case.intervene',
+      'case.refer',
+      'case.close',
     ],
     forbidden: ['incident.fix', 'auth.register.role_assign'],
   },
