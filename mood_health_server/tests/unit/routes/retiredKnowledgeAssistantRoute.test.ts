@@ -14,7 +14,7 @@ jest.mock('../../../src/utils/redis.client', () => ({
   default: { ping: jest.fn() },
 }))
 
-describe('retired knowledge assistant API', () => {
+describe('knowledge assistant API', () => {
   let server: Server
   let baseUrl: string
 
@@ -34,7 +34,7 @@ describe('retired knowledge assistant API', () => {
     })
   })
 
-  it('does not expose the independent knowledge-assistant route', async () => {
+  it('exposes the authenticated knowledge-assistant session route', async () => {
     const token = jwt.sign(
       { userId: 7, username: 'student', role: 'student' },
       process.env.JWT_SECRET!
@@ -43,6 +43,10 @@ describe('retired knowledge assistant API', () => {
       headers: { Authorization: `Bearer ${token}` },
     })
 
-    expect(response.status).toBe(404)
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toMatchObject({
+      code: 0,
+      data: [],
+    })
   })
 })
