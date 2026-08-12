@@ -107,7 +107,11 @@ def test_reasoning_steps_include_decision_when_web_allowed_but_no_key():
 
 
 class _FakeFinalProviderWithSummary:
-    """能区分「历史摘要调用」与「最终回复调用」的假 provider。"""
+    """记录长历史场景实际触发的模型调用。"""
+
+    def __init__(self) -> None:
+        self.calls = 0
+        self.messages: list[list[Any]] = []
 
     async def chat(  # noqa: ANN001
         self,
@@ -116,28 +120,25 @@ class _FakeFinalProviderWithSummary:
         temperature: float = 0.7,
         max_tokens: int = 2048,
     ) -> tuple[str, str, dict[str, int] | None]:
-        joined = " ".join(str(m.get("content", "")) for m in messages)
-        if "压缩成不超过120字" in joined:
-            return (
-                "用户此前倾诉学业压力与失眠，助手建议固定作息并练习呼吸放松。",
-                "deepseek-chat",
-                {"total_tokens": 30},
-            )
+        self.calls += 1
+        self.messages.append(messages)
         return ("这是一条用于单元测试的模拟回复。", "deepseek-chat", {"total_tokens": 10})
 
 
-def _build_fake_deps_with_summary() -> AgentDependencies:
+def _build_fake_deps_with_summary(
+    provider: _FakeFinalProviderWithSummary,
+) -> AgentDependencies:
     return AgentDependencies(
         settings=_FakeSettings(),  # type: ignore[arg-type]
         retrieve=_fake_retrieve,  # type: ignore[arg-type]
         decision_model_factory=_fake_decision_factory,  # type: ignore[arg-type]
-        final_provider=_FakeFinalProviderWithSummary(),  # type: ignore[arg-type]
+        final_provider=provider,  # type: ignore[arg-type]
         web_gateway=_FakeWebGateway(),  # type: ignore[arg-type]
     )
 
 
 def test_long_term_memory_compresses_older_history():
-    """超长历史：早期对话应被压缩为摘要，并在推理轨迹标注 memory 步骤。"""
+    """超长历史使用本地摘要，不能在最终回答前再串行调用一次模型。"""
     history = [
         {"role": "user", "content": "我最近考试压力大"},
         {"role": "assistant", "content": "我们可以聊聊如何分解任务"},
@@ -156,13 +157,20 @@ def test_long_term_memory_compresses_older_history():
         allowWebSearch=False,
     )
 
-    response = asyncio.run(run_assistant_agent(request, dependencies=_build_fake_deps_with_summary()))
+    provider = _FakeFinalProviderWithSummary()
+    response = asyncio.run(
+        run_assistant_agent(request, dependencies=_build_fake_deps_with_summary(provider))
+    )
 
     phases = [step.phase for step in response.reasoningSteps]
     # 历史超过 RECENT_HISTORY_K(6)，应触发压缩并留下 memory 步骤
     assert "memory" in phases
     memory_step = next(step for step in response.reasoningSteps if step.phase == "memory")
     assert "2 轮" in memory_step.label
+    assert provider.calls == 1
+    final_prompt = "\n".join(str(item.get("content", "")) for item in provider.messages[0])
+    assert "我最近考试压力大" in final_prompt
+    assert "我们可以聊聊如何分解任务" in final_prompt
     assert response.answer == "这是一条用于单元测试的模拟回复。"
 
 

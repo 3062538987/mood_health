@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import importlib
 import json
 import logging
-from operator import add
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
+from functools import lru_cache
+from operator import add
 from typing import Annotated, Any, Literal, NotRequired, Protocol, TypedDict, cast
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage
@@ -18,14 +18,11 @@ from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 from pydantic import SecretStr
 
-from app.agent.tavily_gateway import (
-    TavilySearchGateway,
-    WebSearchEvidence,
-    WebSearchResult,
-)
 from app.agent.duckduckgo_gateway import build_web_gateway
+from app.agent.tavily_gateway import WebSearchEvidence, WebSearchResult
 from app.config import Settings, get_settings
 from app.models.contracts import (
+    AssistantHistoryMessage,
     AssistantResponse,
     AssistantResponseRequest,
     RagSource,
@@ -57,6 +54,8 @@ WebSearchStatus = Literal["not_requested", "not_needed", "used", "failed"]
 
 # 长程记忆：保留最近若干轮原文，更早的对话压缩为摘要，避免长时间对话丢失上下文
 RECENT_HISTORY_K = 6
+MAX_HISTORY_SUMMARY_CHARS = 600
+MAX_HISTORY_MESSAGE_CHARS = 160
 
 
 class DecisionModel(Protocol):
@@ -274,47 +273,27 @@ def _final_user_prompt(state: AgentState) -> str:
 
 
 def _build_history_digest(history: list[AssistantHistoryMessage]) -> str:
-    """把早期历史拼成可读文本（LLM 摘要失败时的确定性降级）。"""
-    return "\n".join(f"{item.role}: {item.content}" for item in history)
+    """在本地生成有界摘要，避免为每轮长对话额外调用一次模型。"""
+    lines = [
+        f"{item.role}: {' '.join(item.content.split())[:MAX_HISTORY_MESSAGE_CHARS]}"
+        for item in history
+    ]
+    digest = "\n".join(lines)
+    if len(digest) <= MAX_HISTORY_SUMMARY_CHARS:
+        return digest
+    return f"…{digest[-(MAX_HISTORY_SUMMARY_CHARS - 1):]}"
 
 
-async def compress_history(
+def compress_history(
     history: list[AssistantHistoryMessage],
     recent_k: int,
-    provider: FinalProvider,
 ) -> tuple[list[AssistantHistoryMessage], str | None]:
-    """长程记忆压缩：保留最近 recent_k 轮原文，更早的对话用 LLM 压成摘要。
-
-    返回 (近期原文, 摘要或 None)。历史不超过窗口或摘要失败时摘要为 None，
-    此时回落为「不压缩」（仍把全部历史原文带入）。
-    """
+    """保留最近原文，并在本地把更早对话压成有界摘要。"""
     if len(history) <= recent_k:
         return history, None
     recent = history[-recent_k:]
     older = history[:-recent_k]
-    digest = _build_history_digest(older)
-    summary_prompt = [
-        {
-            "role": "system",
-            "content": (
-                "把以下多轮心理咨询对话压缩成不超过120字的中文摘要，"
-                "保留用户的主要困扰、情绪与已给出的关键建议，不要新增信息。"
-            ),
-        },
-        {"role": "user", "content": digest},
-    ]
-    try:
-        summary, _model, _usage = await provider.chat(
-            messages=summary_prompt,
-            temperature=0.3,
-            max_tokens=200,
-        )
-        summary = summary.strip()
-    except Exception as error:
-        logger.warning(
-            "历史摘要压缩失败，降级为原文召回 type=%s", type(error).__name__
-        )
-        summary = digest
+    summary = _build_history_digest(older)
     return recent, (summary or None)
 
 
@@ -417,7 +396,10 @@ def build_assistant_graph(dependencies: AgentDependencies) -> Any:
                     "messages": [],
                     "web_status": "failed",
                     "reasoning_steps": [
-                        ReasoningStep(phase="decision", label="联网决策模型返回异常，仅依据本地证据")
+                        ReasoningStep(
+                            phase="decision",
+                            label="联网决策模型返回异常，仅依据本地证据",
+                        )
                     ],
                 }
             tool_calls = raw_message.tool_calls[:1]
@@ -487,9 +469,7 @@ def build_assistant_graph(dependencies: AgentDependencies) -> Any:
 
     async def final_answer(state: AgentState) -> dict[str, AssistantResponse]:
         raw_history = state["request"].history
-        recent_history, history_summary = await compress_history(
-            raw_history, RECENT_HISTORY_K, dependencies.final_provider
-        )
+        recent_history, history_summary = compress_history(raw_history, RECENT_HISTORY_K)
         messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPT}]
         if history_summary:
             messages.append(
@@ -562,8 +542,11 @@ async def run_assistant_agent(
     *,
     dependencies: AgentDependencies | None = None,
 ) -> AssistantResponse:
-    resolved_dependencies = dependencies or build_runtime_dependencies()
-    graph = build_assistant_graph(resolved_dependencies)
+    if dependencies is None:
+        resolved_dependencies, graph = _runtime_agent()
+    else:
+        resolved_dependencies = dependencies
+        graph = build_assistant_graph(resolved_dependencies)
     initial_state: AgentState = {
         "request": request,
         "messages": [],
@@ -578,3 +561,10 @@ async def run_assistant_agent(
     if not isinstance(response, AssistantResponse):
         raise RuntimeError("assistant graph completed without a response")
     return response
+
+
+@lru_cache(maxsize=1)
+def _runtime_agent() -> tuple[AgentDependencies, Any]:
+    """复用 Provider HTTP 客户端与已编译图，避免每次请求重新握手和构图。"""
+    dependencies = build_runtime_dependencies()
+    return dependencies, build_assistant_graph(dependencies)

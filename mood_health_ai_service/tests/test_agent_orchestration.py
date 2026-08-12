@@ -510,6 +510,41 @@ def test_compiled_graph_has_no_checkpointer_or_session_store() -> None:
     assert "decision" in graph.nodes
 
 
+@pytest.mark.asyncio
+async def test_runtime_requests_reuse_dependencies_and_compiled_graph(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import app.agent.orchestration as orchestration
+
+    dependencies, _, _ = make_dependencies()
+    build_calls = 0
+    compile_calls = 0
+    real_compile = orchestration.build_assistant_graph
+
+    def build_dependencies() -> AgentDependencies:
+        nonlocal build_calls
+        build_calls += 1
+        return dependencies
+
+    def compile_graph(agent_dependencies: AgentDependencies) -> Any:
+        nonlocal compile_calls
+        compile_calls += 1
+        return real_compile(agent_dependencies)
+
+    monkeypatch.setattr(orchestration, "build_runtime_dependencies", build_dependencies)
+    monkeypatch.setattr(orchestration, "build_assistant_graph", compile_graph)
+
+    await orchestration.run_assistant_agent(
+        AssistantResponseRequest(query="first", requestId="runtime-cache-1")
+    )
+    await orchestration.run_assistant_agent(
+        AssistantResponseRequest(query="second", requestId="runtime-cache-2")
+    )
+
+    assert build_calls == 1
+    assert compile_calls == 1
+
+
 def test_runtime_decision_model_uses_exact_deepseek_config_and_one_tool(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
