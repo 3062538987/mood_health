@@ -47,7 +47,6 @@ test('super admin can open every visible admin page without redirects or API fai
       '/admin/user-moods',
       '/admin/moods',
       '/admin/assessments',
-      '/admin/posts',
       '/admin/treehole',
       '/admin/cases',
       '/admin/courses',
@@ -56,6 +55,7 @@ test('super admin can open every visible admin page without redirects or API fai
       '/admin/activity-stats',
     ])
   )
+  expect(hrefs).not.toContain('/admin/posts')
 
   for (const href of hrefs) {
     await test.step(`open ${href}`, async () => {

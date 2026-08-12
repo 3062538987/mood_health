@@ -66,9 +66,7 @@
 
       <div class="admin-main">
         <router-view v-slot="{ Component }">
-          <transition name="fade-slide" mode="out-in">
-            <component :is="Component" />
-          </transition>
+          <component :is="Component" class="admin-route-content" />
         </router-view>
       </div>
     </main>
@@ -432,18 +430,4 @@ watch(
   }
 }
 
-.fade-slide-enter-active,
-.fade-slide-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.fade-slide-enter-from {
-  opacity: 0;
-  transform: translateY(8px);
-}
-
-.fade-slide-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
-}
 </style>

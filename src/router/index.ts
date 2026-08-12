@@ -205,7 +205,7 @@ const baseRoutes: RouteRecordRaw[] = [
       adminOnly: true,
       roles: ['admin', 'super_admin'],
       permission: 'user.manage',
-      nonCoreSubNavPaths: ['/admin/posts', '/admin/treehole', '/admin/courses', '/admin/music'],
+      nonCoreSubNavPaths: ['/admin/treehole', '/admin/courses', '/admin/music'],
       subNav: [
         { path: '/admin/dashboard', name: '管理首页', icon: 'fas fa-gauge-high' },
         { path: '/admin/users', name: '用户管理', icon: 'fas fa-users-cog' },
@@ -215,11 +215,6 @@ const baseRoutes: RouteRecordRaw[] = [
           path: '/admin/assessments',
           name: '测评管理',
           icon: 'fas fa-clipboard-list',
-        },
-        {
-          path: '/admin/posts',
-          name: '帖子审核',
-          icon: 'fas fa-clipboard-check',
         },
         {
           path: '/admin/treehole',
@@ -262,16 +257,6 @@ const baseRoutes: RouteRecordRaw[] = [
           adminOnly: true,
           roles: ['super_admin'],
           permission: 'user.manage',
-        },
-      },
-      {
-        path: 'posts',
-        component: () => import('@/views/admin/Posts.vue'),
-        meta: {
-          feature: 'nonCore',
-          adminOnly: true,
-          roles: ['admin', 'super_admin'],
-          permission: 'post.audit',
         },
       },
       {

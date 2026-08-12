@@ -1,6 +1,14 @@
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
 import AdminLayout from '@/views/admin/AdminLayout.vue'
+
+const adminLayoutSource = readFileSync(
+  path.resolve(process.cwd(), 'src/views/admin/AdminLayout.vue'),
+  'utf8'
+)
+const routerSource = readFileSync(path.resolve(process.cwd(), 'src/router/index.ts'), 'utf8')
 
 const navigationState = vi.hoisted(() => ({
   route: {
@@ -105,5 +113,19 @@ describe('AdminLayout navigation', () => {
     ])
     expect(wrapper.text()).not.toContain('用户管理')
     expect(wrapper.text()).not.toContain('失效入口')
+  })
+
+  it('renders child routes without an out-in page transition', () => {
+    expect(adminLayoutSource).toContain('class="admin-route-content"')
+    expect(adminLayoutSource).not.toContain('mode="out-in"')
+    expect(adminLayoutSource).not.toContain('name="fade-slide"')
+  })
+
+  it('does not expose the retired post moderation route', () => {
+    expect(routerSource).not.toContain("path: '/admin/posts'")
+    expect(routerSource).not.toContain("name: '帖子审核'")
+    expect(routerSource).not.toContain("path: 'posts'")
+    expect(routerSource).not.toContain("import('@/views/admin/Posts.vue')")
+    expect(routerSource).toContain("name: '树洞审核'")
   })
 })
