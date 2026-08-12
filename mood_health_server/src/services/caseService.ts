@@ -8,14 +8,21 @@ import {
 import {
   AssessmentRepository,
 } from '../repositories/assessmentRepository'
+import {
+  AutomaticRiskCaseRepository,
+  createAutomaticRiskCaseRepository,
+} from '../repositories/automaticRiskCaseRepository'
 
 export interface CaseServiceDependencies {
   repository?: CaseRepository
   assessmentRepository?: AssessmentRepository
+  automaticRiskRepository?: AutomaticRiskCaseRepository
 }
 
 export const createCaseService = (dependencies: CaseServiceDependencies = {}) => {
   const repository = dependencies.repository ?? createCaseRepository()
+  const automaticRiskRepository =
+    dependencies.automaticRiskRepository ?? createAutomaticRiskCaseRepository()
 
   const createCase = async (input: {
     studentUserId: number
@@ -126,6 +133,7 @@ export const createCaseService = (dependencies: CaseServiceDependencies = {}) =>
       return repository.findByCounselorId(userId)
     }
     if (roleCode === 'admin' || roleCode === 'super_admin') {
+      await automaticRiskRepository.syncCandidates()
       return repository.findAll()
     }
     return []

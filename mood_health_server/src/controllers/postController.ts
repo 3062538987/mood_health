@@ -9,6 +9,7 @@ import contentAuditService from '../utils/ai/contentAuditService'
 import { apiFailure, API_ERROR_CODES } from '../utils/apiResponse'
 import { generateAndSaveAiReply } from './treeholeController'
 import { formatCrisisSupport } from '../constants/crisisSupport'
+import { recordTreeholeRiskSignal } from '../repositories/automaticRiskCaseRepository'
 
 const postRepo = createPostRepository()
 const auditService = createAuditService()
@@ -36,6 +37,14 @@ export const createPostHandler = async (req: AuthRequest, res: Response) => {
     // 基础敏感词过滤
     const filterResult = filterContent(content)
     if (shouldAutoReject(content)) {
+      try {
+        await recordTreeholeRiskSignal(userId)
+      } catch (signalError) {
+        logger.error('树洞高风险信号记录失败', {
+          userId,
+          error: signalError instanceof Error ? signalError.message : String(signalError),
+        })
+      }
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         code: 400,
         message: '内容包含敏感词，无法发布',
@@ -54,6 +63,14 @@ export const createPostHandler = async (req: AuthRequest, res: Response) => {
       const auditResult = await contentAuditService.auditContent({ content, type: 'post' })
       if (!auditResult.isSafe) {
         if (auditResult.severity === 'high') {
+          try {
+            await recordTreeholeRiskSignal(userId)
+          } catch (signalError) {
+            logger.error('树洞 AI 高风险信号记录失败', {
+              userId,
+              error: signalError instanceof Error ? signalError.message : String(signalError),
+            })
+          }
           return res.status(HTTP_STATUS.BAD_REQUEST).json({
             code: 400,
             message: 'AI 检测到高风险内容，无法发布',

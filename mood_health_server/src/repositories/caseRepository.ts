@@ -22,9 +22,11 @@ export interface CaseDto {
   studentUserId: number
   assignedCounselorId: number | null
   sourceSessionId: number | null
+  origin?: string | null
   status: CaseStatus
   riskLevel: string | null
   summary: string | null
+  triggerReasons?: string[]
   createdAt: string
   updatedAt: string
 }
@@ -63,9 +65,11 @@ type CaseRow = RowDataPacket & {
   student_user_id: number
   assigned_counselor_id: number | null
   source_session_id: number | null
+  origin?: string | null
   status: string
   risk_level: string | null
   summary: string | null
+  trigger_reasons_json?: string | string[] | null
   created_at: Date | string
   updated_at: Date | string
 }
@@ -90,9 +94,20 @@ const mapCase = (row: CaseRow): CaseDto => ({
   studentUserId: row.student_user_id,
   assignedCounselorId: row.assigned_counselor_id,
   sourceSessionId: row.source_session_id,
+  origin: row.origin ?? null,
   status: row.status as CaseStatus,
   riskLevel: row.risk_level,
   summary: row.summary,
+  triggerReasons: (() => {
+    if (Array.isArray(row.trigger_reasons_json)) return row.trigger_reasons_json.map(String)
+    if (typeof row.trigger_reasons_json !== 'string') return []
+    try {
+      const value = JSON.parse(row.trigger_reasons_json)
+      return Array.isArray(value) ? value.map(String) : []
+    } catch {
+      return []
+    }
+  })(),
   createdAt: toIsoString(row.created_at),
   updatedAt: toIsoString(row.updated_at),
 })
@@ -122,9 +137,11 @@ export const createCaseRepository = (db: CaseDatabase = getMysqlPool()) => {
       studentUserId: input.studentUserId,
       assignedCounselorId: null,
       sourceSessionId: input.sourceSessionId ?? null,
+      origin: null,
       status: 'open',
       riskLevel: input.riskLevel ?? null,
       summary: input.summary ?? null,
+      triggerReasons: [],
       createdAt: now,
       updatedAt: now,
     }

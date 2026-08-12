@@ -8,9 +8,11 @@ export interface CaseItem {
   studentUserId: number
   assignedCounselorId: number | null
   sourceSessionId: number | null
+  origin?: string | null
   status: CaseStatus
   riskLevel: string | null
   summary: string | null
+  triggerReasons?: string[]
   createdAt: string
   updatedAt: string
 }

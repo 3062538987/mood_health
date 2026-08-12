@@ -74,10 +74,12 @@ const makeFakeRepo = (): CaseRepository => {
 describe('CaseService', () => {
   let repo: CaseRepository
   let service: ReturnType<typeof createCaseService>
+  const automaticRiskRepository = { syncCandidates: jest.fn(), recordTreeholeRisk: jest.fn() }
 
   beforeEach(() => {
     repo = makeFakeRepo()
-    service = createCaseService({ repository: repo })
+    automaticRiskRepository.syncCandidates.mockReset().mockResolvedValue(0)
+    service = createCaseService({ repository: repo, automaticRiskRepository: automaticRiskRepository as never })
   })
 
   describe('createCase', () => {
@@ -180,6 +182,7 @@ describe('CaseService', () => {
       expect(cases.map((item) => item.id)).toEqual(
         expect.arrayContaining([openCase.id, closedCase.id])
       )
+      expect(automaticRiskRepository.syncCandidates).toHaveBeenCalledTimes(1)
     })
   })
 

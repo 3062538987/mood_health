@@ -25,6 +25,7 @@ export interface AssistantMessageMetadata {
   groundingUsed: boolean
   fallbackUsed: boolean
   webSearchStatus: WebSearchStatus
+  riskLevel?: 'low' | 'high'
 }
 
 export interface CounselingSession {
@@ -157,8 +158,8 @@ export async function saveMessagePair(
   try {
     await connection.beginTransaction()
     await connection.query(
-      'INSERT INTO counseling_sessions (user_id, session_id, role, content) VALUES (?, ?, ?, ?)',
-      [userId, sessionId, 'user', userMessage]
+      'INSERT INTO counseling_sessions (user_id, session_id, role, content, risk_level) VALUES (?, ?, ?, ?, ?)',
+      [userId, sessionId, 'user', userMessage, metadata.riskLevel ?? 'low']
     )
     await connection.query(
       `INSERT INTO counseling_sessions

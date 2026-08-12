@@ -29,7 +29,7 @@ const RISK_FALLBACK =
 export interface UnifiedAssistantResult {
   response: string
   sessionId: string
-  riskLevel: 'low' | 'medium'
+  riskLevel: 'low' | 'high'
   hasRiskContent: boolean
   suggestion?: string
   sources: AssistantSource[]
@@ -106,12 +106,13 @@ export async function generateUnifiedAssistantResponse(
     groundingUsed,
     fallbackUsed,
     webSearchStatus,
+    riskLevel: hasRiskContent ? 'high' : 'low',
   })
 
   return {
     response,
     sessionId,
-    riskLevel: hasRiskContent ? 'medium' : 'low',
+    riskLevel: hasRiskContent ? 'high' : 'low',
     hasRiskContent,
     suggestion: hasRiskContent
       ? '如果你正在经历困难，建议寻求专业心理咨询师的帮助'

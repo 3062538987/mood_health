@@ -78,3 +78,9 @@ export const createAutomaticRiskCaseRepository = (
 }
 
 export type AutomaticRiskCaseRepository = ReturnType<typeof createAutomaticRiskCaseRepository>
+
+let defaultRepository: AutomaticRiskCaseRepository | null = null
+export const recordTreeholeRiskSignal = async (userId: number): Promise<void> => {
+  defaultRepository = defaultRepository ?? createAutomaticRiskCaseRepository()
+  await defaultRepository.recordTreeholeRisk(userId)
+}

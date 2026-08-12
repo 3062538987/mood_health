@@ -105,7 +105,7 @@ describe('unifiedAssistantService', () => {
     }))
     expect(result).toEqual(expect.objectContaining({
       hasRiskContent: true,
-      riskLevel: 'medium',
+      riskLevel: 'high',
       groundingUsed: false,
       sources: [],
     }))

@@ -17,6 +17,7 @@
             <th>状态</th>
             <th>风险等级</th>
             <th>摘要</th>
+            <th>触发原因（满足任一即可）</th>
             <th>创建时间</th>
             <th>操作</th>
           </tr>
@@ -37,6 +38,12 @@
               <span v-else class="text-muted">-</span>
             </td>
             <td class="summary-cell">{{ item.summary || '-' }}</td>
+            <td class="reason-cell">
+              <span v-for="reason in item.triggerReasons || []" :key="reason" class="reason-tag">
+                {{ reason }}
+              </span>
+              <span v-if="!item.triggerReasons?.length" class="text-muted">人工创建或测评触发</span>
+            </td>
             <td>{{ formatDate(item.createdAt) }}</td>
             <td>
               <router-link :to="`/admin/cases/${item.id}`" class="detail-link">
@@ -194,6 +201,9 @@ onMounted(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.reason-cell { min-width: 220px; }
+.reason-tag { margin: 2px 4px 2px 0; padding: 4px 8px; display: inline-block; border-radius: 999px; color: #9b3f32; background: #fff0ed; font-size: 12px; }
 
 .text-muted {
   color: $text-light-color;
