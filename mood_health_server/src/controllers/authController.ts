@@ -70,6 +70,22 @@ export const getMe = async (req: AuthRequest, res: Response) => {
   }
 }
 
+export const updateMe = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(apiFailure(401, '未登录'))
+    }
+    const user = await authService.updateProfile(req.user.userId, req.body)
+    res.json(apiSuccess({ user }, '个人资料已更新'))
+  } catch (error) {
+    if (error instanceof HttpException) {
+      return res.status(error.statusCode).json(apiFailure(error.statusCode, error.message))
+    }
+    logger.error('更新个人资料失败', { error, userId: req.user?.userId })
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '更新个人资料失败'))
+  }
+}
+
 // 有意预留端点 handler（前端注销入口待补）：当前登录用户注销账号（DELETE /api/auth/me）
 export const deleteMe = async (req: AuthRequest, res: Response) => {
   try {

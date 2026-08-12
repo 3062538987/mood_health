@@ -7,7 +7,7 @@
 
 import { Router } from 'express'
 import { body } from 'express-validator'
-import { register, login, logout, getMe, deleteMe } from '../controllers/authController'
+import { register, login, logout, getMe, updateMe, deleteMe } from '../controllers/authController'
 import { authenticate } from '../middleware/auth'
 import { validateRequest } from '../middleware/validateRequest'
 
@@ -89,6 +89,18 @@ router.post(
  * Headers: { "Authorization": "Bearer eyJhbGciOiJIUzI1NiIs..." }
  */
 router.get('/me', authenticate, getMe)
+router.patch(
+  '/me',
+  authenticate,
+  [
+    body('username')
+      .matches(/^[\u4e00-\u9fa5a-zA-Z0-9_]{3,20}$/)
+      .withMessage('用户名需为3-20位，可包含中文、字母、数字或下划线'),
+    body('avatarUrl').optional({ values: 'null' }).isString().isLength({ max: 500 }),
+  ],
+  validateRequest,
+  updateMe
+)
 
 /**
  * 用户退出登录接口

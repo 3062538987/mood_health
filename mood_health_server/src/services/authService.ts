@@ -42,6 +42,11 @@ interface LoginResult {
   user: PublicUser
 }
 
+interface UpdateProfileInput {
+  username?: unknown
+  avatarUrl?: unknown
+}
+
 const buildDefaultEmail = (
   username: string,
   now: () => Date = () => new Date(),
@@ -208,6 +213,44 @@ export const createAuthService = (dependencies: AuthServiceDependencies = {}) =>
     return user
   }
 
+  const updateProfile = async (
+    userId: number,
+    input: UpdateProfileInput
+  ): Promise<PublicUser> => {
+    if (
+      typeof input.username !== 'string' ||
+      !/^[\u4e00-\u9fa5a-zA-Z0-9_]{3,20}$/.test(input.username.trim())
+    ) {
+      throw new BusinessError('用户名需为3-20位，可包含中文、字母、数字或下划线')
+    }
+
+    let avatarUrl: string | null = null
+    if (input.avatarUrl !== null && input.avatarUrl !== undefined && input.avatarUrl !== '') {
+      if (typeof input.avatarUrl !== 'string' || input.avatarUrl.length > 500) {
+        throw new BusinessError('头像地址无效')
+      }
+      try {
+        const url = new URL(input.avatarUrl)
+        if (url.protocol !== 'https:' || url.username || url.password) throw new Error('unsafe')
+        avatarUrl = input.avatarUrl
+      } catch {
+        throw new BusinessError('头像必须使用安全的 HTTPS 地址')
+      }
+    }
+
+    try {
+      const user = await repository.updateProfile(userId, {
+        username: input.username.trim(),
+        avatarUrl,
+      })
+      if (!user) throw new HttpException('用户不存在', 404)
+      return user
+    } catch (error) {
+      if (error instanceof DuplicateUserError) throw new BusinessError('用户名已存在')
+      throw error
+    }
+  }
+
   const deleteMe = async (userId: number): Promise<void> => {
     const result = await repository.deleteUser(userId)
     if (!result.deleted) {
@@ -219,6 +262,7 @@ export const createAuthService = (dependencies: AuthServiceDependencies = {}) =>
     register,
     login,
     getMe,
+    updateProfile,
     deleteMe,
   }
 }

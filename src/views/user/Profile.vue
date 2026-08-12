@@ -6,13 +6,31 @@
       <!-- 用户信息卡片 -->
       <div class="user-info-card">
         <div class="avatar">
-          <div class="avatar-placeholder">👤</div>
+          <img
+            v-if="userStore.user?.avatarUrl"
+            data-test="profile-avatar-image"
+            :src="userStore.user.avatarUrl"
+            alt="用户头像"
+          />
+          <div v-else class="avatar-placeholder">👤</div>
         </div>
         <div class="user-details">
           <h2 class="username">{{ displayUsername }}</h2>
           <p class="user-id">用户ID: {{ displayUserId }}</p>
         </div>
+        <button data-test="edit-profile" class="edit-profile-button" type="button" @click="openEdit">编辑资料</button>
       </div>
+
+      <form v-if="editing" data-test="profile-form" class="profile-form" @submit.prevent="saveProfile">
+        <h3>自定义个人资料</h3>
+        <label>用户名<input v-model.trim="profileDraft.username" data-test="profile-username" maxlength="20" required /></label>
+        <label>头像 HTTPS 地址<input v-model.trim="profileDraft.avatarUrl" data-test="profile-avatar" type="url" maxlength="500" placeholder="https://…" /></label>
+        <div class="form-actions">
+          <button type="button" @click="editing = false">取消</button>
+          <button class="primary" type="submit" :disabled="saving">{{ saving ? '保存中…' : '保存修改' }}</button>
+        </div>
+        <p v-if="profileError" role="alert">{{ profileError }}</p>
+      </form>
 
       <!-- 个人情绪主页 -->
       <div class="emotion-homepage">
@@ -84,8 +102,40 @@ import { getMyJoinedActivities } from '@/api/activityApi'
 const router = useRouter()
 const userStore = useUserStore()
 
-const displayUsername = computed(() => userStore.user?.username || '未登录用户')
+const profileVersion = ref(0)
+const displayUsername = computed(() => {
+  profileVersion.value
+  return userStore.user?.username || '未登录用户'
+})
 const displayUserId = computed(() => String(userStore.user?.id || '-'))
+const editing = ref(false)
+const saving = ref(false)
+const profileError = ref('')
+const profileDraft = ref({ username: '', avatarUrl: '' })
+
+const openEdit = () => {
+  profileDraft.value = {
+    username: userStore.user?.username || '',
+    avatarUrl: userStore.user?.avatarUrl || '',
+  }
+  profileError.value = ''
+  editing.value = true
+}
+
+const saveProfile = async () => {
+  saving.value = true
+  profileError.value = ''
+  const ok = await userStore.updateProfile(
+    profileDraft.value.username,
+    profileDraft.value.avatarUrl || null
+  )
+  saving.value = false
+  if (ok) {
+    profileVersion.value += 1
+    editing.value = false
+  }
+  else profileError.value = userStore.error || '个人资料更新失败'
+}
 
 // 个人情绪主页数据（按当前登录用户实时计算）
 const emotionScore = ref(0)
@@ -203,6 +253,14 @@ onMounted(() => {
   gap: 20px;
 
   .avatar {
+    img {
+      width: 100px;
+      height: 100px;
+      display: block;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #e8f5ee;
+    }
     .avatar-placeholder {
       width: 100px;
       height: 100px;
@@ -230,6 +288,9 @@ onMounted(() => {
     }
   }
 }
+
+.edit-profile-button { margin-left: auto; padding: 9px 15px; border: 1px solid #7dbb9b; border-radius: 9px; color: #287052; background: #fff; cursor: pointer; }
+.profile-form { margin: -14px 0 28px; padding: 20px; display: grid; gap: 13px; border: 1px solid #dce9e2; border-radius: 14px; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,.05); }.profile-form h3 { margin: 0; }.profile-form label { display: grid; gap: 6px; color: #4c6258; font-size: 13px; font-weight: 700; }.profile-form input { padding: 10px 12px; border: 1px solid #d4e1da; border-radius: 9px; font: inherit; }.form-actions { display: flex; gap: 9px; }.form-actions button { padding: 9px 15px; border: 1px solid #ccd9d2; border-radius: 8px; background: #fff; cursor: pointer; }.form-actions .primary { border-color: #3f8b6a; color: #fff; background: #3f8b6a; }.profile-form [role='alert'] { margin: 0; color: #a23e3e; }
 
 // 功能区域样式
 .function-section {

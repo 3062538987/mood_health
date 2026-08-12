@@ -8,6 +8,7 @@ export interface User {
   email: string
   role?: string
   avatar?: string
+  avatarUrl?: string | null
   created_at?: string
 }
 
@@ -96,6 +97,25 @@ export const useUserStore = defineStore('user', () => {
     } catch (err) {
       clearToken()
       return false
+    }
+  }
+
+  const updateProfile = async (username: string, avatarUrl: string | null): Promise<boolean> => {
+    loading.value = true
+    error.value = ''
+    try {
+      const response = await request<{ user: User }>({
+        url: '/api/auth/me',
+        method: 'patch',
+        data: { username, avatarUrl },
+      })
+      user.value = response.user
+      return true
+    } catch (err) {
+      error.value = getErrorMessage(err, '个人资料更新失败')
+      return false
+    } finally {
+      loading.value = false
     }
   }
 
@@ -196,6 +216,7 @@ export const useUserStore = defineStore('user', () => {
     login,
     logout,
     fetchUserInfo,
+    updateProfile,
     trySessionRestore,
     init,
   }

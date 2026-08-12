@@ -48,6 +48,7 @@ const createRepository = (): jest.Mocked<UserRepository> => ({
   findPublicUserById: jest.fn(),
   createStudentUser: jest.fn(),
   updateLastLoginAt: jest.fn().mockResolvedValue(undefined),
+  updateProfile: jest.fn(),
   disableUser: jest.fn(),
   deleteUser: jest.fn(),
 })
@@ -162,5 +163,36 @@ describe('authService', () => {
     })
 
     await expect(service.getMe(8)).resolves.toEqual(publicUser)
+  })
+
+  it('updates username and an HTTPS avatar and returns persisted public data', async () => {
+    const repository = createRepository()
+    repository.updateProfile.mockResolvedValue({
+      ...publicUser,
+      username: 'new_name',
+      avatarUrl: 'https://images.example.com/avatar.png',
+    })
+    const service = createAuthService({ repository, jwtSecret: 'test-secret' })
+
+    await expect(
+      service.updateProfile(8, {
+        username: ' new_name ',
+        avatarUrl: 'https://images.example.com/avatar.png',
+      })
+    ).resolves.toMatchObject({ username: 'new_name' })
+    expect(repository.updateProfile).toHaveBeenCalledWith(8, {
+      username: 'new_name',
+      avatarUrl: 'https://images.example.com/avatar.png',
+    })
+  })
+
+  it('rejects invalid usernames and non-HTTPS avatar URLs before persistence', async () => {
+    const repository = createRepository()
+    const service = createAuthService({ repository, jwtSecret: 'test-secret' })
+
+    await expect(
+      service.updateProfile(8, { username: 'x', avatarUrl: 'javascript:alert(1)' })
+    ).rejects.toMatchObject({ statusCode: 400 })
+    expect(repository.updateProfile).not.toHaveBeenCalled()
   })
 })

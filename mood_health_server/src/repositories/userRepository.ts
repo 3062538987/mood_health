@@ -43,6 +43,11 @@ export interface CreateStudentUserInput {
   nickname?: string | null
 }
 
+export interface UpdateUserProfileInput {
+  username: string
+  avatarUrl: string | null
+}
+
 type UserRow = RowDataPacket & {
   id: number
   username: string
@@ -200,6 +205,24 @@ export const createUserRepository = (db: MysqlExecutor = getMysqlPool()) => {
     )
   }
 
+  const updateProfile = async (
+    id: number,
+    input: UpdateUserProfileInput
+  ): Promise<PublicUser | null> => {
+    try {
+      await db.query<ResultSetHeader>(
+        `UPDATE users
+         SET username = ?, avatar_url = ?, updated_at = UTC_TIMESTAMP(3)
+         WHERE id = ? AND status = 'active'`,
+        [input.username, input.avatarUrl, id]
+      )
+    } catch (error) {
+      if (isDuplicateEntryError(error)) throw new DuplicateUserError()
+      throw error
+    }
+    return findPublicUserById(id)
+  }
+
   const disableUser = async (id: number): Promise<boolean> => {
     const [result] = await db.query<ResultSetHeader>(
       `UPDATE users SET status = 'disabled', updated_at = UTC_TIMESTAMP(3) WHERE id = ? AND status = 'active'`,
@@ -268,6 +291,7 @@ export const createUserRepository = (db: MysqlExecutor = getMysqlPool()) => {
     findPublicUserById,
     createStudentUser,
     updateLastLoginAt,
+    updateProfile,
     disableUser,
     deleteUser,
   }
