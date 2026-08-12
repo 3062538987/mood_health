@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import request from '@/utils/request'
-import { getAdminAuditLogs, getAdminMoods, getAdminMusic, getAdminUsers } from '@/api/admin'
+import {
+  createAdminCourse,
+  getAdminAuditLogs,
+  getAdminMoods,
+  getAdminMusic,
+  getAdminUsers,
+  updateAdminCourse,
+} from '@/api/admin'
 
 vi.mock('@/utils/request', () => ({ default: vi.fn() }))
 
@@ -52,6 +59,58 @@ describe('admin API contract', () => {
     requestMock.mockResolvedValueOnce(music)
 
     await expect(getAdminMusic()).resolves.toEqual(music)
+  })
+
+  it('maps the video course form to the backend course contract', async () => {
+    requestMock.mockResolvedValueOnce({ id: 1, title: '睡眠课' })
+
+    await createAdminCourse({
+      title: '睡眠课',
+      description: '改善睡眠',
+      category: '睡眠',
+      content: '课程说明',
+      videoUrl: 'https://example.com/sleep.mp4',
+      coverImage: 'https://example.com/sleep.jpg',
+    })
+
+    expect(requestMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          title: '睡眠课',
+          description: '改善睡眠',
+          category: '睡眠',
+          coverUrl: 'https://example.com/sleep.jpg',
+          content: 'https://example.com/sleep.mp4',
+          type: 'video',
+        },
+      })
+    )
+  })
+
+  it('maps an article course update without losing its content', async () => {
+    requestMock.mockResolvedValueOnce({ id: 2, title: '情绪课' })
+
+    await updateAdminCourse(2, {
+      title: '情绪课',
+      description: '理解情绪',
+      category: '情绪管理',
+      content: '正文内容',
+      videoUrl: '',
+      coverImage: '',
+    })
+
+    expect(requestMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          title: '情绪课',
+          description: '理解情绪',
+          category: '情绪管理',
+          coverUrl: '',
+          content: '正文内容',
+          type: 'article',
+        },
+      })
+    )
   })
 
   it('returns only the minimal mood statistics DTO', async () => {

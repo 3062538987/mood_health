@@ -136,19 +136,31 @@ export type AdminCoursePayload = {
   category: string
 }
 
+const toAdminCourseApiPayload = (payload: AdminCoursePayload) => {
+  const videoUrl = payload.videoUrl?.trim() ?? ''
+  return {
+    title: payload.title,
+    description: payload.description,
+    coverUrl: payload.coverImage ?? '',
+    content: videoUrl || payload.content || '',
+    category: payload.category,
+    type: videoUrl ? 'video' : 'article',
+  }
+}
+
 export const createAdminCourse = async (payload: AdminCoursePayload) => {
   return request<AdminCourse>({
     url: '/api/admin/courses',
     method: 'post',
-    data: payload,
+    data: toAdminCourseApiPayload(payload),
   })
 }
 
-export const updateAdminCourse = async (id: number, payload: Record<string, unknown>) => {
+export const updateAdminCourse = async (id: number, payload: AdminCoursePayload) => {
   return request<AdminCourse>({
     url: `/api/admin/courses/${id}`,
     method: 'put',
-    data: payload,
+    data: toAdminCourseApiPayload(payload),
   })
 }
 
