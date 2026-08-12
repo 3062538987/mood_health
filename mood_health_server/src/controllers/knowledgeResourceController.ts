@@ -11,6 +11,11 @@ import {
   API_ERROR_CODES,
 } from '../utils/apiResponse'
 import logger from '../utils/logger'
+import {
+  createKnowledgeUploadService,
+  KnowledgeUploadService,
+} from '../services/knowledgeUploadService'
+import type { KnowledgeUploadFile } from '../services/knowledgeUploadPolicy'
 
 const getUserId = (request: Request): number | null => request.user?.userId ?? null
 
@@ -30,8 +35,13 @@ const getErrorContract = (error: unknown): { statusCode: number; message: string
 }
 
 export const createKnowledgeResourceController = (
-  service: KnowledgeResourceService = createKnowledgeResourceService()
+  service: KnowledgeResourceService = createKnowledgeResourceService(),
+  uploadService?: KnowledgeUploadService
 ) => {
+  const getUploadService = (): KnowledgeUploadService => {
+    uploadService = uploadService ?? createKnowledgeUploadService()
+    return uploadService
+  }
   const respondWithError = (response: Response, error: unknown): void => {
     const contract = getErrorContract(error)
     if (contract) {
@@ -115,7 +125,50 @@ export const createKnowledgeResourceController = (
     }
   }
 
-  return { listFolders, listResources, getResource, setFavorite }
+  const uploadResource = async (request: Request, response: Response): Promise<void> => {
+    const userId = requireUserId(request, response)
+    if (userId === null) return
+    try {
+      const file = (request as Request & { file?: KnowledgeUploadFile }).file
+      if (!file) {
+        throw new KnowledgeResourceServiceError('BAD_REQUEST', 400, '请选择要上传的资料文件')
+      }
+      const resource = await getUploadService().upload({
+        userId,
+        role: request.user?.role ?? 'user',
+        title: request.body?.title,
+        summary: request.body?.summary,
+        licenseCode: request.body?.licenseCode,
+        file,
+      })
+      response.status(201).json(apiSuccess(resource, '资料上传成功'))
+    } catch (error) {
+      respondWithError(response, error)
+    }
+  }
+
+  const downloadResource = async (request: Request, response: Response): Promise<void> => {
+    const userId = requireUserId(request, response)
+    if (userId === null) return
+    try {
+      const download = await getUploadService().getDownload({
+        resourceId: Number(request.params.id),
+      })
+      response.setHeader('Content-Type', download.mimeType)
+      response.download(download.absolutePath, download.downloadName)
+    } catch (error) {
+      respondWithError(response, error)
+    }
+  }
+
+  return {
+    listFolders,
+    listResources,
+    getResource,
+    setFavorite,
+    uploadResource,
+    downloadResource,
+  }
 }
 
 let defaultController: ReturnType<typeof createKnowledgeResourceController> | null = null
@@ -132,3 +185,7 @@ export const getKnowledgeResource = (request: Request, response: Response) =>
   getDefaultController().getResource(request, response)
 export const setKnowledgeResourceFavorite = (request: Request, response: Response) =>
   getDefaultController().setFavorite(request, response)
+export const uploadKnowledgeResource = (request: Request, response: Response) =>
+  getDefaultController().uploadResource(request, response)
+export const downloadKnowledgeResource = (request: Request, response: Response) =>
+  getDefaultController().downloadResource(request, response)

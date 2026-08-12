@@ -23,6 +23,7 @@ export interface KnowledgeResourceDto {
   summary: string
   resourceType: KnowledgeResourceType
   sourceUrl: string | null
+  downloadUrl: string | null
   licenseCode: string
   isBuiltin: boolean
   ingestionStatus: KnowledgeIngestionStatus
@@ -30,6 +31,23 @@ export interface KnowledgeResourceDto {
   favorited: boolean
   createdAt: string
   updatedAt: string
+}
+
+export interface CreateUploadedKnowledgeResourceInput {
+  ownerUserId: number
+  folderSlug: string
+  folderName: string
+  title: string
+  summary: string
+  storageKey: string
+  licenseCode: string
+  contentHash: string
+}
+
+export interface KnowledgeResourceFileDto {
+  resourceId: number
+  title: string
+  storageKey: string
 }
 
 export interface ListKnowledgeResourcesInput {
@@ -70,6 +88,7 @@ type ResourceRow = RowDataPacket & {
   summary: string
   resource_type: string
   source_url: string | null
+  storage_key: string | null
   license_code: string
   is_builtin: number | boolean
   ingestion_status: string
@@ -109,6 +128,7 @@ const mapResource = (row: ResourceRow): KnowledgeResourceDto => ({
   summary: row.summary,
   resourceType: row.resource_type as KnowledgeResourceType,
   sourceUrl: row.source_url,
+  downloadUrl: row.storage_key ? `/api/knowledge-resources/${Number(row.id)}/download` : null,
   licenseCode: row.license_code,
   isBuiltin: Boolean(row.is_builtin),
   ingestionStatus: row.ingestion_status as KnowledgeIngestionStatus,
@@ -120,7 +140,7 @@ const mapResource = (row: ResourceRow): KnowledgeResourceDto => ({
 
 const RESOURCE_SELECT = `
   SELECT r.id, r.folder_id, f.slug AS folder_slug, r.title, r.summary, r.resource_type,
-         r.source_url, r.license_code, r.is_builtin, r.ingestion_status, r.reviewed_at,
+         r.source_url, r.storage_key, r.license_code, r.is_builtin, r.ingestion_status, r.reviewed_at,
          EXISTS(
            SELECT 1 FROM knowledge_favorites favorite
            WHERE favorite.user_id = ? AND favorite.resource_id = r.id
@@ -206,7 +226,101 @@ export const createKnowledgeResourceRepository = (
     return false
   }
 
-  return { listFolders, listResources, findById, setFavorite }
+  const createUploadedResource = async (
+    input: CreateUploadedKnowledgeResourceInput
+  ): Promise<KnowledgeResourceDto> => {
+    const now = new Date()
+    await db.query<ResultSetHeader>(
+      `INSERT INTO knowledge_folders
+         (slug, name, description, is_builtin, owner_user_id, created_at, updated_at)
+       VALUES (?, ?, ?, 0, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE name = VALUES(name), description = VALUES(description), updated_at = VALUES(updated_at)`,
+      [
+        input.folderSlug,
+        input.folderName,
+        '由老师上传并共享的心理健康资料',
+        input.ownerUserId,
+        now,
+        now,
+      ]
+    )
+    const [folderRows] = await db.query<(RowDataPacket & { id: number })[]>(
+      'SELECT id FROM knowledge_folders WHERE slug = ? AND owner_user_id = ? LIMIT 1',
+      [input.folderSlug, input.ownerUserId]
+    )
+    const folderId = Number(folderRows[0]?.id)
+    if (!Number.isInteger(folderId) || folderId <= 0) {
+      throw new Error('knowledge upload folder was not created')
+    }
+
+    let resourceId: number | null = null
+    try {
+      const [insertResult] = await db.query<ResultSetHeader>(
+        `INSERT INTO knowledge_resources
+           (folder_id, owner_user_id, slug, title, summary, resource_type, source_url,
+            storage_key, license_code, content_hash, ingestion_status, ingestion_error_code,
+            reviewed_at, is_builtin, is_active, created_at, updated_at)
+         VALUES (?, ?, NULL, ?, ?, 'document', NULL, ?, ?, ?, 'ready', NULL, NULL, 0, 1, ?, ?)`,
+        [
+          folderId,
+          input.ownerUserId,
+          input.title,
+          input.summary,
+          input.storageKey,
+          input.licenseCode,
+          input.contentHash,
+          now,
+          now,
+        ]
+      )
+      resourceId = Number(insertResult.insertId)
+      await db.query<ResultSetHeader>(
+        `INSERT INTO knowledge_resource_versions
+           (resource_id, version_number, content_text, storage_key, content_hash, created_by_user_id, created_at)
+         VALUES (?, 1, NULL, ?, ?, ?, ?)`,
+        [resourceId, input.storageKey, input.contentHash, input.ownerUserId, now]
+      )
+      await db.query<ResultSetHeader>(
+        `INSERT INTO knowledge_ingestion_jobs
+           (resource_id, status, attempt_count, error_code, started_at, finished_at, created_at, updated_at)
+         VALUES (?, 'succeeded', 1, NULL, ?, ?, ?, ?)`,
+        [resourceId, now, now, now, now]
+      )
+    } catch (error) {
+      if (resourceId !== null) {
+        await db.query<ResultSetHeader>('DELETE FROM knowledge_resources WHERE id = ?', [resourceId])
+      }
+      throw error
+    }
+
+    const created = await findById(resourceId, input.ownerUserId)
+    if (!created) throw new Error('created knowledge resource was not found')
+    return created
+  }
+
+  const findFileById = async (resourceId: number): Promise<KnowledgeResourceFileDto | null> => {
+    const [rows] = await db.query<
+      (RowDataPacket & { id: number; title: string; storage_key: string | null })[]
+    >(
+      `SELECT id, title, storage_key
+       FROM knowledge_resources
+       WHERE id = ? AND is_active = 1 AND storage_key IS NOT NULL
+       LIMIT 1`,
+      [resourceId]
+    )
+    const row = rows[0]
+    if (!row?.storage_key) return null
+    return { resourceId: Number(row.id), title: row.title, storageKey: row.storage_key }
+  }
+
+  return {
+    listFolders,
+    listResources,
+    findById,
+    setFavorite,
+    createUploadedResource,
+    findFileById,
+  }
 }
 
 export type KnowledgeResourceRepository = ReturnType<typeof createKnowledgeResourceRepository>

@@ -68,6 +68,9 @@ mood_health_server/mood_health_server/
 # AI runtime vector store (regenerable, do not commit)
 mood_health_ai_service/data/
 
+# Uploaded knowledge files are runtime data, never source artifacts
+mood_health_server/storage/
+
 # Temp setup/scratch scripts
 .tmp*.ps1
 

@@ -29,6 +29,7 @@ const builtinResource: KnowledgeResourceDto = {
   summary: '权威压力管理资料',
   resourceType: 'link',
   sourceUrl: 'https://www.who.int/example',
+  downloadUrl: null,
   licenseCode: 'LINK_ONLY',
   isBuiltin: true,
   ingestionStatus: 'ready',
@@ -53,6 +54,8 @@ const makeRepository = (): KnowledgeResourceRepository => {
       favorited = nextFavorite
       return favorited
     },
+    createUploadedResource: async () => builtinResource,
+    findFileById: async () => null,
   }
 }
 
