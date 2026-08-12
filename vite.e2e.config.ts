@@ -31,7 +31,7 @@ const getManualChunk = (id: string) => {
   }
 
   const matchedGroup = vendorChunkGroups.find(({ packages }) =>
-    packages.some((pkg) => id.includes(`/node_modules/${pkg}/`)),
+    packages.some((pkg) => id.includes(`/node_modules/${pkg}/`))
   )
 
   if (matchedGroup) {
@@ -44,10 +44,14 @@ const getManualChunk = (id: string) => {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const backendPort = Number(process.env.E2E_BACKEND_PORT || 3100)
-  const devAllowedHosts = mode === 'development' ? ['localhost', '127.0.0.1', 'moodhealth.loca.lt'] : undefined
+  const devAllowedHosts =
+    mode === 'development' ? ['localhost', '127.0.0.1', 'moodhealth.loca.lt'] : undefined
 
   return {
     plugins: [vue()],
+    define: {
+      'process.env.NODE_ENV': JSON.stringify(mode),
+    },
     base: env.VITE_BASE_URL || '/',
     css: {
       preprocessorOptions: {

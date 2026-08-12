@@ -44,6 +44,9 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [vue()],
+    define: {
+      'process.env.NODE_ENV': JSON.stringify(mode),
+    },
     base: env.VITE_BASE_URL || '/',
     css: {
       preprocessorOptions: {
@@ -75,7 +78,7 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
         },
         '/ai': {
-          target: 'http://localhost:8001',  // N2/T5：统一为 AI 服务端口 8001
+          target: 'http://localhost:8001', // N2/T5：统一为 AI 服务端口 8001
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/ai/, '/api'),
         },
