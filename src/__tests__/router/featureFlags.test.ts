@@ -51,6 +51,7 @@ describe('feature-aware routes', () => {
       '/admin/users',
       '/admin/user-moods',
       '/admin/moods',
+      '/admin/assessments',
       '/admin/cases',
       '/admin/audit-logs',
       '/admin/activity-stats',

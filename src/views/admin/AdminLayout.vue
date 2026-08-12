@@ -78,33 +78,44 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import type { RouteMeta } from 'vue-router'
+import { requirePermission } from '@/router/guards'
 import { useUserStore } from '@/stores/userStore'
+
+type SubNavItem = NonNullable<RouteMeta['subNav']>[number]
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const sidebarCollapsed = ref(false)
 
-const sidebarItems = [
-  { path: '/admin/dashboard', name: '管理首页', icon: 'fas fa-gauge-high' },
-  { path: '/admin/users', name: '用户管理', icon: 'fas fa-users-cog' },
-  { path: '/admin/user-moods', name: '用户情绪数据', icon: 'fas fa-chart-line' },
-  { path: '/admin/moods', name: '情绪记录', icon: 'fas fa-face-smile' },
-  { path: '/admin/posts', name: '帖子审核', icon: 'fas fa-clipboard-check' },
-  { path: '/admin/treehole', name: '树洞审核', icon: 'fas fa-tree' },
-  { path: '/admin/cases', name: '风险个案', icon: 'fas fa-heart-circle-exclamation' },
-  { path: '/admin/courses', name: '课程管理', icon: 'fas fa-book-medical' },
-  { path: '/admin/music', name: '音乐管理', icon: 'fas fa-music' },
-  { path: '/admin/audit-logs', name: '审计日志', icon: 'fas fa-file-shield' },
-  { path: '/admin/activity-stats', name: '活动统计', icon: 'fas fa-chart-bar' },
-]
+const sidebarItems = computed<SubNavItem[]>(() => {
+  const adminRoute = route.matched.find((record) => Array.isArray(record.meta.subNav))
+  const configuredItems = adminRoute?.meta.subNav ?? []
+
+  return configuredItems.filter((item) => {
+    const resolved = router.resolve(item.path)
+    const leafRoute = resolved.matched[resolved.matched.length - 1]
+    if (!leafRoute || leafRoute.name === 'NotFound') {
+      return false
+    }
+
+    const roles = leafRoute.meta.roles ?? []
+    const currentRole = userStore.user?.role ?? 'user'
+    if (roles.length > 0 && !roles.includes(currentRole)) {
+      return false
+    }
+
+    return requirePermission(userStore, leafRoute.meta.permission)
+  })
+})
 
 const isNavActive = (path: string) => {
   return route.path.startsWith(path)
 }
 
 const currentPageName = computed(() => {
-  const item = sidebarItems.find((i) => route.path.startsWith(i.path))
+  const item = sidebarItems.value.find((i) => route.path.startsWith(i.path))
   return item?.name || '管理后台'
 })
 
