@@ -26,6 +26,7 @@ import counselingRoutes from './routes/counselingRoutes'
 import feedbackRoutes from './routes/feedbackRoutes'
 import moodAnalysisRoutes from './routes/moodAnalysisRoutes'
 import knowledgeAssistantRoutes from './routes/knowledgeAssistantRoutes'
+import knowledgeResourceRoutes from './routes/knowledgeResourceRoutes'
 import logger, { summarizeRequestBody } from './utils/logger'
 import redisClient from './utils/redis.client'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler'
@@ -219,6 +220,7 @@ app.use('/api/counseling', createAiRateLimiter())
 app.use('/api/counseling', counselingRoutes)
 app.use('/api/knowledge-assistant', createAiRateLimiter())
 app.use('/api/knowledge-assistant', knowledgeAssistantRoutes)
+app.use('/api/knowledge-resources', knowledgeResourceRoutes)
 
   app.get(
     '/health',
