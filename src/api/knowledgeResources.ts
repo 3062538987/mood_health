@@ -40,7 +40,7 @@ export interface KnowledgeResourcePage {
 
 export interface KnowledgeResourceQuery {
   folderId?: number
-  keyword?: string
+  search?: string
   page?: number
   pageSize?: number
 }

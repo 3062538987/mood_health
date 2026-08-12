@@ -196,7 +196,7 @@ const loadResources = async () => {
   try {
     const result = await getKnowledgeResources({
       folderId: selectedFolderId.value,
-      keyword: keyword.value || undefined,
+      search: keyword.value || undefined,
       pageSize: 50,
     })
     resources.value = result.items
