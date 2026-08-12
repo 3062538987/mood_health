@@ -91,6 +91,8 @@ const expectedMigrationFiles = [
   '0420_create_knowledge_resources.up.sql',
   '0430_create_automatic_risk_signals.down.sql',
   '0430_create_automatic_risk_signals.up.sql',
+  '0440_create_user_notifications.down.sql',
+  '0440_create_user_notifications.up.sql',
 ]
 
 describe('migration SQL files', () => {
@@ -110,6 +112,24 @@ describe('migration SQL files', () => {
     }
 
     expect(fs.readFileSync(bootstrapFile, 'utf8')).toMatch(/IF\s+NOT\s+EXISTS/i)
+  })
+
+  it('stores notification preferences and deduplicated user notifications', () => {
+    const upSql = fs.readFileSync(
+      path.join(migrationsDir, '0440_create_user_notifications.up.sql'),
+      'utf8'
+    )
+    const downSql = fs.readFileSync(
+      path.join(migrationsDir, '0440_create_user_notifications.down.sql'),
+      'utf8'
+    )
+
+    expect(upSql).toMatch(/CREATE\s+TABLE\s+user_notification_preferences/i)
+    expect(upSql).toMatch(/CREATE\s+TABLE\s+user_notifications/i)
+    expect(upSql).toMatch(/UNIQUE\s+KEY\s+uk_user_notifications_dedupe/i)
+    expect(upSql).toMatch(/FOREIGN\s+KEY\s+\(user_id\).*ON\s+DELETE\s+CASCADE/is)
+    expect(downSql).toMatch(/DROP\s+TABLE\s+user_notifications/i)
+    expect(downSql).toMatch(/DROP\s+TABLE\s+user_notification_preferences/i)
   })
 
   it('adds a constrained web search status with a safe default and reversible down migration', () => {
