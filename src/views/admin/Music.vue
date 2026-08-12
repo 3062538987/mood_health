@@ -20,10 +20,33 @@
       <tbody>
         <tr v-for="item in musicList" :key="item.id">
           <td>{{ item.id }}</td>
-          <td>{{ item.title }}</td>
-          <td>{{ item.artist || '-' }}</td>
           <td>
-            <button @click="touch(item.id)">保存</button>
+            <input
+              v-model="item.title"
+              :name="`title-${item.id}`"
+              :aria-label="`音乐 ${item.id} 名称`"
+              class="table-input"
+              maxlength="100"
+            />
+          </td>
+          <td>
+            <input
+              v-model="item.artist"
+              :name="`artist-${item.id}`"
+              :aria-label="`音乐 ${item.id} 作者`"
+              class="table-input"
+              maxlength="100"
+            />
+          </td>
+          <td>
+            <button
+              type="button"
+              class="save-btn"
+              :disabled="savingId === item.id"
+              @click="save(item)"
+            >
+              {{ savingId === item.id ? '保存中...' : '保存' }}
+            </button>
           </td>
         </tr>
       </tbody>
@@ -39,24 +62,36 @@ import type { AdminMusic } from '@/api/admin'
 
 const musicList = ref<AdminMusic[]>([])
 const loading = ref(false)
+const savingId = ref<number | null>(null)
 
 const load = async () => {
   loading.value = true
   try {
     musicList.value = await getAdminMusic()
-  } catch (error) {
+  } catch {
     ElMessage.error('获取音乐失败')
   } finally {
     loading.value = false
   }
 }
 
-const touch = async (id: number) => {
+const save = async (item: AdminMusic) => {
+  const title = item.title.trim()
+  const artist = item.artist?.trim() ?? ''
+  if (!title) {
+    ElMessage.error('音乐名称不能为空')
+    return
+  }
+
+  savingId.value = item.id
   try {
-    await updateAdminMusic(id, {})
+    const updated = await updateAdminMusic(item.id, { title, artist })
+    Object.assign(item, updated)
     ElMessage.success('保存成功')
-  } catch (error) {
+  } catch {
     ElMessage.error('保存失败')
+  } finally {
+    savingId.value = null
   }
 }
 
@@ -91,5 +126,23 @@ onMounted(load)
   border-bottom: 1px solid #f1f5f9;
   padding: 10px;
   text-align: left;
+}
+.table-input {
+  width: 100%;
+  min-width: 140px;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: #1e293b;
+  background: #fff;
+}
+.table-input:focus {
+  border-color: #e8834a;
+  outline: 2px solid rgba(232, 131, 74, 0.18);
+}
+.save-btn:disabled {
+  cursor: wait;
+  opacity: 0.6;
 }
 </style>
