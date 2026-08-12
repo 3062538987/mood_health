@@ -355,7 +355,7 @@ const baseRoutes: RouteRecordRaw[] = [
         meta: {
           adminOnly: true,
           roles: ['admin', 'super_admin'],
-          permission: 'case.manage',
+          permission: 'case.read_assigned',
         },
       },
       {
@@ -364,7 +364,7 @@ const baseRoutes: RouteRecordRaw[] = [
         meta: {
           adminOnly: true,
           roles: ['admin', 'super_admin'],
-          permission: 'case.manage',
+          permission: 'case.read_assigned',
         },
       },
     ],

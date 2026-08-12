@@ -114,6 +114,28 @@ describe('router guards', () => {
       ).toBeNull()
     })
 
+    it.each(['admin', 'super_admin'])('%s 可访问风险个案管理页面', (role) => {
+      const to = createRoute({
+        path: '/admin/cases',
+        meta: {
+          adminOnly: true,
+          roles: ['admin', 'super_admin'],
+          permission: 'case.read_assigned',
+        },
+      })
+
+      expect(
+        getRouteRedirect(
+          to,
+          createUserStore({
+            isLoggedIn: true,
+            isAdmin: true,
+            user: { id: 1, role },
+          }) as never
+        )
+      ).toBeNull()
+    })
+
     it('已登录用户访问普通公开页面时允许通过', () => {
       const to = createRoute({
         path: '/guide',

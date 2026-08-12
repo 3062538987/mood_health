@@ -13,6 +13,7 @@ const navigationState = vi.hoisted(() => ({
             { path: '/admin/dashboard', name: '管理首页', icon: 'dashboard-icon' },
             { path: '/admin/users', name: '用户管理', icon: 'users-icon' },
             { path: '/admin/assessments', name: '测评管理', icon: 'assessment-icon' },
+            { path: '/admin/cases', name: '风险个案', icon: 'case-icon' },
             { path: '/admin/missing', name: '失效入口', icon: 'missing-icon' },
           ],
         },
@@ -75,6 +76,10 @@ describe('AdminLayout navigation', () => {
         '/admin/assessments',
         { meta: { roles: ['admin', 'super_admin'], permission: 'user.manage' } },
       ],
+      [
+        '/admin/cases',
+        { meta: { roles: ['admin', 'super_admin'], permission: 'case.read_assigned' } },
+      ],
     ])
   })
 
@@ -96,6 +101,7 @@ describe('AdminLayout navigation', () => {
     expect(links.map((link) => link.attributes('href'))).toEqual([
       '/admin/dashboard',
       '/admin/assessments',
+      '/admin/cases',
     ])
     expect(wrapper.text()).not.toContain('用户管理')
     expect(wrapper.text()).not.toContain('失效入口')

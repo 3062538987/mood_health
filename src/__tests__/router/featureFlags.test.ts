@@ -71,6 +71,13 @@ describe('feature-aware routes', () => {
     expect(findRoute(routes, 'music')).toBeDefined()
   })
 
+  it('uses the backend case read permission for the admin list and detail routes', () => {
+    const routes = createRoutes({ nonCoreModules: true })
+
+    expect(findRoute(routes, 'cases')?.meta?.permission).toBe('case.read_assigned')
+    expect(findRoute(routes, 'cases/:id')?.meta?.permission).toBe('case.read_assigned')
+  })
+
   it.each([
     '/relax',
     '/improve/group',
