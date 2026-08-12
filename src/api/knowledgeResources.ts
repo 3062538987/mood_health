@@ -22,6 +22,7 @@ export interface KnowledgeResource {
   summary: string
   resourceType: KnowledgeResourceType
   sourceUrl: string | null
+  downloadUrl: string | null
   licenseCode: string
   isBuiltin: boolean
   ingestionStatus: KnowledgeIngestionStatus
@@ -70,3 +71,25 @@ export const setKnowledgeResourceFavorite = (id: number, favorite: boolean) =>
     method: 'post',
     data: { favorite },
   })
+
+export interface UploadKnowledgeResourceInput {
+  title: string
+  summary: string
+  licenseCode?: string
+  file: File
+}
+
+export const uploadKnowledgeResource = (input: UploadKnowledgeResourceInput) => {
+  const data = new FormData()
+  data.append('title', input.title)
+  data.append('summary', input.summary)
+  if (input.licenseCode) data.append('licenseCode', input.licenseCode)
+  data.append('file', input.file)
+
+  return request<KnowledgeResource>({
+    url: '/api/knowledge-resources/upload',
+    method: 'post',
+    data,
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}

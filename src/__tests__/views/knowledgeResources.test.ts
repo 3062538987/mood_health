@@ -25,6 +25,7 @@ const builtinResource = {
   summary: '世界卫生组织压力管理指南',
   resourceType: 'document' as const,
   sourceUrl: 'https://www.who.int/publications/b/53604',
+  downloadUrl: null,
   licenseCode: 'CC-BY-NC-SA-3.0-IGO',
   isBuiltin: true,
   ingestionStatus: 'ready' as const,
