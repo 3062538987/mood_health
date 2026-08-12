@@ -122,6 +122,7 @@ def make_dependencies(
         decision_model_factory=decision_factory,
         final_provider=provider,
         web_gateway=gateway,
+        web_available=bool(tavily_key.strip()),
     )
     return dependencies, retrieval_calls, bound_tools
 
