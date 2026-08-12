@@ -312,13 +312,12 @@ export interface ActivityStatsData {
 export const getActivityStats = async (
   params?: Record<string, string>,
 ): Promise<ActivityStatsData> => {
-  const response = await request<{ data: ActivityStatsData }>({
+  return request<ActivityStatsData>({
     url: '/api/activities/stats',
     method: 'get',
     params,
     ...noBlockingLoadingConfig,
   })
-  return response.data
 }
 
 /**
