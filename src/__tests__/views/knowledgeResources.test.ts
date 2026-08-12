@@ -11,6 +11,11 @@ vi.mock('@/api/knowledgeResources', () => ({
   getKnowledgeFolders: vi.fn(),
   getKnowledgeResources: vi.fn(),
   setKnowledgeResourceFavorite: vi.fn(),
+  uploadKnowledgeResource: vi.fn(),
+}))
+
+vi.mock('@/stores/userStore', () => ({
+  useUserStore: () => ({ user: { id: 7, role: 'student' } }),
 }))
 
 const getFoldersMock = vi.mocked(getKnowledgeFolders)

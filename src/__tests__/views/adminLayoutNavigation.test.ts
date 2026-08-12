@@ -128,4 +128,11 @@ describe('AdminLayout navigation', () => {
     expect(routerSource).not.toContain("import('@/views/admin/Posts.vue')")
     expect(routerSource).toContain("name: '树洞审核'")
   })
+
+  it('exposes a resolvable knowledge resource management route', () => {
+    expect(routerSource).toContain("path: '/admin/knowledge'")
+    expect(routerSource).toContain("name: '资料管理'")
+    expect(routerSource).toContain("path: 'knowledge'")
+    expect(routerSource).toContain("import('@/views/admin/KnowledgeResources.vue')")
+  })
 })

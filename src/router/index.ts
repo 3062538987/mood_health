@@ -232,6 +232,11 @@ const baseRoutes: RouteRecordRaw[] = [
           icon: 'fas fa-book-medical',
         },
         {
+          path: '/admin/knowledge',
+          name: '资料管理',
+          icon: 'fas fa-folder-open',
+        },
+        {
           path: '/admin/music',
           name: '音乐管理',
           icon: 'fas fa-music',
@@ -280,6 +285,15 @@ const baseRoutes: RouteRecordRaw[] = [
       {
         path: 'assessments',
         component: () => import('@/views/admin/AdminAssessments.vue'),
+        meta: {
+          adminOnly: true,
+          roles: ['admin', 'super_admin'],
+          permission: 'user.manage',
+        },
+      },
+      {
+        path: 'knowledge',
+        component: () => import('@/views/admin/KnowledgeResources.vue'),
         meta: {
           adminOnly: true,
           roles: ['admin', 'super_admin'],

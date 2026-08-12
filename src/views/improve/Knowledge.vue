@@ -131,6 +131,10 @@
       </section>
     </section>
 
+    <section v-if="canUpload" class="upload-section">
+      <KnowledgeUploadForm @uploaded="handleUploaded" />
+    </section>
+
     <div v-if="selectedResource" class="detail-backdrop" @click.self="selectedResource = null">
       <section class="detail-panel" role="dialog" aria-modal="true" :aria-labelledby="`resource-${selectedResource.id}`">
         <button class="detail-close" type="button" aria-label="关闭资料详情" @click="selectedResource = null">×</button>
@@ -167,7 +171,10 @@ import {
   type KnowledgeResourceType,
 } from '@/api/knowledgeResources'
 import { getErrorMessage } from '@/utils/request'
+import KnowledgeUploadForm from '@/components/knowledge/KnowledgeUploadForm.vue'
+import { useUserStore } from '@/stores/userStore'
 
+const userStore = useUserStore()
 const folders = ref<KnowledgeFolder[]>([])
 const resources = ref<KnowledgeResource[]>([])
 const selectedFolderId = ref<number | undefined>()
@@ -181,6 +188,9 @@ const activeFolderName = computed(() =>
   selectedFolderId.value === undefined
     ? '全部资料'
     : folders.value.find((folder) => folder.id === selectedFolderId.value)?.name || '资料列表'
+)
+const canUpload = computed(() =>
+  ['counselor', 'admin', 'super_admin'].includes(userStore.user?.role ?? '')
 )
 
 const resourceTypeLabel = (type: KnowledgeResourceType) => ({
@@ -240,6 +250,8 @@ const toggleFavorite = async (resource: KnowledgeResource) => {
   }
 }
 
+const handleUploaded = () => void loadPage()
+
 onMounted(() => {
   void loadPage()
 })
@@ -254,6 +266,7 @@ onMounted(() => {
 .hero-stat { min-width: 128px; padding: 18px; text-align: center; border-radius: 18px; background: rgba(255,255,255,.14); }
 .hero-stat strong { display: block; font-size: 36px; }.hero-stat span { font-size: 13px; opacity: .82; }
 .workspace { max-width: 1280px; margin: auto; display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 22px; }
+.upload-section { max-width: 1280px; margin: 22px auto 0; }
 .folder-panel, .resource-panel { border: 1px solid #e2eae6; border-radius: 20px; background: #fff; box-shadow: 0 8px 30px rgba(41, 67, 57, .06); }
 .folder-panel { align-self: start; padding: 18px; }.panel-title { padding: 4px 8px 14px; display: flex; justify-content: space-between; font-weight: 700; }.folder-count { color: #678077; }
 .folder-button { width: 100%; padding: 12px; display: grid; grid-template-columns: 38px minmax(0,1fr) auto; align-items: center; gap: 10px; border: 0; border-radius: 13px; color: #40554d; text-align: left; background: transparent; cursor: pointer; }
