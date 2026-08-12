@@ -7,6 +7,7 @@ import { seedDemoData, seedTestData } from './seeds/profileSeed'
 import { seedPromptTemplates } from './seeds/promptSeed'
 import { seedCourses } from './seeds/courseSeed'
 import { seedAiAnalysisData } from './seeds/seedAiAnalysisData'
+import { seedKnowledgeResources } from './seeds/knowledgeResourceSeed'
 
 dotenv.config()
 
@@ -45,12 +46,14 @@ export const runSeedCommand = async (profile = process.argv[2] ?? 'reference'): 
   try {
     if (profile === 'reference') {
       const result = await seedReferenceData(db)
-      console.log(`Reference seed applied: roles=${result.roles}, permissions=${result.permissions}, rolePermissions=${result.rolePermissions}, emotionTypes=${result.emotionTypes}, systemTags=${result.systemTags}.`)
+      const knowledgeResult = await seedKnowledgeResources(db)
+      console.log(`Reference seed applied: roles=${result.roles}, permissions=${result.permissions}, rolePermissions=${result.rolePermissions}, emotionTypes=${result.emotionTypes}, systemTags=${result.systemTags}, knowledgeResources=${knowledgeResult.count}.`)
       return
     }
 
     if (profile === 'demo') {
       await seedReferenceData(db)
+      await seedKnowledgeResources(db)
       const result = await seedDemoData(db)
       console.log(`Demo seed applied: accounts=${result.accounts.join(',')}, moods=${result.moods}.`)
       return
@@ -58,6 +61,7 @@ export const runSeedCommand = async (profile = process.argv[2] ?? 'reference'): 
 
     if (profile === 'test') {
       await seedReferenceData(db)
+      await seedKnowledgeResources(db)
       const result = await seedTestData(db)
       console.log(`Test seed applied: assessment=${result.assessmentCode}.`)
       return
@@ -65,11 +69,12 @@ export const runSeedCommand = async (profile = process.argv[2] ?? 'reference'): 
 
     if (profile === 'all') {
       await seedReferenceData(db)
+      const knowledgeResult = await seedKnowledgeResources(db)
       const demoResult = await seedDemoData(db)
       const testResult = await seedTestData(db)
       const promptResult = await seedPromptTemplates(db)
       const courseResult = await seedCourses(db)
-      console.log(`All seed profiles applied: demoAccounts=${demoResult.accounts.length}, demoMoods=${demoResult.moods}, testAssessment=${testResult.assessmentCode}, prompts=${promptResult.count}, courses=${courseResult.count}.`)
+      console.log(`All seed profiles applied: demoAccounts=${demoResult.accounts.length}, demoMoods=${demoResult.moods}, testAssessment=${testResult.assessmentCode}, prompts=${promptResult.count}, courses=${courseResult.count}, knowledgeResources=${knowledgeResult.count}.`)
       return
     }
 
