@@ -89,6 +89,8 @@ const expectedMigrationFiles = [
   '0410_migrate_legacy_knowledge_messages.up.sql',
   '0420_create_knowledge_resources.down.sql',
   '0420_create_knowledge_resources.up.sql',
+  '0430_create_automatic_risk_signals.down.sql',
+  '0430_create_automatic_risk_signals.up.sql',
 ]
 
 describe('migration SQL files', () => {
