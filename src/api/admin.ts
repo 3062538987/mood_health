@@ -160,15 +160,15 @@ export const deleteAdminCourse = async (id: number) => {
 }
 
 export const getAdminMusic = async (): Promise<AdminMusic[]> => {
-  const response = await request<{ success?: boolean; data?: AdminMusic[] }>({
+  const response = await request<AdminMusic[]>({
     url: '/api/music',
     method: 'get',
   })
-  return Array.isArray(response?.data) ? response.data : []
+  return Array.isArray(response) ? response : []
 }
 
 export const updateAdminMusic = async (id: number, payload: Record<string, unknown>) => {
-  return request<{ message?: string }>({
+  return request<AdminMusic>({
     url: `/api/music/${id}`,
     method: 'put',
     data: payload,

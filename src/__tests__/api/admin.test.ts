@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import request from '@/utils/request'
-import { getAdminAuditLogs, getAdminMoods, getAdminUsers } from '@/api/admin'
+import { getAdminAuditLogs, getAdminMoods, getAdminMusic, getAdminUsers } from '@/api/admin'
 
 vi.mock('@/utils/request', () => ({ default: vi.fn() }))
 
@@ -45,6 +45,13 @@ describe('admin API contract', () => {
     })
 
     await expect(getAdminAuditLogs()).resolves.toEqual(logs)
+  })
+
+  it('returns the unwrapped music list', async () => {
+    const music = [{ id: 1, title: '白噪音', artist: 'Mood Health' }]
+    requestMock.mockResolvedValueOnce(music)
+
+    await expect(getAdminMusic()).resolves.toEqual(music)
   })
 
   it('returns only the minimal mood statistics DTO', async () => {

@@ -1,7 +1,7 @@
 import { HTTP_STATUS } from '../utils/httpStatus'
 import { Request, Response } from "express";
 import { createMusicRepository } from "../repositories/musicRepository";
-import { apiFailure, API_ERROR_CODES } from "../utils/apiResponse";
+import { apiFailure, apiSuccess, API_ERROR_CODES } from "../utils/apiResponse";
 import logger from "../utils/logger";
 
 const musicRepo = createMusicRepository();
@@ -15,17 +15,12 @@ export const getMusicList = async (
     const { category } = req.query;
     const musicList = await musicRepo.findAll(category as string | undefined);
 
-    res.status(HTTP_STATUS.OK).json({
-      success: true,
-      data: musicList,
-      message: "获取音乐列表成功",
-    });
+    res.status(HTTP_STATUS.OK).json(apiSuccess(musicList, "获取音乐列表成功"));
   } catch (error) {
     logger.error("获取音乐列表失败:", error);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: "服务器错误",
-    });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      apiFailure(API_ERROR_CODES.INTERNAL_ERROR, "服务器错误"),
+    );
   }
 };
 
@@ -43,17 +38,12 @@ export const getMusicById = async (
       return;
     }
 
-    res.status(HTTP_STATUS.OK).json({
-      success: true,
-      data: music,
-      message: "获取音乐详情成功",
-    });
+    res.status(HTTP_STATUS.OK).json(apiSuccess(music, "获取音乐详情成功"));
   } catch (error) {
     logger.error("获取音乐详情失败:", error);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: "服务器错误",
-    });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      apiFailure(API_ERROR_CODES.INTERNAL_ERROR, "服务器错误"),
+    );
   }
 };
 
@@ -79,16 +69,11 @@ export const updateMusic = async (
       return;
     }
 
-    res.status(HTTP_STATUS.OK).json({
-      success: true,
-      data: music,
-      message: "更新音乐成功",
-    });
+    res.status(HTTP_STATUS.OK).json(apiSuccess(music, "更新音乐成功"));
   } catch (error) {
     logger.error("更新音乐失败:", error);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: "服务器错误",
-    });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      apiFailure(API_ERROR_CODES.INTERNAL_ERROR, "服务器错误"),
+    );
   }
 };
