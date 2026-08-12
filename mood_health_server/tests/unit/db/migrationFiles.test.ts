@@ -87,6 +87,8 @@ const expectedMigrationFiles = [
   '0400_add_counseling_web_search_status.up.sql',
   '0410_migrate_legacy_knowledge_messages.down.sql',
   '0410_migrate_legacy_knowledge_messages.up.sql',
+  '0420_create_knowledge_resources.down.sql',
+  '0420_create_knowledge_resources.up.sql',
 ]
 
 describe('migration SQL files', () => {
@@ -174,5 +176,31 @@ describe('migration SQL files', () => {
       /DROP\s+INDEX\s+idx_counseling_legacy_knowledge_message_id/i
     )
     expect(downSql).toMatch(/DROP\s+COLUMN\s+legacy_knowledge_message_id/i)
+  })
+
+  it('creates reversible knowledge folders, resources, versions, favorites and ingestion jobs', () => {
+    const upSql = fs.readFileSync(
+      path.join(migrationsDir, '0420_create_knowledge_resources.up.sql'),
+      'utf8'
+    )
+    const downSql = fs.readFileSync(
+      path.join(migrationsDir, '0420_create_knowledge_resources.down.sql'),
+      'utf8'
+    )
+
+    for (const table of [
+      'knowledge_folders',
+      'knowledge_resources',
+      'knowledge_resource_versions',
+      'knowledge_favorites',
+      'knowledge_ingestion_jobs',
+    ]) {
+      expect(upSql).toMatch(new RegExp(`CREATE\\s+TABLE\\s+${table}`, 'i'))
+      expect(downSql).toMatch(new RegExp(`DROP\\s+TABLE\\s+${table}`, 'i'))
+    }
+    expect(upSql).toMatch(/UNIQUE\s+KEY\s+uk_knowledge_folders_slug/i)
+    expect(upSql).toMatch(/PRIMARY\s+KEY\s*\(user_id,\s*resource_id\)/i)
+    expect(upSql).toMatch(/license_code\s+VARCHAR\(80\)\s+NOT\s+NULL/i)
+    expect(upSql).toMatch(/reviewed_at\s+DATE\s+NULL/i)
   })
 })
