@@ -7,12 +7,24 @@ import {
   type AdminAssessmentDetail,
   type AdminAssessmentListItem,
 } from '@/api/adminAssessments'
+import {
+  buildAssessmentCsv,
+  downloadCsv,
+} from '@/utils/assessmentExport'
 
 const loading = ref(false)
 const list = ref<AdminAssessmentListItem[]>([])
 const total = ref(0)
 const page = ref(1)
 const pageSize = ref(20)
+
+// 本地复核标记（后端暂无对应写接口，先在前端记录已复核项）
+const reviewedIds = reactive<Set<number>>(new Set())
+const isReviewed = (id: number): boolean => reviewedIds.has(id)
+const toggleReviewed = (id: number) => {
+  if (reviewedIds.has(id)) reviewedIds.delete(id)
+  else reviewedIds.add(id)
+}
 
 const filters = reactive({
   riskLevel: '' as string,
@@ -47,6 +59,16 @@ const formatDateTime = (value: string): string => {
     `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
     `${pad(date.getHours())}:${pad(date.getMinutes())}`
   )
+}
+
+const exportCsv = () => {
+  if (!list.value.length) {
+    ElMessage.warning('当前没有可导出的测评数据')
+    return
+  }
+  const csv = buildAssessmentCsv(list.value, undefined, reviewedIds)
+  downloadCsv(`测评管理_${new Date().toISOString().slice(0, 10)}.csv`, csv)
+  ElMessage.success(`已导出 ${list.value.length} 条测评记录`)
 }
 
 const loadList = async () => {
@@ -136,6 +158,8 @@ onMounted(loadList)
       />
       <el-button type="primary" :loading="loading" @click="loadList">查询</el-button>
       <el-button @click="resetFilters">重置</el-button>
+      <el-button :disabled="!list.length" @click="exportCsv">导出 CSV</el-button>
+      <span class="review-hint">复核标记为本地状态（后端暂未提供写接口）</span>
     </div>
 
     <el-table v-loading="loading" :data="list" border stripe class="assessment-table">
@@ -154,6 +178,17 @@ onMounted(loadList)
       </el-table-column>
       <el-table-column label="提交时间" min-width="160">
         <template #default="{ row }">{{ formatDateTime(row.submittedAt) }}</template>
+      </el-table-column>
+      <el-table-column label="复核" width="110">
+        <template #default="{ row }">
+          <el-button
+            :type="isReviewed(row.id) ? 'success' : 'info'"
+            link
+            @click="toggleReviewed(row.id)"
+          >
+            {{ isReviewed(row.id) ? '已复核' : '标记复核' }}
+          </el-button>
+        </template>
       </el-table-column>
       <el-table-column label="操作" width="100" fixed="right">
         <template #default="{ row }">
@@ -244,6 +279,13 @@ onMounted(loadList)
 
 .filter-item {
   width: 220px;
+}
+
+.review-hint {
+  align-self: center;
+  margin-left: auto;
+  color: var(--text-sub, #667a73);
+  font-size: 12px;
 }
 
 .assessment-table {
