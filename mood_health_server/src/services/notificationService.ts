@@ -125,7 +125,7 @@ export const createNotificationService = (dependencies: NotificationServiceDepen
       notificationType: 'test',
       title: '提醒测试成功',
       message: '这是由服务端生成的真实站内提醒。',
-      actionPath: '/settings',
+      actionPath: '/user/setting',
       dedupeKey: `test:${current.getTime()}`,
       scheduledFor: current,
     })

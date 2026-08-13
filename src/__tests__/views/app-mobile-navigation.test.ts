@@ -38,6 +38,10 @@ vi.mock('@/components/shared/AchievementNotification.vue', () => ({
   },
 }))
 
+vi.mock('@/components/shared/UserNotificationCenter.vue', () => ({
+  default: { name: 'UserNotificationCenter', template: '<div />' },
+}))
+
 const mountApp = () =>
   mount(App, {
     attachTo: document.body,

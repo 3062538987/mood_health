@@ -90,7 +90,11 @@ describe('notificationService', () => {
 
     expect(notification.title).toBe('提醒测试成功')
     expect(repository.createNotificationIfAbsent).toHaveBeenCalledWith(
-      expect.objectContaining({ notificationType: 'test', userId: 7 })
+      expect.objectContaining({
+        notificationType: 'test',
+        userId: 7,
+        actionPath: '/user/setting',
+      })
     )
   })
 })

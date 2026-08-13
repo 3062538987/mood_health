@@ -1,6 +1,20 @@
 <template>
   <div class="setting-view">
     <div class="container">
+      <div class="notification-test-card">
+        <div>
+          <strong>提醒功能自检</strong>
+          <p>由服务端创建一条真实站内提醒，用于确认提醒链路可用。</p>
+        </div>
+        <button
+          class="action-btn"
+          data-test="send-test-notification"
+          :disabled="isSendingTestNotification"
+          @click="sendTestNotification"
+        >
+          {{ isSendingTestNotification ? '发送中...' : '发送测试提醒' }}
+        </button>
+      </div>
       <h1 class="page-title">设置</h1>
 
       <!-- 个性化设置 -->
@@ -228,6 +242,12 @@ import { nextTick, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { deleteCurrentAccount } from '@/api/auth'
+import {
+  createTestNotification,
+  getNotificationPreferences,
+  saveNotificationPreferences,
+  type NotificationPreferences,
+} from '@/api/notifications'
 import { useUserStore } from '@/stores/userStore'
 import soundManager from '@/utils/sound'
 
@@ -266,6 +286,7 @@ const notifications = ref<NotificationSettings>({
 const showPrivacyModal = ref(false)
 const showDeleteConfirmModal = ref(false)
 const isDeletingAccount = ref(false)
+const isSendingTestNotification = ref(false)
 const lastSavedSettings = ref<PreferenceSettings>({
   reminderTime: reminderTime.value,
   weeklyReport: weeklyReport.value,
@@ -287,28 +308,33 @@ const initTimeOptions = () => {
 }
 
 // 从localStorage加载设置
-onMounted(() => {
+onMounted(async () => {
   initTimeOptions()
+  try {
 
   // 加载个性化设置
-  const savedReminderTime = localStorage.getItem('reminderTime')
-  const savedWeeklyReport = localStorage.getItem('weeklyReport')
-  const savedGameSound = localStorage.getItem('gameSound')
+  const saved = await getNotificationPreferences()
+  const savedReminderTime = saved.reminderTime
+  const savedWeeklyReport = saved.weeklyReportEnabled
+  const savedGameSound = saved.gameSoundEnabled
 
   if (savedReminderTime) {
     reminderTime.value = savedReminderTime
   }
   if (savedWeeklyReport) {
-    weeklyReport.value = JSON.parse(savedWeeklyReport)
+    weeklyReport.value = savedWeeklyReport
   }
   if (savedGameSound) {
-    gameSound.value = JSON.parse(savedGameSound)
+    gameSound.value = savedGameSound
   }
 
   // 加载消息通知设置
-  const savedNotifications = localStorage.getItem('notifications')
-  if (savedNotifications) {
-    notifications.value = JSON.parse(savedNotifications)
+  notifications.value = {
+    emotionReminder: saved.emotionReminderEnabled,
+    weeklyReport: saved.weeklyReportNotificationEnabled,
+    groupActivity: saved.groupActivityEnabled,
+    treeHoleReply: saved.treeholeReplyEnabled,
+    featureUpdate: saved.featureUpdateEnabled,
   }
 
   lastSavedSettings.value = {
@@ -316,7 +342,23 @@ onMounted(() => {
     weeklyReport: weeklyReport.value,
     gameSound: gameSound.value,
   }
-  lastSavedNotifications.value = { ...notifications.value }
+    lastSavedNotifications.value = { ...notifications.value }
+    soundManager.setSoundEnabled(gameSound.value)
+  } catch (error) {
+    console.error('加载设置失败', error)
+    ElMessage.error('设置加载失败，请稍后重试')
+  }
+})
+
+const currentPreferences = (): NotificationPreferences => ({
+  reminderTime: reminderTime.value,
+  weeklyReportEnabled: weeklyReport.value,
+  gameSoundEnabled: gameSound.value,
+  emotionReminderEnabled: notifications.value.emotionReminder,
+  weeklyReportNotificationEnabled: notifications.value.weeklyReport,
+  groupActivityEnabled: notifications.value.groupActivity,
+  treeholeReplyEnabled: notifications.value.treeHoleReply,
+  featureUpdateEnabled: notifications.value.featureUpdate,
 })
 
 // 保存个性化设置
@@ -328,9 +370,7 @@ const saveSettings = async () => {
   }
 
   try {
-    localStorage.setItem('reminderTime', nextSettings.reminderTime)
-    localStorage.setItem('weeklyReport', JSON.stringify(nextSettings.weeklyReport))
-    localStorage.setItem('gameSound', JSON.stringify(nextSettings.gameSound))
+    await saveNotificationPreferences(currentPreferences())
     lastSavedSettings.value = { ...nextSettings }
     // 更新音效管理器状态
     soundManager.setSoundEnabled(nextSettings.gameSound)
@@ -341,13 +381,6 @@ const saveSettings = async () => {
     reminderTime.value = lastSavedSettings.value.reminderTime
     weeklyReport.value = lastSavedSettings.value.weeklyReport
     gameSound.value = lastSavedSettings.value.gameSound
-    try {
-      localStorage.setItem('reminderTime', lastSavedSettings.value.reminderTime)
-      localStorage.setItem('weeklyReport', JSON.stringify(lastSavedSettings.value.weeklyReport))
-      localStorage.setItem('gameSound', JSON.stringify(lastSavedSettings.value.gameSound))
-    } catch {
-      // localStorage may remain unavailable; UI state has already been restored.
-    }
     soundManager.setSoundEnabled(lastSavedSettings.value.gameSound)
     ElMessage.error('设置保存失败，已恢复原值')
   }
@@ -373,18 +406,13 @@ const saveNotifications = async () => {
   const nextNotifications = { ...notifications.value }
 
   try {
-    localStorage.setItem('notifications', JSON.stringify(nextNotifications))
+    await saveNotificationPreferences(currentPreferences())
     lastSavedNotifications.value = { ...nextNotifications }
     ElMessage.success('通知设置已保存')
   } catch (error) {
     console.error('保存通知设置失败', error)
     await nextTick()
     notifications.value = { ...lastSavedNotifications.value }
-    try {
-      localStorage.setItem('notifications', JSON.stringify(lastSavedNotifications.value))
-    } catch {
-      // localStorage may remain unavailable; UI state has already been restored.
-    }
     ElMessage.error('通知设置保存失败，已恢复原值')
   }
 }
@@ -395,6 +423,20 @@ const updateNotification = (key: keyof NotificationSettings, event: Event) => {
     [key]: (event.target as HTMLInputElement).checked,
   }
   void saveNotifications()
+}
+
+const sendTestNotification = async () => {
+  if (isSendingTestNotification.value) return
+  isSendingTestNotification.value = true
+  try {
+    const notification = await createTestNotification()
+    ElMessage.success(`${notification.title}：${notification.message}`)
+  } catch (error) {
+    console.error('发送测试提醒失败', error)
+    ElMessage.error('测试提醒发送失败，请稍后重试')
+  } finally {
+    isSendingTestNotification.value = false
+  }
 }
 
 // 显示隐私声明
@@ -445,6 +487,24 @@ const deleteAccount = async () => {
     color: #42b983;
     margin: 0 0 40px 0;
     font-size: 32px;
+  }
+}
+
+.notification-test-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  border: 1px solid #bce8d2;
+  border-radius: 14px;
+  background: #effaf5;
+
+  p {
+    margin: 6px 0 0;
+    color: #60706a;
+    font-size: 14px;
   }
 }
 

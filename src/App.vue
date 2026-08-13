@@ -53,7 +53,8 @@
     <!-- 路由出口 -->
     <main class="app-content">
       <router-view v-slot="{ Component, route }">
-        <transition :name="getTransitionName(route)" mode="out-in">
+        <component v-if="!shouldAnimateRoute(route.path)" :is="Component" :key="route.path" />
+        <transition v-else :name="getTransitionName(route)" mode="out-in">
           <component :is="Component" :key="route.path" />
         </transition>
       </router-view>
@@ -128,6 +129,7 @@
     </nav>
     <!-- 成就通知 -->
     <AchievementNotification v-if="featureFlags.nonCoreModules" />
+    <UserNotificationCenter />
   </div>
 </template>
 
@@ -137,7 +139,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
 import { useMoodStore } from '@/stores/moodStore'
 import AchievementNotification from '@/components/shared/AchievementNotification.vue'
+import UserNotificationCenter from '@/components/shared/UserNotificationCenter.vue'
 import { featureFlags } from '@/config/featureFlags'
+import { shouldAnimateRoute } from '@/utils/routeTransitions'
 
 const route = useRoute()
 const router = useRouter()
@@ -166,7 +170,7 @@ const getTransitionName = (route: ReturnType<typeof useRoute>) => {
   if (authPaths.includes(route.path)) {
     return 'slide-up'
   }
-  const modalPaths = ['/user/profile', '/admin']
+  const modalPaths = ['/user/profile']
   if (modalPaths.some(p => route.path.startsWith(p))) {
     return 'fade-scale'
   }

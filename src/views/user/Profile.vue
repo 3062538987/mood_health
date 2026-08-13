@@ -104,7 +104,7 @@ const userStore = useUserStore()
 
 const profileVersion = ref(0)
 const displayUsername = computed(() => {
-  profileVersion.value
+  void profileVersion.value
   return userStore.user?.username || '未登录用户'
 })
 const displayUserId = computed(() => String(userStore.user?.id || '-'))

@@ -4,6 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import Setting from '@/views/user/Setting.vue'
 import { useUserStore } from '@/stores/userStore'
 import { deleteCurrentAccount } from '@/api/auth'
+import {
+  createTestNotification,
+  getNotificationPreferences,
+  saveNotificationPreferences,
+} from '@/api/notifications'
 
 const elementMocks = vi.hoisted(() => ({
   success: vi.fn(),
@@ -16,6 +21,12 @@ const routerMocks = vi.hoisted(() => ({
 
 vi.mock('@/api/auth', () => ({
   deleteCurrentAccount: vi.fn(),
+}))
+
+vi.mock('@/api/notifications', () => ({
+  getNotificationPreferences: vi.fn(),
+  saveNotificationPreferences: vi.fn(),
+  createTestNotification: vi.fn(),
 }))
 
 vi.mock('@/utils/request', () => ({
@@ -40,6 +51,19 @@ vi.mock('@/utils/sound', () => ({
 }))
 
 const deleteCurrentAccountMock = vi.mocked(deleteCurrentAccount)
+const getNotificationPreferencesMock = vi.mocked(getNotificationPreferences)
+const saveNotificationPreferencesMock = vi.mocked(saveNotificationPreferences)
+const createTestNotificationMock = vi.mocked(createTestNotification)
+const serverPreferences = {
+  reminderTime: '20:00',
+  weeklyReportEnabled: true,
+  gameSoundEnabled: true,
+  emotionReminderEnabled: true,
+  weeklyReportNotificationEnabled: true,
+  groupActivityEnabled: true,
+  treeholeReplyEnabled: true,
+  featureUpdateEnabled: true,
+}
 
 const mountSetting = () => {
   const wrapper = mount(Setting)
@@ -59,6 +83,18 @@ describe('Setting account deletion flow', () => {
     setActivePinia(createPinia())
     localStorage.clear()
     vi.clearAllMocks()
+    getNotificationPreferencesMock.mockResolvedValue({ ...serverPreferences })
+    saveNotificationPreferencesMock.mockImplementation(async (value) => value)
+    createTestNotificationMock.mockResolvedValue({
+      id: 1,
+      notificationType: 'test',
+      title: '提醒测试成功',
+      message: '这是由服务端生成的真实站内提醒。',
+      actionPath: '/user/setting',
+      scheduledFor: new Date().toISOString(),
+      readAt: null,
+      createdAt: new Date().toISOString(),
+    })
   })
 
   afterEach(() => {
@@ -75,12 +111,10 @@ describe('Setting account deletion flow', () => {
     expect(elementMocks.error).not.toHaveBeenCalled()
   })
 
-  it('restores preference settings when localStorage save fails', async () => {
+  it('restores preference settings when server save fails', async () => {
     const { wrapper } = mountSetting()
-    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem')
-    setItemSpy.mockImplementation(() => {
-      throw new Error('quota exceeded')
-    })
+    await flushPromises()
+    saveNotificationPreferencesMock.mockRejectedValueOnce(new Error('server failed'))
 
     const weeklyReportInput = wrapper.findAll('input[type="checkbox"]')[0]
     await weeklyReportInput.setValue(false)
@@ -105,12 +139,10 @@ describe('Setting account deletion flow', () => {
     expect(elementMocks.error).not.toHaveBeenCalled()
   })
 
-  it('restores notification settings when localStorage save fails', async () => {
+  it('restores notification settings when server save fails', async () => {
     const { wrapper } = mountSetting()
-    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem')
-    setItemSpy.mockImplementation(() => {
-      throw new Error('quota exceeded')
-    })
+    await flushPromises()
+    saveNotificationPreferencesMock.mockRejectedValueOnce(new Error('server failed'))
 
     const emotionReminderInput = wrapper.findAll('input[type="checkbox"]')[2]
     await emotionReminderInput.setValue(false)
@@ -123,6 +155,17 @@ describe('Setting account deletion flow', () => {
     expect(elementMocks.error).toHaveBeenCalledTimes(1)
     expect(elementMocks.error).toHaveBeenCalledWith('通知设置保存失败，已恢复原值')
     expect(elementMocks.success).not.toHaveBeenCalled()
+  })
+
+  it('sends a real test notification through the server', async () => {
+    const { wrapper } = mountSetting()
+    await flushPromises()
+
+    await wrapper.find('[data-test="send-test-notification"]').trigger('click')
+    await flushPromises()
+
+    expect(createTestNotificationMock).toHaveBeenCalledTimes(1)
+    expect(elementMocks.success).toHaveBeenCalledWith('提醒测试成功：这是由服务端生成的真实站内提醒。')
   })
 
   it('deletes the account through the API, then clears login state and redirects', async () => {
