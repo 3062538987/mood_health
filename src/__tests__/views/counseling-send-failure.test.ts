@@ -94,6 +94,24 @@ describe('Counseling send failure feedback', () => {
     expect(wrapper.find('[role="alert"]').exists()).toBe(false)
   })
 
+  it('clears the composer immediately while the real AI request is still running', async () => {
+    let resolveSend!: (value: never) => void
+    sendSessionCounselingMessageMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveSend = resolve
+      })
+    )
+    const wrapper = mountCounseling()
+
+    await wrapper.find('textarea').setValue('我想快速问一个问题')
+    await wrapper.find('.send-button').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    expect((wrapper.find('textarea').element as HTMLTextAreaElement).value).toBe('')
+    expect(wrapper.find('.loading-bubble').exists()).toBe(true)
+    void resolveSend
+  })
+
   it('shows verified sources only on grounded assistant messages', async () => {
     sendSessionCounselingMessageMock.mockResolvedValueOnce({
       sessionId: 'test-session',

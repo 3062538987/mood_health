@@ -29,6 +29,19 @@
       </transition>
 
       <div class="counseling-container">
+      <aside class="history-column" aria-label="历史会话栏">
+        <CounselingHistorySidebar
+          :sessions="sessions"
+          :current-session-id="currentSessionId"
+          :loading="sessionsLoading"
+          :error="sessionsError"
+          @close="sidebarOpen = true"
+          @create="createNewSession"
+          @retry="loadSessions"
+          @select="switchSession"
+          @rename="handleRenameSession"
+        />
+      </aside>
       <aside class="info-panel">
         <section class="info-card">
           <h3>服务介绍</h3>
@@ -100,13 +113,25 @@
                 <details
                   v-if="msg.role === 'assistant' && msg.reasoningSteps?.length"
                   class="reasoning-trace"
+                  open
                 >
-                  <summary>AI 是怎么想的</summary>
+                  <summary>
+                    <span class="rt-title">AI 是怎么想的</span>
+                    <span class="rt-count">{{ msg.reasoningSteps.length }} 步</span>
+                  </summary>
                   <ol>
-                    <li v-for="(step, idx) in msg.reasoningSteps" :key="idx">
-                      <span class="trace-phase">{{ step.phase }}</span>
-                      <span class="trace-label">{{ step.label }}</span>
-                      <small v-if="step.detail" class="trace-detail">{{ step.detail }}</small>
+                    <li
+                      v-for="(step, idx) in msg.reasoningSteps"
+                      :key="idx"
+                      class="trace-item"
+                      :class="`trace-${step.phase}`"
+                    >
+                      <span class="trace-node" :aria-hidden="true">{{ traceIcon(step.phase) }}</span>
+                      <div class="trace-body">
+                        <span class="trace-phase">{{ traceLabel(step.phase) }}</span>
+                        <span class="trace-label">{{ step.label }}</span>
+                        <small v-if="step.detail" class="trace-detail">{{ step.detail }}</small>
+                      </div>
                     </li>
                   </ol>
                 </details>
@@ -148,6 +173,8 @@
           </div>
         </div>
 
+        </section>
+
         <footer class="input-panel">
           <el-input
             v-model="inputMessage"
@@ -177,7 +204,6 @@
           </el-button>
         </footer>
         <div class="send-tip">按 Ctrl + Enter 发送，Enter 换行</div>
-      </section>
     </div>
   </div>
   </div>
@@ -342,6 +368,21 @@ const formatTime = (isoTime: string): string => {
   return `${hour}:${minute}`
 }
 
+// CoT 推理轨迹：phase → 中文标签 + 语义图标（与 AI 服务 orchestration.py 的 ReasoningStep.phase 对齐）
+const TRACE_META: Record<string, { label: string; icon: string }> = {
+  safety: { label: '安全检查', icon: '🛡️' },
+  retrieve: { label: '检索知识', icon: '📚' },
+  web: { label: '联网检索', icon: '🌐' },
+  decision: { label: '决策', icon: '🧭' },
+  tools: { label: '调用工具', icon: '🔧' },
+  collect_tool_result: { label: '整合结果', icon: '🔗' },
+  collect: { label: '整合结果', icon: '🔗' },
+  memory: { label: '长程记忆', icon: '🧠' },
+  synthesis: { label: '总结作答', icon: '✨' },
+}
+const traceLabel = (phase: string): string => TRACE_META[phase]?.label ?? phase
+const traceIcon = (phase: string): string => TRACE_META[phase]?.icon ?? '•'
+
 const handleCtrlEnterSend = async () => {
   await sendMessage()
 }
@@ -429,6 +470,7 @@ const sendMessage = async () => {
   }
 
   messages.value.push(newUserMessage)
+  inputMessage.value = ''
 
   isSending.value = true
 
@@ -436,6 +478,9 @@ const sendMessage = async () => {
     await sendToService(newUserMessage, inputSnapshot)
   } catch (error: unknown) {
     updateUserMessageStatus(newUserMessage.id, 'failed')
+    if (!inputMessage.value.trim()) {
+      inputMessage.value = inputSnapshot
+    }
     const message = error instanceof Error ? error.message : '发送失败，请稍后再试'
     sendError.value = `发送失败：${message}。原文字已保留，可修改后重试。`
     ElMessage.error(message)
@@ -583,14 +628,45 @@ const clearConversation = async () => {
 }
 
 .counseling-container {
-  max-width: 1300px;
+  max-width: 1600px;
   margin: 0 auto;
   min-height: calc(100vh - 140px);
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr) minmax(260px, 300px);
+  grid-template-areas:
+    'history chat info'
+    'composer composer composer'
+    'tip tip tip';
   gap: 20px;
+  align-items: start;
+}
+
+.history-column {
+  grid-area: history;
+  position: sticky;
+  top: 20px;
+  height: calc(100vh - 180px);
+  min-height: 520px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+
+  :deep(.session-sidebar) {
+    width: 100%;
+    max-width: none;
+    border-right: 0;
+    box-shadow: none;
+  }
+
+  :deep(.close-sidebar) {
+    display: none;
+  }
 }
 
 .info-panel {
+  grid-area: info;
   flex: 0 0 320px;
   position: sticky;
   top: 20px;
@@ -633,6 +709,7 @@ const clearConversation = async () => {
 }
 
 .chat-panel {
+  grid-area: chat;
   min-width: 0;
   flex: 1;
   background: var(--surface);
@@ -794,42 +871,123 @@ const clearConversation = async () => {
 
 .reasoning-trace {
   margin-top: 12px;
-  padding: 10px 12px;
-  border: 1px dashed var(--chat-line);
+  padding: 10px 12px 12px;
+  border: 1px solid var(--chat-line);
   border-radius: 10px;
   background: color-mix(in srgb, var(--bg-color) 60%, transparent);
 
   summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     cursor: pointer;
     font-size: 12px;
     font-weight: 700;
     color: var(--chat-text-sub);
     user-select: none;
+
+    &::marker {
+      color: var(--brand-color, #2f6f5c);
+    }
+  }
+
+  .rt-title {
+    flex: 0 0 auto;
+  }
+
+  .rt-count {
+    flex: 0 0 auto;
+    padding: 1px 7px;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--brand-color, #2f6f5c);
+    background: color-mix(in srgb, var(--brand-color, #2f6f5c) 14%, transparent);
+  }
+
+  // 展开动画（details[open] 内容淡入下滑）
+  &[open] ol {
+    animation: trace-fade-in 0.28s ease both;
+  }
+
+  @keyframes trace-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   ol {
-    display: grid;
-    gap: 8px;
-    margin: 10px 0 2px;
-    padding-left: 18px;
+    margin: 12px 0 2px;
+    padding: 0;
+    list-style: none;
   }
 
-  li {
+  .trace-item {
+    --trace-accent: var(--brand-color, #2f6f5c);
+    position: relative;
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: 10px;
+    padding-bottom: 10px;
+
+    // 时间线连接线（除最后一项外向下延伸）
+    &:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      left: 10px;
+      top: 22px;
+      bottom: 0;
+      width: 2px;
+      background: color-mix(in srgb, var(--trace-accent) 30%, transparent);
+    }
+  }
+
+  .trace-node {
+    z-index: 1;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 12px;
+    background: color-mix(in srgb, var(--trace-accent) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--trace-accent) 45%, transparent);
+  }
+
+  .trace-body {
     display: grid;
     gap: 2px;
     font-size: 13px;
     color: var(--chat-text);
+    min-width: 0;
   }
+
+  // 各阶段配色
+  .trace-safety { --trace-accent: #2f6f5c; }
+  .trace-retrieve { --trace-accent: #3b6ea5; }
+  .trace-web { --trace-accent: #b07d2b; }
+  .trace-decision { --trace-accent: #8a4f9e; }
+  .trace-tools { --trace-accent: #5a6b7a; }
+  .trace-collect_tool_result,
+  .trace-collect { --trace-accent: #4a8a8a; }
+  .trace-memory { --trace-accent: #a85d5d; }
+  .trace-synthesis { --trace-accent: #c2691d; }
 
   .trace-phase {
     display: inline-block;
-    margin-right: 8px;
+    width: fit-content;
     padding: 1px 8px;
     border-radius: 99px;
     font-size: 11px;
     font-weight: 700;
-    color: var(--brand-color, #2f6f5c);
-    background: color-mix(in srgb, var(--brand-color, #2f6f5c) 14%, transparent);
+    color: var(--trace-accent);
+    background: color-mix(in srgb, var(--trace-accent) 14%, transparent);
   }
 
   .trace-label {
@@ -838,6 +996,8 @@ const clearConversation = async () => {
 
   .trace-detail {
     color: var(--chat-text-sub);
+    line-height: 1.5;
+    word-break: break-word;
   }
 }
 
@@ -924,6 +1084,7 @@ const clearConversation = async () => {
 }
 
 .input-panel {
+  grid-area: composer;
   border-top: 1px solid var(--border-color);
   padding: 14px;
   display: grid;
@@ -945,6 +1106,7 @@ const clearConversation = async () => {
 }
 
 .send-tip {
+  grid-area: tip;
   padding: 0 16px 12px;
   color: var(--muted);
   font-size: 12px;
@@ -1026,8 +1188,17 @@ const clearConversation = async () => {
 
 @media (max-width: 960px) {
   .counseling-container {
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'chat'
+      'composer'
+      'tip'
+      'info';
     min-height: auto;
+  }
+
+  .history-column {
+    display: none;
   }
 
   .info-panel {

@@ -14,6 +14,10 @@ vi.mock('@/components/shared/AchievementNotification.vue', () => ({
   default: { template: '<div />' },
 }))
 
+vi.mock('@/components/shared/UserNotificationCenter.vue', () => ({
+  default: { name: 'UserNotificationCenter', template: '<div />' },
+}))
+
 describe('unified AI psychological assistant navigation', () => {
   it('exposes one assistant entry that opens the counseling window', async () => {
     const router = createRouter({

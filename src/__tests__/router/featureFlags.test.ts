@@ -37,7 +37,7 @@ describe('feature-aware routes', () => {
     expect(findRoute(routes, '/relax')).toBeUndefined()
     expect(findRoute(routes, 'group')).toBeUndefined()
     expect(findRoute(routes, 'group/:id')).toBeUndefined()
-    expect(findRoute(routes, 'knowledge')).toBeUndefined()
+    expect(findRoute(improveRoute?.children ?? [], 'knowledge')).toBeUndefined()
     expect(findRoute(routes, 'courses')).toBeUndefined()
     expect(findRoute(routes, 'course/:id')).toBeUndefined()
     expect(findRoute(routes, 'posts')).toBeUndefined()
@@ -53,6 +53,7 @@ describe('feature-aware routes', () => {
       '/admin/moods',
       '/admin/assessments',
       '/admin/cases',
+      '/admin/knowledge',
       '/admin/audit-logs',
       '/admin/activity-stats',
     ])
@@ -64,9 +65,9 @@ describe('feature-aware routes', () => {
     expect(findRoute(routes, '/relax')).toBeDefined()
     expect(findRoute(routes, 'group')).toBeDefined()
     expect(findRoute(routes, 'group/:id')).toBeDefined()
-    expect(findRoute(routes, 'knowledge')).toBeDefined()
+    expect(findRoute(findRoute(routes, '/improve')?.children ?? [], 'knowledge')).toBeDefined()
     expect(findRoute(routes, 'courses')).toBeDefined()
-    expect(findRoute(routes, 'posts')).toBeDefined()
+    expect(findRoute(routes, 'posts')).toBeUndefined()
     expect(findRoute(routes, 'treehole')).toBeDefined()
     expect(findRoute(routes, 'music')).toBeDefined()
   })
