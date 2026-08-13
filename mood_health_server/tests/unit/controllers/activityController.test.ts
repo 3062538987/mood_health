@@ -7,6 +7,17 @@ jest.mock('../../../src/repositories/activityRepository', () => ({
   createActivityRepository: jest.fn(() => ({ getStats: jest.fn() })),
 }))
 
+jest.mock('../../../src/utils/logger', () => ({
+  __esModule: true,
+  default: { error: jest.fn(), warn: jest.fn(), info: jest.fn() },
+}))
+
+jest.mock('../../../src/utils/cache', () => ({
+  setCache: jest.fn(),
+  getCache: jest.fn(),
+  clearActivityCache: jest.fn(),
+}))
+
 const createMock = createActivityRepository as jest.Mock
 const repoInstance = createMock.mock.results[0].value as { getStats: jest.Mock }
 const fakeGetStats = repoInstance.getStats

@@ -14,4 +14,14 @@ describe('P2-1 dead code cleanup', () => {
       expect(fs.existsSync(path.join(projectRoot, relativePath)), relativePath).toBe(false)
     }
   })
+
+  it('does not log sensitive mood payloads or leftover game debug messages', () => {
+    const sensitiveSources = [
+      'src/stores/moodRecordStore.ts',
+      'src/components/relax/PinballGame.vue',
+      'src/views/mood/MoodAnalysis.vue',
+    ].map((relativePath) => fs.readFileSync(path.join(projectRoot, relativePath), 'utf8'))
+
+    expect(sensitiveSources.join('\n')).not.toMatch(/console\.log\(/)
+  })
 })
