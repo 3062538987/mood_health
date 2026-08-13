@@ -65,11 +65,11 @@
 
         <!-- 移动端控制按钮 -->
         <div class="mobile-controls">
-          <button class="ctrl-btn rotate-btn" @touchstart.prevent="rotatePiece()">↻</button>
+          <button class="ctrl-btn rotate-btn" aria-label="旋转方块" @pointerdown.prevent="rotatePiece()">↻</button>
           <div class="dpad">
-            <button class="ctrl-btn" @touchstart.prevent="movePiece(-1,0)">←</button>
-            <button class="ctrl-btn drop-btn" @touchstart.prevent="movePiece(0,1)">↓</button>
-            <button class="ctrl-btn" @touchstart.prevent="movePiece(1,0)">→</button>
+            <button class="ctrl-btn" aria-label="向左连续移动" @pointerdown.prevent="startControlRepeat(-1, 0)" @pointerup="stopControlRepeat" @pointercancel="stopControlRepeat" @pointerleave="stopControlRepeat">←</button>
+            <button class="ctrl-btn drop-btn" aria-label="向下连续移动" @pointerdown.prevent="startControlRepeat(0, 1)" @pointerup="stopControlRepeat" @pointercancel="stopControlRepeat" @pointerleave="stopControlRepeat">↓</button>
+            <button class="ctrl-btn" aria-label="向右连续移动" @pointerdown.prevent="startControlRepeat(1, 0)" @pointerup="stopControlRepeat" @pointercancel="stopControlRepeat" @pointerleave="stopControlRepeat">→</button>
           </div>
         </div>
       </div>
@@ -111,6 +111,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import useRelaxStore from '@/stores/relaxStore'
 import useAchievementStore from '@/stores/achievementStore'
 import soundManager from '@/utils/sound'
+import { createPressRepeater } from '@/utils/pressRepeater'
 
 // 游戏常量
 const GRID_WIDTH = 10
@@ -202,6 +203,14 @@ let lastDropTime: number = 0
 
 // 按键状态
 const keysPressed = ref<Set<string>>(new Set())
+const controlRepeater = createPressRepeater()
+
+const startControlRepeat = (dx: number, dy: number) => {
+  if (!isGameStarted.value || isPaused.value || gameOver.value) return
+  controlRepeater.start(() => movePiece(dx, dy))
+}
+
+const stopControlRepeat = () => controlRepeater.stop()
 
 // 计算下落速度
 const calculateDropInterval = (speed: number) => {
@@ -561,6 +570,7 @@ onMounted(() => {
 
 // 组件卸载时清理
 onUnmounted(() => {
+  stopControlRepeat()
   window.removeEventListener('keydown', handleKeyDown)
   window.removeEventListener('keyup', handleKeyUp)
   if (gameLoop) {

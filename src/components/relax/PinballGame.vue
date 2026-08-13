@@ -310,7 +310,6 @@ const endGame = async () => {
   }
 
   // 确保游戏结束页面保持显示
-  console.log('游戏结束，显示结束页面')
   await saveRelaxRecord()
 }
 
