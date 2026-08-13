@@ -8,6 +8,15 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$PythonExe = Join-Path $Root 'mood_health_ai_service\.venv\Scripts\python.exe'
+
+if (-not (Test-Path -LiteralPath $PythonExe)) {
+    throw 'Python environment is missing. Run npm run setup:python first.'
+}
+$PythonVersion = & $PythonExe -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"
+if ($LASTEXITCODE -ne 0 -or $PythonVersion -ne '3.11') {
+    throw "The AI service requires Python 3.11, but .venv reports $PythonVersion. Run npm run setup:python."
+}
 
 Write-Host "=== Starting Mood Health backend services ===" -ForegroundColor Cyan
 Write-Host ""
@@ -22,7 +31,7 @@ Write-Host "[1/2] Starting FastAPI AI service (port $AiPort)..." -ForegroundColo
 Start-Process powershell -ArgumentList @(
     '-NoExit',
     '-Command',
-    "`$host.UI.RawUI.WindowTitle='MoodHealth - FastAPI AI'; Write-Host '=== FastAPI AI (port $AiPort) ===' -ForegroundColor Cyan; `$env:MOOD_AI_SERVICE_PORT='$AiPort'; `$env:HF_HUB_OFFLINE='1'; `$env:TRANSFORMERS_OFFLINE='1'; Set-Location '$Root\mood_health_ai_service'; python -m uvicorn app.main:app --host 0.0.0.0 --port $AiPort --reload"
+    "`$host.UI.RawUI.WindowTitle='MoodHealth - FastAPI AI'; Write-Host '=== FastAPI AI (port $AiPort) ===' -ForegroundColor Cyan; `$env:MOOD_AI_SERVICE_PORT='$AiPort'; `$env:HF_HUB_OFFLINE='1'; `$env:TRANSFORMERS_OFFLINE='1'; Set-Location '$Root\mood_health_ai_service'; &'$PythonExe' -m uvicorn app.main:app --host 0.0.0.0 --port $AiPort --reload"
 )
 
 # 2. Start Node

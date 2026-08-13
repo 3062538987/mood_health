@@ -63,7 +63,7 @@ if not exist "%ROOT%mood_health_server\node_modules" (
 )
 
 echo.
-echo [3/5] Checking isolated Python environment...
+echo [3/5] Checking isolated Python 3.11 environment...
 set "AI_DIR=%ROOT%mood_health_ai_service"
 set "AI_VENV=%AI_DIR%\.venv"
 set "AI_PYTHON=%AI_VENV%\Scripts\python.exe"
@@ -75,34 +75,12 @@ if not exist "%AI_DIR%\requirements.txt" (
   exit /b 1
 )
 
-if not exist "%AI_PYTHON%" (
-  echo Creating project Python environment...
-  where py >nul 2>nul
-  if not errorlevel 1 (
-    py -3 -m venv "%AI_VENV%"
-  ) else (
-    where python >nul 2>nul
-    if errorlevel 1 (
-      echo [ERROR] Python 3 was not found. Please install Python 3.11 or later.
-      pause
-      exit /b 1
-    )
-    python -m venv "%AI_VENV%"
-  )
-  if errorlevel 1 (
-    echo [ERROR] Failed to create the project Python environment.
-    pause
-    exit /b 1
-  )
-)
-
-call "%AI_VENV%\Scripts\activate.bat"
-python -c "import fastapi, uvicorn, pydantic_settings" >nul 2>nul
+if exist "%AI_PYTHON%" "%AI_PYTHON%" -c "import sys; raise SystemExit(0 if sys.version_info[:2] == (3, 11) else 1)" >nul 2>nul
 if errorlevel 1 (
-  echo Installing FastAPI AI dependencies into the project environment...
-  python -m pip install --disable-pip-version-check -r "%AI_DIR%\requirements.txt"
+  echo Creating or repairing the Python 3.11 environment...
+  call npm run setup:python:recreate
   if errorlevel 1 (
-    echo [ERROR] Failed to install FastAPI AI dependencies.
+    echo [ERROR] Failed to prepare the Python 3.11 environment.
     pause
     exit /b 1
   )

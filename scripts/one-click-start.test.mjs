@@ -89,22 +89,20 @@ test('batch launcher opens the browser without a fixed readiness delay', async (
   assert.match(batch, /start "" "http:\/\/localhost:3001"/)
 })
 
-test('batch launcher bootstraps and activates an isolated Python environment', async () => {
+test('batch launcher bootstraps an isolated Python 3.11 environment through the setup script', async () => {
   const [batch] = await readLaunchers()
 
   assert.match(batch, /set "PYTHONUTF8=1"/)
   assert.match(batch, /set "AI_DIR=%ROOT%mood_health_ai_service"/)
   assert.match(batch, /set "AI_VENV=%AI_DIR%\\\.venv"/)
-  assert.match(batch, /-m venv/)
-  assert.match(batch, /-m pip install[^\r\n]*requirements\.txt/)
-  assert.match(batch, /Scripts\\activate\.bat/)
+  assert.match(batch, /sys\.version_info\[:2\] == \(3, 11\)/)
+  assert.match(batch, /npm run setup:python/)
 
-  const activatePython = batch.indexOf('Scripts\\activate.bat')
   const forceUtf8 = batch.indexOf('set "PYTHONUTF8=1"')
-  const installRequirements = batch.indexOf('-m pip install')
+  const setupPython = batch.indexOf('npm run setup:python')
   const startProject = batch.indexOf('start-project.ps1')
-  assert.ok(forceUtf8 >= 0 && forceUtf8 < installRequirements)
-  assert.ok(activatePython >= 0 && activatePython < startProject)
+  assert.ok(forceUtf8 >= 0 && forceUtf8 < setupPython)
+  assert.ok(setupPython >= 0 && setupPython < startProject)
 })
 
 test('PowerShell reconciles persistent MySQL app credentials before migration', async () => {

@@ -10,6 +10,18 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
+$Pm2Cli = Join-Path $Root 'node_modules\pm2\bin\pm2'
+$BackendEntry = Join-Path $Root 'mood_health_server\dist\server.js'
+$PythonExe = Join-Path $Root 'mood_health_ai_service\.venv\Scripts\python.exe'
+
+function Remove-Pm2ProcessIfExists {
+    param([Parameter(Mandatory)][string]$Name)
+
+    & node $Pm2Cli delete $Name *> $null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Verbose "PM2 process $Name did not exist."
+    }
+}
 
 function Read-DotEnvFile {
     param([Parameter(Mandatory)][string]$Path)
@@ -271,6 +283,7 @@ if ($Clean) {
         Where-Object { $_.MainWindowTitle -like '*MoodHealth*' } |
         ForEach-Object { & taskkill.exe /PID $_.Id /T /F *> $null }
     Stop-StaleWorkspaceServices -Ports @($NodePort, $AiPort, $FrontendPort)
+    Remove-Pm2ProcessIfExists -Name 'mood-health-server'
     Write-Host "Cleaned." -ForegroundColor Green
     exit 0
 }
@@ -324,7 +337,33 @@ Stop-StaleWorkspaceServices -Ports @($NodePort, $AiPort, $FrontendPort)
 
 # 1. Start backend (FastAPI + Node)
 if (-not $NoAi) {
-    & "$Root\scripts\start-all.ps1" -NodePort $NodePort -AiPort $AiPort
+    if (-not (Test-Path -LiteralPath $PythonExe)) {
+        throw 'Python environment is missing. Run npm run setup:python first.'
+    }
+    $pythonVersion = & $PythonExe -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"
+    if ($LASTEXITCODE -ne 0 -or $pythonVersion -ne '3.11') {
+        throw "The AI service requires Python 3.11, but .venv reports $pythonVersion. Run npm run setup:python."
+    }
+    Write-Host "[1/3] Starting FastAPI AI service (port $AiPort)..." -ForegroundColor Yellow
+    Start-Process powershell -ArgumentList @(
+        '-NoExit',
+        '-Command',
+        "`$host.UI.RawUI.WindowTitle='MoodHealth - FastAPI AI'; `$env:MOOD_AI_SERVICE_PORT='$AiPort'; `$env:HF_HUB_OFFLINE='1'; `$env:TRANSFORMERS_OFFLINE='1'; Set-Location '$Root\mood_health_ai_service'; &'$PythonExe' -m uvicorn app.main:app --host 0.0.0.0 --port $AiPort"
+    )
+}
+
+Write-Host '[2/3] Building and starting Node backend through PM2...' -ForegroundColor Yellow
+& npm --prefix mood_health_server run build
+if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $BackendEntry)) {
+    throw 'Node backend production build failed.'
+}
+Remove-Pm2ProcessIfExists -Name 'mood-health-server'
+$env:PORT = [string]$NodePort
+$env:AI_SERVICE_BASE_URL = "http://127.0.0.1:${AiPort}"
+$env:FASTAPI_BASE_URL = "http://127.0.0.1:${AiPort}"
+& node $Pm2Cli start "$Root\mood_health_server\ecosystem.config.js" --only mood-health-server --update-env
+if ($LASTEXITCODE -ne 0) {
+    throw 'PM2 could not start mood-health-server.'
 }
 
 # 2. Start frontend

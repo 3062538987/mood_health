@@ -136,6 +136,28 @@ function checkPort(host, port) {
   })
 }
 
+function checkProjectPython() {
+  const relativePath = process.platform === 'win32'
+    ? 'mood_health_ai_service/.venv/Scripts/python.exe'
+    : 'mood_health_ai_service/.venv/bin/python'
+  const executable = path.join(root, relativePath)
+  if (!fs.existsSync(executable)) {
+    fail(`Missing project Python environment: ${relativePath}. Run npm run setup:python.`)
+    return false
+  }
+
+  const result = spawnSync(executable, ['-c', 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")'], {
+    encoding: 'utf8',
+  })
+  const version = (result.stdout || '').trim()
+  if (result.error || result.status !== 0 || !version.startsWith('3.11.')) {
+    fail(`AI project requires Python 3.11; .venv reports ${version || 'unavailable'}. Run npm run setup:python.`)
+    return false
+  }
+  ok(`project python ${version}`)
+  return true
+}
+
 async function checkRagReadiness(baseUrl) {
   try {
     const parsed = new URL(baseUrl)
@@ -160,8 +182,8 @@ async function run() {
 
   checkCommand('node', ['--version'], true)
   checkCommand('npm', ['--version'], true)
-  checkCommand('python', ['--version'], false)
-  checkCommand('pm2', ['--version'], false)
+  checkProjectPython()
+  checkFile('node_modules/pm2/package.json', false)
 
   checkFile('package.json', true)
   checkFile('mood_health_server/package.json', true)
