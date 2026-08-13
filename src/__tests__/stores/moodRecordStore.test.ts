@@ -39,7 +39,7 @@ describe('moodRecordStore', () => {
       { id: 3, code: 'neutral', name: '一般', icon: 'meh', category: 'neutral' },
     ])
     // A2-05: submitRecord 现在返回 { recordId, analysisJob } 格式
-    apiMocks.submitMoodRecord.mockResolvedValue(null)
+    apiMocks.submitMoodRecord.mockResolvedValue({ recordId: 12, analysisJob: null })
   })
 
   it('maps selected frontend emotion codes to backend emotion type ids before submit', async () => {

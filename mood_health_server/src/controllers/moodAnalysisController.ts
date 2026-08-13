@@ -74,6 +74,23 @@ function toAnalysisResponse(version: AnalysisVersion) {
   }
 }
 
+function toAnalysisHistoryItem(version: AnalysisVersion, isLatest: boolean) {
+  const summary = version.analysisContent?.summary
+  return {
+    id: String(version.id),
+    period: version.period,
+    dataVersion: version.dataVersion,
+    status: normalizeStatus(version.status),
+    createdAt: version.createdAt,
+    summary: typeof summary === 'string' ? summary : undefined,
+    recordCount: version.recordCount,
+    dateRange: `${version.dataRangeStart} 至 ${version.dataRangeEnd}`,
+    usesJournalExcerpt: false,
+    isStale: version.isStale,
+    isLatest,
+  }
+}
+
 /**
  * POST /api/mood-analyses
  * 创建或复用指定周期的分析任务
@@ -160,7 +177,12 @@ export const listAnalyses = async (req: AuthRequest, res: Response) => {
     const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize as string) || 20))
 
     const result = await moodAnalysisDataService.listAnalyses(userId, parsedPeriod, page, pageSize)
-    res.json(apiSuccess({ list: result.list.map(toAnalysisResponse), total: result.total }, '获取成功'))
+    res.json(apiSuccess({
+      data: result.list.map((version, index) => toAnalysisHistoryItem(version, page === 1 && index === 0)),
+      total: result.total,
+      page,
+      pageSize,
+    }, '获取成功'))
   } catch (error) {
     logger.error('[listAnalyses] Error:', error)
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(apiFailure(500, '获取分析列表失败'))

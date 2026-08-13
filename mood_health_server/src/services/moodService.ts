@@ -221,6 +221,20 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
     }
   }
 
+  const updateMood = async (input: UpdateMoodServiceInput): Promise<boolean> => {
+    const emotions = normalizeEmotions(input.emotions)
+    return repository.updateMood({
+      id: input.id,
+      userId: input.userId,
+      noteCiphertext: encryptField(input.note),
+      triggerCiphertext: encryptField(input.trigger),
+      includeNote: input.includeNote,
+      recordedAt: input.recordedAt,
+      emotions,
+      tagIds: input.tagIds,
+    })
+  }
+
   const deleteMood = async (userId: number, moodId: number): Promise<boolean> => {
     return repository.deleteMood(userId, moodId)
   }
@@ -244,6 +258,25 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
 
     emotionTypesCache = { data, timestamp: now }
     return data
+  }
+
+  const listTags = async (userId: number) => {
+    const tags = await repository.listTags(userId)
+    return tags.map((tag) => ({
+      id: tag.id,
+      name: tag.name,
+      user_id: tag.userId,
+      is_system: tag.isSystem,
+    }))
+  }
+
+  const createOrGetTag = async (name: string, userId: number) => {
+    const normalizedName = name.trim()
+    if (!normalizedName) {
+      throw new BusinessError('标签名称不能为空')
+    }
+    const id = await repository.createOrGetTag(normalizedName, userId)
+    return { id, name: normalizedName }
   }
 
   const createOrGetTagsBatch = async (names: string[], userId: number) => {
@@ -320,6 +353,90 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
       dailyData,
       mostFrequentMood,
       summary: `本周共记录 ${totalCount} 次情绪，平均强度为 ${averageIntensity}，请结合具体事件持续观察变化。`,
+    }
+  }
+
+  const getMoodAnalysis = async (userId: number, range: 'week' | 'month') => {
+    const end = now()
+    const endDate = toDateString(end)
+    const startDate = resolveTrendStartDate(end, range)
+    const rows = await repository.listAnalysisRows(userId, startDate, endDate)
+
+    if (rows.length === 0) {
+      return {
+        avgIntensity: 0,
+        positiveRatio: 0,
+        negativeRatio: 0,
+        neutralRatio: 0,
+        consecutiveLowDays: 0,
+        dominantEmotion: null,
+        emotionDistribution: [],
+        triggerStats: {},
+        recommendations: ['继续记录情绪，积累足够数据后再查看统计分析。'],
+        trendDirection: 'stable' as const,
+        recordCount: 0,
+        dateRange: { start: startDate, end: endDate },
+      }
+    }
+
+    const recordCount = rows.length
+    const avgIntensity = roundTwoDecimals(rows.reduce((sum, row) => sum + row.intensity, 0) / recordCount)
+    const categoryCounts: Record<EmotionCategory, number> = { positive: 0, negative: 0, neutral: 0 }
+    const emotionCounts = new Map<string, number>()
+    const triggerStats: Record<string, Record<string, number>> = {}
+
+    for (const row of rows) {
+      categoryCounts[row.emotionCategory] += 1
+      emotionCounts.set(row.emotionName, (emotionCounts.get(row.emotionName) ?? 0) + 1)
+      const trigger = decryptField(row.triggerCiphertext)?.trim()
+      if (trigger) {
+        const emotions = triggerStats[trigger] ?? {}
+        emotions[row.emotionName] = (emotions[row.emotionName] ?? 0) + 1
+        triggerStats[trigger] = emotions
+      }
+    }
+
+    const emotionDistribution = Array.from(emotionCounts.entries())
+      .map(([name, count]) => ({ name, count, percentage: roundTwoDecimals(count / recordCount) }))
+      .sort((left, right) => right.count - left.count || left.name.localeCompare(right.name))
+    const dominantEmotion = emotionDistribution[0]?.name ?? null
+
+    const dailyIntensity = new Map<string, number[]>()
+    for (const row of rows) {
+      const values = dailyIntensity.get(row.date) ?? []
+      values.push(row.intensity)
+      dailyIntensity.set(row.date, values)
+    }
+    const dailyAverages = Array.from(dailyIntensity.entries())
+      .map(([date, values]) => ({ date, value: values.reduce((sum, value) => sum + value, 0) / values.length }))
+      .sort((left, right) => left.date.localeCompare(right.date))
+
+    let consecutiveLowDays = 0
+    for (let index = dailyAverages.length - 1; index >= 0 && dailyAverages[index].value < 5; index -= 1) {
+      consecutiveLowDays += 1
+    }
+
+    const midpoint = Math.max(1, Math.floor(dailyAverages.length / 2))
+    const averageSlice = (items: typeof dailyAverages) =>
+      items.length === 0 ? 0 : items.reduce((sum, item) => sum + item.value, 0) / items.length
+    const intensityChange = averageSlice(dailyAverages.slice(midpoint)) - averageSlice(dailyAverages.slice(0, midpoint))
+    const trendDirection: 'improving' | 'declining' | 'stable' =
+      intensityChange > 0.5 ? 'improving' : intensityChange < -0.5 ? 'declining' : 'stable'
+    const negativeRatio = roundTwoDecimals(categoryCounts.negative / recordCount)
+
+    return {
+      avgIntensity,
+      positiveRatio: roundTwoDecimals(categoryCounts.positive / recordCount),
+      negativeRatio,
+      neutralRatio: roundTwoDecimals(categoryCounts.neutral / recordCount),
+      consecutiveLowDays,
+      dominantEmotion,
+      emotionDistribution,
+      triggerStats,
+      recommendations: buildAnalysisRecommendations(negativeRatio, trendDirection, consecutiveLowDays),
+      trendDirection,
+      recordCount,
+      dateRange: { start: startDate, end: endDate },
     }
   }
 
@@ -479,11 +596,15 @@ export const createMoodService = (dependencies: MoodServiceDependencies = {}) =>
   return {
     recordMood,
     listMoods,
+    updateMood,
     deleteMood,
     listEmotionTypes,
+    listTags,
+    createOrGetTag,
     createOrGetTagsBatch,
     getMoodTrend,
     getWeeklyReport,
+    getMoodAnalysis,
     getPeriodComparison,
     getMoodInsight,
   }

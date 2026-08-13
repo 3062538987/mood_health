@@ -6,7 +6,7 @@ vi.mock('@/utils/request', () => ({
 }))
 
 import request from '@/utils/request'
-import { analyzeMood } from '@/api/moodAnalysis'
+import { analyzeMood, debouncedAnalyzeMood } from '@/api/moodAnalysis'
 
 const requestMock = vi.mocked(request)
 
@@ -39,5 +39,25 @@ describe('R0 mood analysis boundary', () => {
         mood: 7,
       },
     })
+  })
+
+  it('settles every caller with the latest result when debounce calls are coalesced', async () => {
+    vi.useFakeTimers()
+    requestMock.mockReset()
+    requestMock.mockResolvedValueOnce({ analysis: 'latest', suggestions: [] })
+
+    const first = debouncedAnalyzeMood({ content: 'first', mood_level: 3 }, 100)
+    const second = debouncedAnalyzeMood({ content: 'second', mood_level: 7 }, 100)
+    await vi.advanceTimersByTimeAsync(100)
+
+    await expect(Promise.all([first, second])).resolves.toEqual([
+      { analysis: 'latest', suggestions: [] },
+      { analysis: 'latest', suggestions: [] },
+    ])
+    expect(requestMock).toHaveBeenCalledTimes(1)
+    expect(requestMock).toHaveBeenCalledWith(expect.objectContaining({
+      data: { message: 'second', mood: 7 },
+    }))
+    vi.useRealTimers()
   })
 })

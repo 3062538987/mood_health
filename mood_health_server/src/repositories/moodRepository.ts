@@ -432,6 +432,71 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
     return Number(rows[0]?.total ?? 0)
   }
 
+  const updateMood = async (input: UpdateMoodInput): Promise<boolean> => {
+    const connection = await db.getConnection()
+
+    try {
+      await connection.beginTransaction()
+      const [result] = await connection.query<ResultSetHeader>(
+        `
+        UPDATE moods
+        SET note_ciphertext = ?,
+            trigger_ciphertext = ?,
+            include_note = ?,
+            recorded_at = ?,
+            updated_at = UTC_TIMESTAMP(3)
+        WHERE id = ? AND user_id = ?
+        `,
+        [
+          input.noteCiphertext,
+          input.triggerCiphertext,
+          input.includeNote ? 1 : 0,
+          input.recordedAt,
+          input.id,
+          input.userId,
+        ]
+      )
+
+      if (Number(result.affectedRows) === 0) {
+        await connection.rollback()
+        return false
+      }
+
+      await connection.query<ResultSetHeader>('DELETE FROM mood_emotions WHERE mood_id = ?', [input.id])
+      if (input.emotions.length > 0) {
+        const values = input.emotions.map((emotion) => [
+          input.id,
+          emotion.emotionTypeId,
+          emotion.intensity,
+          emotion.isPrimary ? 1 : 0,
+        ])
+        const placeholders = values.map(() => '(?, ?, ?, ?)').join(', ')
+        await connection.query<ResultSetHeader>(
+          `INSERT INTO mood_emotions (mood_id, emotion_type_id, intensity, is_primary) VALUES ${placeholders}`,
+          values.flat()
+        )
+      }
+
+      await connection.query<ResultSetHeader>('DELETE FROM mood_tags WHERE mood_id = ?', [input.id])
+      if (input.tagIds.length > 0) {
+        const values = input.tagIds.map((tagId) => [input.id, tagId])
+        const placeholders = values.map(() => '(?, ?)').join(', ')
+        await connection.query<ResultSetHeader>(
+          `INSERT INTO mood_tags (mood_id, tag_id) VALUES ${placeholders}`,
+          values.flat()
+        )
+      }
+
+      await connection.commit()
+      return true
+    } catch (error) {
+      await connection.rollback()
+      throw error
+    } finally {
+      connection.release()
+    }
+  }
+
   const deleteMood = async (userId: number, moodId: number): Promise<boolean> => {
     const [result] = await db.query<ResultSetHeader>(
       `
@@ -468,6 +533,52 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
       category: row.category,
       sortOrder: Number(row.sort_order),
     }))
+  }
+
+  const listTags = async (userId: number): Promise<TagRecord[]> => {
+    const [rows] = await db.query<TagRow[]>(
+      `
+      SELECT id, code, owner_user_id, name, is_system
+      FROM tags
+      WHERE is_system = 1 OR owner_user_id = ?
+      ORDER BY is_system DESC, name ASC
+      `,
+      [userId]
+    )
+
+    return rows.map((row) => ({
+      id: Number(row.id),
+      code: row.code,
+      userId: row.owner_user_id === null ? null : Number(row.owner_user_id),
+      name: row.name,
+      isSystem: Number(row.is_system) === 1,
+    }))
+  }
+
+  const createOrGetTag = async (name: string, userId: number): Promise<number> => {
+    const [rows] = await db.query<IdRow[]>(
+      `
+      SELECT id
+      FROM tags
+      WHERE name = ? AND (is_system = 1 OR owner_user_id = ?)
+      ORDER BY is_system DESC
+      LIMIT 1
+      `,
+      [name, userId]
+    )
+
+    if (rows[0]) {
+      return Number(rows[0].id)
+    }
+
+    const [result] = await db.query<ResultSetHeader>(
+      `
+      INSERT INTO tags (code, owner_user_id, name, is_system, created_at)
+      VALUES (?, ?, ?, 0, UTC_TIMESTAMP(3))
+      `,
+      [null, userId, name]
+    )
+    return Number(result.insertId)
   }
 
   // 批量获取或创建标签（避免 N+1 查询）
@@ -695,8 +806,11 @@ export const createMoodRepository = (db: MoodDatabase = asMoodDatabase()) => {
     listByUserAndEmotionType,
     countByUser,
     countByUserAndEmotionType,
+    updateMood,
     deleteMood,
     listEmotionTypes,
+    listTags,
+    createOrGetTag,
     createOrGetTagsBatch,
     listTrendRows,
     listWeeklyRows,

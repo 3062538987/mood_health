@@ -195,8 +195,7 @@
 
         <section class="privacy-section">
           <AnalysisPrivacy
-            :uses-journal="latestAnalysis?.job?.usesJournalExcerpt || false"
-            @toggle="toggleJournalUsage"
+            :uses-journal-excerpt="latestAnalysis?.job?.usesJournalExcerpt || false"
           />
         </section>
       </template>
@@ -211,7 +210,7 @@ import { ElMessage } from 'element-plus'
 import { featureFlags } from '@/config/featureFlags'
 import { messages } from '@/constants/messages'
 import { getMoodInsight } from '@/api/moodInsight'
-import { getLatestAnalysis, retryAnalysis as apiRetryAnalysis, createAnalysis, getAnalysisHistory } from '@/api/moodAnalysis'
+import { getLatestAnalysis, retryAnalysis as apiRetryAnalysis, createAnalysis, getAnalysis, getAnalysisHistory } from '@/api/moodAnalysis'
 import type { MoodInsightResponse, InsightPeriod, Polarity } from '@/types/moodInsight'
 import type { AnalysisPeriod, AnalysisHistoryItem, AiAnalysisResult } from '@/types/moodAnalysis'
 import type { AnalysisResponse } from '@/api/moodAnalysis'
@@ -409,12 +408,10 @@ const refreshAiAnalysis = () => {
   loadAnalysis()
 }
 
-const selectHistoryItem = (item: { id: string }) => {
-  loadAnalysis()
-}
-
-const toggleJournalUsage = (enabled: boolean) => {
-  console.log('Toggle journal usage:', enabled)
+const selectHistoryItem = async (item: { id: string }) => {
+  const analysis = await getAnalysis(item.id)
+  latestAnalysis.value = analysis
+  aiResult.value = analysis.status === 'succeeded' ? analysis.result ?? null : null
 }
 
 const goRecord = () => {

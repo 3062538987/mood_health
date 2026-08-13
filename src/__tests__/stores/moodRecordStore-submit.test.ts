@@ -53,7 +53,7 @@ describe('moodRecordStore submit prerequisites', () => {
   })
 
   it('allows submit only when mood selection and intensity are valid', async () => {
-    submitMoodRecordMock.mockResolvedValueOnce(null)
+    submitMoodRecordMock.mockResolvedValueOnce({ recordId: 12, analysisJob: null })
     const store = useMoodRecordStore()
     store.toggleMoodType('happy')
     store.intensity = 7

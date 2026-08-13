@@ -41,6 +41,11 @@ export interface AnalyzeMoodResponse {
   mood?: string
 }
 
+export interface MoodRecordWriteResult {
+  recordId: number
+  analysisJob: { id: number; status: string } | null
+}
+
 export const analyzeMoodLegacy = (data: AnalyzeMoodRequest) => {
   return analyzeMood(data)
 }
@@ -79,7 +84,7 @@ const shouldRetry = (error: unknown): boolean => {
 }
 
 export const submitMoodRecord = (data: CreateMoodRecordInput) => {
-  return request<null>({
+  return request<MoodRecordWriteResult>({
     url: '/api/moods/record',
     method: 'post',
     data,

@@ -8,6 +8,7 @@ import { seedPromptTemplates } from './seeds/promptSeed'
 import { seedCourses } from './seeds/courseSeed'
 import { seedAiAnalysisData } from './seeds/seedAiAnalysisData'
 import { seedKnowledgeResources } from './seeds/knowledgeResourceSeed'
+import { seedSupportAdminYearData } from './seeds/seedSupportAdminYearData'
 
 dotenv.config()
 
@@ -55,7 +56,8 @@ export const runSeedCommand = async (profile = process.argv[2] ?? 'reference'): 
       await seedReferenceData(db)
       await seedKnowledgeResources(db)
       const result = await seedDemoData(db)
-      console.log(`Demo seed applied: accounts=${result.accounts.join(',')}, moods=${result.moods}.`)
+      const supportResult = await seedSupportAdminYearData(db)
+      console.log(`Demo seed applied: accounts=${result.accounts.join(',')}, moods=${result.moods}, supportAdminMoods=${supportResult.moodCount}.`)
       return
     }
 
@@ -71,10 +73,11 @@ export const runSeedCommand = async (profile = process.argv[2] ?? 'reference'): 
       await seedReferenceData(db)
       const knowledgeResult = await seedKnowledgeResources(db)
       const demoResult = await seedDemoData(db)
+      const supportResult = await seedSupportAdminYearData(db)
       const testResult = await seedTestData(db)
       const promptResult = await seedPromptTemplates(db)
       const courseResult = await seedCourses(db)
-      console.log(`All seed profiles applied: demoAccounts=${demoResult.accounts.length}, demoMoods=${demoResult.moods}, testAssessment=${testResult.assessmentCode}, prompts=${promptResult.count}, courses=${courseResult.count}, knowledgeResources=${knowledgeResult.count}.`)
+      console.log(`All seed profiles applied: demoAccounts=${demoResult.accounts.length + 1}, demoMoods=${demoResult.moods + supportResult.moodCount}, testAssessment=${testResult.assessmentCode}, prompts=${promptResult.count}, courses=${courseResult.count}, knowledgeResources=${knowledgeResult.count}.`)
       return
     }
 
@@ -97,6 +100,13 @@ export const runSeedCommand = async (profile = process.argv[2] ?? 'reference'): 
       await seedDemoData(db)
       const result = await seedAiAnalysisData(db)
       console.log(`AI analysis seed applied: moods=${result.moods}.`)
+      return
+    }
+
+    if (profile === 'support-admin-year') {
+      await seedReferenceData(db)
+      const result = await seedSupportAdminYearData(db)
+      console.log(`Support admin year seed applied: userId=${result.userId}, days=${result.daysCovered}, moods=${result.moodCount}.`)
       return
     }
 

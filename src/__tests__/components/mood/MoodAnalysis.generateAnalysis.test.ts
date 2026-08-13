@@ -8,6 +8,7 @@ import MoodAnalysis from '@/views/mood/MoodAnalysis.vue'
 // createAnalysis 返回 null（无情绪记录）的空值守卫，避免 created.id 崩溃。
 vi.mock('@/api/moodAnalysis', () => ({
   getLatestAnalysis: vi.fn().mockResolvedValue(null),
+  getAnalysis: vi.fn(),
   retryAnalysis: vi.fn().mockResolvedValue({}),
   createAnalysis: vi.fn(),
   getAnalysisHistory: vi.fn().mockResolvedValue({ data: [] }),
@@ -17,11 +18,13 @@ vi.mock('@/api/moodInsight', () => ({
   getMoodInsight: vi.fn().mockResolvedValue({ summary: { totalRecords: 0 } }),
 }))
 
-import { createAnalysis, retryAnalysis, getLatestAnalysis } from '@/api/moodAnalysis'
+import { createAnalysis, retryAnalysis, getLatestAnalysis, getAnalysis } from '@/api/moodAnalysis'
 
 type MoodAnalysisVm = {
   generateAnalysis: () => Promise<void>
+  selectHistoryItem: (item: { id: string }) => Promise<void>
   latestAnalysis: unknown
+  aiResult: unknown
 }
 
 describe('MoodAnalysis.generateAnalysis — createAnalysis 返回 null 守卫', () => {
@@ -64,5 +67,31 @@ describe('MoodAnalysis.generateAnalysis — createAnalysis 返回 null 守卫', 
     await expect(vm.generateAnalysis()).resolves.toBeUndefined()
     expect(createAnalysis).toHaveBeenCalledTimes(1)
     expect(vm.latestAnalysis).not.toBeNull()
+  })
+  it('loads the selected historical analysis instead of reloading the latest item', async () => {
+    const historical = {
+      id: 'history-2',
+      period: '1m',
+      status: 'succeeded',
+      result: {
+        summary: 'historical',
+        patterns: [],
+        possibleFactors: [],
+        actions: [],
+        whenToSeekHelp: '',
+        warnings: [],
+      },
+      createdAt: '',
+      updatedAt: '',
+    }
+    ;(getAnalysis as unknown as Mock).mockResolvedValue(historical)
+
+    const wrapper = shallowMount(MoodAnalysis)
+    const vm = wrapper.vm as unknown as MoodAnalysisVm
+    await vm.selectHistoryItem({ id: 'history-2' })
+
+    expect(getAnalysis).toHaveBeenCalledWith('history-2')
+    expect(vm.latestAnalysis).toEqual(historical)
+    expect(vm.aiResult).toEqual(historical.result)
   })
 })

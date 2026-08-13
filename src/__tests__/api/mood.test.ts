@@ -20,7 +20,8 @@ describe('mood API contract', () => {
   })
 
   it('returns the unwrapped write result after recording a mood', async () => {
-    requestMock.mockResolvedValueOnce(null)
+    const writeResult = { recordId: 12, analysisJob: null }
+    requestMock.mockResolvedValueOnce(writeResult)
     const payload = {
       intensity: 7,
       moodType: ['快乐'],
@@ -30,7 +31,7 @@ describe('mood API contract', () => {
       trigger: '任务完成',
     }
 
-    await expect(submitMoodRecord(payload)).resolves.toBeNull()
+    await expect(submitMoodRecord(payload)).resolves.toEqual(writeResult)
     expect(requestMock).toHaveBeenCalledWith({
       url: '/api/moods/record',
       method: 'post',

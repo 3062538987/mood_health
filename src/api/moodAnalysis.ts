@@ -68,6 +68,11 @@ export const analyzeMood = async (data: MoodAnalysisRequest): Promise<MoodAnalys
 }
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
+let debouncedMoodInput: MoodAnalysisRequest | null = null
+let debounceWaiters: Array<{
+  resolve: (value: MoodAnalysisResponse) => void
+  reject: (reason?: unknown) => void
+}> = []
 
 export const debouncedAnalyzeMood = async (
   data: MoodAnalysisRequest,
@@ -77,14 +82,27 @@ export const debouncedAnalyzeMood = async (
     clearTimeout(debounceTimer)
   }
 
+  debouncedMoodInput = data
+
   return new Promise((resolve, reject) => {
-    debounceTimer = setTimeout(async () => {
-      try {
-        const result = await analyzeMood(data)
-        resolve(result)
-      } catch (error) {
-        reject(error)
+    debounceWaiters.push({ resolve, reject })
+    debounceTimer = setTimeout(() => {
+      const input = debouncedMoodInput
+      const waiters = debounceWaiters
+      debounceTimer = null
+      debouncedMoodInput = null
+      debounceWaiters = []
+
+      if (!input) {
+        const error = new Error('缺少待分析的情绪内容')
+        waiters.forEach((waiter) => waiter.reject(error))
+        return
       }
+
+      void analyzeMood(input).then(
+        (result) => waiters.forEach((waiter) => waiter.resolve(result)),
+        (error) => waiters.forEach((waiter) => waiter.reject(error))
+      )
     }, delay)
   })
 }
