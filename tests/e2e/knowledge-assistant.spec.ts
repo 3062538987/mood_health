@@ -24,53 +24,38 @@ const login = async (page: Page, baseURL: string, username: string, password: st
   })
 }
 
-test('uses one AI psychological assistant window with optional sources', async ({
+test('standalone knowledge assistant shows grounded and ungrounded answers', async ({
   page,
   baseURL,
   testAccount,
 }) => {
   await login(page, baseURL!, testAccount.username, testAccount.password)
 
-  await page.goto('/ai/knowledge-assistant')
-  await expect(page).toHaveURL(/\/counseling$/, { timeout: 30_000 })
-  await expect(page.getByRole('heading', { name: 'AI 心理助手' })).toBeVisible()
+  await page.route('**/api/knowledge-assistant/sessions', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ code: 0, message: '获取成功', data: [] }),
+    })
+  })
 
   let responseIndex = 0
-  await page.route('**/api/counseling/send', async (route) => {
+  await page.route('**/api/knowledge-assistant/messages', async (route) => {
     const responses = [
       {
-        response: '可以先固定每天的起床时间。',
-        sessionId: 'session-unified',
-        riskLevel: 'low',
-        hasRiskContent: false,
-        sources: [{ title: '睡眠卫生', reference: '国家卫健委' }],
-        groundingUsed: true,
+        sessionId: 'session-knowledge',
+        answer: '可以先固定每天的起床时间。',
+        sources: [{ title: '睡眠卫生', reference: '国家卫生健康委员会' }],
         requestId: 'request-grounded',
         provider: 'deepseek',
         model: 'deepseek-chat',
         fallbackUsed: false,
       },
       {
-        response: '听起来你今天承受了很多。',
-        sessionId: 'session-unified',
-        riskLevel: 'low',
-        hasRiskContent: false,
+        sessionId: 'session-knowledge',
+        answer: '听起来你今天承受了很多。',
         sources: [],
-        groundingUsed: false,
         requestId: 'request-support',
-        provider: 'deepseek',
-        model: 'deepseek-chat',
-        fallbackUsed: false,
-      },
-      {
-        response: '请先联系身边可信任的人或学校心理中心。',
-        sessionId: 'session-unified',
-        riskLevel: 'medium',
-        hasRiskContent: true,
-        suggestion: '请寻求专业帮助',
-        sources: [],
-        groundingUsed: false,
-        requestId: 'request-risk',
         provider: 'deepseek',
         model: 'deepseek-chat',
         fallbackUsed: false,
@@ -83,23 +68,24 @@ test('uses one AI psychological assistant window with optional sources', async (
     })
   })
 
-  const input = page.locator('.input-panel textarea')
+  await page.goto('/ai/knowledge-assistant')
+  await expect(page).toHaveURL(/\/ai\/knowledge-assistant$/)
+  await expect(page.getByRole('heading', { name: '知识助手', exact: true })).toBeVisible()
+
+  const input = page.locator('.composer textarea')
   await input.fill('怎样改善睡眠？')
-  await page.locator('.send-button').click()
-  await expect(page.getByLabel('参考来源')).toContainText('国家卫健委')
+  await page.locator('[data-test="send"]').click()
+  await expect(page.locator('[data-test="source"]')).toContainText('国家卫生健康委员会')
 
   await input.fill('我今天很难过')
-  await page.locator('.send-button').click()
-  await expect(page.getByText('听起来你今天承受了很多。')).toBeVisible()
-  await expect(page.getByLabel('参考来源')).toHaveCount(1)
-
-  await input.fill('我不想活了')
-  await page.locator('.send-button').click()
-  await expect(page.locator('.risk-badge.medium')).toBeVisible()
-  await expect(page.getByLabel('参考来源')).toHaveCount(1)
+  await page.locator('[data-test="send"]').click()
+  await expect(page.locator('[data-test="assistant-answer"]').last()).toContainText(
+    '听起来你今天承受了很多。',
+  )
+  await expect(page.locator('[data-test="source"]')).toHaveCount(1)
 })
 
-test('keeps the original text when the unified assistant service fails', async ({
+test('keeps the original text when the psychological assistant service fails', async ({
   page,
   baseURL,
   testAccount,

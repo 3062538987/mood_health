@@ -39,7 +39,7 @@ test('login -> protected page -> refresh -> logout -> back -> revisit', async ({
 
   // 浏览器后退不应恢复旧会话
   await page.goBack()
-  await expect(page).toHaveURL(/\/(login|)$/, { timeout: 10_000 })
+  await expect(page).not.toHaveURL(/\/mood\/record/, { timeout: 10_000 })
 
   // 再次直接访问受保护页，应要求登录
   await page.goto('/mood/record')

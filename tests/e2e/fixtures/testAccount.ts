@@ -43,12 +43,11 @@ async function ensureCsrfToken(
   baseURL: string,
 ): Promise<string> {
   // CSRF 中间件只对 /api 路由生效；GET /api/auth/me 会种下 token 并返回 401
-  const response = await request.get(`${baseURL}/api/auth/me`, {
+  await request.get(`${baseURL}/api/auth/me`, {
     failOnStatusCode: false,
   })
   const state = await request.storageState()
   const allCookies = state.cookies
-  console.log('[ensureCsrfToken] response status:', response.status(), 'cookies:', JSON.stringify(allCookies))
   const csrfCookie = allCookies.find(
     (c) => c.name === CSRF_COOKIE,
   )

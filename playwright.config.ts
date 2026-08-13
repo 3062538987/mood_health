@@ -24,8 +24,6 @@ process.env.ALLOW_DEMO_SEED = 'true'
 process.env.DEMO_PASSWORD = 'E2eDemoPass123!'
 process.env.E2E_USERNAME = 'demo_student'
 process.env.E2E_PASSWORD = 'E2eDemoPass123!'
-console.log('[DEBUG] E2E_MYSQL_PORT:', process.env.E2E_MYSQL_PORT, 'MYSQL_PORT:', process.env.MYSQL_PORT)
-
 process.env.NO_PROXY = process.env.NO_PROXY ? `${process.env.NO_PROXY},${noProxy}` : noProxy
 process.env.no_proxy = process.env.no_proxy ? `${process.env.no_proxy},${noProxy}` : noProxy
 // 前端通过 Vite proxy 访问 /api，不直接指向 backendUrl，避免跨域 cookie/CSRF 问题
@@ -51,6 +49,7 @@ const e2eEnv = {
   AI_SERVICE_BASE_URL: process.env.E2E_AI_SERVICE_BASE_URL || 'http://127.0.0.1:8001',
   AI_TIMEOUT: process.env.E2E_AI_TIMEOUT || '1000',
   AI_MAX_RETRIES: process.env.E2E_AI_MAX_RETRIES || '0',
+  AUTH_LOGIN_RATE_LIMIT_MAX: process.env.E2E_AUTH_LOGIN_RATE_LIMIT_MAX || '1000',
   NO_PROXY: process.env.NO_PROXY,
   no_proxy: process.env.no_proxy,
 }
@@ -62,6 +61,7 @@ export default defineConfig({
     timeout: 5_000,
   },
   retries: 0,
+  workers: Number(process.env.E2E_WORKERS || 4),
   // outputDir overridable via E2E_OUTPUT_DIR. In sandboxes the default path sits
   // under a non-ASCII workspace root and Playwright's emptyDir triggers a bulk-delete
   // guard; pointing at a fresh ASCII dir (e.g. D:/e2e_artifacts) avoids that.
@@ -92,7 +92,7 @@ export default defineConfig({
             env: e2eEnv,
           },
           {
-            command: `npx vite --port ${frontendPort} --strictPort -c vite.e2e.config.ts --mode e2e`,
+            command: 'npm run build:e2e && npm run preview:e2e',
             url: frontendUrl,
             reuseExistingServer: process.env.E2E_REUSE_SERVER !== 'false',
             timeout: 120_000,
