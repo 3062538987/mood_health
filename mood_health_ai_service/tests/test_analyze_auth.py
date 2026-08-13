@@ -3,8 +3,12 @@ R1 回归测试：/api/analyze/mood 与 /api/ai/chat 现在必须携带有效 HM
 否则返回 401。验证后端→AI 链路的鉴权闸门已闭合（不匹配签名 → 401）。
 """
 
-import pytest
 from fastapi.testclient import TestClient
+
+ANALYZE_BODY = (
+    '{"contractVersion":"1.0.0","requestId":"x","period":"7d",'
+    '"metrics":[],"trend":[],"triggers":[]}'
+)
 
 
 def _make_client(monkeypatch):
@@ -34,7 +38,7 @@ def test_analyze_passes_with_valid_signature(monkeypatch):
     from app.auth import generate_auth_headers
 
     client = _make_client(monkeypatch)
-    body = '{"contractVersion":"1.0.0","requestId":"x","period":"7d","metrics":[],"trend":[],"triggers":[]}'
+    body = ANALYZE_BODY
     headers = generate_auth_headers(body, "test-token")
     resp = client.post("/api/analyze/mood", content=body, headers=headers)
     # 鉴权通过后才走到下游（AI_API_KEY 缺失 → 500，或校验 → 422）；绝不能是 401
@@ -45,7 +49,7 @@ def test_analyze_rejects_wrong_signature(monkeypatch):
     from app.auth import generate_auth_headers
 
     client = _make_client(monkeypatch)
-    body = '{"contractVersion":"1.0.0","requestId":"x","period":"7d","metrics":[],"trend":[],"triggers":[]}'
+    body = ANALYZE_BODY
     headers = generate_auth_headers(body, "wrong-token")
     resp = client.post("/api/analyze/mood", content=body, headers=headers)
     assert resp.status_code == 401

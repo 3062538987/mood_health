@@ -179,7 +179,9 @@ class TestVerifyInternalAuth:
         signature = compute_signature("body", timestamp, "nonce-expired-12345", "secret")
 
         async def run():
-            ok, err = await verify_internal_auth("body", signature, timestamp, "nonce-expired-12345")
+            ok, err = await verify_internal_auth(
+                "body", signature, timestamp, "nonce-expired-12345"
+            )
             assert not ok
             assert "偏差过大" in err
 

@@ -41,6 +41,7 @@ class FakeProvider:
         self.error = error
         self.messages: list[dict[str, str]] = []
         self.calls = 0
+        self.max_tokens: int | None = None
 
     async def chat(
         self,
@@ -49,12 +50,31 @@ class FakeProvider:
         temperature: float = 0.7,
         max_tokens: int = 2048,
     ) -> tuple[str, str, dict[str, int] | None]:
-        del model, temperature, max_tokens
+        del model, temperature
+        self.max_tokens = max_tokens
         self.calls += 1
         self.messages = messages
         if self.error is not None:
             raise self.error
         return "final answer", "deepseek-v4-flash", {"totalTokens": 11}
+
+
+@pytest.mark.asyncio
+async def test_final_answer_uses_a_bounded_concise_response_budget() -> None:
+    provider = FakeProvider()
+    dependencies, _, _ = make_dependencies(provider=provider, tavily_key="")
+
+    await run_assistant_agent(
+        AssistantResponseRequest(
+            query="我有一点焦虑，现在可以怎样放松？",
+            requestId="concise-budget",
+            allowWebSearch=False,
+        ),
+        dependencies=dependencies,
+    )
+
+    assert provider.max_tokens == 600
+    assert "180 to 300 Chinese characters" in provider.messages[0]["content"]
 
 
 class FakeGateway:
