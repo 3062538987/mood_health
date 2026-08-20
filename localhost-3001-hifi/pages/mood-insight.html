@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>情绪洞察</title>
+    <link rel="stylesheet" href="../colors_and_type.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <style>
+        @keyframes drift {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(8px, -12px) scale(1.03); }
+            66% { transform: translate(-6px, 6px) scale(0.98); }
+        }
+        @keyframes breathe {
+            0%, 100% { opacity: 0.45; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.06); }
+        }
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(232, 131, 74, 0.25); }
+            70% { box-shadow: 0 0 0 10px rgba(232, 131, 74, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(232, 131, 74, 0); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .rise { animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.08s; }
+        .delay-2 { animation-delay: 0.16s; }
+        .delay-3 { animation-delay: 0.24s; }
+        .delay-4 { animation-delay: 0.32s; }
+        .delay-5 { animation-delay: 0.4s; }
+        .delay-6 { animation-delay: 0.48s; }
+        .delay-7 { animation-delay: 0.56s; }
+        .delay-8 { animation-delay: 0.64s; }
+
+        body {
+            background-color: var(--mh-background);
+            color: var(--mh-text);
+        }
+
+        .aurora {
+            background:
+                radial-gradient(ellipse 120% 80% at 20% -10%, rgba(240, 184, 96, 0.35) 0%, transparent 50%),
+                radial-gradient(ellipse 100% 90% at 90% 10%, rgba(232, 131, 74, 0.2) 0%, transparent 45%),
+                radial-gradient(ellipse 80% 70% at 70% 90%, rgba(138, 171, 124, 0.18) 0%, transparent 45%),
+                linear-gradient(180deg, #fff9f4 0%, #fef3ea 50%, #fdf6ef 100%);
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            pointer-events: none;
+        }
+
+        .glass-surface {
+            background: rgba(255, 253, 249, 0.78);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .card {
+            background: var(--mh-card);
+            border: 1px solid var(--mh-border);
+            box-shadow: var(--mh-shadow-sm);
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--mh-shadow-md);
+            border-color: rgba(232, 131, 74, 0.22);
+        }
+
+        .btn-main {
+            background: linear-gradient(135deg, #f0b860 0%, #e8834a 100%);
+            color: white;
+            box-shadow: 0 8px 24px rgba(232, 131, 74, 0.28);
+            transition: all 0.25s ease;
+        }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(232, 131, 74, 0.36); }
+        .btn-main:active { transform: scale(0.97); }
+
+        .btn-soft {
+            background: var(--mh-surface-muted);
+            color: var(--mh-text);
+            border: 1px solid var(--mh-border);
+            transition: all 0.2s ease;
+        }
+        .btn-soft:hover { background: var(--mh-border); }
+
+        .text-gradient {
+            background: linear-gradient(135deg, var(--mh-primary) 0%, var(--mh-accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-pill {
+            background: rgba(255, 253, 249, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(232, 221, 208, 0.6);
+            box-shadow: 0 8px 32px rgba(180, 140, 100, 0.14);
+        }
+
+        .insight-card {
+            background: linear-gradient(135deg, #e8834a 0%, #f0b860 50%, #8aab7c 100%);
+        }
+
+        .stat-ring {
+            animation: pulse-ring 2.5s ease-out infinite;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Donut chart */
+        .donut-chart {
+            position: relative;
+            width: 180px;
+            height: 180px;
+        }
+        .donut-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: var(--mh-card);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 2px 8px rgba(180, 140, 100, 0.08);
+        }
+
+        /* Line chart area gradient */
+        .line-area {
+            fill: url(#lineGradient);
+        }
+        .line-path {
+            fill: none;
+            stroke: url(#lineStroke);
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .chart-dot {
+            fill: var(--mh-primary);
+            stroke: white;
+            stroke-width: 2;
+        }
+
+        /* Period tabs */
+        .period-tab {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .period-tab.active {
+            background: linear-gradient(135deg, var(--mh-primary) 0%, var(--mh-accent) 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(232, 131, 74, 0.25);
+        }
+        .period-tab:not(.active):hover {
+            background: var(--mh-border);
+        }
+
+        /* Resource card hover */
+        .resource-card {
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .resource-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--mh-shadow-md);
+        }
+        .resource-card:hover .resource-icon {
+            transform: scale(1.1) rotate(-3deg);
+        }
+        .resource-icon {
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Bar chart animation */
+        @keyframes barGrow {
+            from { width: 0; }
+        }
+        .bar-animate {
+            animation: barGrow 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Donut segments */
+        .donut-segment {
+            transition: transform 0.3s ease;
+            transform-origin: center;
+        }
+        .donut-segment:hover {
+            transform: scale(1.04);
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen">
+
+    <div class="aurora min-h-screen w-full max-w-[480px] mx-auto relative overflow-hidden pb-[calc(88px+env(safe-area-inset-bottom))]">
+
+        <!-- Organic Background Orbs -->
+        <div class="orb w-72 h-72 bg-[var(--mh-accent)]/25 -top-24 -left-24" style="animation: drift 12s ease-in-out infinite;"></div>
+        <div class="orb w-64 h-64 bg-[var(--mh-primary)]/18 top-1/4 -right-20" style="animation: drift 15s ease-in-out infinite 1s;"></div>
+        <div class="orb w-56 h-56 bg-[var(--mh-secondary)]/14 bottom-32 -left-16" style="animation: drift 14s ease-in-out infinite 2s;"></div>
+        <div class="orb w-80 h-80 bg-[var(--mh-accent)]/10 -bottom-32 right-1/4" style="animation: breathe 8s ease-in-out infinite;"></div>
+
+        <!-- Status Bar -->
+        <div class="rise flex items-center justify-between px-6 pt-4 pb-2 text-[13px] font-semibold text-[var(--mh-text)] relative z-10">
+            <span>9:41</span>
+            <div class="flex items-center gap-1.5">
+                <i data-lucide="signal" class="w-4 h-4"></i>
+                <i data-lucide="wifi" class="w-4 h-4"></i>
+                <i data-lucide="battery-full" class="w-5 h-5"></i>
+            </div>
+        </div>
+
+        <!-- Top Navigation Bar -->
+        <div class="rise delay-1 relative z-10 px-4 pt-2 pb-3 flex items-center">
+            <button class="w-10 h-10 rounded-full glass-surface flex items-center justify-center text-[var(--mh-text)] active:scale-95 transition-transform">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+            </button>
+            <h1 class="flex-1 text-center text-[17px] font-semibold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">情绪洞察</h1>
+            <button class="w-10 h-10 rounded-full glass-surface flex items-center justify-center text-[var(--mh-text-light)] active:scale-95 transition-transform">
+                <i data-lucide="share-2" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <!-- Header -->
+        <header class="rise delay-2 relative z-10 px-6 pt-3 pb-6">
+            <p class="text-[12px] font-bold tracking-widest text-[var(--mh-primary)] uppercase mb-2">情绪洞察</p>
+            <h2 class="text-[28px] leading-[1.2] font-bold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">
+                了解自己的<br>
+                <span class="text-gradient">情绪模式</span>
+            </h2>
+            <p class="mt-3 text-[13px] text-[var(--mh-text-light)] leading-relaxed max-w-[290px]">
+                用数据认识真实的自己，每一次记录都是向内探索的温柔旅程。
+            </p>
+        </header>
+
+        <!-- Period Switcher -->
+        <section class="rise delay-3 px-6 pb-5 relative z-10">
+            <div class="glass-surface rounded-full p-1.5 flex gap-1">
+                <button class="period-tab active flex-1 h-9 rounded-full text-[12px] font-semibold">本周</button>
+                <button class="period-tab flex-1 h-9 rounded-full text-[12px] font-medium text-[var(--mh-text-light)]">本月</button>
+                <button class="period-tab flex-1 h-9 rounded-full text-[12px] font-medium text-[var(--mh-text-light)]">全部</button>
+            </div>
+        </section>
+
+        <!-- Overview Stats Cards -->
+        <section class="rise delay-4 px-6 pb-5 relative z-10">
+            <div class="grid grid-cols-3 gap-3">
+                <!-- Record Days -->
+                <div class="card rounded-[20px] p-3.5 flex flex-col items-center text-center">
+                    <div class="w-10 h-10 rounded-[12px] bg-purple-100/80 flex items-center justify-center mb-2.5">
+                        <i data-lucide="calendar-days" class="w-5 h-5 text-purple-500"></i>
+                    </div>
+                    <p class="text-[22px] font-bold text-[var(--mh-text)] leading-none" style="font-family: var(--mh-font-display);">14</p>
+                    <p class="text-[10px] text-[var(--mh-text-light)] mt-1.5">记录天数</p>
+                </div>
+                <!-- Record Count -->
+                <div class="card rounded-[20px] p-3.5 flex flex-col items-center text-center">
+                    <div class="w-10 h-10 rounded-[12px] bg-blue-100/80 flex items-center justify-center mb-2.5">
+                        <i data-lucide="file-text" class="w-5 h-5 text-blue-500"></i>
+                    </div>
+                    <p class="text-[22px] font-bold text-[var(--mh-text)] leading-none" style="font-family: var(--mh-font-display);">23</p>
+                    <p class="text-[10px] text-[var(--mh-text-light)] mt-1.5">记录条数</p>
+                </div>
+                <!-- Main Mood -->
+                <div class="card rounded-[20px] p-3.5 flex flex-col items-center text-center">
+                    <div class="w-10 h-10 rounded-[12px] bg-[var(--mh-primary-soft)] flex items-center justify-center mb-2.5">
+                        <i data-lucide="smile" class="w-5 h-5 text-[var(--mh-primary)]"></i>
+                    </div>
+                    <p class="text-[18px] font-bold text-[var(--mh-text)] leading-none" style="font-family: var(--mh-font-display);">平静</p>
+                    <p class="text-[10px] text-[var(--mh-text-light)] mt-1.5">平均 5.8</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mood Distribution (Donut Chart) -->
+        <section class="rise delay-5 px-6 pb-5 relative z-10">
+            <div class="card rounded-[24px] p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-[16px] font-semibold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">情绪分布</h3>
+                    <span class="text-[11px] text-[var(--mh-text-muted)]">本周 23 条记录</span>
+                </div>
+                <div class="flex items-center gap-5">
+                    <!-- Donut Chart SVG -->
+                    <div class="donut-chart flex-shrink-0">
+                        <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90">
+                            <!-- Happy 30% - yellow -->
+                            <circle class="donut-segment" cx="50" cy="50" r="40" fill="none"
+                                stroke="#f0b860" stroke-width="14"
+                                stroke-dasharray="75.4 251.3" stroke-dashoffset="0" />
+                            <!-- Calm 25% - green -->
+                            <circle class="donut-segment" cx="50" cy="50" r="40" fill="none"
+                                stroke="#8aab7c" stroke-width="14"
+                                stroke-dasharray="62.8 251.3" stroke-dashoffset="-75.4" />
+                            <!-- Anxious 18% - purple -->
+                            <circle class="donut-segment" cx="50" cy="50" r="40" fill="none"
+                                stroke="#c090d0" stroke-width="14"
+                                stroke-dasharray="45.2 251.3" stroke-dashoffset="-138.2" />
+                            <!-- Tired 15% - blue -->
+                            <circle class="donut-segment" cx="50" cy="50" r="40" fill="none"
+                                stroke="#7ba5c4" stroke-width="14"
+                                stroke-dasharray="37.7 251.3" stroke-dashoffset="-183.4" />
+                            <!-- Sad 12% - gray-blue -->
+                            <circle class="donut-segment" cx="50" cy="50" r="40" fill="none"
+                                stroke="#b0a69c" stroke-width="14"
+                                stroke-dasharray="30.2 251.3" stroke-dashoffset="-221.1" />
+                        </svg>
+                        <div class="donut-center">
+                            <span class="text-[11px] text-[var(--mh-text-muted)]">总计</span>
+                            <span class="text-[22px] font-bold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">23</span>
+                        </div>
+                    </div>
+                    <!-- Legend -->
+                    <div class="flex-1 space-y-2.5">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-3 h-3 rounded-full bg-[var(--mh-mood-happy)] flex-shrink-0"></div>
+                            <span class="text-[12px] text-[var(--mh-text)] flex-1">开心</span>
+                            <span class="text-[12px] font-semibold text-[var(--mh-text)]">30%</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-3 h-3 rounded-full bg-[var(--mh-mood-calm)] flex-shrink-0"></div>
+                            <span class="text-[12px] text-[var(--mh-text)] flex-1">平静</span>
+                            <span class="text-[12px] font-semibold text-[var(--mh-text)]">25%</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-3 h-3 rounded-full bg-[var(--mh-mood-anxious)] flex-shrink-0"></div>
+                            <span class="text-[12px] text-[var(--mh-text)] flex-1">焦虑</span>
+                            <span class="text-[12px] font-semibold text-[var(--mh-text)]">18%</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-3 h-3 rounded-full bg-[var(--mh-mood-sad)] flex-shrink-0"></div>
+                            <span class="text-[12px] text-[var(--mh-text)] flex-1">疲惫</span>
+                            <span class="text-[12px] font-semibold text-[var(--mh-text)]">15%</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-3 h-3 rounded-full bg-[var(--mh-mood-neutral)] flex-shrink-0"></div>
+                            <span class="text-[12px] text-[var(--mh-text)] flex-1">难过</span>
+                            <span class="text-[12px] font-semibold text-[var(--mh-text)]">12%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mood Intensity Trend (Line Chart) -->
+        <section class="rise delay-6 px-6 pb-5 relative z-10">
+            <div class="card rounded-[24px] p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-[16px] font-semibold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">情绪强度趋势</h3>
+                    <div class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--mh-primary-soft)]">
+                        <i data-lucide="trending-up" class="w-3.5 h-3.5 text-[var(--mh-primary)]"></i>
+                        <span class="text-[10px] font-bold text-[var(--mh-primary)]">+12%</span>
+                    </div>
+                </div>
+                <!-- Line Chart SVG -->
+                <div class="relative">
+                    <svg viewBox="0 0 300 140" class="w-full h-[140px]">
+                        <defs>
+                            <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#e8834a;stop-opacity:0.25" />
+                                <stop offset="100%" style="stop-color:#e8834a;stop-opacity:0" />
+                            </linearGradient>
+                            <linearGradient id="lineStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#f0b860" />
+                                <stop offset="100%" style="stop-color:#e8834a" />
+                            </linearGradient>
+                        </defs>
+                        <!-- Grid lines -->
+                        <line x1="0" y1="28" x2="300" y2="28" stroke="#e8ddd0" stroke-width="0.5" stroke-dasharray="4,4" opacity="0.6" />
+                        <line x1="0" y1="70" x2="300" y2="70" stroke="#e8ddd0" stroke-width="0.5" stroke-dasharray="4,4" opacity="0.6" />
+                        <line x1="0" y1="112" x2="300" y2="112" stroke="#e8ddd0" stroke-width="0.5" stroke-dasharray="4,4" opacity="0.6" />
+                        <!-- Area fill -->
+                        <path class="line-area" d="M20,95 L65,70 L110,55 L155,90 L200,60 L245,45 L280,35 L280,130 L20,130 Z" />
+                        <!-- Line -->
+                        <path class="line-path" d="M20,95 L65,70 L110,55 L155,90 L200,60 L245,45 L280,35" />
+                        <!-- Dots -->
+                        <circle class="chart-dot" cx="20" cy="95" r="4" />
+                        <circle class="chart-dot" cx="65" cy="70" r="4" />
+                        <circle class="chart-dot" cx="110" cy="55" r="4" />
+                        <circle class="chart-dot" cx="155" cy="90" r="4" />
+                        <circle class="chart-dot" cx="200" cy="60" r="4" />
+                        <circle class="chart-dot" cx="245" cy="45" r="4" />
+                        <circle class="chart-dot" cx="280" cy="35" r="5" stroke-width="3" />
+                    </svg>
+                    <!-- X-axis labels -->
+                    <div class="flex justify-between px-1 mt-1">
+                        <span class="text-[10px] text-[var(--mh-text-muted)]">周一</span>
+                        <span class="text-[10px] text-[var(--mh-text-muted)]">周二</span>
+                        <span class="text-[10px] text-[var(--mh-text-muted)]">周三</span>
+                        <span class="text-[10px] text-[var(--mh-text-muted)]">周四</span>
+                        <span class="text-[10px] text-[var(--mh-text-muted)]">周五</span>
+                        <span class="text-[10px] text-[var(--mh-text-muted)]">周六</span>
+                        <span class="text-[10px] text-[var(--mh-primary)] font-bold">今天</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Positive/Negative Ratio -->
+        <section class="rise delay-6 px-6 pb-5 relative z-10">
+            <div class="card rounded-[24px] p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-[16px] font-semibold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">正负情绪占比</h3>
+                    <span class="text-[11px] text-[var(--mh-text-muted)]">本周</span>
+                </div>
+                <!-- Bar -->
+                <div class="h-5 rounded-full bg-[var(--mh-surface-muted)] overflow-hidden flex mb-3">
+                    <div class="bar-animate h-full rounded-full bg-gradient-to-r from-[var(--mh-mood-happy)] to-[var(--mh-mood-calm)]" style="width: 62%;"></div>
+                    <div class="bar-animate h-full rounded-full bg-gradient-to-r from-[var(--mh-mood-sad)] to-[var(--mh-mood-anxious)]" style="width: 38%; animation-delay: 0.3s;"></div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2.5 h-2.5 rounded-full bg-[var(--mh-mood-calm)]"></div>
+                        <span class="text-[12px] text-[var(--mh-text-light)]">积极情绪</span>
+                        <span class="text-[14px] font-bold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">62%</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[14px] font-bold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">38%</span>
+                        <span class="text-[12px] text-[var(--mh-text-light)]">消极情绪</span>
+                        <div class="w-2.5 h-2.5 rounded-full bg-[var(--mh-mood-anxious)]"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Insight Card -->
+        <section class="rise delay-7 px-6 pb-5 relative z-10">
+            <div class="insight-card rounded-[28px] p-5 relative overflow-hidden shadow-[var(--mh-shadow-md)] text-white active:scale-[0.98] transition-transform">
+                <div class="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/10 blur-2xl"></div>
+                <div class="absolute -left-8 bottom-0 w-28 h-28 rounded-full bg-[var(--mh-accent-light)]/20 blur-xl"></div>
+                <div class="absolute right-6 top-6" style="animation: float 4s ease-in-out infinite;">
+                    <i data-lucide="sparkles" class="w-8 h-8 text-white/40"></i>
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-7 h-7 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                            <i data-lucide="sparkles" class="w-4 h-4 text-white"></i>
+                        </div>
+                        <span class="text-[12px] font-semibold text-white/90">AI 暖心洞察</span>
+                    </div>
+                    <h3 class="text-[18px] font-semibold text-white mb-3" style="font-family: var(--mh-font-display);">
+                        本周情绪整体平稳
+                    </h3>
+                    <p class="text-[13px] text-white/80 leading-relaxed mb-4">
+                        平静与愉悦占比达 62%。周三下午的焦虑情绪峰值与工作 deadlines 高度相关。建议在高压时段前尝试 5 分钟呼吸练习。
+                    </p>
+                    <button class="w-full h-11 rounded-full bg-white/15 backdrop-blur-sm text-white text-[13px] font-semibold flex items-center justify-center gap-2 hover:bg-white/25 transition-colors">
+                        <span>查看完整分析</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Support Resources -->
+        <section class="rise delay-8 px-6 pb-8 relative z-10">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-[16px] font-semibold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">支持资源</h3>
+                <button class="text-[12px] font-medium text-[var(--mh-primary)] flex items-center gap-0.5">
+                    更多
+                    <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                </button>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+                <!-- AI Counseling -->
+                <div class="resource-card card rounded-[20px] p-3.5 flex flex-col items-center text-center">
+                    <div class="resource-icon w-11 h-11 rounded-[14px] bg-blue-50 flex items-center justify-center mb-2.5">
+                        <i data-lucide="message-circle-heart" class="w-5 h-5 text-blue-500"></i>
+                    </div>
+                    <p class="text-[11px] font-semibold text-[var(--mh-text)] leading-tight">AI心理<br>咨询</p>
+                </div>
+                <!-- Breathing -->
+                <div class="resource-card card rounded-[20px] p-3.5 flex flex-col items-center text-center">
+                    <div class="resource-icon w-11 h-11 rounded-[14px] bg-green-50 flex items-center justify-center mb-2.5">
+                        <i data-lucide="wind" class="w-5 h-5 text-[var(--mh-secondary)]"></i>
+                    </div>
+                    <p class="text-[11px] font-semibold text-[var(--mh-text)] leading-tight">呼吸<br>放松</p>
+                </div>
+                <!-- Mood Science -->
+                <div class="resource-card card rounded-[20px] p-3.5 flex flex-col items-center text-center">
+                    <div class="resource-icon w-11 h-11 rounded-[14px] bg-purple-50 flex items-center justify-center mb-2.5">
+                        <i data-lucide="book-open" class="w-5 h-5 text-purple-500"></i>
+                    </div>
+                    <p class="text-[11px] font-semibold text-[var(--mh-text)] leading-tight">情绪<br>科普</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bottom Navigation -->
+        <nav class="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-40px)] max-w-[400px]">
+            <div class="nav-pill rounded-full h-[64px] px-2 flex items-center justify-between">
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">首页</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-primary)] bg-[var(--mh-primary-soft)]">
+                    <i data-lucide="heart" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-semibold">情绪</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="leaf" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">放松</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="trees" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">树洞</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">我的</span>
+                </button>
+            </div>
+        </nav>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Period tab switching
+        document.querySelectorAll('.period-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.period-tab').forEach(t => {
+                    t.classList.remove('active');
+                    t.classList.remove('text-white');
+                    t.classList.add('text-[var(--mh-text-light)]');
+                    t.classList.remove('font-semibold');
+                    t.classList.add('font-medium');
+                });
+                this.classList.add('active');
+                this.classList.add('text-white');
+                this.classList.remove('text-[var(--mh-text-light)]');
+                this.classList.add('font-semibold');
+                this.classList.remove('font-medium');
+            });
+        });
+    </script>
+</body>
+</html>
