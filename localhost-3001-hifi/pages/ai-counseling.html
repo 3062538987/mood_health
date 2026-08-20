@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>暖暖 AI · 心理咨询</title>
+    <link rel="stylesheet" href="../colors_and_type.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <style>
+        @keyframes drift {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(8px, -12px) scale(1.03); }
+            66% { transform: translate(-6px, 6px) scale(0.98); }
+        }
+        @keyframes breathe {
+            0%, 100% { opacity: 0.45; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.06); }
+        }
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-6px); opacity: 1; }
+        }
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(138, 171, 124, 0.5); }
+            50% { box-shadow: 0 0 0 4px rgba(138, 171, 124, 0); }
+        }
+        @keyframes shimmer-card {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .rise { animation: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        .fade-in { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.25s; }
+        .delay-3 { animation-delay: 0.45s; }
+        .delay-4 { animation-delay: 0.65s; }
+        .delay-5 { animation-delay: 0.85s; }
+        .delay-6 { animation-delay: 1.05s; }
+
+        body {
+            background-color: var(--mh-background);
+            color: var(--mh-text);
+        }
+
+        .aurora {
+            background:
+                radial-gradient(ellipse 120% 80% at 20% -10%, rgba(240, 184, 96, 0.35) 0%, transparent 50%),
+                radial-gradient(ellipse 100% 90% at 90% 10%, rgba(232, 131, 74, 0.2) 0%, transparent 45%),
+                radial-gradient(ellipse 80% 70% at 70% 90%, rgba(138, 171, 124, 0.15) 0%, transparent 45%),
+                linear-gradient(180deg, #fff9f4 0%, #fef3ea 50%, #fdf6ef 100%);
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            pointer-events: none;
+        }
+
+        .glass-surface {
+            background: rgba(255, 253, 249, 0.78);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .glass-header {
+            background: rgba(255, 253, 249, 0.85);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border-bottom: 1px solid rgba(232, 221, 208, 0.5);
+        }
+
+        .card {
+            background: var(--mh-card);
+            border: 1px solid var(--mh-border);
+            box-shadow: var(--mh-shadow-sm);
+        }
+
+        .btn-main {
+            background: linear-gradient(135deg, #f0b860 0%, #e8834a 100%);
+            color: white;
+            box-shadow: 0 8px 24px rgba(232, 131, 74, 0.28);
+            transition: all 0.25s ease;
+        }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(232, 131, 74, 0.36); }
+        .btn-main:active { transform: scale(0.97); }
+
+        .btn-soft {
+            background: var(--mh-surface-muted);
+            color: var(--mh-text);
+            border: 1px solid var(--mh-border);
+            transition: all 0.2s ease;
+        }
+        .btn-soft:hover { background: var(--mh-border); }
+
+        .text-gradient {
+            background: linear-gradient(135deg, var(--mh-primary) 0%, var(--mh-accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-pill {
+            background: rgba(255, 253, 249, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(232, 221, 208, 0.6);
+            box-shadow: 0 8px 32px rgba(180, 140, 100, 0.14);
+        }
+
+        /* Chat bubbles */
+        .bubble-ai {
+            background: var(--mh-card);
+            border: 1px solid var(--mh-border);
+            border-radius: 8px 20px 20px 20px;
+            box-shadow: 0 2px 8px rgba(180, 140, 100, 0.06);
+        }
+
+        .bubble-user {
+            background: linear-gradient(135deg, #f0b860 0%, #e8834a 100%);
+            color: white;
+            border-radius: 20px 8px 20px 20px;
+            box-shadow: 0 4px 16px rgba(232, 131, 74, 0.25);
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--mh-text-muted);
+            animation: typing 1.2s ease-in-out infinite;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.15s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+        .online-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--mh-secondary);
+            border: 2px solid var(--mh-card);
+            border-radius: 50%;
+            animation: pulse-green 2.5s ease-in-out infinite;
+        }
+
+        .quick-reply {
+            background: var(--mh-primary-soft);
+            color: var(--mh-primary);
+            border: 1px solid rgba(232, 131, 74, 0.2);
+            transition: all 0.2s ease;
+        }
+        .quick-reply:hover {
+            background: var(--mh-primary);
+            color: white;
+            transform: translateY(-1px);
+        }
+        .quick-reply:active { transform: scale(0.97); }
+
+        .disclaimer-bar {
+            background: rgba(240, 184, 96, 0.12);
+            border: 1px solid rgba(240, 184, 96, 0.25);
+        }
+
+        .breathing-card {
+            background: linear-gradient(135deg, rgba(138, 171, 124, 0.15) 0%, rgba(240, 184, 96, 0.15) 100%);
+            border: 1px solid rgba(138, 171, 124, 0.25);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .breathing-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(138, 171, 124, 0.15);
+        }
+        .breathing-card:active { transform: scale(0.98); }
+
+        .play-btn {
+            background: linear-gradient(135deg, #8aab7c 0%, #6b8f5e 100%);
+            box-shadow: 0 4px 12px rgba(138, 171, 124, 0.35);
+            transition: all 0.25s ease;
+        }
+        .play-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 6px 18px rgba(138, 171, 124, 0.45);
+        }
+        .play-btn:active { transform: scale(0.95); }
+
+        .input-bar {
+            background: rgba(255, 253, 249, 0.92);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-top: 1px solid rgba(232, 221, 208, 0.5);
+        }
+
+        .input-field {
+            background: var(--mh-surface-muted);
+            border: 1px solid var(--mh-border);
+            transition: all 0.25s ease;
+        }
+        .input-field:focus-within {
+            border-color: var(--mh-primary);
+            background: var(--mh-card);
+            box-shadow: 0 0 0 3px rgba(232, 131, 74, 0.1);
+        }
+
+        .shortcut-pill {
+            background: var(--mh-surface-muted);
+            border: 1px solid var(--mh-border);
+            transition: all 0.2s ease;
+        }
+        .shortcut-pill:hover {
+            background: var(--mh-primary-soft);
+            border-color: rgba(232, 131, 74, 0.25);
+            color: var(--mh-primary);
+        }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .chat-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(232, 131, 74, 0.2) transparent;
+        }
+        .chat-scroll::-webkit-scrollbar { width: 4px; }
+        .chat-scroll::-webkit-scrollbar-track { background: transparent; }
+        .chat-scroll::-webkit-scrollbar-thumb {
+            background: rgba(232, 131, 74, 0.2);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen">
+
+    <div class="aurora min-h-screen w-full max-w-[480px] mx-auto relative overflow-hidden pb-[calc(88px+env(safe-area-inset-bottom))]">
+
+        <!-- Organic Background Orbs -->
+        <div class="orb w-72 h-72 bg-[var(--mh-accent)]/25 -top-24 -left-24" style="animation: drift 12s ease-in-out infinite;"></div>
+        <div class="orb w-64 h-64 bg-[var(--mh-primary)]/18 top-1/4 -right-20" style="animation: drift 15s ease-in-out infinite 1s;"></div>
+        <div class="orb w-56 h-56 bg-[var(--mh-secondary)]/14 bottom-32 -left-16" style="animation: drift 14s ease-in-out infinite 2s;"></div>
+        <div class="orb w-80 h-80 bg-[var(--mh-accent)]/10 -bottom-32 right-1/4" style="animation: breathe 8s ease-in-out infinite;"></div>
+
+        <!-- Status Bar -->
+        <div class="glass-header fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40">
+            <div class="flex items-center justify-between px-6 pt-3 pb-1 text-[13px] font-semibold text-[var(--mh-text)]">
+                <span id="clock">14:30</span>
+                <div class="flex items-center gap-1.5">
+                    <i data-lucide="signal" class="w-4 h-4"></i>
+                    <i data-lucide="wifi" class="w-4 h-4"></i>
+                    <i data-lucide="battery-full" class="w-5 h-5"></i>
+                </div>
+            </div>
+
+            <!-- Header Bar -->
+            <div class="flex items-center justify-between px-4 py-3">
+                <button class="w-10 h-10 rounded-full flex items-center justify-center text-[var(--mh-text)] hover:bg-[var(--mh-surface-muted)] transition-colors">
+                    <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                </button>
+                <div class="flex flex-col items-center">
+                    <div class="flex items-center gap-2">
+                        <div class="relative">
+                            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--mh-accent)] to-[var(--mh-primary)] flex items-center justify-center shadow-sm">
+                                <span class="text-white text-[14px] font-semibold" style="font-family: var(--mh-font-display);">暖</span>
+                            </div>
+                            <div class="online-dot absolute -bottom-0.5 -right-0.5"></div>
+                        </div>
+                        <div class="text-left">
+                            <h1 class="text-[15px] font-semibold text-[var(--mh-text)] leading-tight" style="font-family: var(--mh-font-display);">暖暖 AI</h1>
+                            <p class="text-[10px] text-[var(--mh-secondary)] font-medium flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-[var(--mh-secondary)] inline-block"></span>
+                                在线
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <button class="w-10 h-10 rounded-full flex items-center justify-center text-[var(--mh-text)] hover:bg-[var(--mh-surface-muted)] transition-colors">
+                    <i data-lucide="more-vertical" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-scroll pt-[108px] pb-[180px] px-4 overflow-y-auto h-screen hide-scrollbar">
+
+            <!-- Disclaimer Bar -->
+            <div class="fade-in delay-1 mb-4">
+                <div id="disclaimer" class="disclaimer-bar rounded-[14px] p-3 flex items-start gap-2.5 cursor-pointer" onclick="toggleDisclaimer()">
+                    <i data-lucide="alert-circle" class="w-4 h-4 text-[var(--mh-accent)] flex-shrink-0 mt-0.5"></i>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[11px] text-[var(--mh-text-light)] leading-relaxed">
+                            AI心理咨询仅供参考，不能替代专业医疗诊断。如遇紧急情况请拨打心理援助热线。
+                        </p>
+                    </div>
+                    <i data-lucide="chevron-up" class="w-4 h-4 text-[var(--mh-text-muted)] flex-shrink-0 mt-0.5 transition-transform" id="disclaimer-chevron"></i>
+                </div>
+            </div>
+
+            <!-- AI Message 1 -->
+            <div class="fade-in delay-2 mb-4 flex items-end gap-2">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--mh-accent)] to-[var(--mh-primary)] flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <span class="text-white text-[11px] font-semibold" style="font-family: var(--mh-font-display);">暖</span>
+                </div>
+                <div class="flex flex-col max-w-[78%]">
+                    <div class="bubble-ai px-4 py-3">
+                        <p class="text-[14px] text-[var(--mh-text)] leading-relaxed">
+                            你好呀，我是暖暖，你的AI心理伙伴。今天想聊点什么呢？是有什么开心的事想分享，还是有什么困扰想倾诉呢？
+                        </p>
+                    </div>
+                    <span class="text-[10px] text-[var(--mh-text-muted)] mt-1.5 ml-1">14:30</span>
+                </div>
+            </div>
+
+            <!-- User Message -->
+            <div class="fade-in delay-3 mb-4 flex items-end gap-2 justify-end">
+                <div class="flex flex-col max-w-[78%] items-end">
+                    <div class="bubble-user px-4 py-3">
+                        <p class="text-[14px] text-white leading-relaxed">
+                            最近工作压力好大，每天加班到很晚，感觉有点撑不住了...
+                        </p>
+                    </div>
+                    <span class="text-[10px] text-[var(--mh-text-muted)] mt-1.5 mr-1">14:32</span>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-[var(--mh-surface-muted)] border border-[var(--mh-border)] flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="user" class="w-4 h-4 text-[var(--mh-text-light)]"></i>
+                </div>
+            </div>
+
+            <!-- AI Message 2 with Quick Replies -->
+            <div class="fade-in delay-4 mb-4 flex items-end gap-2">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--mh-accent)] to-[var(--mh-primary)] flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <span class="text-white text-[11px] font-semibold" style="font-family: var(--mh-font-display);">暖</span>
+                </div>
+                <div class="flex flex-col max-w-[80%]">
+                    <div class="bubble-ai px-4 py-3">
+                        <p class="text-[14px] text-[var(--mh-text)] leading-relaxed">
+                            听起来最近真的很辛苦呢，持续的加班确实会让人身心俱疲。能具体说说，是什么让你感到压力最大吗？是工作量太大，还是工作内容本身让你觉得有挑战？
+                        </p>
+                    </div>
+                    <!-- Quick Reply Buttons -->
+                    <div class="flex flex-wrap gap-2 mt-3">
+                        <button class="quick-reply px-3.5 py-1.5 rounded-full text-[12px] font-medium">
+                            工作量太大
+                        </button>
+                        <button class="quick-reply px-3.5 py-1.5 rounded-full text-[12px] font-medium">
+                            人际关系问题
+                        </button>
+                        <button class="quick-reply px-3.5 py-1.5 rounded-full text-[12px] font-medium">
+                            职业发展困惑
+                        </button>
+                    </div>
+                    <span class="text-[10px] text-[var(--mh-text-muted)] mt-2 ml-1">14:32</span>
+                </div>
+            </div>
+
+            <!-- AI Message 3 with Breathing Card -->
+            <div class="fade-in delay-5 mb-4 flex items-end gap-2">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--mh-accent)] to-[var(--mh-primary)] flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <span class="text-white text-[11px] font-semibold" style="font-family: var(--mh-font-display);">暖</span>
+                </div>
+                <div class="flex flex-col max-w-[80%]">
+                    <div class="bubble-ai px-4 py-3">
+                        <p class="text-[14px] text-[var(--mh-text)] leading-relaxed mb-3">
+                            我能理解你的感受。其实，在高压环境下感到疲惫是很正常的反应。这里有一个5分钟的呼吸练习，或许可以帮你暂时放松一下：
+                        </p>
+                        <!-- Breathing Exercise Card -->
+                        <div class="breathing-card rounded-[16px] p-3.5 flex items-center gap-3">
+                            <button class="play-btn w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="play" class="w-5 h-5 text-white ml-0.5 fill-current"></i>
+                            </button>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <span class="text-[15px]">🌬️</span>
+                                    <span class="text-[13px] font-semibold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">4-7-8 呼吸法</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] text-[var(--mh-text-light)] bg-white/50 px-2 py-0.5 rounded-full">5 分钟</span>
+                                    <span class="text-[10px] text-[var(--mh-secondary)] font-medium">放松 · 减压</span>
+                                </div>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-[var(--mh-text-muted)] flex-shrink-0"></i>
+                        </div>
+                    </div>
+                    <span class="text-[10px] text-[var(--mh-text-muted)] mt-1.5 ml-1">14:33</span>
+                </div>
+            </div>
+
+            <!-- Typing Indicator (hidden by default, shown for demo) -->
+            <div id="typing-indicator" class="mb-4 flex items-end gap-2 hidden">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--mh-accent)] to-[var(--mh-primary)] flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <span class="text-white text-[11px] font-semibold" style="font-family: var(--mh-font-display);">暖</span>
+                </div>
+                <div class="bubble-ai px-4 py-3">
+                    <div class="flex items-center gap-1.5">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Bottom Input Area -->
+        <div class="input-bar fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 pb-[calc(88px+env(safe-area-inset-bottom))]">
+            <!-- Quick Shortcuts -->
+            <div class="flex gap-2 px-4 py-2.5 overflow-x-auto hide-scrollbar">
+                <button class="shortcut-pill flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-medium text-[var(--mh-text-light)] flex items-center gap-1.5">
+                    <i data-lucide="pen-line" class="w-3.5 h-3.5"></i>
+                    心情记录
+                </button>
+                <button class="shortcut-pill flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-medium text-[var(--mh-text-light)] flex items-center gap-1.5">
+                    <i data-lucide="leaf" class="w-3.5 h-3.5"></i>
+                    放松练习
+                </button>
+                <button class="shortcut-pill flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-medium text-[var(--mh-text-light)] flex items-center gap-1.5">
+                    <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i>
+                    情绪测评
+                </button>
+            </div>
+
+            <!-- Input Bar -->
+            <div class="flex items-center gap-2.5 px-4 pb-3">
+                <button class="w-10 h-10 rounded-full btn-soft flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="plus" class="w-5 h-5 text-[var(--mh-text-light)]"></i>
+                </button>
+                <div class="input-field flex-1 rounded-full px-4 py-2.5 flex items-center gap-2">
+                    <input 
+                        type="text" 
+                        placeholder="说点什么吧..." 
+                        class="flex-1 bg-transparent border-none outline-none text-[14px] text-[var(--mh-text)] placeholder:text-[var(--mh-text-muted)]"
+                    >
+                </div>
+                <button class="w-10 h-10 rounded-full btn-main flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="send" class="w-4 h-4 ml-0.5"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-40px)] max-w-[400px]">
+            <div class="nav-pill rounded-full h-[64px] px-2 flex items-center justify-between">
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">首页</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="heart" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">情绪</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="leaf" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">放松</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-primary)] bg-[var(--mh-primary-soft)]">
+                    <i data-lucide="bot" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-semibold">AI 咨询</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">我的</span>
+                </button>
+            </div>
+        </nav>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Update clock
+        const now = new Date();
+        const clockStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('clock').textContent = clockStr;
+
+        // Disclaimer toggle
+        let disclaimerCollapsed = false;
+        function toggleDisclaimer() {
+            const disclaimer = document.getElementById('disclaimer');
+            const chevron = document.getElementById('disclaimer-chevron');
+            const text = disclaimer.querySelector('p');
+
+            if (disclaimerCollapsed) {
+                text.style.display = '';
+                chevron.style.transform = 'rotate(0deg)';
+                disclaimerCollapsed = false;
+            } else {
+                text.style.display = 'none';
+                chevron.style.transform = 'rotate(180deg)';
+                disclaimerCollapsed = true;
+            }
+        }
+
+        // Simulate typing indicator after a delay (for demo)
+        setTimeout(() => {
+            const indicator = document.getElementById('typing-indicator');
+            indicator.classList.remove('hidden');
+            indicator.classList.add('fade-in', 'delay-6');
+        }, 3000);
+
+        // Quick reply interaction
+        document.querySelectorAll('.quick-reply').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const text = this.textContent.trim();
+                // Visual feedback
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 150);
+            });
+        });
+    </script>
+</body>
+</html>

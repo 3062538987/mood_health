@@ -1,0 +1,184 @@
+{
+  "data": [
+    {
+      "id": "page-home",
+      "title": "首页",
+      "type": "page",
+      "version": 2,
+      "createdAt": 1787201000000,
+      "updatedAt": 1787207400000,
+      "canvasData": {
+        "x": 0,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 1243,
+          "viewportWidth": 375,
+          "sourceHash": "fnv1a-a20f27e8",
+          "measuredAt": 1787201321473
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/index.html"
+      }
+    },
+    {
+      "id": "page-mood-record",
+      "title": "情绪记录",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787207400000,
+      "canvasData": {
+        "x": 520,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/mood-record.html"
+      }
+    },
+    {
+      "id": "page-mood-insight",
+      "title": "情绪洞察",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787207400000,
+      "canvasData": {
+        "x": 1040,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/mood-insight.html"
+      }
+    },
+    {
+      "id": "page-relax",
+      "title": "放松中心",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787207400000,
+      "canvasData": {
+        "x": 1560,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/relax.html"
+      }
+    },
+    {
+      "id": "page-treehole",
+      "title": "树洞",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787207400000,
+      "canvasData": {
+        "x": 0,
+        "y": 1400,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/treehole.html"
+      }
+    },
+    {
+      "id": "page-ai-counseling",
+      "title": "AI 心理咨询",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787207400000,
+      "canvasData": {
+        "x": 520,
+        "y": 1400,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/ai-counseling.html"
+      }
+    },
+    {
+      "id": "page-improve",
+      "title": "提升计划",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787207400000,
+      "canvasData": {
+        "x": 1040,
+        "y": 1400,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/improve.html"
+      }
+    },
+    {
+      "id": "page-profile",
+      "title": "个人中心",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787207400000,
+      "canvasData": {
+        "x": 1560,
+        "y": 1400,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/profile.html"
+      }
+    },
+    {
+      "id": "page-login",
+      "title": "登录",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787207400000,
+      "canvasData": {
+        "x": 0,
+        "y": 2800,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/login.html"
+      }
+    },
+    {
+      "id": "page-register",
+      "title": "注册",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787207400000,
+      "canvasData": {
+        "x": 520,
+        "y": 2800,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/register.html"
+      }
+    },
+    {
+      "id": "page-admin-dashboard",
+      "title": "管理后台 · 仪表盘",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787207400000,
+      "canvasData": {
+        "x": 1040,
+        "y": 2800,
+        "group": 1
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/admin-dashboard.html"
+      }
+    }
+  ],
+  "config": {
+    "autoLayout": false,
+    "deviceType": "mixed",
+    "projectName": "情绪健康管理平台 · 高保真原型",
+    "designLibrary": null,
+    "description": "基于 localhost:3001 实际代码的高保真原型图，日落花园·暖光治愈设计风格，包含用户端10个移动端页面 + 管理后台桌面端页面"
+  }
+}

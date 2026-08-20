@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>记录情绪 · 日落花园</title>
+    <link rel="stylesheet" href="../colors_and_type.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <style>
+        @keyframes drift {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(8px, -12px) scale(1.03); }
+            66% { transform: translate(-6px, 6px) scale(0.98); }
+        }
+        @keyframes breathe {
+            0%, 100% { opacity: 0.45; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.06); }
+        }
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(232, 131, 74, 0.25); }
+            70% { box-shadow: 0 0 0 10px rgba(232, 131, 74, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(232, 131, 74, 0); }
+        }
+        @keyframes float-up {
+            0% { opacity: 0; transform: translateY(10px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes glow-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(232, 131, 74, 0.3); }
+            50% { box-shadow: 0 0 0 6px rgba(232, 131, 74, 0); }
+        }
+
+        .rise { animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.08s; }
+        .delay-2 { animation-delay: 0.16s; }
+        .delay-3 { animation-delay: 0.24s; }
+        .delay-4 { animation-delay: 0.32s; }
+        .delay-5 { animation-delay: 0.4s; }
+        .delay-6 { animation-delay: 0.48s; }
+        .delay-7 { animation-delay: 0.56s; }
+        .delay-8 { animation-delay: 0.64s; }
+
+        body {
+            background-color: var(--mh-background);
+            color: var(--mh-text);
+        }
+
+        .aurora {
+            background:
+                radial-gradient(ellipse 120% 80% at 20% -10%, rgba(240, 184, 96, 0.32) 0%, transparent 50%),
+                radial-gradient(ellipse 100% 90% at 90% 10%, rgba(232, 131, 74, 0.18) 0%, transparent 45%),
+                radial-gradient(ellipse 80% 70% at 70% 90%, rgba(138, 171, 124, 0.16) 0%, transparent 45%),
+                linear-gradient(180deg, #fff9f4 0%, #fef3ea 50%, #fdf6ef 100%);
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            pointer-events: none;
+        }
+
+        .glass-surface {
+            background: rgba(255, 253, 249, 0.78);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .glass-card {
+            background: rgba(255, 253, 249, 0.72);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            box-shadow: 0 4px 20px rgba(180, 140, 100, 0.08);
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .card {
+            background: var(--mh-card);
+            border: 1px solid var(--mh-border);
+            box-shadow: var(--mh-shadow-sm);
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--mh-shadow-md);
+        }
+
+        .btn-main {
+            background: linear-gradient(135deg, #f0b860 0%, #e8834a 100%);
+            color: white;
+            box-shadow: 0 8px 24px rgba(232, 131, 74, 0.28);
+            transition: all 0.25s ease;
+        }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(232, 131, 74, 0.36); }
+        .btn-main:active { transform: scale(0.97); }
+
+        .btn-soft {
+            background: rgba(255, 253, 249, 0.8);
+            backdrop-filter: blur(12px);
+            color: var(--mh-text);
+            border: 1px solid var(--mh-border);
+            transition: all 0.2s ease;
+        }
+        .btn-soft:hover { background: var(--mh-surface-muted); }
+        .btn-soft:active { transform: scale(0.97); }
+
+        .text-gradient {
+            background: linear-gradient(135deg, var(--mh-primary) 0%, var(--mh-accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-pill {
+            background: rgba(255, 253, 249, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(232, 221, 208, 0.6);
+            box-shadow: 0 8px 32px rgba(180, 140, 100, 0.14);
+        }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Mood card selected state */
+        .mood-card {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+        }
+        .mood-card:active {
+            transform: scale(0.94);
+        }
+        .mood-card.selected {
+            background: linear-gradient(135deg, rgba(232, 131, 74, 0.12) 0%, rgba(240, 184, 96, 0.12) 100%);
+            border-color: var(--mh-primary);
+            box-shadow: 0 4px 16px rgba(232, 131, 74, 0.18);
+        }
+        .mood-card.selected .mood-emoji {
+            transform: scale(1.15);
+        }
+        .mood-card.selected .mood-label {
+            color: var(--mh-primary);
+            font-weight: 600;
+        }
+        .mood-emoji {
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Tag chip */
+        .tag-chip {
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+        }
+        .tag-chip:active { transform: scale(0.93); }
+        .tag-chip.selected {
+            background: linear-gradient(135deg, var(--mh-primary) 0%, var(--mh-accent) 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(232, 131, 74, 0.25);
+        }
+
+        /* Slider custom styling */
+        .intensity-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 999px;
+            background: linear-gradient(to right, var(--mh-secondary-light), var(--mh-accent), var(--mh-primary));
+            outline: none;
+            position: relative;
+        }
+        .intensity-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid var(--mh-primary);
+            box-shadow: 0 4px 12px rgba(232, 131, 74, 0.3);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .intensity-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(232, 131, 74, 0.4);
+        }
+        .intensity-slider::-webkit-slider-thumb:active {
+            transform: scale(0.95);
+        }
+        .intensity-slider::-moz-range-thumb {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid var(--mh-primary);
+            box-shadow: 0 4px 12px rgba(232, 131, 74, 0.3);
+            cursor: pointer;
+        }
+
+        /* Textarea */
+        .mood-textarea {
+            background: rgba(255, 253, 249, 0.6);
+            border: 1px solid var(--mh-border);
+            transition: all 0.25s ease;
+        }
+        .mood-textarea:focus {
+            outline: none;
+            border-color: var(--mh-primary);
+            box-shadow: 0 0 0 4px rgba(232, 131, 74, 0.1);
+            background: rgba(255, 253, 249, 0.9);
+        }
+
+        /* Stat card */
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--mh-primary), var(--mh-accent));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .stat-card:hover::before { opacity: 1; }
+
+        /* Progress ring */
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Trigger factor card */
+        .trigger-card {
+            animation: float-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Bottom action bar */
+        .action-bar {
+            background: rgba(255, 253, 249, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(232, 221, 208, 0.5);
+        }
+
+        /* Section title decoration */
+        .section-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 16px;
+            border-radius: 2px;
+            background: linear-gradient(180deg, var(--mh-primary), var(--mh-accent));
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        /* Back button */
+        .back-btn {
+            transition: all 0.2s ease;
+        }
+        .back-btn:active {
+            transform: scale(0.92);
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen">
+
+    <div class="aurora min-h-screen w-full max-w-[480px] mx-auto relative overflow-hidden pb-[calc(140px+env(safe-area-inset-bottom))]">
+
+        <!-- Organic Background Orbs -->
+        <div class="orb w-72 h-72 bg-[var(--mh-accent)]/25 -top-24 -left-24" style="animation: drift 12s ease-in-out infinite;"></div>
+        <div class="orb w-64 h-64 bg-[var(--mh-primary)]/18 top-1/4 -right-20" style="animation: drift 15s ease-in-out infinite 1s;"></div>
+        <div class="orb w-56 h-56 bg-[var(--mh-secondary)]/14 bottom-40 -left-16" style="animation: drift 14s ease-in-out infinite 2s;"></div>
+        <div class="orb w-80 h-80 bg-[var(--mh-accent)]/10 -bottom-20 right-1/4" style="animation: breathe 8s ease-in-out infinite;"></div>
+
+        <!-- Status Bar -->
+        <div class="rise flex items-center justify-between px-6 pt-4 pb-2 text-[13px] font-semibold text-[var(--mh-text)] relative z-10">
+            <span id="clock">9:41</span>
+            <div class="flex items-center gap-1.5">
+                <i data-lucide="signal" class="w-4 h-4"></i>
+                <i data-lucide="wifi" class="w-4 h-4"></i>
+                <i data-lucide="battery-full" class="w-5 h-5"></i>
+            </div>
+        </div>
+
+        <!-- Top Navigation -->
+        <header class="rise delay-1 relative z-10 px-4 pt-2 pb-2">
+            <div class="flex items-center justify-between">
+                <button class="back-btn w-10 h-10 rounded-full glass-surface flex items-center justify-center text-[var(--mh-text)]">
+                    <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                </button>
+                <h1 class="text-[17px] font-semibold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">记录情绪</h1>
+                <button class="w-10 h-10 rounded-full glass-surface flex items-center justify-center text-[var(--mh-text-light)]">
+                    <i data-lucide="help-circle" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="rise delay-2 relative z-10 px-6 pt-3 pb-5">
+            <h2 class="text-[24px] font-bold text-[var(--mh-text)] leading-tight" style="font-family: var(--mh-font-display);">
+                把今天的情绪，<br>
+                <span class="text-gradient">温柔但清楚地</span>记下来
+            </h2>
+            <p class="mt-2 text-[13px] text-[var(--mh-text-light)] leading-relaxed max-w-[300px]">
+                每一种情绪都值得被看见。花几分钟，和自己的内心聊聊天。
+            </p>
+
+            <!-- Stat Cards -->
+            <div class="grid grid-cols-3 gap-3 mt-5">
+                <div class="stat-card glass-card rounded-[18px] p-3 flex flex-col items-center">
+                    <div class="relative w-11 h-11 mb-1.5">
+                        <svg class="progress-ring w-11 h-11" viewBox="0 0 44 44">
+                            <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(232, 221, 208, 0.5)" stroke-width="4"/>
+                            <circle class="progress-ring-circle" cx="22" cy="22" r="18" fill="none" stroke="url(#progressGradient)" stroke-width="4"
+                                stroke-linecap="round" stroke-dasharray="113.1" stroke-dashoffset="33.9"/>
+                            <defs>
+                                <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#e8834a"/>
+                                    <stop offset="100%" stop-color="#f0b860"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <span class="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-[var(--mh-primary)]">70%</span>
+                    </div>
+                    <span class="text-[10px] text-[var(--mh-text-muted)] text-center leading-tight">记录<br>完成度</span>
+                </div>
+
+                <div class="stat-card glass-card rounded-[18px] p-3 flex flex-col items-center">
+                    <div class="w-11 h-11 rounded-full bg-[var(--mh-secondary)]/15 flex items-center justify-center mb-1.5">
+                        <span class="text-[15px] font-bold text-[var(--mh-secondary)]" id="mood-count">0</span>
+                    </div>
+                    <span class="text-[10px] text-[var(--mh-text-muted)] text-center leading-tight">已选<br>情绪数</span>
+                </div>
+
+                <div class="stat-card glass-card rounded-[18px] p-3 flex flex-col items-center">
+                    <div class="w-11 h-11 rounded-full bg-[var(--mh-accent)]/20 flex items-center justify-center mb-1.5">
+                        <span class="text-[15px] font-bold text-[#b8863a]" id="trigger-count">0</span>
+                    </div>
+                    <span class="text-[10px] text-[var(--mh-text-muted)] text-center leading-tight">触发<br>因素数</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mood Type Selection -->
+        <section class="rise delay-3 relative z-10 px-6 pb-5">
+            <h3 class="section-title text-[15px] font-semibold text-[var(--mh-text)] mb-3" style="font-family: var(--mh-font-display);">
+                你现在的感受是？
+            </h3>
+            <p class="text-[11px] text-[var(--mh-text-muted)] mb-4 pl-3">最多选择 3 个情绪 · 可混合选择积极与低落</p>
+
+            <!-- Positive Moods -->
+            <div class="mb-4">
+                <div class="flex items-center gap-2 mb-3 pl-1">
+                    <div class="w-1.5 h-1.5 rounded-full bg-[var(--mh-accent)]"></div>
+                    <span class="text-[12px] font-medium text-[var(--mh-text-light)]">积极情绪</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2.5" id="positive-moods">
+                    <div class="mood-card glass-card rounded-[16px] p-3 flex flex-col items-center gap-1.5" data-mood="开心" data-emoji="😊">
+                        <span class="mood-emoji text-2xl">😊</span>
+                        <span class="mood-label text-[12px] text-[var(--mh-text)]">开心</span>
+                    </div>
+                    <div class="mood-card glass-card rounded-[16px] p-3 flex flex-col items-center gap-1.5" data-mood="平静" data-emoji="😌">
+                        <span class="mood-emoji text-2xl">😌</span>
+                        <span class="mood-label text-[12px] text-[var(--mh-text)]">平静</span>
+                    </div>
+                    <div class="mood-card glass-card rounded-[16px] p-3 flex flex-col items-center gap-1.5" data-mood="兴奋" data-emoji="🤩">
+                        <span class="mood-emoji text-2xl">🤩</span>
+                        <span class="mood-label text-[12px] text-[var(--mh-text)]">兴奋</span>
+                    </div>
+                    <div class="mood-card glass-card rounded-[16px] p-3 flex flex-col items-center gap-1.5" data-mood="期待" data-emoji="✨">
+                        <span class="mood-emoji text-2xl">✨</span>
+                        <span class="mood-label text-[12px] text-[var(--mh-text)]">期待</span>
+                    </div>
+                    <div class="mood-card glass-card rounded-[16px] p-3 flex flex-col items-center gap-1.5" data-mood="感恩" data-emoji="❤️">
+                        <span class="mood-emoji text-2xl">❤️</span>
+                        <span class="mood-label text-[12px] text-[var(--mh-text)]">感恩</span>
+                    </div>
+                    <div class="mood-card glass-card rounded-[16px] p-3 flex flex-col items-center gap-1.5" data-mood="满足" data-emoji="😌">
+                        <span class="mood-emoji text-2xl">😌</span>
+                        <span class="mood-label text-[12px] text-[var(--mh-text)]">满足</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Negative Moods -->
+            <div>
+                <div class="flex items-center gap-2 mb-3 pl-1">
+                    <div class="w-1.5 h-1.5 rounded-full bg-[var(--mh-info)]"></div>
+                    <span class="text-[12px] font-medium text-[var(--mh-text-light)]">低落情绪</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2.5" id="negative-moods">
+                    <div class="mood-card glass-card rounded-[16px] p-3 flex flex-col items-center gap-1.5" data-mood="难过" data-emoji="😢">
+                        <span class="mood-emoji text-2xl">😢</span>
+                        <span class="mood-label text-[12px] text-[var(--mh-text)]">难过</span>
+                    </div>
+                    <div class="mood-card glass-card rounded-[16px] p-3 flex flex-col items-center gap-1.5" data-mood="生气" data-emoji="😠">
+                        <span class="mood-emoji text-2xl">😠</span>
+                        <span class="mood-label text-[12px] text-[var(--mh-text)]">生气</span>
+                    </div>
+                    <div class="mood-card glass-card rounded-[16px] p-3 flex flex-col items-center gap-1.5" data-mood="焦虑" data-emoji="😰">
+                        <span class="mood-emoji text-2xl">😰</span>
+                        <span class="mood-label text-[12px] text-[var(--mh-text)]">焦虑</span>
+                    </div>
+                    <div class="mood-card glass-card rounded-[16px] p-3 flex flex-col items-center gap-1.5" data-mood="疲惫" data-emoji="😴">
+                        <span class="mood-emoji text-2xl">😴</span>
+                        <span class="mood-label text-[12px] text-[var(--mh-text)]">疲惫</span>
+                    </div>
+                    <div class="mood-card glass-card rounded-[16px] p-3 flex flex-col items-center gap-1.5" data-mood="困惑" data-emoji="😵‍💫">
+                        <span class="mood-emoji text-2xl">😵‍💫</span>
+                        <span class="mood-label text-[12px] text-[var(--mh-text)]">困惑</span>
+                    </div>
+                    <div class="mood-card glass-card rounded-[16px] p-3 flex flex-col items-center gap-1.5" data-mood="孤独" data-emoji="🧍">
+                        <span class="mood-emoji text-2xl">🧍</span>
+                        <span class="mood-label text-[12px] text-[var(--mh-text)]">孤独</span>
+                    </div>
+                    <div class="mood-card glass-card rounded-[16px] p-3 flex flex-col items-center gap-1.5 col-span-1" data-mood="压力大" data-emoji="⚠️">
+                        <span class="mood-emoji text-2xl">⚠️</span>
+                        <span class="mood-label text-[12px] text-[var(--mh-text)]">压力大</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Intensity Slider -->
+        <section class="rise delay-4 relative z-10 px-6 pb-5">
+            <h3 class="section-title text-[15px] font-semibold text-[var(--mh-text)] mb-3" style="font-family: var(--mh-font-display);">
+                情绪强度
+            </h3>
+
+            <div class="glass-card rounded-[20px] p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-[12px] text-[var(--mh-text-light)]">轻微</span>
+                    <div class="px-4 py-1.5 rounded-full bg-gradient-to-r from-[var(--mh-primary)] to-[var(--mh-accent)] text-white text-[12px] font-bold shadow-md">
+                        <span id="intensity-value">6</span>/10 · <span id="intensity-label">中等强度</span>
+                    </div>
+                    <span class="text-[12px] text-[var(--mh-text-light)]">强烈</span>
+                </div>
+
+                <input type="range" min="1" max="10" value="6" class="intensity-slider" id="intensity-slider">
+
+                <div class="flex justify-between mt-3 px-0.5">
+                    <span class="text-[9px] text-[var(--mh-text-muted)]">1</span>
+                    <span class="text-[9px] text-[var(--mh-text-muted)]">2</span>
+                    <span class="text-[9px] text-[var(--mh-text-muted)]">3</span>
+                    <span class="text-[9px] text-[var(--mh-text-muted)]">4</span>
+                    <span class="text-[9px] text-[var(--mh-text-muted)]">5</span>
+                    <span class="text-[9px] text-[var(--mh-text-muted)]">6</span>
+                    <span class="text-[9px] text-[var(--mh-text-muted)]">7</span>
+                    <span class="text-[9px] text-[var(--mh-text-muted)]">8</span>
+                    <span class="text-[9px] text-[var(--mh-text-muted)]">9</span>
+                    <span class="text-[9px] text-[var(--mh-text-muted)]">10</span>
+                </div>
+
+                <div class="flex items-center justify-center gap-2 mt-4 pt-3 border-t border-[var(--mh-border)]/50">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-[var(--mh-accent)]"></i>
+                    <p class="text-[11px] text-[var(--mh-text-muted)] text-center">
+                        情绪没有对错，允许自己真实地感受
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mood Description -->
+        <section class="rise delay-5 relative z-10 px-6 pb-5">
+            <h3 class="section-title text-[15px] font-semibold text-[var(--mh-text)] mb-3" style="font-family: var(--mh-font-display);">
+                说说发生了什么
+            </h3>
+
+            <div class="glass-card rounded-[20px] p-4">
+                <textarea
+                    id="mood-description"
+                    class="mood-textarea w-full h-28 rounded-[14px] p-3 text-[13px] text-[var(--mh-text)] placeholder:text-[var(--mh-text-muted)] resize-none leading-relaxed"
+                    placeholder="今天发生了什么？是什么让你有这样的感受？"
+                    maxlength="300"
+                ></textarea>
+                <div class="flex items-center justify-between mt-2">
+                    <button class="flex items-center gap-1 text-[11px] text-[var(--mh-primary)] font-medium">
+                        <i data-lucide="mic" class="w-3.5 h-3.5"></i>
+                        语音输入
+                    </button>
+                    <span class="text-[11px] text-[var(--mh-text-muted)]">
+                        <span id="char-count">0</span>/300
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mood Tags -->
+        <section class="rise delay-6 relative z-10 px-6 pb-5">
+            <h3 class="section-title text-[15px] font-semibold text-[var(--mh-text)] mb-3" style="font-family: var(--mh-font-display);">
+                涉及哪些方面？
+            </h3>
+            <p class="text-[11px] text-[var(--mh-text-muted)] mb-3 pl-3">可多选，帮助你更好地归类情绪</p>
+
+            <div class="flex flex-wrap gap-2" id="tag-container">
+                <button class="tag-chip px-4 py-2 rounded-full border border-[var(--mh-border)] text-[12px] text-[var(--mh-text)] bg-white/60" data-tag="工作">
+                    💼 工作
+                </button>
+                <button class="tag-chip px-4 py-2 rounded-full border border-[var(--mh-border)] text-[12px] text-[var(--mh-text)] bg-white/60" data-tag="学习">
+                    📚 学习
+                </button>
+                <button class="tag-chip px-4 py-2 rounded-full border border-[var(--mh-border)] text-[12px] text-[var(--mh-text)] bg-white/60" data-tag="感情">
+                    💗 感情
+                </button>
+                <button class="tag-chip px-4 py-2 rounded-full border border-[var(--mh-border)] text-[12px] text-[var(--mh-text)] bg-white/60" data-tag="家庭">
+                    🏠 家庭
+                </button>
+                <button class="tag-chip px-4 py-2 rounded-full border border-[var(--mh-border)] text-[12px] text-[var(--mh-text)] bg-white/60" data-tag="健康">
+                    💪 健康
+                </button>
+                <button class="tag-chip px-4 py-2 rounded-full border border-[var(--mh-border)] text-[12px] text-[var(--mh-text)] bg-white/60" data-tag="人际">
+                    👥 人际
+                </button>
+                <button class="tag-chip px-4 py-2 rounded-full border border-[var(--mh-border)] text-[12px] text-[var(--mh-text)] bg-white/60" data-tag="金钱">
+                    💰 金钱
+                </button>
+                <button class="tag-chip px-4 py-2 rounded-full border border-[var(--mh-border)] text-[12px] text-[var(--mh-text)] bg-white/60" data-tag="其他">
+                    🔖 其他
+                </button>
+            </div>
+        </section>
+
+        <!-- Trigger Factors -->
+        <section class="rise delay-7 relative z-10 px-6 pb-6">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="section-title text-[15px] font-semibold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">
+                    触发因素
+                </h3>
+                <button id="add-trigger-btn" class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[var(--mh-primary-soft)] text-[var(--mh-primary)] text-[11px] font-semibold">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    添加
+                </button>
+            </div>
+            <p class="text-[11px] text-[var(--mh-text-muted)] mb-3 pl-3">记录引发情绪的具体事件或原因</p>
+
+            <div id="trigger-container" class="space-y-2.5">
+                <!-- Trigger cards will be added here -->
+                <div class="glass-card rounded-[16px] p-4 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-[12px] bg-[var(--mh-accent)]/20 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="lightbulb" class="w-5 h-5 text-[#b8863a]"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[12px] text-[var(--mh-text-muted)]">点击「添加」记录第一个触发因素</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bottom Action Bar -->
+        <div class="fixed bottom-[80px] left-1/2 -translate-x-1/2 w-full max-w-[480px] z-30 action-bar px-4 py-3">
+            <div class="flex gap-3">
+                <button class="btn-soft h-12 px-5 rounded-full text-[13px] font-semibold flex items-center gap-2 flex-shrink-0">
+                    <i data-lucide="save" class="w-4 h-4 text-[var(--mh-text-light)]"></i>
+                    草稿
+                </button>
+                <button class="btn-main flex-1 h-12 rounded-full text-[14px] font-bold flex items-center justify-center gap-2">
+                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                    提交记录
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="fixed bottom-2 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-24px)] max-w-[400px]">
+            <div class="nav-pill rounded-full h-[60px] px-1.5 flex items-center justify-between">
+                <button class="flex flex-col items-center justify-center gap-0.5 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">首页</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-0.5 w-12 h-12 rounded-full text-[var(--mh-primary)] bg-[var(--mh-primary-soft)]">
+                    <i data-lucide="heart" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-semibold">情绪</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-0.5 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="leaf" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">放松</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-0.5 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="trees" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">树洞</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-0.5 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">我的</span>
+                </button>
+            </div>
+        </nav>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Clock
+        const now = new Date();
+        const clockStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('clock').textContent = clockStr;
+
+        // ===== Mood Selection =====
+        const moodCards = document.querySelectorAll('.mood-card');
+        let selectedMoods = [];
+        const MAX_MOODS = 3;
+
+        moodCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const mood = card.dataset.mood;
+                const isSelected = card.classList.contains('selected');
+
+                if (isSelected) {
+                    card.classList.remove('selected');
+                    selectedMoods = selectedMoods.filter(m => m !== mood);
+                } else {
+                    if (selectedMoods.length >= MAX_MOODS) {
+                        // Remove first selected
+                        const firstMood = selectedMoods[0];
+                        const firstCard = document.querySelector(`.mood-card[data-mood="${firstMood}"]`);
+                        if (firstCard) firstCard.classList.remove('selected');
+                        selectedMoods.shift();
+                    }
+                    card.classList.add('selected');
+                    selectedMoods.push(mood);
+                }
+
+                document.getElementById('mood-count').textContent = selectedMoods.length;
+                updateProgress();
+            });
+        });
+
+        // ===== Intensity Slider =====
+        const slider = document.getElementById('intensity-slider');
+        const intensityValue = document.getElementById('intensity-value');
+        const intensityLabel = document.getElementById('intensity-label');
+
+        function getIntensityLabel(value) {
+            const v = parseInt(value);
+            if (v <= 2) return '很轻微';
+            if (v <= 4) return '较轻';
+            if (v <= 6) return '中等强度';
+            if (v <= 8) return '较强';
+            return '很强烈';
+        }
+
+        slider.addEventListener('input', (e) => {
+            intensityValue.textContent = e.target.value;
+            intensityLabel.textContent = getIntensityLabel(e.target.value);
+        });
+
+        // ===== Character Count =====
+        const textarea = document.getElementById('mood-description');
+        const charCount = document.getElementById('char-count');
+
+        textarea.addEventListener('input', (e) => {
+            charCount.textContent = e.target.value.length;
+            updateProgress();
+        });
+
+        // ===== Tag Selection =====
+        const tagChips = document.querySelectorAll('.tag-chip');
+        let selectedTags = [];
+
+        tagChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                const tag = chip.dataset.tag;
+                const isSelected = chip.classList.contains('selected');
+
+                if (isSelected) {
+                    chip.classList.remove('selected');
+                    selectedTags = selectedTags.filter(t => t !== tag);
+                } else {
+                    chip.classList.add('selected');
+                    selectedTags.push(tag);
+                }
+            });
+        });
+
+        // ===== Trigger Factors =====
+        const triggerContainer = document.getElementById('trigger-container');
+        const addTriggerBtn = document.getElementById('add-trigger-btn');
+        let triggerCount = 0;
+        const triggerIcons = ['calendar', 'users', 'briefcase', 'book-open', 'heart', 'coffee', 'sun', 'moon'];
+        const triggerColors = [
+            'bg-[var(--mh-primary)]/15 text-[var(--mh-primary)]',
+            'bg-[var(--mh-secondary)]/15 text-[var(--mh-secondary)]',
+            'bg-[var(--mh-accent)]/20 text-[#b8863a]',
+            'bg-[var(--mh-info)]/15 text-[var(--mh-info)]',
+        ];
+
+        // Remove placeholder
+        function removePlaceholder() {
+            const placeholder = triggerContainer.querySelector('.text-[var(--mh-text-muted)]');
+            if (placeholder && placeholder.closest('.glass-card')) {
+                placeholder.closest('.glass-card').remove();
+            }
+        }
+
+        function addTrigger() {
+            removePlaceholder();
+            triggerCount++;
+
+            const iconIdx = (triggerCount - 1) % triggerIcons.length;
+            const colorIdx = (triggerCount - 1) % triggerColors.length;
+
+            const card = document.createElement('div');
+            card.className = 'trigger-card glass-card rounded-[16px] p-3.5 flex items-center gap-3';
+            card.innerHTML = `
+                <div class="w-9 h-9 rounded-[11px] ${triggerColors[colorIdx]} flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="${triggerIcons[iconIdx]}" class="w-4.5 h-4.5"></i>
+                </div>
+                <input type="text" placeholder="描述触发因素..." class="flex-1 bg-transparent border-none outline-none text-[13px] text-[var(--mh-text)] placeholder:text-[var(--mh-text-muted)]" value="">
+                <button class="w-7 h-7 rounded-full bg-[var(--mh-error)]/10 flex items-center justify-center text-[var(--mh-error)] flex-shrink-0 remove-trigger">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+            `;
+
+            triggerContainer.appendChild(card);
+            lucide.createIcons();
+
+            // Focus the input
+            const input = card.querySelector('input');
+            input.focus();
+
+            // Remove handler
+            card.querySelector('.remove-trigger').addEventListener('click', () => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateX(20px)';
+                card.style.transition = 'all 0.3s ease';
+                setTimeout(() => {
+                    card.remove();
+                    triggerCount--;
+                    document.getElementById('trigger-count').textContent = triggerCount;
+                    updateProgress();
+
+                    if (triggerCount === 0) {
+                        addPlaceholder();
+                    }
+                }, 250);
+            });
+
+            document.getElementById('trigger-count').textContent = triggerCount;
+            updateProgress();
+        }
+
+        function addPlaceholder() {
+            triggerContainer.innerHTML = `
+                <div class="glass-card rounded-[16px] p-4 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-[12px] bg-[var(--mh-accent)]/20 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="lightbulb" class="w-5 h-5 text-[#b8863a]"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[12px] text-[var(--mh-text-muted)]">点击「添加」记录第一个触发因素</p>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        addTriggerBtn.addEventListener('click', addTrigger);
+
+        // ===== Progress Calculation =====
+        function updateProgress() {
+            let progress = 0;
+            // Mood selection: 30%
+            if (selectedMoods.length > 0) progress += Math.min(30, selectedMoods.length * 15);
+            // Description: 25%
+            if (textarea.value.trim().length > 0) progress += 25;
+            // Tags: 20%
+            if (selectedTags.length > 0) progress += Math.min(20, selectedTags.length * 5);
+            // Triggers: 15%
+            if (triggerCount > 0) progress += Math.min(15, triggerCount * 7.5);
+            // Intensity (always set): 10%
+            progress += 10;
+
+            const circle = document.querySelector('.progress-ring-circle');
+            const circumference = 2 * Math.PI * 18; // r=18
+            const offset = circumference - (progress / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+
+            // Update percentage text
+            const progressText = document.querySelector('.stat-card:first-child span.text-[11px]');
+            if (progressText) {
+                progressText.textContent = Math.round(progress) + '%';
+            }
+        }
+
+        // Initial progress
+        updateProgress();
+    </script>
+</body>
+</html>

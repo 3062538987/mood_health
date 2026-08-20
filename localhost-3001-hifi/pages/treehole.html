@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>树洞 - 情绪健康管理平台</title>
+    <link rel="stylesheet" href="../colors_and_type.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#e8834a',
+                        secondary: '#8aab7c',
+                        accent: '#f0b860',
+                        background: '#fef8f2',
+                        foreground: '#4a3f38',
+                        card: '#fffdf9',
+                        muted: '#faf5ee',
+                        border: '#e8ddd0',
+                        info: '#7ba5c4',
+                    },
+                    fontFamily: {
+                        display: ['"Noto Serif SC"', 'Georgia', 'Songti SC', 'serif'],
+                        body: ['-apple-system', 'BlinkMacSystemFont', '"PingFang SC"', '"Microsoft YaHei"', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        '2xl': '20px',
+                        '3xl': '28px',
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 24px rgba(232, 131, 74, 0.08)',
+                        'glow': '0 8px 32px rgba(180, 140, 100, 0.14)',
+                        'fab': '0 12px 36px rgba(232, 131, 74, 0.38)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes drift {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(8px, -12px) scale(1.03); }
+            66% { transform: translate(-6px, 6px) scale(0.98); }
+        }
+        @keyframes breathe {
+            0%, 100% { opacity: 0.45; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.06); }
+        }
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes pulse-fab {
+            0% { box-shadow: 0 12px 36px rgba(232, 131, 74, 0.38); }
+            50% { box-shadow: 0 16px 44px rgba(232, 131, 74, 0.48); }
+            100% { box-shadow: 0 12px 36px rgba(232, 131, 74, 0.38); }
+        }
+        @keyframes heart-beat {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(1.18); }
+            50% { transform: scale(1); }
+            75% { transform: scale(1.12); }
+        }
+
+        .rise { animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.08s; }
+        .delay-2 { animation-delay: 0.16s; }
+        .delay-3 { animation-delay: 0.24s; }
+        .delay-4 { animation-delay: 0.32s; }
+        .delay-5 { animation-delay: 0.40s; }
+        .delay-6 { animation-delay: 0.48s; }
+        .delay-7 { animation-delay: 0.56s; }
+        .delay-8 { animation-delay: 0.64s; }
+
+        body {
+            background-color: var(--mh-background);
+            color: var(--mh-text);
+        }
+
+        .treehole-aurora {
+            background:
+                radial-gradient(ellipse 120% 70% at 10% -5%, rgba(240, 184, 96, 0.32) 0%, transparent 55%),
+                radial-gradient(ellipse 100% 80% at 90% 8%, rgba(232, 131, 74, 0.22) 0%, transparent 50%),
+                radial-gradient(ellipse 80% 65% at 30% 100%, rgba(138, 171, 124, 0.18) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 55% at 80% 90%, rgba(184, 208, 168, 0.2) 0%, transparent 45%),
+                linear-gradient(180deg, #fff7ee 0%, #fef3ea 40%, #f6f8ee 100%);
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            pointer-events: none;
+        }
+
+        .glass-surface {
+            background: rgba(255, 253, 249, 0.76);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .glass-card {
+            background: rgba(255, 253, 249, 0.72);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            box-shadow: 0 4px 20px rgba(180, 140, 100, 0.08);
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 32px rgba(180, 140, 100, 0.14);
+            border-color: rgba(232, 131, 74, 0.2);
+        }
+
+        .card {
+            background: var(--mh-card);
+            border: 1px solid var(--mh-border);
+            box-shadow: var(--mh-shadow-sm);
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--mh-shadow-md);
+        }
+
+        .filter-pill {
+            transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .filter-pill-active {
+            background: linear-gradient(135deg, var(--mh-primary) 0%, var(--mh-accent) 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(232, 131, 74, 0.3);
+        }
+        .filter-pill-inactive {
+            background: rgba(255, 255, 255, 0.6);
+            color: var(--mh-text-light);
+            border: 1px solid rgba(232, 221, 208, 0.6);
+        }
+        .filter-pill-inactive:hover {
+            background: rgba(255, 255, 255, 0.88);
+            color: var(--mh-text);
+        }
+
+        .sort-active {
+            color: var(--mh-primary);
+            font-weight: 600;
+        }
+        .sort-inactive {
+            color: var(--mh-text-muted);
+            font-weight: 400;
+        }
+
+        .tag-mood {
+            background: rgba(232, 131, 74, 0.12);
+            color: var(--mh-primary);
+        }
+        .tag-help {
+            background: rgba(123, 165, 196, 0.14);
+            color: var(--mh-info);
+        }
+        .tag-growth {
+            background: rgba(138, 171, 124, 0.14);
+            color: var(--mh-secondary);
+        }
+        .tag-warm {
+            background: rgba(240, 184, 96, 0.18);
+            color: var(--mh-accent-foreground);
+        }
+
+        .btn-main {
+            background: linear-gradient(135deg, #f0b860 0%, #e8834a 100%);
+            color: white;
+            box-shadow: 0 8px 24px rgba(232, 131, 74, 0.28);
+            transition: all 0.25s ease;
+        }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(232, 131, 74, 0.36); }
+        .btn-main:active { transform: scale(0.97); }
+
+        .fab-btn {
+            background: linear-gradient(135deg, #f0b860 0%, #e8834a 100%);
+            color: white;
+            box-shadow: 0 12px 36px rgba(232, 131, 74, 0.38);
+            animation: pulse-fab 3s ease-in-out infinite;
+            transition: all 0.25s ease;
+        }
+        .fab-btn:hover {
+            transform: scale(1.06) translateY(-2px);
+            box-shadow: 0 16px 44px rgba(232, 131, 74, 0.46);
+        }
+        .fab-btn:active { transform: scale(0.94); }
+
+        .nav-pill {
+            background: rgba(255, 253, 249, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(232, 221, 208, 0.6);
+            box-shadow: 0 8px 32px rgba(180, 140, 100, 0.14);
+        }
+
+        .avatar-placeholder {
+            background: linear-gradient(135deg, var(--mh-primary-light) 0%, var(--mh-accent-light) 100%);
+        }
+        .avatar-anonymous {
+            background: linear-gradient(135deg, var(--mh-secondary-light) 0%, var(--mh-accent-light) 100%);
+        }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .action-btn {
+            transition: all 0.2s ease;
+        }
+        .action-btn:hover {
+            transform: scale(1.1);
+        }
+        .action-btn.liked svg {
+            fill: var(--mh-primary);
+            color: var(--mh-primary);
+            animation: heart-beat 0.5s ease-out;
+        }
+        .action-btn.bookmarked svg {
+            fill: var(--mh-accent);
+            color: var(--mh-accent);
+        }
+
+        .divider-dot::before {
+            content: '·';
+            margin: 0 6px;
+            color: var(--mh-text-muted);
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen">
+
+    <div class="treehole-aurora min-h-screen w-full max-w-[480px] mx-auto relative overflow-hidden pb-[calc(88px+env(safe-area-inset-bottom))]">
+
+        <!-- Organic Background Orbs -->
+        <div class="orb w-72 h-72 bg-[var(--mh-accent)]/25 -top-24 -left-20" style="animation: drift 13s ease-in-out infinite;"></div>
+        <div class="orb w-64 h-64 bg-[var(--mh-primary)]/18 top-1/4 -right-16" style="animation: drift 16s ease-in-out infinite 1.5s;"></div>
+        <div class="orb w-56 h-56 bg-[var(--mh-secondary)]/15 bottom-1/4 -left-12" style="animation: breathe 11s ease-in-out infinite 0.5s;"></div>
+        <div class="orb w-72 h-72 bg-[var(--mh-secondary-light)]/18 -bottom-28 right-1/4" style="animation: drift 18s ease-in-out infinite 2.5s;"></div>
+
+        <!-- Status Bar -->
+        <div class="rise flex items-center justify-between px-6 pt-4 pb-2 text-[13px] font-semibold text-[var(--mh-text)] relative z-10">
+            <span id="clock">9:41</span>
+            <div class="flex items-center gap-1.5">
+                <i data-lucide="signal" class="w-4 h-4"></i>
+                <i data-lucide="wifi" class="w-4 h-4"></i>
+                <i data-lucide="battery-full" class="w-5 h-5"></i>
+            </div>
+        </div>
+
+        <!-- Top Nav Bar -->
+        <div class="rise delay-1 flex items-center px-5 py-3 relative z-10">
+            <button class="w-10 h-10 rounded-full glass-surface flex items-center justify-center text-[var(--mh-text)] active:scale-95 transition-transform">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+            </button>
+            <h1 class="flex-1 text-center text-[17px] font-semibold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">树洞</h1>
+            <button class="w-10 h-10 rounded-full glass-surface flex items-center justify-center text-[var(--mh-primary)] active:scale-95 transition-transform hover:bg-white/90">
+                <i data-lucide="pencil" class="w-4.5 h-4.5"></i>
+            </button>
+        </div>
+
+        <!-- Header -->
+        <header class="rise delay-2 relative z-10 px-6 pt-2 pb-5">
+            <h1 class="text-[32px] font-bold text-[var(--mh-text)] leading-tight" style="font-family: var(--mh-font-display);">
+                树洞
+            </h1>
+            <p class="mt-2.5 text-[14px] text-[var(--mh-text-light)] leading-relaxed max-w-[300px]">
+                在这里，你可以匿名倾诉心事，每一份情绪都会被温柔接纳
+            </p>
+        </header>
+
+        <!-- Category Filter Pills -->
+        <section class="rise delay-3 px-6 pb-4 relative z-10">
+            <div class="flex gap-2 overflow-x-auto hide-scrollbar -mx-1 px-1 pb-1">
+                <button class="filter-pill filter-pill-active px-4 py-2 rounded-full text-[13px] font-semibold whitespace-nowrap flex-shrink-0" data-filter="all">
+                    全部
+                </button>
+                <button class="filter-pill filter-pill-inactive px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap flex-shrink-0" data-filter="mood">
+                    心情随笔
+                </button>
+                <button class="filter-pill filter-pill-inactive px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap flex-shrink-0" data-filter="help">
+                    求助倾诉
+                </button>
+                <button class="filter-pill filter-pill-inactive px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap flex-shrink-0" data-filter="growth">
+                    成长分享
+                </button>
+                <button class="filter-pill filter-pill-inactive px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap flex-shrink-0" data-filter="warm">
+                    温暖树洞
+                </button>
+            </div>
+        </section>
+
+        <!-- Sort / Filter Bar -->
+        <section class="rise delay-4 px-6 pb-4 relative z-10">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-5">
+                    <button class="sort-toggle sort-active text-[14px] flex items-center gap-1" data-sort="latest">
+                        最新
+                    </button>
+                    <button class="sort-toggle sort-inactive text-[14px] flex items-center gap-1 hover:text-[var(--mh-text-light)] transition-colors" data-sort="hot">
+                        最热
+                        <i data-lucide="flame" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+                <button class="w-9 h-9 rounded-full glass-surface flex items-center justify-center text-[var(--mh-text-light)] hover:text-[var(--mh-text)] active:scale-95 transition-all">
+                    <i data-lucide="sliders-horizontal" class="w-4.5 h-4.5"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- Post List -->
+        <section class="px-5 pb-8 relative z-10 space-y-4">
+
+            <!-- Post 1: 心情随笔 -->
+            <article class="rise delay-5 glass-card rounded-[22px] p-5 cursor-pointer">
+                <!-- Post Header -->
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-full avatar-anonymous flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="tree-pine" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <p class="text-[14px] font-semibold text-[var(--mh-text)] truncate">匿名小树洞</p>
+                        </div>
+                        <p class="text-[11px] text-[var(--mh-text-muted)] mt-0.5">2小时前</p>
+                    </div>
+                    <span class="tag-mood px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap flex-shrink-0">
+                        心情随笔
+                    </span>
+                </div>
+
+                <!-- Post Content -->
+                <div class="mb-3.5">
+                    <p class="text-[14px] text-[var(--mh-text)] leading-relaxed">
+                        今天终于鼓起勇气和老板谈了加薪，虽然结果还不确定，但说出来的感觉真好。有时候迈出第一步就是最大的胜利。
+                    </p>
+                </div>
+
+                <!-- Post Actions -->
+                <div class="flex items-center justify-between pt-2 border-t border-[var(--mh-border)]/50">
+                    <button class="action-btn flex items-center gap-1.5 text-[12px] text-[var(--mh-text-light)] hover:text-[var(--mh-primary)]" data-action="like">
+                        <i data-lucide="heart" class="w-4 h-4"></i>
+                        <span class="like-count">128</span>
+                    </button>
+                    <button class="action-btn flex items-center gap-1.5 text-[12px] text-[var(--mh-text-light)] hover:text-[var(--mh-secondary)] transition-colors">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i>
+                        <span>24</span>
+                    </button>
+                    <button class="action-btn flex items-center gap-1.5 text-[12px] text-[var(--mh-text-light)] hover:text-[var(--mh-accent)] transition-colors" data-action="bookmark">
+                        <i data-lucide="bookmark" class="w-4 h-4"></i>
+                        <span>收藏</span>
+                    </button>
+                    <button class="action-btn flex items-center gap-1.5 text-[12px] text-[var(--mh-text-light)] hover:text-[var(--mh-text)] transition-colors">
+                        <i data-lucide="share-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </article>
+
+            <!-- Post 2: 求助倾诉 -->
+            <article class="rise delay-6 glass-card rounded-[22px] p-4.5 cursor-pointer">
+                <!-- Post Header -->
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#7ba5c4]/40 to-[#8aab7c]/30 flex items-center justify-center flex-shrink-0">
+                        <span class="text-[14px]">🦌</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <p class="text-[14px] font-semibold text-[var(--mh-text)] truncate">迷路的小鹿</p>
+                        </div>
+                        <p class="text-[11px] text-[var(--mh-text-muted)] mt-0.5">5小时前</p>
+                    </div>
+                    <span class="tag-help px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap flex-shrink-0">
+                        求助倾诉
+                    </span>
+                </div>
+
+                <!-- Post Content -->
+                <div class="mb-3.5">
+                    <p class="text-[14px] text-[var(--mh-text)] leading-relaxed">
+                        最近总是失眠，脑子里不停地想工作的事情，越想越睡不着。大家有什么好的入睡方法推荐吗？
+                    </p>
+                </div>
+
+                <!-- Post Actions -->
+                <div class="flex items-center justify-between pt-2 border-t border-[var(--mh-border)]/50">
+                    <button class="action-btn flex items-center gap-1.5 text-[12px] text-[var(--mh-text-light)] hover:text-[var(--mh-primary)]" data-action="like">
+                        <i data-lucide="heart" class="w-4 h-4"></i>
+                        <span class="like-count">86</span>
+                    </button>
+                    <button class="action-btn flex items-center gap-1.5 text-[12px] text-[var(--mh-text-light)] hover:text-[var(--mh-secondary)] transition-colors">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i>
+                        <span>42</span>
+                    </button>
+                    <button class="action-btn flex items-center gap-1.5 text-[12px] text-[var(--mh-text-light)] hover:text-[var(--mh-accent)] transition-colors" data-action="bookmark">
+                        <i data-lucide="bookmark" class="w-4 h-4"></i>
+                        <span>收藏</span>
+                    </button>
+                    <button class="action-btn flex items-center gap-1.5 text-[12px] text-[var(--mh-text-light)] hover:text-[var(--mh-text)] transition-colors">
+                        <i data-lucide="share-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </article>
+
+            <!-- Post 3: 成长分享 -->
+            <article class="rise delay-7 glass-card rounded-[22px] p-5 cursor-pointer">
+                <!-- Post Header -->
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#8aab7c]/50 to-[#f0b860]/30 flex items-center justify-center flex-shrink-0">
+                        <span class="text-[14px]">🌻</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <p class="text-[14px] font-semibold text-[var(--mh-text)] truncate">向阳而生</p>
+                        </div>
+                        <p class="text-[11px] text-[var(--mh-text-muted)] mt-0.5">昨天</p>
+                    </div>
+                    <span class="tag-growth px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap flex-shrink-0">
+                        成长分享
+                    </span>
+                </div>
+
+                <!-- Post Content -->
+                <div class="mb-3.5">
+                    <p class="text-[14px] text-[var(--mh-text)] leading-relaxed">
+                        坚持冥想第30天打卡！从最开始只能坐2分钟，到现在可以安静地坐15分钟。焦虑感真的减轻了很多，推荐给同样在挣扎的朋友们。
+                    </p>
+                </div>
+
+                <!-- Post Actions -->
+                <div class="flex items-center justify-between pt-2 border-t border-[var(--mh-border)]/50">
+                    <button class="action-btn flex items-center gap-1.5 text-[12px] text-[var(--mh-text-light)] hover:text-[var(--mh-primary)]" data-action="like">
+                        <i data-lucide="heart" class="w-4 h-4"></i>
+                        <span class="like-count">256</span>
+                    </button>
+                    <button class="action-btn flex items-center gap-1.5 text-[12px] text-[var(--mh-text-light)] hover:text-[var(--mh-secondary)] transition-colors">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i>
+                        <span>38</span>
+                    </button>
+                    <button class="action-btn flex items-center gap-1.5 text-[12px] text-[var(--mh-text-light)] hover:text-[var(--mh-accent)] transition-colors" data-action="bookmark">
+                        <i data-lucide="bookmark" class="w-4 h-4"></i>
+                        <span>收藏</span>
+                    </button>
+                    <button class="action-btn flex items-center gap-1.5 text-[12px] text-[var(--mh-text-light)] hover:text-[var(--mh-text)] transition-colors">
+                        <i data-lucide="share-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </article>
+
+            <!-- Post 4: 温暖树洞 -->
+            <article class="rise delay-8 glass-card rounded-[22px] p-4.5 cursor-pointer">
+                <!-- Post Header -->
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--mh-accent-light)] to-[var(--mh-primary-light)] flex items-center justify-center flex-shrink-0">
+                        <span class="text-[14px]">🌿</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <p class="text-[14px] font-semibold text-[var(--mh-text)] truncate">温柔的风</p>
+                        </div>
+                        <p class="text-[11px] text-[var(--mh-text-muted)] mt-0.5">3天前</p>
+                    </div>
+                    <span class="tag-warm px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap flex-shrink-0">
+                        温暖树洞
+                    </span>
+                </div>
+
+                <!-- Post Content -->
+                <div class="mb-3.5">
+                    <p class="text-[14px] text-[var(--mh-text)] leading-relaxed">
+                        想给正在低谷期的你一个拥抱。我知道很难，但请相信，所有的黑暗都会过去。你已经很努力了，不必苛责自己。今天也要好好吃饭，好好睡觉呀。
+                    </p>
+                </div>
+
+                <!-- Post Actions -->
+                <div class="flex items-center justify-between pt-2 border-t border-[var(--mh-border)]/50">
+                    <button class="action-btn flex items-center gap-1.5 text-[12px] text-[var(--mh-text-light)] hover:text-[var(--mh-primary)]" data-action="like">
+                        <i data-lucide="heart" class="w-4 h-4"></i>
+                        <span class="like-count">512</span>
+                    </button>
+                    <button class="action-btn flex items-center gap-1.5 text-[12px] text-[var(--mh-text-light)] hover:text-[var(--mh-secondary)] transition-colors">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i>
+                        <span>76</span>
+                    </button>
+                    <button class="action-btn flex items-center gap-1.5 text-[12px] text-[var(--mh-text-light)] hover:text-[var(--mh-accent)] transition-colors" data-action="bookmark">
+                        <i data-lucide="bookmark" class="w-4 h-4"></i>
+                        <span>收藏</span>
+                    </button>
+                    <button class="action-btn flex items-center gap-1.5 text-[12px] text-[var(--mh-text-light)] hover:text-[var(--mh-text)] transition-colors">
+                        <i data-lucide="share-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </article>
+
+        </section>
+
+        <!-- Floating Action Button -->
+        <button class="fab-btn fixed z-30 right-5 w-14 h-14 rounded-full flex items-center justify-center" style="bottom: calc(88px + env(safe-area-inset-bottom));">
+            <i data-lucide="plus" class="w-6 h-6"></i>
+        </button>
+
+        <!-- Bottom Navigation -->
+        <nav class="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-40px)] max-w-[400px]">
+            <div class="nav-pill rounded-full h-[64px] px-2 flex items-center justify-between">
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">首页</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="heart" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">情绪</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="leaf" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">放松</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-primary)] bg-[var(--mh-primary-soft)]">
+                    <i data-lucide="trees" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-semibold">树洞</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">我的</span>
+                </button>
+            </div>
+        </nav>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Clock
+        const now = new Date();
+        const clockStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('clock').textContent = clockStr;
+
+        // Filter pill interactions
+        const filterPills = document.querySelectorAll('.filter-pill');
+        filterPills.forEach(pill => {
+            pill.addEventListener('click', () => {
+                filterPills.forEach(p => {
+                    p.classList.remove('filter-pill-active');
+                    p.classList.add('filter-pill-inactive');
+                });
+                pill.classList.add('filter-pill-active');
+                pill.classList.remove('filter-pill-inactive');
+            });
+        });
+
+        // Sort toggle interactions
+        const sortToggles = document.querySelectorAll('.sort-toggle');
+        sortToggles.forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                sortToggles.forEach(t => {
+                    t.classList.remove('sort-active');
+                    t.classList.add('sort-inactive');
+                });
+                toggle.classList.add('sort-active');
+                toggle.classList.remove('sort-inactive');
+            });
+        });
+
+        // Like button interaction
+        document.querySelectorAll('[data-action="like"]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const countEl = btn.querySelector('.like-count');
+                const icon = btn.querySelector('[data-lucide="heart"]');
+                const isLiked = btn.classList.contains('liked');
+                let count = parseInt(countEl.textContent);
+
+                if (isLiked) {
+                    btn.classList.remove('liked');
+                    btn.style.color = '';
+                    icon.style.fill = 'none';
+                    icon.style.color = '';
+                    countEl.textContent = count - 1;
+                } else {
+                    btn.classList.add('liked');
+                    btn.style.color = 'var(--mh-primary)';
+                    icon.style.fill = 'var(--mh-primary)';
+                    icon.style.color = 'var(--mh-primary)';
+                    countEl.textContent = count + 1;
+                    // heart beat animation
+                    btn.style.animation = 'none';
+                    btn.offsetHeight;
+                    btn.style.animation = 'heart-beat 0.5s ease-out';
+                }
+            });
+        });
+
+        // Bookmark button interaction
+        document.querySelectorAll('[data-action="bookmark"]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const icon = btn.querySelector('[data-lucide="bookmark"]');
+                const isBookmarked = btn.classList.contains('bookmarked');
+
+                if (isBookmarked) {
+                    btn.classList.remove('bookmarked');
+                    btn.style.color = '';
+                    icon.style.fill = 'none';
+                    icon.style.color = '';
+                } else {
+                    btn.classList.add('bookmarked');
+                    btn.style.color = 'var(--mh-accent)';
+                    icon.style.fill = 'var(--mh-accent)';
+                    icon.style.color = 'var(--mh-accent)';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

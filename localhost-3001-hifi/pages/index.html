@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>情绪健康管理平台</title>
+    <link rel="stylesheet" href="../colors_and_type.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <style>
+        @keyframes drift {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(8px, -12px) scale(1.03); }
+            66% { transform: translate(-6px, 6px) scale(0.98); }
+        }
+        @keyframes breathe {
+            0%, 100% { opacity: 0.45; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.06); }
+        }
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(232, 131, 74, 0.25); }
+            70% { box-shadow: 0 0 0 10px rgba(232, 131, 74, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(232, 131, 74, 0); }
+        }
+
+        .rise { animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+        .delay-5 { animation-delay: 0.5s; }
+        .delay-6 { animation-delay: 0.6s; }
+
+        body {
+            background-color: var(--mh-background);
+            color: var(--mh-text);
+        }
+
+        .aurora {
+            background:
+                radial-gradient(ellipse 120% 80% at 20% -10%, rgba(240, 184, 96, 0.35) 0%, transparent 50%),
+                radial-gradient(ellipse 100% 90% at 90% 10%, rgba(232, 131, 74, 0.2) 0%, transparent 45%),
+                radial-gradient(ellipse 80% 70% at 70% 90%, rgba(138, 171, 124, 0.18) 0%, transparent 45%),
+                linear-gradient(180deg, #fff9f4 0%, #fef3ea 50%, #fdf6ef 100%);
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            pointer-events: none;
+        }
+
+        .glass-surface {
+            background: rgba(255, 253, 249, 0.78);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .card {
+            background: var(--mh-card);
+            border: 1px solid var(--mh-border);
+            box-shadow: var(--mh-shadow-sm);
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--mh-shadow-md);
+            border-color: rgba(232, 131, 74, 0.22);
+        }
+
+        .btn-main {
+            background: linear-gradient(135deg, #f0b860 0%, #e8834a 100%);
+            color: white;
+            box-shadow: 0 8px 24px rgba(232, 131, 74, 0.28);
+            transition: all 0.25s ease;
+        }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(232, 131, 74, 0.36); }
+        .btn-main:active { transform: scale(0.97); }
+
+        .btn-soft {
+            background: var(--mh-surface-muted);
+            color: var(--mh-text);
+            border: 1px solid var(--mh-border);
+            transition: all 0.2s ease;
+        }
+        .btn-soft:hover { background: var(--mh-border); }
+
+        .text-gradient {
+            background: linear-gradient(135deg, var(--mh-primary) 0%, var(--mh-accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-pill {
+            background: rgba(255, 253, 249, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(232, 221, 208, 0.6);
+            box-shadow: 0 8px 32px rgba(180, 140, 100, 0.14);
+        }
+
+        .insight-card {
+            background: linear-gradient(135deg, #e8834a 0%, #f0b860 50%, #8aab7c 100%);
+        }
+
+        .stat-ring {
+            animation: pulse-ring 2.5s ease-out infinite;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="antialiased min-h-screen">
+
+    <div class="aurora min-h-screen w-full max-w-[480px] mx-auto relative overflow-hidden pb-[calc(88px+env(safe-area-inset-bottom))]">
+
+        <!-- Organic Background Orbs -->
+        <div class="orb w-72 h-72 bg-[var(--mh-accent)]/25 -top-24 -left-24" style="animation: drift 12s ease-in-out infinite;"></div>
+        <div class="orb w-64 h-64 bg-[var(--mh-primary)]/18 top-1/4 -right-20" style="animation: drift 15s ease-in-out infinite 1s;"></div>
+        <div class="orb w-56 h-56 bg-[var(--mh-secondary)]/14 bottom-32 -left-16" style="animation: drift 14s ease-in-out infinite 2s;"></div>
+        <div class="orb w-80 h-80 bg-[var(--mh-accent)]/10 -bottom-32 right-1/4" style="animation: breathe 8s ease-in-out infinite;"></div>
+
+        <!-- Status Bar -->
+        <div class="rise flex items-center justify-between px-6 pt-4 pb-2 text-[13px] font-semibold text-[var(--mh-text)] relative z-10">
+            <span id="clock">9:41</span>
+            <div class="flex items-center gap-1.5">
+                <i data-lucide="signal" class="w-4 h-4"></i>
+                <i data-lucide="wifi" class="w-4 h-4"></i>
+                <i data-lucide="battery-full" class="w-5 h-5"></i>
+            </div>
+        </div>
+
+        <!-- Hero -->
+        <header class="rise delay-1 relative z-10 px-6 pt-6 pb-8">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-[13px] font-medium text-[var(--mh-text-light)] mb-1.5" id="date-line">2026年8月20日</p>
+                    <h1 class="text-[34px] leading-[1.15] font-bold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">
+                        晚上好，<br>
+                        <span class="text-gradient">晚晴</span>
+                    </h1>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-[var(--mh-card)] border border-[var(--mh-border)] shadow-sm flex items-center justify-center">
+                    <i data-lucide="bell" class="w-5 h-5 text-[var(--mh-text-light)]"></i>
+                </div>
+            </div>
+            <p class="mt-4 text-[14px] text-[var(--mh-text-light)] leading-relaxed max-w-[280px]">
+                日落花园里的晚风正温柔，愿你今天也被暖意包围。
+            </p>
+        </header>
+
+        <!-- Mood Card -->
+        <section class="rise delay-2 px-6 pb-5 relative z-10">
+            <div class="glass-surface rounded-[28px] p-5 shadow-[var(--mh-shadow-md)]">
+                <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <div class="w-[72px] h-[72px] rounded-[22px] bg-gradient-to-br from-[var(--mh-mood-calm)] to-[var(--mh-secondary-light)] flex items-center justify-center shadow-lg stat-ring">
+                            <i data-lucide="smile" class="w-8 h-8 text-white"></i>
+                        </div>
+                        <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[var(--mh-card)] border border-[var(--mh-border)] flex items-center justify-center">
+                            <i data-lucide="check" class="w-3.5 h-3.5 text-[var(--mh-secondary)]"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[11px] font-bold tracking-widest text-[var(--mh-primary)] uppercase mb-1">今日状态</p>
+                        <p class="text-[22px] font-semibold text-[var(--mh-text)] leading-tight" style="font-family: var(--mh-font-display);">平静愉悦</p>
+                        <p class="text-[13px] text-[var(--mh-text-light)] mt-1">14:20 记录 · 强度 6/10</p>
+                    </div>
+                </div>
+                <div class="h-px bg-[var(--mh-border)] my-4"></div>
+                <div class="flex gap-3">
+                    <button class="flex-1 h-12 rounded-full btn-main text-sm font-semibold flex items-center justify-center gap-2">
+                        <i data-lucide="pen-line" class="w-4 h-4"></i>
+                        记录情绪
+                    </button>
+                    <button class="flex-1 h-12 rounded-full btn-soft text-sm font-semibold flex items-center justify-center gap-2">
+                        <i data-lucide="chart-pie" class="w-4 h-4 text-[var(--mh-primary)]"></i>
+                        查看洞察
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Actions -->
+        <section class="rise delay-3 px-6 pb-5 relative z-10">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-[17px] font-semibold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">快速入口</h2>
+                <button class="text-[12px] font-medium text-[var(--mh-primary)] flex items-center gap-0.5">
+                    全部
+                    <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                </button>
+            </div>
+            <div class="grid grid-cols-4 gap-3">
+                <button class="card rounded-[20px] p-3 flex flex-col items-center gap-2.5 aspect-square justify-center">
+                    <div class="w-11 h-11 rounded-[14px] bg-[var(--mh-primary-soft)] flex items-center justify-center text-[var(--mh-primary)]">
+                        <i data-lucide="pen-line" class="w-5 h-5"></i>
+                    </div>
+                    <span class="text-[11px] font-medium text-[var(--mh-text)]">记录</span>
+                </button>
+                <button class="card rounded-[20px] p-3 flex flex-col items-center gap-2.5 aspect-square justify-center">
+                    <div class="w-11 h-11 rounded-[14px] bg-[var(--mh-secondary)]/12 flex items-center justify-center text-[var(--mh-secondary)]">
+                        <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                    </div>
+                    <span class="text-[11px] font-medium text-[var(--mh-text)]">洞察</span>
+                </button>
+                <button class="card rounded-[20px] p-3 flex flex-col items-center gap-2.5 aspect-square justify-center">
+                    <div class="w-11 h-11 rounded-[14px] bg-[var(--mh-accent)]/18 flex items-center justify-center text-[var(--mh-accent-foreground)]">
+                        <i data-lucide="bot" class="w-5 h-5"></i>
+                    </div>
+                    <span class="text-[11px] font-medium text-[var(--mh-text)]">AI 咨询</span>
+                </button>
+                <button class="card rounded-[20px] p-3 flex flex-col items-center gap-2.5 aspect-square justify-center">
+                    <div class="w-11 h-11 rounded-[14px] bg-[var(--mh-secondary)]/10 flex items-center justify-center text-[var(--mh-secondary)]">
+                        <i data-lucide="leaf" class="w-5 h-5"></i>
+                    </div>
+                    <span class="text-[11px] font-medium text-[var(--mh-text)]">放松</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Weekly Streak -->
+        <section class="rise delay-4 px-6 pb-5 relative z-10">
+            <div class="card rounded-[24px] p-5">
+                <div class="flex items-center justify-between mb-5">
+                    <div>
+                        <h2 class="text-[17px] font-semibold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">本周情绪</h2>
+                        <p class="text-[12px] text-[var(--mh-text-muted)] mt-0.5">连续记录 7 天</p>
+                    </div>
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--mh-primary-soft)] text-[var(--mh-primary)] text-xs font-bold">
+                        <i data-lucide="flame" class="w-3.5 h-3.5 fill-current"></i>
+                        <span>7</span>
+                    </div>
+                </div>
+                <div class="flex justify-between">
+                    <div class="flex flex-col items-center gap-2">
+                        <div class="w-10 h-10 rounded-full bg-[var(--mh-mood-happy)]/15 flex items-center justify-center">
+                            <i data-lucide="smile" class="w-5 h-5 text-[var(--mh-mood-happy)]"></i>
+                        </div>
+                        <span class="text-[10px] text-[var(--mh-text-muted)]">一</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-2">
+                        <div class="w-10 h-10 rounded-full bg-[var(--mh-mood-calm)]/15 flex items-center justify-center">
+                            <i data-lucide="smile" class="w-5 h-5 text-[var(--mh-mood-calm)]"></i>
+                        </div>
+                        <span class="text-[10px] text-[var(--mh-text-muted)]">二</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-2">
+                        <div class="w-10 h-10 rounded-full bg-[var(--mh-mood-neutral)]/15 flex items-center justify-center">
+                            <i data-lucide="meh" class="w-5 h-5 text-[var(--mh-mood-neutral)]"></i>
+                        </div>
+                        <span class="text-[10px] text-[var(--mh-text-muted)]">三</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-2">
+                        <div class="w-10 h-10 rounded-full bg-[var(--mh-mood-happy)]/15 flex items-center justify-center">
+                            <i data-lucide="smile" class="w-5 h-5 text-[var(--mh-mood-happy)]"></i>
+                        </div>
+                        <span class="text-[10px] text-[var(--mh-text-muted)]">四</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-2">
+                        <div class="w-10 h-10 rounded-full bg-[var(--mh-mood-sad)]/15 flex items-center justify-center">
+                            <i data-lucide="frown" class="w-5 h-5 text-[var(--mh-mood-sad)]"></i>
+                        </div>
+                        <span class="text-[10px] text-[var(--mh-text-muted)]">五</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-2">
+                        <div class="w-10 h-10 rounded-full bg-[var(--mh-mood-calm)]/15 flex items-center justify-center">
+                            <i data-lucide="smile" class="w-5 h-5 text-[var(--mh-mood-calm)]"></i>
+                        </div>
+                        <span class="text-[10px] text-[var(--mh-text-muted)]">六</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-2">
+                        <div class="w-11 h-11 rounded-full bg-gradient-to-br from-[var(--mh-primary)] to-[var(--mh-accent)] flex items-center justify-center text-white shadow-md ring-2 ring-white/50">
+                            <i data-lucide="sun" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-[10px] text-[var(--mh-primary)] font-bold">今天</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Insight -->
+        <section class="rise delay-5 px-6 pb-5 relative z-10">
+            <div class="insight-card rounded-[28px] p-5 relative overflow-hidden shadow-[var(--mh-shadow-md)] text-white active:scale-[0.98] transition-transform">
+                <div class="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/10 blur-2xl"></div>
+                <div class="absolute -left-8 bottom-0 w-28 h-28 rounded-full bg-[var(--mh-accent-light)]/20 blur-xl"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-7 h-7 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                            <i data-lucide="sparkles" class="w-4 h-4 text-white"></i>
+                        </div>
+                        <span class="text-[12px] font-semibold text-white/90">AI 暖心洞察</span>
+                    </div>
+                    <h3 class="text-[18px] font-semibold text-white mb-2" style="font-family: var(--mh-font-display);">
+                        本周情绪趋势向好
+                    </h3>
+                    <p class="text-[13px] text-white/80 leading-relaxed mb-4 max-w-[300px]">
+                        你已连续 7 天记录心情，平静与愉悦占比达 62%。傍晚散步时段的放松练习效果显著。
+                    </p>
+                    <div class="inline-flex items-center gap-1.5 text-white text-[12px] font-bold bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                        <span>查看完整分析</span>
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Relax Recommendation -->
+        <section class="rise delay-6 px-6 pb-8 relative z-10">
+            <h2 class="text-[17px] font-semibold text-[var(--mh-text)] mb-4 pl-1" style="font-family: var(--mh-font-display);">为你推荐</h2>
+            <div class="card rounded-[24px] overflow-hidden">
+                <div class="h-44 relative bg-gradient-to-br from-[var(--mh-warm)] to-[var(--mh-primary-soft)] flex items-center justify-center">
+                    <div class="absolute inset-0 opacity-30">
+                        <svg viewBox="0 0 200 200" class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="#e8834a" d="M44.7,-76.4C58.9,-69.2,71.8,-59.1,79.6,-46.3C87.4,-33.5,90.1,-18,86.9,-3.8C83.7,10.4,74.6,23.3,64.2,33.8C53.8,44.3,42.1,52.4,29.6,58.7C17.1,65,3.8,69.5,-8.8,68.5C-21.4,67.5,-33.3,61,-44.7,52.8C-56.1,44.6,-67,34.7,-73.3,22.3C-79.6,9.9,-81.3,-5,-76.8,-18.2C-72.3,-31.4,-61.6,-42.9,-49.6,-51.2C-37.6,-59.5,-24.3,-64.6,-10.6,-66.7C3.1,-68.8,16.9,-67.9,30.5,-83.6L44.7,-76.4Z" transform="translate(100 100)" style="animation: drift 20s ease-in-out infinite;" />
+                        </svg>
+                    </div>
+                    <div class="relative z-10 w-20 h-20 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center shadow-lg">
+                        <i data-lucide="play" class="w-8 h-8 text-white ml-1"></i>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--mh-primary-soft)] text-[var(--mh-primary)] text-[10px] font-bold mb-2">
+                                <i data-lucide="headphones" class="w-3 h-3"></i>
+                                冥想音频
+                            </span>
+                            <h3 class="text-[16px] font-semibold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">日落花园 · 5分钟呼吸</h3>
+                            <p class="text-[12px] text-[var(--mh-text-light)] mt-1">跟随温柔引导，在日落余晖中安放身心</p>
+                        </div>
+                        <button class="w-10 h-10 rounded-full btn-main flex items-center justify-center flex-shrink-0 mt-1">
+                            <i data-lucide="play" class="w-4 h-4 ml-0.5 fill-current"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bottom Navigation -->
+        <nav class="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-40px)] max-w-[400px]">
+            <div class="nav-pill rounded-full h-[64px] px-2 flex items-center justify-between">
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-primary)] bg-[var(--mh-primary-soft)]">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-semibold">首页</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="heart" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">情绪</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="leaf" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">放松</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="trees" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">树洞</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">我的</span>
+                </button>
+            </div>
+        </nav>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const now = new Date();
+        const hours = now.getHours();
+        const greetingMap = {
+            night: '夜深了，照顾好自己',
+            morning: '早上好，今天也要好好的',
+            noon: '中午好，记得休息一下',
+            afternoon: '下午好，保持好心情',
+            evening: '晚上好，放松一下吧'
+        };
+        let greeting = greetingMap.evening;
+        if (hours < 6) greeting = greetingMap.night;
+        else if (hours < 12) greeting = greetingMap.morning;
+        else if (hours < 14) greeting = greetingMap.noon;
+        else if (hours < 18) greeting = greetingMap.afternoon;
+
+        const dateStr = now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+        document.getElementById('date-line').textContent = dateStr;
+
+        const clockStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('clock').textContent = clockStr;
+    </script>
+</body>
+</html>

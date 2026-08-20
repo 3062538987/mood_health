@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>解压中心 - 情绪健康管理平台</title>
+    <link rel="stylesheet" href="../colors_and_type.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#e8834a',
+                        secondary: '#8aab7c',
+                        accent: '#f0b860',
+                        background: '#fef8f2',
+                        foreground: '#4a3f38',
+                        card: '#fffdf9',
+                        muted: '#faf5ee',
+                        border: '#e8ddd0',
+                    },
+                    fontFamily: {
+                        display: ['"Noto Serif SC"', 'Georgia', 'Songti SC', 'serif'],
+                        body: ['-apple-system', 'BlinkMacSystemFont', '"PingFang SC"', '"Microsoft YaHei"', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        '2xl': '20px',
+                        '3xl': '28px',
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 24px rgba(138, 171, 124, 0.08)',
+                        'glow': '0 8px 32px rgba(180, 140, 100, 0.14)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes drift {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(8px, -12px) scale(1.03); }
+            66% { transform: translate(-6px, 6px) scale(0.98); }
+        }
+        @keyframes breathe {
+            0%, 100% { opacity: 0.45; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.06); }
+        }
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(138, 171, 124, 0.35); }
+            70% { box-shadow: 0 0 0 20px rgba(138, 171, 124, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(138, 171, 124, 0); }
+        }
+        @keyframes breathing-circle {
+            0% { transform: scale(0.7); opacity: 0.6; }
+            28.5% { transform: scale(1); opacity: 1; }
+            42.8% { transform: scale(1); opacity: 1; }
+            71.4% { transform: scale(0.7); opacity: 0.6; }
+            100% { transform: scale(0.7); opacity: 0.6; }
+        }
+        @keyframes breathing-ring-1 {
+            0% { transform: scale(0.7); opacity: 0.4; }
+            28.5% { transform: scale(1.15); opacity: 0.2; }
+            42.8% { transform: scale(1.15); opacity: 0.2; }
+            71.4% { transform: scale(0.85); opacity: 0.3; }
+            100% { transform: scale(0.7); opacity: 0.4; }
+        }
+        @keyframes breathing-ring-2 {
+            0% { transform: scale(0.7); opacity: 0.25; }
+            28.5% { transform: scale(1.3); opacity: 0.1; }
+            42.8% { transform: scale(1.3); opacity: 0.1; }
+            71.4% { transform: scale(0.9); opacity: 0.2; }
+            100% { transform: scale(0.7); opacity: 0.25; }
+        }
+        @keyframes progress-flow {
+            0% { width: 34%; }
+            50% { width: 36%; }
+            100% { width: 34%; }
+        }
+        @keyframes wood-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        .rise { animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+        .delay-5 { animation-delay: 0.5s; }
+        .delay-6 { animation-delay: 0.6s; }
+        .delay-7 { animation-delay: 0.7s; }
+
+        body {
+            background-color: var(--mh-background);
+            color: var(--mh-text);
+        }
+
+        .relax-aurora {
+            background:
+                radial-gradient(ellipse 120% 70% at 15% -5%, rgba(138, 171, 124, 0.35) 0%, transparent 55%),
+                radial-gradient(ellipse 100% 80% at 85% 5%, rgba(240, 184, 96, 0.22) 0%, transparent 50%),
+                radial-gradient(ellipse 90% 70% at 50% 100%, rgba(184, 208, 168, 0.3) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 60% at 10% 80%, rgba(232, 131, 74, 0.12) 0%, transparent 45%),
+                linear-gradient(180deg, #f5f8ee 0%, #faf7ef 40%, #fdf6ef 100%);
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            pointer-events: none;
+        }
+
+        .glass-surface {
+            background: rgba(255, 253, 249, 0.72);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 24px rgba(138, 171, 124, 0.08);
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .glass-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(138, 171, 124, 0.14);
+        }
+
+        .card {
+            background: var(--mh-card);
+            border: 1px solid var(--mh-border);
+            box-shadow: var(--mh-shadow-sm);
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--mh-shadow-md);
+        }
+
+        .mode-card-active {
+            border-color: var(--mh-secondary) !important;
+            box-shadow: 0 0 0 2px rgba(138, 171, 124, 0.15), 0 8px 24px rgba(138, 171, 124, 0.15) !important;
+            background: linear-gradient(135deg, rgba(138, 171, 124, 0.08) 0%, rgba(255, 255, 255, 0.7) 100%) !important;
+        }
+
+        .filter-pill {
+            transition: all 0.25s ease;
+        }
+        .filter-pill-active {
+            background: var(--mh-secondary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(138, 171, 124, 0.3);
+        }
+        .filter-pill-inactive {
+            background: rgba(255, 255, 255, 0.6);
+            color: var(--mh-text-light);
+            border: 1px solid rgba(232, 221, 208, 0.6);
+        }
+        .filter-pill-inactive:hover {
+            background: rgba(255, 255, 255, 0.85);
+            color: var(--mh-text);
+        }
+
+        .btn-main {
+            background: linear-gradient(135deg, #8aab7c 0%, #b8d0a8 100%);
+            color: white;
+            box-shadow: 0 8px 24px rgba(138, 171, 124, 0.28);
+            transition: all 0.25s ease;
+        }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(138, 171, 124, 0.36); }
+        .btn-main:active { transform: scale(0.97); }
+
+        .nav-pill {
+            background: rgba(255, 253, 249, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(232, 221, 208, 0.6);
+            box-shadow: 0 8px 32px rgba(180, 140, 100, 0.14);
+        }
+
+        .breathing-container {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .breath-ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid rgba(138, 171, 124, 0.3);
+        }
+
+        .breath-ring-1 {
+            width: 220px;
+            height: 220px;
+            animation: breathing-ring-1 14s ease-in-out infinite;
+            background: radial-gradient(circle, rgba(138, 171, 124, 0.08) 0%, transparent 70%);
+        }
+
+        .breath-ring-2 {
+            width: 180px;
+            height: 180px;
+            animation: breathing-ring-2 14s ease-in-out infinite;
+            background: radial-gradient(circle, rgba(184, 208, 168, 0.12) 0%, transparent 70%);
+        }
+
+        .breath-core {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #8aab7c 0%, #b8d0a8 50%, #d4e4c6 100%);
+            box-shadow:
+                0 8px 32px rgba(138, 171, 124, 0.35),
+                inset 0 2px 8px rgba(255, 255, 255, 0.4),
+                inset 0 -4px 12px rgba(138, 171, 124, 0.2);
+            animation: breathing-circle 14s ease-in-out infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .breath-core::before {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 20%;
+            width: 40%;
+            height: 30%;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            filter: blur(8px);
+        }
+
+        .breath-text {
+            font-family: var(--mh-font-display);
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 3;
+            animation: fade-in 14s ease-in-out infinite;
+        }
+
+        @keyframes breath-text-cycle {
+            0%, 100% { opacity: 0; }
+            5%, 23.5% { opacity: 1; }
+            28.5%, 38% { opacity: 0; }
+            42%, 52% { opacity: 1; }
+            57%, 66% { opacity: 0; }
+            71%, 95% { opacity: 1; }
+        }
+
+        .progress-bar-track {
+            height: 4px;
+            background: rgba(232, 221, 208, 0.6);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--mh-secondary), var(--mh-accent));
+            border-radius: 2px;
+            animation: progress-flow 4s ease-in-out infinite;
+        }
+
+        .audio-player {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .wood-fish {
+            animation: wood-float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen">
+
+    <div class="relax-aurora min-h-screen w-full max-w-[480px] mx-auto relative overflow-hidden pb-[calc(88px+env(safe-area-inset-bottom))]">
+
+        <!-- Organic Background Orbs -->
+        <div class="orb w-72 h-72 bg-[var(--mh-secondary)]/25 -top-28 -left-20" style="animation: drift 14s ease-in-out infinite;"></div>
+        <div class="orb w-64 h-64 bg-[var(--mh-accent)]/18 top-1/3 -right-16" style="animation: drift 16s ease-in-out infinite 2s;"></div>
+        <div class="orb w-60 h-60 bg-[var(--mh-secondary-light)]/25 bottom-1/3 -left-12" style="animation: breathe 10s ease-in-out infinite 1s;"></div>
+        <div class="orb w-80 h-80 bg-[var(--mh-primary)]/8 -bottom-28 right-1/3" style="animation: drift 18s ease-in-out infinite 3s;"></div>
+
+        <!-- Status Bar -->
+        <div class="rise flex items-center justify-between px-6 pt-4 pb-2 text-[13px] font-semibold text-[var(--mh-text)] relative z-10">
+            <span id="clock">9:41</span>
+            <div class="flex items-center gap-1.5">
+                <i data-lucide="signal" class="w-4 h-4"></i>
+                <i data-lucide="wifi" class="w-4 h-4"></i>
+                <i data-lucide="battery-full" class="w-5 h-5"></i>
+            </div>
+        </div>
+
+        <!-- Top Nav with Back -->
+        <div class="rise delay-1 flex items-center px-5 py-3 relative z-10">
+            <button class="w-10 h-10 rounded-full glass-surface flex items-center justify-center text-[var(--mh-text)] active:scale-95 transition-transform">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+            </button>
+            <h1 class="flex-1 text-center text-[17px] font-semibold text-[var(--mh-text)] pr-10" style="font-family: var(--mh-font-display);">解压中心</h1>
+        </div>
+
+        <!-- Audio Player (Sticky) -->
+        <div class="rise delay-2 px-5 pt-2 pb-3 audio-player">
+            <div class="glass-surface rounded-[20px] p-3.5 shadow-[var(--mh-shadow-md)]">
+                <div class="flex items-center gap-3">
+                    <div class="relative w-12 h-12 rounded-[14px] bg-gradient-to-br from-[var(--mh-secondary)] to-[var(--mh-secondary-light)] flex items-center justify-center flex-shrink-0 shadow-md">
+                        <i data-lucide="cloud-rain" class="w-5 h-5 text-white"></i>
+                        <div class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-white flex items-center justify-center shadow-sm">
+                            <div class="w-2.5 h-2.5 rounded-full bg-[var(--mh-secondary)]"></div>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[13px] font-semibold text-[var(--mh-text)] truncate">日落花园 · 雨声白噪音</p>
+                        <div class="flex items-center gap-2 mt-1">
+                            <div class="flex-1 progress-bar-track">
+                                <div class="progress-bar-fill" style="width: 34%;"></div>
+                            </div>
+                            <span class="text-[10px] text-[var(--mh-text-muted)] font-medium whitespace-nowrap">03:24 / 10:00</span>
+                        </div>
+                    </div>
+                    <button class="w-10 h-10 rounded-full btn-main flex items-center justify-center flex-shrink-0 ml-1">
+                        <i data-lucide="pause" class="w-4 h-4 fill-current"></i>
+                    </button>
+                    <button class="w-9 h-9 rounded-full flex items-center justify-center text-[var(--mh-text-light)] hover:text-[var(--mh-text)] transition-colors flex-shrink-0">
+                        <i data-lucide="volume-2" class="w-4.5 h-4.5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <header class="rise delay-2 relative z-10 px-6 pt-3 pb-5">
+            <h1 class="text-[30px] font-bold text-[var(--mh-text)] leading-tight" style="font-family: var(--mh-font-display);">
+                解压中心
+            </h1>
+            <p class="mt-2.5 text-[14px] text-[var(--mh-text-light)] leading-relaxed max-w-[300px]">
+                选择适合你的放松方式，释放压力，找回内心的平静。
+            </p>
+        </header>
+
+        <!-- Mode Filter Pills -->
+        <section class="rise delay-3 px-6 pb-5 relative z-10">
+            <div class="flex gap-2 overflow-x-auto hide-scrollbar -mx-1 px-1">
+                <button class="filter-pill filter-pill-active px-5 py-2 rounded-full text-[13px] font-semibold whitespace-nowrap flex-shrink-0">
+                    全部
+                </button>
+                <button class="filter-pill filter-pill-inactive px-5 py-2 rounded-full text-[13px] font-medium whitespace-nowrap flex-shrink-0">
+                    安静放松
+                </button>
+                <button class="filter-pill filter-pill-inactive px-5 py-2 rounded-full text-[13px] font-medium whitespace-nowrap flex-shrink-0">
+                    活动解压
+                </button>
+            </div>
+        </section>
+
+        <!-- Relax Mode Cards -->
+        <section class="rise delay-4 px-6 pb-5 relative z-10">
+            <div class="grid grid-cols-2 gap-3">
+                <!-- 木鱼敲击 - Active -->
+                <div class="glass-card mode-card-active rounded-[22px] p-4 cursor-pointer relative overflow-hidden">
+                    <div class="absolute top-2 right-2 w-5 h-5 rounded-full bg-[var(--mh-secondary)] flex items-center justify-center">
+                        <i data-lucide="check" class="w-3 h-3 text-white"></i>
+                    </div>
+                    <div class="w-12 h-12 rounded-[14px] bg-gradient-to-br from-[var(--mh-accent)]/25 to-[var(--mh-primary)]/20 flex items-center justify-center mb-3 wood-fish">
+                        <span class="text-2xl">🪘</span>
+                    </div>
+                    <h3 class="text-[15px] font-semibold text-[var(--mh-text)] mb-1" style="font-family: var(--mh-font-display);">木鱼敲击</h3>
+                    <p class="text-[11px] text-[var(--mh-text-light)] leading-relaxed mb-3">敲击木鱼，释放焦虑</p>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--mh-secondary)]/15 text-[var(--mh-secondary)] text-[10px] font-bold">
+                        随时开始
+                    </span>
+                </div>
+
+                <!-- 呼吸冥想 -->
+                <div class="glass-card rounded-[22px] p-4 cursor-pointer">
+                    <div class="w-12 h-12 rounded-[14px] bg-gradient-to-br from-[var(--mh-secondary)]/25 to-[var(--mh-secondary-light)]/30 flex items-center justify-center mb-3">
+                        <span class="text-2xl">🧘</span>
+                    </div>
+                    <h3 class="text-[15px] font-semibold text-[var(--mh-text)] mb-1" style="font-family: var(--mh-font-display);">呼吸冥想</h3>
+                    <p class="text-[11px] text-[var(--mh-text-light)] leading-relaxed mb-3">跟随呼吸，放松身心</p>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--mh-muted)] text-[var(--mh-text-muted)] text-[10px] font-medium">
+                        3-10分钟
+                    </span>
+                </div>
+
+                <!-- 弹珠消砖 -->
+                <div class="glass-card rounded-[22px] p-4 cursor-pointer">
+                    <div class="w-12 h-12 rounded-[14px] bg-gradient-to-br from-[var(--mh-primary)]/20 to-[var(--mh-accent)]/25 flex items-center justify-center mb-3">
+                        <span class="text-2xl">🎮</span>
+                    </div>
+                    <h3 class="text-[15px] font-semibold text-[var(--mh-text)] mb-1" style="font-family: var(--mh-font-display);">弹珠消砖</h3>
+                    <p class="text-[11px] text-[var(--mh-text-light)] leading-relaxed mb-3">经典小游戏，转移注意力</p>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--mh-muted)] text-[var(--mh-text-muted)] text-[10px] font-medium">
+                        不限时
+                    </span>
+                </div>
+
+                <!-- 俄罗斯方块 -->
+                <div class="glass-card rounded-[22px] p-4 cursor-pointer">
+                    <div class="w-12 h-12 rounded-[14px] bg-gradient-to-br from-[var(--mh-info)]/20 to-[var(--mh-secondary)]/20 flex items-center justify-center mb-3">
+                        <span class="text-2xl">🧱</span>
+                    </div>
+                    <h3 class="text-[15px] font-semibold text-[var(--mh-text)] mb-1" style="font-family: var(--mh-font-display);">俄罗斯方块</h3>
+                    <p class="text-[11px] text-[var(--mh-text-light)] leading-relaxed mb-3">方块挑战，专注当下</p>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--mh-muted)] text-[var(--mh-text-muted)] text-[10px] font-medium">
+                        不限时
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Breathing Meditation Section -->
+        <section class="rise delay-5 px-6 pb-6 relative z-10">
+            <div class="glass-surface rounded-[28px] p-6 shadow-[var(--mh-shadow-md)] relative overflow-hidden">
+                <!-- Section Header -->
+                <div class="flex items-center justify-between mb-5">
+                    <div>
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--mh-secondary)]/15 text-[var(--mh-secondary)] text-[10px] font-bold mb-2">
+                            <i data-lucide="wind" class="w-3 h-3"></i>
+                            呼吸冥想
+                        </span>
+                        <h2 class="text-[20px] font-semibold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">4-7-8 呼吸法</h2>
+                    </div>
+                    <button class="w-9 h-9 rounded-full bg-[var(--mh-secondary)]/12 flex items-center justify-center text-[var(--mh-secondary)]">
+                        <i data-lucide="settings-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Breathing Circle -->
+                <div class="flex flex-col items-center py-4">
+                    <div class="breathing-container mb-6">
+                        <div class="breath-ring breath-ring-1"></div>
+                        <div class="breath-ring breath-ring-2"></div>
+                        <div class="breath-core">
+                            <span class="breath-text" id="breath-guide">吸气...</span>
+                        </div>
+                    </div>
+
+                    <!-- Session Stats -->
+                    <div class="flex items-center gap-6 mb-5">
+                        <div class="text-center">
+                            <p class="text-[24px] font-bold text-[var(--mh-secondary)]" style="font-family: var(--mh-font-display);">3</p>
+                            <p class="text-[11px] text-[var(--mh-text-muted)] mt-0.5">当前次数</p>
+                        </div>
+                        <div class="w-px h-8 bg-[var(--mh-border)]"></div>
+                        <div class="text-center">
+                            <p class="text-[24px] font-bold text-[var(--mh-text)]" style="font-family: var(--mh-font-display);">10</p>
+                            <p class="text-[11px] text-[var(--mh-text-muted)] mt-0.5">总次数</p>
+                        </div>
+                        <div class="w-px h-8 bg-[var(--mh-border)]"></div>
+                        <div class="text-center">
+                            <p class="text-[24px] font-bold text-[var(--mh-accent)]" style="font-family: var(--mh-font-display);">4:30</p>
+                            <p class="text-[11px] text-[var(--mh-text-muted)] mt-0.5">已用时间</p>
+                        </div>
+                    </div>
+
+                    <!-- Control Buttons -->
+                    <div class="flex items-center gap-4">
+                        <button class="w-12 h-12 rounded-full glass-surface flex items-center justify-center text-[var(--mh-text-light)] hover:text-[var(--mh-text)] transition-colors active:scale-95">
+                            <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                        </button>
+                        <button class="w-16 h-16 rounded-full btn-main flex items-center justify-center shadow-lg active:scale-95 transition-transform">
+                            <i data-lucide="pause" class="w-6 h-6 fill-current ml-0.5"></i>
+                        </button>
+                        <button class="w-12 h-12 rounded-full glass-surface flex items-center justify-center text-[var(--mh-text-light)] hover:text-[var(--mh-text)] transition-colors active:scale-95">
+                            <i data-lucide="skip-forward" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Divider -->
+                <div class="h-px bg-[var(--mh-border)]/60 my-5"></div>
+
+                <!-- Breathing Method Info -->
+                <div class="space-y-3">
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-full bg-[var(--mh-secondary)]/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-[12px] font-bold text-[var(--mh-secondary)]">4</span>
+                        </div>
+                        <div>
+                            <p class="text-[14px] font-semibold text-[var(--mh-text)]">吸气</p>
+                            <p class="text-[12px] text-[var(--mh-text-light)] mt-0.5">用鼻子缓慢吸气，感受腹部隆起，持续 4 秒</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-full bg-[var(--mh-accent)]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-[12px] font-bold text-[var(--mh-accent-foreground)]">7</span>
+                        </div>
+                        <div>
+                            <p class="text-[14px] font-semibold text-[var(--mh-text)]">屏息</p>
+                            <p class="text-[12px] text-[var(--mh-text-light)] mt-0.5">保持呼吸，让氧气充分循环，持续 7 秒</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-full bg-[var(--mh-primary)]/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-[12px] font-bold text-[var(--mh-primary)]">8</span>
+                        </div>
+                        <div>
+                            <p class="text-[14px] font-semibold text-[var(--mh-text)]">呼气</p>
+                            <p class="text-[12px] text-[var(--mh-text-light)] mt-0.5">用嘴缓慢呼气，发出呼呼声，持续 8 秒</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tips Section -->
+        <section class="rise delay-6 px-6 pb-8 relative z-10">
+            <div class="glass-card rounded-[22px] p-4 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-[12px] bg-gradient-to-br from-[var(--mh-accent)]/25 to-[var(--mh-primary)]/15 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="lightbulb" class="w-5 h-5 text-[var(--mh-accent-foreground)]"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-[13px] font-semibold text-[var(--mh-text)]">小贴士</p>
+                    <p class="text-[11px] text-[var(--mh-text-light)] mt-0.5">每天练习 5-10 分钟，有助于缓解焦虑和改善睡眠</p>
+                </div>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-[var(--mh-text-muted)] flex-shrink-0"></i>
+            </div>
+        </section>
+
+        <!-- Bottom Navigation -->
+        <nav class="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-40px)] max-w-[400px]">
+            <div class="nav-pill rounded-full h-[64px] px-2 flex items-center justify-between">
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">首页</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="heart" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">情绪</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-secondary)] bg-[var(--mh-secondary)]/15">
+                    <i data-lucide="leaf" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-semibold">放松</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="trees" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">树洞</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full text-[var(--mh-text-light)] hover:text-[var(--mh-primary)] transition-colors">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-medium">我的</span>
+                </button>
+            </div>
+        </nav>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Clock
+        const now = new Date();
+        const clockStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('clock').textContent = clockStr;
+
+        // Breathing text cycle (4-7-8 pattern = 19s per cycle, but we use 14s for visual smoothness)
+        // Actually let's sync with the 14s animation: 4s inhale, ~2s hold, 5s exhale, ~3s rest (simplified)
+        const breathTexts = [
+            { text: '吸气...', start: 0, end: 28.5 },   // 0-4s (of 14s = 28.5%)
+            { text: '屏息...', start: 28.5, end: 42.8 }, // 4-6s
+            { text: '呼气...', start: 42.8, end: 71.4 }, // 6-10s
+            { text: '放松...', start: 71.4, end: 100 }   // 10-14s
+        ];
+
+        const breathGuide = document.getElementById('breath-guide');
+        const cycleDuration = 14000; // 14 seconds
+
+        function updateBreathText() {
+            const now = Date.now();
+            const progress = ((now % cycleDuration) / cycleDuration) * 100;
+
+            for (const phase of breathTexts) {
+                if (progress >= phase.start && progress < phase.end) {
+                    if (breathGuide.textContent !== phase.text) {
+                        breathGuide.textContent = phase.text;
+                        breathGuide.style.animation = 'none';
+                        breathGuide.offsetHeight; // trigger reflow
+                        breathGuide.style.animation = 'fade-in 0.6s ease-out';
+                    }
+                    break;
+                }
+            }
+        }
+
+        setInterval(updateBreathText, 200);
+        updateBreathText();
+
+        // Mode card interactions
+        const modeCards = document.querySelectorAll('.glass-card');
+        modeCards.forEach((card, index) => {
+            card.addEventListener('click', () => {
+                modeCards.forEach(c => c.classList.remove('mode-card-active'));
+                const checkIcon = card.querySelector('.absolute.top-2.right-2');
+                if (!checkIcon) {
+                    card.classList.add('mode-card-active');
+                }
+            });
+        });
+
+        // Filter pill interactions
+        const filterPills = document.querySelectorAll('.filter-pill');
+        filterPills.forEach(pill => {
+            pill.addEventListener('click', () => {
+                filterPills.forEach(p => {
+                    p.classList.remove('filter-pill-active');
+                    p.classList.add('filter-pill-inactive');
+                });
+                pill.classList.add('filter-pill-active');
+                pill.classList.remove('filter-pill-inactive');
+            });
+        });
+    </script>
+</body>
+</html>
