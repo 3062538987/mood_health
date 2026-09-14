@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理首页 · 管理后台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  .dash-date {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid var(--line-strong); border-radius: 10px;
+    background: #fff; padding: 9px 14px; font-size: 14px; color: var(--ink);
+  }
+  .dash-date i { color: var(--ink-mute); font-size: 13px; }
+  .dash-date-range { display: flex; align-items: center; gap: 10px; color: var(--ink-mute); }
+  .kpi-heading { font-size: 15px; font-weight: 700; margin: 22px 0 12px; color: var(--ink); }
+  .kpi-row1 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 14px; }
+  .kpi-row2 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 14px; margin-top: 14px; }
+  .chart-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .chart-toggle { display: flex; gap: 8px; }
+  .chart-toggle button { border-radius: 8px; padding: 8px 18px; font-size: 13px; font-weight: 600; }
+  .chart-toggle .on { background: var(--primary); color: #fff; border: 1px solid var(--primary); }
+  .chart-toggle .off { background: #fff; color: var(--ink-soft); border: 1px solid var(--line-strong); }
+  .panel-trend { height: 300px; display: flex; flex-direction: column; }
+  .chart-body { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--ink-mute); font-size: 14px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+</style>
+</head>
+<body>
+<div class="desktop">
+
+  <nav class="top-nav">
+    <a href="#"><i class="fa-solid fa-house ic"></i>首页</a>
+    <a href="#"><i class="fa-solid fa-face-smile ic"></i>情绪</a>
+    <a href="#"><i class="fa-solid fa-leaf ic"></i>放松</a>
+    <a href="#"><i class="fa-solid fa-chart-line ic"></i>提升</a>
+    <a href="#"><i class="fa-solid fa-heart ic"></i>咨询</a>
+    <a href="#"><i class="fa-solid fa-robot ic"></i>AI知识助手</a>
+    <a href="#"><i class="fa-solid fa-user ic"></i>我的</a>
+    <a href="#" class="active"><i class="fa-solid fa-users-gear ic"></i>管理后台</a>
+    <span class="spacer"></span>
+    <span class="user-name">demo_super_admin</span>
+    <a href="#" class="logout"><i class="fa-solid fa-right-from-bracket"></i> 退出</a>
+  </nav>
+
+  <div class="crumb-bar">
+    <div class="left"><i class="fa-solid fa-house ic"></i>管理首页</div>
+    <div class="right">
+      <i class="fa-solid fa-circle-user" style="color:var(--primary)"></i>
+      <span>demo_super_admin</span>
+      <span class="role-tag">super_admin</span>
+    </div>
+  </div>
+
+  <div class="admin-body">
+    <aside class="sidebar">
+      <div class="sidebar-head">
+        <span><i class="fa-solid fa-users ic"></i> 管理后台</span>
+        <i class="fa-solid fa-chevron-left collapse"></i>
+      </div>
+      <nav class="side-menu">
+        <a href="dashboard.html" class="active"><i class="fa-solid fa-gauge-high ic"></i>管理首页</a>
+        <a href="users.html"><i class="fa-solid fa-users-cog ic"></i>用户管理</a>
+        <a href="user-moods.html"><i class="fa-solid fa-chart-line ic"></i>用户情绪数据</a>
+        <a href="moods.html"><i class="fa-solid fa-face-smile ic"></i>情绪记录</a>
+        <a href="posts.html"><i class="fa-solid fa-clipboard-check ic"></i>帖子审核</a>
+        <a href="treehole-audit.html"><i class="fa-solid fa-tree ic"></i>树洞审核</a>
+        <a href="#"><i class="fa-solid fa-heart-circle-exclamation ic"></i>风险个案</a>
+        <a href="#"><i class="fa-solid fa-book-medical ic"></i>课程管理</a>
+        <a href="#"><i class="fa-solid fa-music ic"></i>音乐管理</a>
+        <a href="#"><i class="fa-solid fa-file-shield ic"></i>审计日志</a>
+        <a href="#"><i class="fa-solid fa-chart-bar ic"></i>活动统计</a>
+      </nav>
+      <div class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> 退出登录</div>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-h">
+        <h2>管理驾驶舱</h2>
+        <div class="dash-date-range">
+          <span class="dash-date">2026/09/07 <i class="fa-regular fa-calendar"></i></span>
+          <span>~</span>
+          <span class="dash-date">2026/09/14 <i class="fa-regular fa-calendar"></i></span>
+        </div>
+      </div>
+
+      <div class="kpi-heading">关键指标</div>
+
+      <div class="kpi-row1">
+        <div class="stat"><div class="lab">用户总数</div><div class="num">6</div></div>
+        <div class="stat"><div class="lab">情绪记录</div><div class="num">0</div></div>
+        <div class="stat"><div class="lab">测评次数</div><div class="num">0</div></div>
+        <div class="stat"><div class="lab">社区内容</div><div class="num">0</div><div class="sub">待审核 0</div></div>
+        <div class="stat"><div class="lab">活动数</div><div class="num">0</div></div>
+        <div class="stat"><div class="lab">AI 调用</div><div class="num">0</div></div>
+        <div class="stat"><div class="lab">放松练习</div><div class="num">0</div></div>
+      </div>
+      <div class="kpi-row2">
+        <div class="stat"><div class="lab">参与用户</div><div class="num">0</div><div class="sub">情绪记录用户</div></div>
+      </div>
+
+      <div class="panel panel-trend" style="margin-top:18px;">
+        <div class="chart-h">
+          <div class="panel-title" style="margin-bottom:0;">情绪趋势</div>
+          <div class="chart-toggle">
+            <button class="on">按日</button>
+            <button class="off">按周</button>
+          </div>
+        </div>
+        <div class="chart-body">还没有情绪趋势数据</div>
+      </div>
+
+      <div class="two-col">
+        <div class="panel" style="height:300px; margin-bottom:18px;">
+          <div class="panel-title">情绪分布</div>
+          <div class="chart-body" style="height:240px;">还没有情绪分布数据</div>
+        </div>
+        <div class="panel" style="height:300px; margin-bottom:18px;">
+          <div class="panel-title">模块使用</div>
+        </div>
+      </div>
+
+      <div class="panel" style="height:300px;">
+        <div class="panel-title">测评分布</div>
+        <div class="chart-body" style="height:240px;">还没有测评数据</div>
+      </div>
+
+      <div class="copyright">© 2025 情绪健康平台 版权所有</div>
+    </main>
+  </div>
+
+</div>
+</body>
+</html>

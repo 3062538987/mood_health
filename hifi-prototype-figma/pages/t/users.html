@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>用户管理 · 管理后台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  .table-card { background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  .tbl .ops-cell { display:flex; gap:8px; }
+  .mini-btn { padding:7px 14px; font-size:13px; border-radius:8px; font-weight:500; }
+</style>
+</head>
+<body>
+<div class="desktop">
+
+  <nav class="top-nav">
+    <a href="#"><i class="fa-solid fa-house ic"></i>首页</a>
+    <a href="#"><i class="fa-solid fa-face-smile ic"></i>情绪</a>
+    <a href="#"><i class="fa-solid fa-leaf ic"></i>放松</a>
+    <a href="#"><i class="fa-solid fa-chart-line ic"></i>提升</a>
+    <a href="#"><i class="fa-solid fa-heart ic"></i>咨询</a>
+    <a href="#"><i class="fa-solid fa-robot ic"></i>AI知识助手</a>
+    <a href="#"><i class="fa-solid fa-user ic"></i>我的</a>
+    <a href="#" class="active"><i class="fa-solid fa-users-gear ic"></i>管理后台</a>
+    <span class="spacer"></span>
+    <span class="user-name">demo_super_admin</span>
+    <a href="#" class="logout"><i class="fa-solid fa-right-from-bracket"></i> 退出</a>
+  </nav>
+
+  <div class="crumb-bar">
+    <div class="left"><i class="fa-solid fa-house ic"></i>用户管理</div>
+    <div class="right">
+      <i class="fa-solid fa-circle-user" style="color:var(--primary)"></i>
+      <span>demo_super_admin</span>
+      <span class="role-tag">super_admin</span>
+    </div>
+  </div>
+
+  <div class="admin-body">
+    <aside class="sidebar">
+      <div class="sidebar-head">
+        <span><i class="fa-solid fa-users ic"></i> 管理后台</span>
+        <i class="fa-solid fa-chevron-left collapse"></i>
+      </div>
+      <nav class="side-menu">
+        <a href="dashboard.html"><i class="fa-solid fa-gauge-high ic"></i>管理首页</a>
+        <a href="users.html" class="active"><i class="fa-solid fa-users-cog ic"></i>用户管理</a>
+        <a href="user-moods.html"><i class="fa-solid fa-chart-line ic"></i>用户情绪数据</a>
+        <a href="moods.html"><i class="fa-solid fa-face-smile ic"></i>情绪记录</a>
+        <a href="posts.html"><i class="fa-solid fa-clipboard-check ic"></i>帖子审核</a>
+        <a href="treehole-audit.html"><i class="fa-solid fa-tree ic"></i>树洞审核</a>
+        <a href="#"><i class="fa-solid fa-heart-circle-exclamation ic"></i>风险个案</a>
+        <a href="#"><i class="fa-solid fa-book-medical ic"></i>课程管理</a>
+        <a href="#"><i class="fa-solid fa-music ic"></i>音乐管理</a>
+        <a href="#"><i class="fa-solid fa-file-shield ic"></i>审计日志</a>
+        <a href="#"><i class="fa-solid fa-chart-bar ic"></i>活动统计</a>
+      </nav>
+      <div class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> 退出登录</div>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-h">
+        <h2>用户权限管理</h2>
+        <div class="ops">
+          <button class="btn btn-sm btn-outline-blue"><i class="fa-solid fa-rotate"></i> 刷新</button>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>ID</th><th>用户名</th><th>邮箱</th><th>角色</th><th>创建时间</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>99999002</td>
+              <td>demo_support_admin</td>
+              <td>demo.support.admin@example.invalid</td>
+              <td><select class="role-select"><option selected>super_admin</option><option>admin</option><option>user</option></select></td>
+              <td>2026/8/13 01:35:41</td>
+              <td><div class="ops-cell"><button class="mini-btn btn-outline-blue">保存</button><button class="mini-btn btn-outline-danger">删除</button></div></td>
+            </tr>
+            <tr>
+              <td>21</td>
+              <td>aitest_chain</td>
+              <td>aitest_chain_1786035493975f27f8c@temp.user</td>
+              <td><select class="role-select"><option selected>user</option><option>admin</option><option>super_admin</option></select></td>
+              <td>2026/8/7 00:58:13</td>
+              <td><div class="ops-cell"><button class="mini-btn btn-outline-blue">保存</button><button class="mini-btn btn-outline-danger">删除</button></div></td>
+            </tr>
+            <tr>
+              <td>20</td>
+              <td>aitest_user</td>
+              <td>aitest_user_178603544321063e290@temp.user</td>
+              <td><select class="role-select"><option selected>user</option><option>admin</option><option>super_admin</option></select></td>
+              <td>2026/8/7 00:57:23</td>
+              <td><div class="ops-cell"><button class="mini-btn btn-outline-blue">保存</button><button class="mini-btn btn-outline-danger">删除</button></div></td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>demo_super_admin</td>
+              <td>demo.superadmin@example.invalid</td>
+              <td><select class="role-select"><option selected>super_admin</option><option>admin</option><option>user</option></select></td>
+              <td>2026/8/2 13:26:25</td>
+              <td><div class="ops-cell"><button class="mini-btn btn-outline-blue">保存</button><button class="mini-btn btn-outline-danger">删除</button></div></td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>demo_counselor</td>
+              <td>demo.counselor@example.invalid</td>
+              <td><select class="role-select"><option selected>admin</option><option>user</option><option>super_admin</option></select></td>
+              <td>2026/8/2 13:26:25</td>
+              <td><div class="ops-cell"><button class="mini-btn btn-outline-blue">保存</button><button class="mini-btn btn-outline-danger">删除</button></div></td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>demo_student</td>
+              <td>demo.student@example.invalid</td>
+              <td><select class="role-select"><option selected>user</option><option>admin</option><option>super_admin</option></select></td>
+              <td>2026/8/2 13:26:25</td>
+              <td><div class="ops-cell"><button class="mini-btn btn-outline-blue">保存</button><button class="mini-btn btn-outline-danger">删除</button></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="copyright">© 2025 情绪健康平台 版权所有</div>
+    </main>
+  </div>
+
+</div>
+</body>
+</html>
