@@ -14,8 +14,8 @@
   /* 竖排窄字子导航 */
   .vnav { display: flex; background: #f4f8f4; border-bottom: 1px solid #e7efe7; position: relative; }
   .vnav a {
-    flex: 1; display: flex; flex-direction: row; align-items: center; justify-content: center;
-    gap: 5px; padding: 16px 4px 14px; color: #7c8a7c; font-size: 13px; position: relative;
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    gap: 5px; padding: 10px 2px 12px; color: #7c8a7c; font-size: 12px; position: relative;
   }
   .vnav a .ic { font-size: 19px; line-height: 1; }
   .vnav a .vt { writing-mode: vertical-rl; letter-spacing: 4px; line-height: 1.05; }
@@ -27,10 +27,9 @@
 
   /* 错误提示浮条 */
   .error-toast {
-    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
-    z-index: 20; display: flex; align-items: center; gap: 10px;
+    display: flex; align-items: center; gap: 10px;
     background: #fdeceb; border: 1px solid #f6d2ce; border-radius: 12px;
-    padding: 11px 18px; width: 300px;
+    padding: 11px 16px; width: 100%; margin-bottom: 16px;
     box-shadow: 0 6px 18px rgba(200,90,70,.14);
   }
   .error-toast .x {
@@ -118,10 +117,6 @@
 <body>
 <div class="phone">
   <nav class="vnav">
-    <div class="error-toast">
-      <span class="x"><i class="fa-solid fa-xmark"></i></span>
-      <span>获取帖子列表失败，请稍后重试</span>
-    </div>
     <a href="#"><span class="ic"><i class="fa-solid fa-headphones"></i></span><span class="vt">解压中心</span></a>
     <a href="#"><span class="ic"><i class="fa-solid fa-clock-rotate-left"></i></span><span class="vt">放松历史</span></a>
     <a href="#"><span class="ic"><i class="fa-solid fa-trophy"></i></span><span class="vt">成就中心</span></a>
@@ -130,6 +125,10 @@
   </nav>
 
   <div class="wrap">
+    <div class="error-toast">
+      <span class="x"><i class="fa-solid fa-xmark"></i></span>
+      <span>获取帖子列表失败，请稍后重试</span>
+    </div>
     <div class="post-card">
       <h2 class="serif">分享你的心事</h2>
       <div class="audit-bar">

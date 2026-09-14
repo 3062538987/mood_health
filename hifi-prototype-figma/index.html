@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高保真原型总览 · 情绪健康平台</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; background:#efe9e1; color:#2b2620; }
+  header { padding:40px 48px 24px; }
+  header h1 { font-size:30px; font-weight:700; }
+  header p { margin-top:8px; color:#7c7468; font-size:15px; }
+  .legend { display:flex; gap:20px; margin-top:16px; font-size:13px; color:#7c7468; }
+  .legend span { display:inline-flex; align-items:center; gap:7px; }
+  .dot { width:11px; height:11px; border-radius:3px; display:inline-block; }
+  .dot.s { background:#e8823c; } .dot.t { background:#26323f; }
+
+  section { padding:8px 48px 40px; }
+  .sec-title { font-size:20px; font-weight:700; margin:18px 0 20px; display:flex; align-items:center; gap:10px; }
+  .sec-title small { font-size:13px; font-weight:400; color:#9a9184; }
+
+  .grid-s { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:34px 28px; }
+  .grid-t { display:grid; grid-template-columns:repeat(auto-fill,minmax(420px,1fr)); gap:34px 28px; }
+
+  .card { display:flex; flex-direction:column; }
+  .card .cap { font-size:14px; font-weight:600; margin-bottom:10px; color:#3a342c; display:flex; justify-content:space-between; }
+  .card .cap em { font-style:normal; font-weight:400; color:#a29a8d; font-size:12px; }
+  .frame { background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(80,60,30,.14); border:1px solid #e2dbd0; }
+  .frame iframe { border:0; display:block; width:100%; background:#fff; pointer-events:none; }
+
+  .frame.phone { border-radius:22px; }
+  .frame.phone iframe { height:600px; }
+  .frame.desktop iframe { height:300px; }
+
+  a.open { color:#c9742f; text-decoration:none; font-size:12px; font-weight:500; }
+  a.open:hover { text-decoration:underline; }
+</style>
+</head>
+<body>
+<header>
+  <h1>情绪健康平台 · 高保真原型总览</h1>
+  <p>共 26 屏：学生端 14 屏（移动端 390px）· 教师端 12 屏（桌面端 1440px）。点击卡片右上角可打开单页，用于逐屏导入 Figma 对照。</p>
+  <div class="legend">
+    <span><i class="dot s"></i>学生端 / 移动</span>
+    <span><i class="dot t"></i>教师端 / 桌面</span>
+  </div>
+</header>
+
+<section>
+  <div class="sec-title">学生端 <small>移动端 · 390 × 844</small></div>
+  <div class="grid-s" id="gridS"></div>
+</section>
+
+<section>
+  <div class="sec-title">教师端 <small>桌面管理后台 · 1440 宽</small></div>
+  <div class="grid-t" id="gridT"></div>
+</section>
+
+<script>
+  const student = [
+    ['login','登录'],['register','注册'],['home','首页'],['mood-record','情绪记录'],
+    ['mood-archive','情绪档案'],['mood-insight','情绪洞察'],['mood-analysis','情绪分析'],
+    ['relax-center','解压中心'],['treehole','树洞'],['music','音乐疗愈'],
+    ['counseling','心理咨询'],['group','互助小组'],['survey','心理测评'],['profile','个人中心']
+  ];
+  const teacher = [
+    ['dashboard','管理驾驶舱'],['users','用户管理'],['user-moods','用户情绪数据'],['moods','情绪记录'],
+    ['posts','帖子审核'],['treehole-audit','树洞审核'],['cases','风险个案'],['case-detail','个案详情'],
+    ['courses','课程管理'],['music-manage','音乐管理'],['audit-logs','审计日志'],['activity-stats','活动统计']
+  ];
+  function render(list, kind, gridId, frameCls){
+    const wrap = document.getElementById(gridId);
+    list.forEach(([file,label],i)=>{
+      const n = String(i+1).padStart(2,'0');
+      const card = document.createElement('div'); card.className='card';
+      const designW = kind==='s' ? 390 : 1440;
+      const designH = kind==='s' ? 844 : 900;
+      card.innerHTML = `
+        <div class="cap"><span>${n} · ${label}</span><a class="open" href="pages/${kind}/${file}.html" target="_blank">打开 ↗</a></div>
+        <div class="frame ${frameCls}"><iframe loading="lazy" src="pages/${kind}/${file}.html" scrolling="no"
+          style="width:${designW}px;height:${designH}px;"></iframe></div>`;
+      wrap.appendChild(card);
+    });
+  }
+  render(student,'s','gridS','phone');
+  render(teacher,'t','gridT','desktop');
+
+  function fit(){
+    document.querySelectorAll('.frame').forEach(frame=>{
+      const f = frame.classList.contains('phone') ? 390 : 1440;
+      const h = f===390 ? 844 : 900;
+      const scale = frame.clientWidth / f;
+      const ifr = frame.querySelector('iframe');
+      ifr.style.transform = `scale(${scale})`;
+      ifr.style.transformOrigin = 'top left';
+      ifr.style.position = 'absolute';
+      ifr.style.top='0'; ifr.style.left='0';
+      frame.style.position='relative';
+      frame.style.height = (h*scale)+'px';
+    });
+  }
+  window.addEventListener('load', fit);
+  window.addEventListener('resize', fit);
+  setTimeout(fit, 400);
+</script>
+</body>
+</html>
