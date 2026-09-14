@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>情绪记录 - 情绪健康平台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  body { overflow-x: hidden; }
+  .page { padding: 18px 16px 0; }
+
+  /* 统一大卡 */
+  .m-card {
+    background: #fffdf8;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    box-shadow: var(--sh-card);
+    padding: 28px 22px;
+    margin-bottom: 22px;
+  }
+  .m-card.white { background: #fff; }
+
+  .eyebrow-en {
+    font-size: 15px; letter-spacing: .14em; font-weight: 700;
+    color: #b3a897; margin-bottom: 14px;
+  }
+  .lead-title {
+    font-family: var(--font-serif);
+    font-size: 30px; font-weight: 700; line-height: 1.42;
+    color: var(--ink); margin-bottom: 20px;
+  }
+  .lead-desc { font-size: 15px; color: #a99e90; line-height: 1.8; margin-bottom: 28px; }
+
+  /* 三个统计块 */
+  .stat-block {
+    background: #f9f1e7;
+    border-radius: 22px;
+    padding: 22px 26px 24px;
+    margin-bottom: 14px;
+  }
+  .stat-block:last-child { margin-bottom: 0; }
+  .stat-block .n { font-size: 32px; font-weight: 800; color: var(--primary-deep); line-height: 1.1; }
+  .stat-block .t { font-size: 16px; color: #a99e90; margin-top: 8px; }
+
+  /* 情绪类型 */
+  .section-title {
+    font-family: var(--font-serif);
+    font-size: 23px; font-weight: 700; color: var(--ink);
+    text-align: center; margin-bottom: 20px;
+  }
+  .mood-group { margin-bottom: 22px; }
+  .mood-group:last-child { margin-bottom: 0; }
+  .mood-group h3 { font-size: 17px; font-weight: 700; color: var(--ink); margin-bottom: 12px; }
+  .mood-row {
+    display: grid; grid-template-columns: 1fr 76px; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .mood-row:last-child { margin-bottom: 0; }
+  .mood-main {
+    border-radius: 18px;
+    min-height: 96px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px;
+    font-size: 18px; font-weight: 500;
+  }
+  .mood-main .e { font-size: 36px; line-height: 1; }
+  .mood-side { border-radius: 18px; min-height: 96px; }
+  .y { background: var(--emo-yellow); border: 1.5px solid #f0d39a; color: #4a4034; }
+  .b { background: var(--emo-blue); border: 1.5px solid #a9c6e6; color: #3f3a34; }
+  .p { background: var(--emo-pink); border: 1.5px solid #efb3c0; color: #463a3d; }
+  .b.light-text { color: #fff; }
+  .p.light-text { color: #fff; }
+  .sy { background: var(--emo-side-y); border: 1.5px solid #bfe4b9; }
+  .sb { background: var(--emo-side-b); border: 1.5px solid #c8bde6; }
+  .sp { background: var(--emo-side-p); border: 1.5px solid #ecc9aa; }
+
+  /* 情绪强度 */
+  .card-head { margin-bottom: 22px; }
+  .card-head h2 {
+    font-family: var(--font-serif);
+    font-size: 24px; font-weight: 700; color: var(--ink); margin-bottom: 10px;
+  }
+  .card-head p { font-size: 15px; color: #a99e90; }
+
+  .intensity-box {
+    width: 158px;
+    background: var(--primary-soft);
+    border-radius: 22px;
+    padding: 20px 16px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .intensity-box .ie { font-size: 30px; }
+  .intensity-box .iv { font-size: 30px; font-weight: 800; color: var(--primary-deep); margin: 6px 0 4px; }
+  .intensity-box .il { font-size: 15px; color: #a99e90; }
+
+  .intensity-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
+    margin-bottom: 26px;
+  }
+  .intensity-grid button {
+    aspect-ratio: 1; border-radius: 15px;
+    background: #fcf2e8; border: 1.5px solid #f3e4d3;
+    font-size: 18px; font-weight: 600; color: var(--ink-soft);
+  }
+  .intensity-grid button.on {
+    background: var(--primary); border-color: var(--primary);
+    color: #fff; font-weight: 800;
+    box-shadow: 0 6px 14px rgba(232,131,74,.3);
+  }
+
+  .slider {
+    position: relative; height: 10px; border-radius: 5px;
+    background: linear-gradient(to right, var(--primary) 0%, var(--primary) 58%, #4a4641 58%, #4a4641 100%);
+    margin: 6px 0 18px;
+  }
+  .slider .knob {
+    position: absolute; left: 58%; top: 50%;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--primary);
+    transform: translate(-50%, -50%);
+    box-shadow: 0 3px 8px rgba(232,131,74,.4);
+  }
+  .slider-labels {
+    display: flex; justify-content: space-between;
+    font-size: 15px; color: #a99e90;
+  }
+
+  /* 情绪描述 / 触发因素：居中标题 */
+  .center-head { text-align: center; margin-bottom: 20px; }
+  .center-head h2 {
+    font-family: var(--font-serif);
+    font-size: 25px; font-weight: 700; color: var(--ink); margin-bottom: 10px;
+  }
+  .center-head p { font-size: 15px; color: #a99e90; }
+  .counter-pill {
+    display: inline-block;
+    background: #fbebdf;
+    color: #b09f8d;
+    font-size: 16px;
+    border-radius: var(--r-pill);
+    padding: 9px 26px;
+    margin-bottom: 22px;
+  }
+  .center-col { display: flex; flex-direction: column; align-items: center; }
+  .soft-divider { height: 1.5px; background: #eee3d4; margin-bottom: 22px; }
+
+  .desc-textarea {
+    width: 100%; min-height: 250px;
+    border: 1.5px solid #e7dccb;
+    border-radius: 20px;
+    background: #fff;
+    padding: 20px 22px;
+    font-family: inherit; font-size: 16px; color: var(--ink);
+    line-height: 1.8; resize: none;
+  }
+  .desc-textarea::placeholder { color: #b3a89a; }
+
+  /* 触发因素 */
+  .trigger-input {
+    width: 100%; height: 58px;
+    border: 1.5px solid #e7dccb;
+    border-radius: 18px;
+    background: #fff;
+    padding: 0 20px;
+    font-family: inherit; font-size: 14px; color: var(--ink);
+    margin-bottom: 18px;
+  }
+  .trigger-input::placeholder { color: #9b9083; }
+  .btn-add {
+    width: 100%; height: 56px;
+    border-radius: var(--r-pill);
+    background: #fcebdc;
+    color: var(--ink);
+    font-size: 19px; font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .trigger-tags { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .trigger-tags .chip3 {
+    background: #fcebdc;
+    border-radius: var(--r-pill);
+    text-align: center;
+    padding: 13px 0;
+    font-size: 17px; color: var(--ink);
+  }
+
+  /* 周期对比 */
+  .compare-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
+  .compare-head h2 { font-family: var(--font-serif); font-size: 23px; font-weight: 700; }
+  .compare-switch {
+    display: flex; border: 1.5px solid #d8dde6; border-radius: 10px; overflow: hidden;
+  }
+  .compare-switch button {
+    padding: 9px 14px; font-size: 14px; font-weight: 500;
+    background: #fff; color: #6b6258;
+  }
+  .compare-switch button.on { background: var(--blue); color: #fff; font-weight: 700; }
+  .compare-empty { font-size: 16px; color: #a99e90; line-height: 1.9; padding-bottom: 40px; }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <nav class="subnav">
+    <a class="subnav-item active" href="mood-record.html"><i class="fa-solid fa-pencil ic"></i><span>情绪记录</span></a>
+    <a class="subnav-item" href="mood-archive.html"><i class="fa-solid fa-box-archive ic"></i><span>情绪档案</span></a>
+    <a class="subnav-item" href="mood-insight.html"><i class="fa-solid fa-lightbulb ic"></i><span>情绪洞察</span></a>
+    <a class="subnav-item" href="mood-analysis.html"><i class="fa-solid fa-chart-pie ic"></i><span>情绪分析</span></a>
+  </nav>
+
+  <div class="page">
+
+    <!-- 记录头部 + 统计 -->
+    <section class="m-card">
+      <p class="eyebrow-en">MOOD RECORD</p>
+      <h1 class="lead-title">把今天的情绪，温柔但清楚地记下来</h1>
+      <p class="lead-desc">先记录情绪，再决定要不要解决它。这里会帮你把感受、触发因素和个人 记录整理成一条更清楚的路径。</p>
+
+      <div class="stat-block">
+        <div class="n">0%</div>
+        <div class="t">记录完成度</div>
+      </div>
+      <div class="stat-block">
+        <div class="n">0</div>
+        <div class="t">已选情绪</div>
+      </div>
+      <div class="stat-block">
+        <div class="n">0</div>
+        <div class="t">触发因素</div>
+      </div>
+    </section>
+
+    <!-- 情绪类型 -->
+    <section class="m-card">
+      <h2 class="section-title">情绪类型</h2>
+
+      <div class="mood-group">
+        <h3>强烈情绪</h3>
+        <div class="mood-row">
+          <div class="mood-main y"><span class="e">😆</span><span>狂喜</span></div>
+          <div class="mood-side sy"></div>
+        </div>
+        <div class="mood-row">
+          <div class="mood-main b light-text"><span class="e">😱</span><span>惊愕</span></div>
+          <div class="mood-side sb"></div>
+        </div>
+        <div class="mood-row">
+          <div class="mood-main p light-text"><span class="e">😡</span><span>愤怒</span></div>
+          <div class="mood-side sp"></div>
+        </div>
+      </div>
+
+      <div class="mood-group">
+        <h3>复合情绪</h3>
+        <div class="mood-row">
+          <div class="mood-main y"><span class="e">🥰</span><span>愉悦</span></div>
+          <div class="mood-side sy"></div>
+        </div>
+        <div class="mood-row">
+          <div class="mood-main b"><span class="e">🎉</span><span>惊喜</span></div>
+          <div class="mood-side sb"></div>
+        </div>
+        <div class="mood-row">
+          <div class="mood-main p"><span class="e">😤</span><span>生气</span></div>
+          <div class="mood-side sp"></div>
+        </div>
+      </div>
+
+      <div class="mood-group">
+        <h3>基础情绪</h3>
+        <div class="mood-row">
+          <div class="mood-main y"><span class="e">😌</span><span>平静</span></div>
+          <div class="mood-side sy"></div>
+        </div>
+        <div class="mood-row">
+          <div class="mood-main b"><span class="e">🎮</span><span>娱乐</span></div>
+          <div class="mood-side sb"></div>
+        </div>
+        <div class="mood-row">
+          <div class="mood-main p"><span class="e">😣</span><span>烦恼</span></div>
+          <div class="mood-side sp"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 情绪强度 -->
+    <section class="m-card">
+      <div class="card-head">
+        <h2>情绪强度</h2>
+        <p>今天的情绪能量大概在哪个刻度</p>
+      </div>
+
+      <div class="intensity-box">
+        <div class="ie">🌤️</div>
+        <div class="iv">6/10</div>
+        <div class="il">中段平衡</div>
+      </div>
+
+      <div class="intensity-grid">
+        <button>1</button><button>2</button><button>3</button><button>4</button><button>5</button>
+        <button class="on">6</button><button>7</button><button>8</button><button>9</button><button>10</button>
+      </div>
+
+      <div class="slider"><span class="knob"></span></div>
+      <div class="slider-labels"><span>低落</span><span>平稳</span><span>高能量</span></div>
+    </section>
+
+    <!-- 情绪描述 -->
+    <section class="m-card">
+      <div class="center-head">
+        <h2>情绪描述</h2>
+        <p>先说说，今天发生了什么</p>
+      </div>
+      <div class="center-col">
+        <span class="counter-pill">0/300</span>
+      </div>
+      <div class="soft-divider"></div>
+      <textarea class="desc-textarea" placeholder="从一件小事开始：今天什么时候开始觉得不舒服？"></textarea>
+    </section>
+
+    <!-- 触发因素 -->
+    <section class="m-card">
+      <div class="center-head">
+        <h2>触发因素</h2>
+        <p>给今天的情绪加几个关键词</p>
+      </div>
+      <div class="soft-divider"></div>
+      <input class="trigger-input" type="text" placeholder="比如：考试、熬夜、家庭、朋友、工作...">
+      <button class="btn-add">添加</button>
+      <div class="trigger-tags">
+        <span class="chip3">+ 考试</span>
+        <span class="chip3">+ 作业</span>
+        <span class="chip3">+ 熬夜</span>
+        <span class="chip3">+ 社交</span>
+        <span class="chip3">+ 家庭</span>
+        <span class="chip3">+ 工作</span>
+      </div>
+    </section>
+
+    <!-- 周期对比 -->
+    <section class="m-card white">
+      <div class="compare-head">
+        <h2>周期对比</h2>
+        <div class="compare-switch">
+          <button class="on">本周 vs 上周</button>
+          <button>本月 vs 上月</button>
+        </div>
+      </div>
+      <p class="compare-empty">两个周期均无记录，开始记录后可查看趋势对比。</p>
+    </section>
+
+    <div class="copyright">© 2025 情绪健康平台 版权所有</div>
+  </div>
+
+  <nav class="tabbar">
+    <a class="tab-item" href="home.html"><i class="fa-solid fa-house ic"></i><span>首页</span></a>
+    <a class="tab-item active" href="mood-record.html"><i class="fa-solid fa-face-smile ic"></i><span>情绪</span></a>
+    <a class="tab-item" href="relax-center.html"><i class="fa-solid fa-leaf ic"></i><span>放松</span></a>
+    <a class="tab-item" href="#"><i class="fa-solid fa-chart-line ic"></i><span>提升</span></a>
+    <a class="tab-item" href="#"><i class="fa-solid fa-ellipsis ic"></i><span>更多</span></a>
+  </nav>
+
+</div>
+</body>
+</html>

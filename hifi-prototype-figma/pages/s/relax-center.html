@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>解压中心 - 情绪健康平台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  body { overflow-x: hidden; }
+  .wrap { padding: 22px 20px 0; }
+
+  /* 竖排窄字子导航 */
+  .vnav { display: flex; background: #f4f8f4; border-bottom: 1px solid #e7efe7; }
+  .vnav a {
+    flex: 1; display: flex; flex-direction: row; align-items: center; justify-content: center;
+    gap: 5px; padding: 16px 4px 14px; color: #7c8a7c; font-size: 13px; position: relative;
+  }
+  .vnav a .ic { font-size: 19px; line-height: 1; }
+  .vnav a .vt { writing-mode: vertical-rl; letter-spacing: 4px; line-height: 1.05; }
+  .vnav a.active { color: var(--green-deep); font-weight: 700; }
+  .vnav a.active::after {
+    content: ''; position: absolute; bottom: 0; left: 26%; right: 26%;
+    height: 3px; border-radius: 3px; background: var(--green-deep);
+  }
+
+  .page-head { text-align: center; margin: 26px 0 22px; }
+  .page-head h1 { font-size: 36px; letter-spacing: 4px; }
+  .page-head p { color: var(--ink-mute); font-size: 14.5px; margin-top: 12px; }
+
+  .filters { display: flex; justify-content: center; gap: 16px; margin-bottom: 22px; }
+  .filters .chip {
+    padding: 12px 26px; font-size: 16px; border-radius: var(--r-pill);
+    background: #fff; border: 1.5px solid var(--line-strong); color: var(--ink-soft); font-weight: 500;
+  }
+  .filters .chip.on {
+    background: var(--primary); border-color: var(--primary); color: #fff;
+    font-weight: 700; box-shadow: var(--sh-btn);
+  }
+
+  /* 音频卡 */
+  .audio-card { background: #fff; border: 1px solid var(--line); border-radius: var(--r-lg);
+    box-shadow: var(--sh-soft); padding: 20px 18px; margin-bottom: 22px; }
+  .audio-row1 { display: flex; align-items: center; gap: 12px; }
+  .audio-row1 .lab { font-size: 16px; color: var(--ink); font-weight: 700; white-space: nowrap; }
+  .audio-select {
+    flex: 1; display: flex; align-items: center; justify-content: space-between;
+    border: 1.5px solid #d8e0e8; background: #fff; border-radius: 10px;
+    padding: 13px 16px; font-size: 17px; color: var(--ink);
+  }
+  .audio-select i { color: #2b3440; font-size: 15px; }
+  .audio-row2 { display: flex; align-items: center; gap: 14px; margin-top: 18px; }
+  .play-btn {
+    width: 62px; height: 62px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(145deg, #3aa877, #247a58);
+    color: #fff; font-size: 20px; display: flex; align-items: center; justify-content: center;
+    padding-left: 4px; box-shadow: 0 6px 14px rgba(36,122,88,.3);
+  }
+  .dots { display: flex; gap: 6px; flex: 1; padding-left: 14px; }
+  .dots span { width: 6px; height: 6px; border-radius: 50%; background: #d9d3c9; }
+  .vol-ic { font-size: 22px; color: #9aa6b8; }
+  .toggle {
+    width: 96px; height: 44px; border-radius: 10px; background: #e6eaee;
+    display: flex; align-items: center; justify-content: flex-end; padding: 0 8px;
+  }
+  .toggle .knob { width: 30px; height: 30px; border-radius: 50%; background: #35b97a;
+    box-shadow: 0 2px 6px rgba(0,0,0,.18); }
+
+  /* 方式卡 2 列 */
+  .method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }
+  .method {
+    background: #fdf9f3; border: 1.5px solid var(--line); border-radius: var(--r-lg);
+    padding: 22px 10px 18px; text-align: center;
+  }
+  .method.sel { background: #fbeadd; border: 2.5px solid var(--primary); padding: 20.5px 8.5px 16.5px; }
+  .method .m-emo {
+    width: 72px; height: 72px; margin: 0 auto 14px; border-radius: 18px;
+    background: #f4ece2; display: flex; align-items: center; justify-content: center; font-size: 40px;
+  }
+  .method h3 { font-family: var(--font-sans); font-size: 19px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+  .method p { font-size: 13.5px; color: var(--ink-mute); line-height: 1.5; min-height: 40px; }
+  .method .tag {
+    display: inline-block; margin-top: 10px; font-size: 13px; font-weight: 700;
+    color: var(--primary-deep); background: #fbe3d0; border-radius: var(--r-pill); padding: 3px 12px;
+  }
+
+  /* 木鱼区 */
+  .fish-card {
+    background: #fff; border: 1px solid var(--line); border-radius: var(--r-lg);
+    box-shadow: var(--sh-soft); padding: 30px 20px 34px; position: relative; margin-bottom: 26px;
+  }
+  .count-badge {
+    position: absolute; top: -15px; right: 14px;
+    background: linear-gradient(135deg, #7b6ce0, #6354cc);
+    color: #fff; font-size: 15px; font-weight: 700; letter-spacing: 1px;
+    padding: 11px 20px; border-radius: 14px 14px 18px 18px;
+    box-shadow: 0 6px 16px rgba(99,84,204,.35); white-space: nowrap;
+  }
+  .count-badge i { font-style: normal; margin-right: 6px; }
+  .fish-stage { display: flex; flex-direction: column; align-items: center; margin: 10px 0 34px; }
+  .fish-dome {
+    width: 236px; height: 158px; border-radius: 50% 50% 46% 46% / 58% 58% 42% 42%;
+    background: radial-gradient(circle at 42% 32%, #d3ab82 0%, #bd9164 55%, #a87a4c 100%);
+    box-shadow: inset 0 -14px 26px rgba(120,78,40,.35), 0 18px 26px rgba(140,98,56,.28);
+    display: flex; align-items: flex-start; justify-content: center; position: relative;
+  }
+  .fish-hole {
+    margin-top: 40px; width: 96px; height: 62px; border-radius: 50%;
+    background: radial-gradient(circle at 44% 38%, #c49b6e, #a57d52);
+    box-shadow: inset 0 5px 10px rgba(110,72,38,.4);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-serif); font-size: 34px; font-weight: 700; color: #4a311c;
+  }
+  .fish-stick {
+    width: 26px; height: 104px; margin-top: -8px;
+    background: linear-gradient(90deg, #8a6318, #c9a22e 45%, #7d5713);
+    border-radius: 0 0 13px 13px;
+    box-shadow: 0 8px 14px rgba(120,80,20,.3);
+  }
+  .target-label { text-align: center; font-size: 18px; color: var(--ink); margin-bottom: 18px; }
+  .target-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .target-grid button {
+    border: 1.5px solid var(--line-strong); background: #f6f7f8; border-radius: 12px;
+    padding: 16px 0; font-size: 18px; color: var(--ink-soft); font-weight: 500;
+  }
+  .target-grid button.on { background: var(--green-deep); border-color: var(--green-deep); color: #fff;
+    font-weight: 700; box-shadow: 0 6px 14px rgba(87,160,127,.3); }
+  .target-confirm { display: flex; gap: 14px; margin-bottom: 24px; }
+  .target-confirm input {
+    flex: 1; border: 1.5px solid var(--line-strong); background: #fff; border-radius: 12px;
+    text-align: center; font-size: 19px; padding: 15px 0; color: var(--ink);
+  }
+  .target-confirm button {
+    width: 128px; border-radius: 12px; background: var(--green-deep); color: #fff;
+    font-size: 19px; font-weight: 700; box-shadow: 0 6px 14px rgba(87,160,127,.3);
+  }
+  .progress { height: 14px; border-radius: var(--r-pill); background: #e7e9ec; margin-bottom: 14px; }
+  .knocked { text-align: center; font-size: 17px; color: var(--ink-mute); }
+  .knocked b { color: var(--ink); font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <nav class="vnav">
+    <a class="active" href="#"><span class="ic"><i class="fa-solid fa-headphones"></i></span><span class="vt">解压中心</span></a>
+    <a href="#"><span class="ic"><i class="fa-solid fa-clock-rotate-left"></i></span><span class="vt">放松历史</span></a>
+    <a href="#"><span class="ic"><i class="fa-solid fa-trophy"></i></span><span class="vt">成就中心</span></a>
+    <a href="#"><span class="ic"><i class="fa-solid fa-tree"></i></span><span class="vt">树洞</span></a>
+    <a href="#"><span class="ic"><i class="fa-solid fa-music"></i></span><span class="vt">音乐疗愈</span></a>
+  </nav>
+
+  <div class="wrap">
+    <div class="page-head">
+      <h1 class="serif">解压中心</h1>
+      <p>选择适合你的放松方式，释放压力，找回内心的平静</p>
+    </div>
+
+    <div class="filters">
+      <button class="chip on">全部</button>
+      <button class="chip">安静放松</button>
+      <button class="chip">活动解压</button>
+    </div>
+
+    <div class="audio-card">
+      <div class="audio-row1">
+        <span class="lab">选择音频：</span>
+        <div class="audio-select"><span>雨声</span><i class="fa-solid fa-chevron-down"></i></div>
+      </div>
+      <div class="audio-row2">
+        <button class="play-btn"><i class="fa-solid fa-play"></i></button>
+        <div class="dots"><span></span><span></span><span></span><span></span><span></span></div>
+        <i class="fa-solid fa-volume-high vol-ic"></i>
+        <div class="toggle"><span class="knob"></span></div>
+      </div>
+    </div>
+
+    <div class="method-grid">
+      <div class="method sel">
+        <div class="m-emo">🪘</div>
+        <h3>木鱼敲击</h3>
+        <p>敲击木鱼，释放焦虑</p>
+        <span class="tag">随时开始</span>
+      </div>
+      <div class="method">
+        <div class="m-emo">🧘</div>
+        <h3>呼吸冥想</h3>
+        <p>跟随呼吸，放松身心</p>
+        <span class="tag">3-10分钟</span>
+      </div>
+      <div class="method">
+        <div class="m-emo">🎮</div>
+        <h3>弹珠消砖</h3>
+        <p>打碎砖块，击碎压力</p>
+        <span class="tag">休闲时长</span>
+      </div>
+      <div class="method">
+        <div class="m-emo">🧩</div>
+        <h3>俄罗斯方块</h3>
+        <p>经典游戏，转移注意力</p>
+      </div>
+    </div>
+
+    <div class="fish-card">
+      <div class="count-badge"><i>📊</i>今日累计：0次</div>
+      <div class="fish-stage">
+        <div class="fish-dome"><div class="fish-hole">木</div></div>
+        <div class="fish-stick"></div>
+      </div>
+      <div class="target-label">目标敲击次数：</div>
+      <div class="target-grid">
+        <button>50</button>
+        <button class="on">100</button>
+        <button>200</button>
+        <button>500</button>
+      </div>
+      <div class="target-confirm">
+        <input type="text" value="100">
+        <button>确定</button>
+      </div>
+      <div class="progress"></div>
+      <div class="knocked">已敲击：<b>0/100</b></div>
+    </div>
+  </div>
+
+  <nav class="tabbar">
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-house"></i></span><span>首页</span></a>
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-face-smile"></i></span><span>情绪</span></a>
+    <a class="tab-item active" href="#"><span class="ic"><i class="fa-solid fa-leaf"></i></span><span>放松</span></a>
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-chart-line"></i></span><span>提升</span></a>
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-ellipsis"></i></span><span>更多</span></a>
+  </nav>
+  <div class="copyright">© 2025 情绪健康平台 版权所有</div>
+</div>
+</body>
+</html>

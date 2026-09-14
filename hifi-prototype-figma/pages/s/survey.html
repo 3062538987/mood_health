@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>情绪筛查问卷 - 情绪健康平台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  body { overflow-x: hidden; }
+  .wrap { padding: 26px 22px 0; }
+
+  /* 横排子导航（双行窄字） */
+  .hnav { display: flex; background: #f4f8f4; border-bottom: 1px solid #e7efe7; }
+  .hnav a {
+    flex: 1; display: flex; flex-direction: row; align-items: center; justify-content: center;
+    gap: 7px; padding: 13px 4px 12px; color: #7c8a7c; font-size: 14px; position: relative;
+  }
+  .hnav a .ic { font-size: 20px; line-height: 1; }
+  .hnav a .lb { line-height: 1.25; }
+  .hnav a.active { color: var(--green-deep); font-weight: 700; }
+  .hnav a.active::after {
+    content: ''; position: absolute; bottom: 0; left: 24%; right: 24%;
+    height: 3px; border-radius: 3px; background: var(--green-deep);
+  }
+
+  .survey-head h1 { font-size: 32px; color: var(--ink); margin-bottom: 30px; }
+  .survey-head p { font-size: 18px; color: var(--ink-mute); line-height: 1.8; }
+  .survey-head .pick { font-size: 21px; color: #5a5048; font-weight: 500; margin-top: 4px; }
+  .survey-blank { height: 760px; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <nav class="hnav">
+    <a href="#"><span class="ic"><i class="fa-solid fa-users"></i></span><span class="lb">团体<br>辅导</span></a>
+    <a href="#"><span class="ic"><i class="fa-solid fa-book"></i></span><span class="lb">情绪<br>科普</span></a>
+    <a href="#"><span class="ic"><i class="fa-solid fa-graduation-cap"></i></span><span class="lb">成长<br>课程</span></a>
+    <a class="active" href="#"><span class="ic"><i class="fa-solid fa-clipboard-list"></i></span><span class="lb">问卷<br>调查</span></a>
+  </nav>
+
+  <div class="wrap">
+    <div class="survey-head">
+      <h1 class="serif">情绪筛查问卷</h1>
+      <p>结果仅用于自我筛查与风险提示，不构成医学诊断。</p>
+      <p class="pick">请选择一个问卷</p>
+    </div>
+    <div class="survey-blank"></div>
+  </div>
+
+  <nav class="tabbar">
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-house"></i></span><span>首页</span></a>
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-face-smile"></i></span><span>情绪</span></a>
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-leaf"></i></span><span>放松</span></a>
+    <a class="tab-item active" href="#"><span class="ic"><i class="fa-solid fa-chart-line"></i></span><span>提升</span></a>
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-ellipsis"></i></span><span>更多</span></a>
+  </nav>
+  <div class="copyright">© 2025 情绪健康平台 版权所有</div>
+</div>
+</body>
+</html>

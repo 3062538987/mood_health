@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>用户注册 - 情绪健康平台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  body { overflow-x: hidden; }
+  .phone {
+    padding-bottom: 0;
+    display: flex; align-items: flex-start; justify-content: center;
+  }
+  .auth-card {
+    width: calc(100% - 40px);
+    margin-top: 96px;
+    background: #fffdf9;
+    border: 1.5px solid #f0e2cf;
+    border-radius: 30px;
+    box-shadow: 0 14px 44px rgba(190, 150, 105, 0.16);
+    padding: 40px 32px 38px;
+  }
+  .auth-card h1 {
+    font-family: var(--font-serif);
+    font-size: 34px;
+    font-weight: 700;
+    text-align: center;
+    color: var(--ink);
+    margin-bottom: 30px;
+  }
+  .auth-field { margin-bottom: 24px; }
+  .auth-field label {
+    display: block;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+  .auth-input {
+    position: relative;
+  }
+  .auth-input input {
+    width: 100%;
+    height: 58px;
+    border: 2px solid #e7ddce;
+    background: #faf4eb;
+    border-radius: 15px;
+    padding: 0 52px 0 20px;
+    font-size: 17px;
+    color: var(--ink);
+    font-family: inherit;
+  }
+  .auth-input input::placeholder { color: #b7ab9c; }
+  .auth-input .eye {
+    position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+    color: #a89c8d; font-size: 20px;
+  }
+  .auth-input input[type="email"] { padding-right: 14px; font-size: 13px; }
+  .btn-auth {
+    width: 100%;
+    height: 60px;
+    margin-top: 8px;
+    border-radius: 17px;
+    background: var(--grad-primary);
+    color: #fff;
+    font-size: 21px;
+    font-weight: 700;
+    box-shadow: var(--sh-btn);
+  }
+  .auth-switch {
+    margin-top: 28px;
+    text-align: center;
+    font-size: 16px;
+    color: #b3a89a;
+  }
+  .auth-switch a { color: var(--primary-deep); font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="auth-card">
+    <h1>用户注册</h1>
+
+    <div class="auth-field">
+      <label>用户名</label>
+      <div class="auth-input">
+        <input type="text" placeholder="请输入用户名">
+      </div>
+    </div>
+
+    <div class="auth-field">
+      <label>密码</label>
+      <div class="auth-input">
+        <input type="password" placeholder="请输入密码（6-128位）">
+        <i class="fa-solid fa-eye eye"></i>
+      </div>
+    </div>
+
+    <div class="auth-field">
+      <label>确认密码</label>
+      <div class="auth-input">
+        <input type="password" placeholder="请再次输入密码">
+      </div>
+    </div>
+
+    <div class="auth-field">
+      <label>QQ邮箱</label>
+      <div class="auth-input">
+        <input type="email" placeholder="请输入QQ邮箱（如：123456789@qq.com）">
+      </div>
+    </div>
+
+    <button class="btn-auth">注册</button>
+
+    <p class="auth-switch">已有账号？ <a href="login.html">立即登录</a></p>
+  </div>
+</div>
+</body>
+</html>

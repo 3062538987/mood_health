@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>首页 - 情绪健康平台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  body { overflow-x: hidden; }
+  .hero { text-align: center; padding: 46px 24px 0; }
+  .hero h1 {
+    font-family: var(--font-serif);
+    font-size: 33px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: 2px;
+  }
+  .hero .greet { margin-top: 16px; font-size: 17px; color: #9b9083; }
+  .hero .disclaimer { margin: 20px auto 0; font-size: 11px; color: #b3a89a; line-height: 1.6; white-space: nowrap; }
+
+  /* 等待记录大卡 */
+  .wait-card {
+    margin: 30px 20px 0;
+    background: #fffdf9;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    box-shadow: var(--sh-card);
+    padding: 30px 28px 32px;
+  }
+  .wait-icon {
+    width: 84px; height: 84px; border-radius: 50%;
+    background: var(--grad-primary);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 10px 22px rgba(232,131,74,.3);
+    margin-bottom: 24px;
+  }
+  .wait-icon i { color: #fff; font-size: 34px; }
+  .wait-status { color: #e2773e; font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+  .wait-card h2 {
+    font-family: var(--font-sans);
+    font-size: 26px; font-weight: 700; color: var(--ink);
+    margin: 12px 0 12px;
+  }
+  .wait-card p { font-size: 16px; color: #968b7e; line-height: 1.7; margin-bottom: 26px; }
+  .btn-record-today {
+    width: 100%; height: 56px; border-radius: 18px;
+    background: var(--grad-primary); color: #fff;
+    font-size: 18px; font-weight: 700;
+    box-shadow: var(--sh-btn);
+  }
+
+  /* 快速入口 */
+  .quick-title {
+    font-family: var(--font-serif);
+    font-size: 22px; font-weight: 700; color: var(--ink);
+    margin: 32px 20px 16px;
+  }
+  .quick-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    margin: 0 20px;
+  }
+  .quick-item {
+    background: #fffdf9;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--sh-soft);
+    height: 112px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px;
+  }
+  .quick-item i { font-size: 30px; color: var(--primary); }
+  .quick-item span { font-size: 16px; font-weight: 500; color: var(--ink); }
+
+  .home-gap { height: 210px; }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <header class="hero">
+    <h1>情绪健康管理平台</h1>
+    <p class="greet">下午好，保持好心情</p>
+    <p class="disclaimer">本平台提供情绪记录与自我调节建议，不能替代专业心理咨询或医疗诊断</p>
+  </header>
+
+  <section class="wait-card">
+    <div class="wait-icon"><i class="fa-solid fa-clock"></i></div>
+    <p class="wait-status" style="color:#e2773e;">等待记录</p>
+    <h2>今天还没有记录情绪</h2>
+    <p>花一分钟记录当下的感受，了解自己的情绪变化规律</p>
+    <button class="btn-record-today">记录今天的情绪</button>
+  </section>
+
+  <h2 class="quick-title">快速入口</h2>
+  <section class="quick-grid">
+    <a class="quick-item" href="mood-record.html">
+      <i class="fa-solid fa-pencil"></i>
+      <span>记录情绪</span>
+    </a>
+    <a class="quick-item" href="relax-center.html">
+      <i class="fa-solid fa-headphones"></i>
+      <span>放松中心</span>
+    </a>
+    <a class="quick-item" href="mood-insight.html">
+      <i class="fa-solid fa-chart-pie"></i>
+      <span>情绪洞察</span>
+    </a>
+    <a class="quick-item" href="treehole.html">
+      <i class="fa-solid fa-tree"></i>
+      <span>树洞</span>
+    </a>
+    <a class="quick-item" href="#">
+      <i class="fa-solid fa-rocket"></i>
+      <span>提升计划</span>
+    </a>
+    <a class="quick-item" href="profile.html">
+      <i class="fa-solid fa-user"></i>
+      <span>个人中心</span>
+    </a>
+  </section>
+
+  <div class="copyright">© 2026 情绪健康管理平台 | 用心呵护每一份情绪</div>
+
+  <div class="home-gap"></div>
+
+  <nav class="tabbar">
+    <a class="tab-item active" href="home.html"><i class="fa-solid fa-house ic"></i><span>首页</span></a>
+    <a class="tab-item" href="mood-record.html"><i class="fa-solid fa-face-smile ic"></i><span>情绪</span></a>
+    <a class="tab-item" href="relax-center.html"><i class="fa-solid fa-leaf ic"></i><span>放松</span></a>
+    <a class="tab-item" href="#"><i class="fa-solid fa-chart-line ic"></i><span>提升</span></a>
+    <a class="tab-item" href="#"><i class="fa-solid fa-ellipsis ic"></i><span>更多</span></a>
+  </nav>
+
+  <div class="copyright">© 2025 情绪健康平台 版权所有</div>
+
+</div>
+</body>
+</html>

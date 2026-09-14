@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>音乐疗愈 - 情绪健康平台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  body { overflow-x: hidden; background: var(--bg-cool); }
+  .phone {
+    background:
+      radial-gradient(120% 34% at 50% -4%, rgba(150,180,225,.22), transparent 60%),
+      var(--bg-cool);
+    padding-bottom: 0;
+  }
+  .wrap { padding: 26px 20px 0; }
+
+  /* 竖排窄字子导航 */
+  .vnav { display: flex; background: #f4f8f4; border-bottom: 1px solid #e7efe7; }
+  .vnav a {
+    flex: 1; display: flex; flex-direction: row; align-items: center; justify-content: center;
+    gap: 5px; padding: 16px 4px 14px; color: #7c8a7c; font-size: 13px; position: relative;
+  }
+  .vnav a .ic { font-size: 19px; line-height: 1; }
+  .vnav a .vt { writing-mode: vertical-rl; letter-spacing: 4px; line-height: 1.05; }
+  .vnav a.active { color: var(--green-deep); font-weight: 700; }
+  .vnav a.active::after {
+    content: ''; position: absolute; bottom: 0; left: 26%; right: 26%;
+    height: 3px; border-radius: 3px; background: var(--green-deep);
+  }
+
+  .page-head { text-align: center; margin: 30px 0 30px; }
+  .page-head h1 { font-size: 40px; letter-spacing: 6px; color: #2b2f38; }
+
+  /* 分类方块 */
+  .cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 30px; }
+  .cat {
+    background: #fff; border-radius: 16px; padding: 18px 4px 14px; text-align: center;
+    box-shadow: 0 4px 14px rgba(90,110,150,.10);
+  }
+  .cat .ic { font-size: 34px; color: #4f86e0; display: block; margin-bottom: 10px; }
+  .cat span { font-size: 15px; font-weight: 500; color: #4a4f5a; }
+  .cat.on { background: #4f86e0; box-shadow: 0 8px 18px rgba(79,134,224,.35); }
+  .cat.on .ic, .cat.on span { color: #fff; }
+  .cat.on span { font-weight: 700; }
+
+  /* 曲目列表卡 */
+  .track-card {
+    background: #fff; border-radius: var(--r-lg);
+    box-shadow: 0 8px 26px rgba(90,110,150,.12); padding: 8px 26px;
+  }
+  .track { display: flex; align-items: center; justify-content: space-between; padding: 26px 0; }
+  .track + .track { border-top: 1px solid #eef0f3; }
+  .track .name { font-size: 23px; font-weight: 700; color: #2b2f38; margin-bottom: 8px; }
+  .track .type { font-size: 16px; color: #9aa0ab; }
+  .track .dur { font-size: 19px; color: #9aa0ab; }
+
+  .cool-spacer { height: 560px; }
+  .warm-foot {
+    background: var(--bg); margin: 0 -0px;
+  }
+  .phone .tabbar { bottom: 118px; }
+  .warm-foot .copyright { padding: 30px 0 34px; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <nav class="vnav">
+    <a href="#"><span class="ic"><i class="fa-solid fa-headphones"></i></span><span class="vt">解压中心</span></a>
+    <a href="#"><span class="ic"><i class="fa-solid fa-clock-rotate-left"></i></span><span class="vt">放松历史</span></a>
+    <a href="#"><span class="ic"><i class="fa-solid fa-trophy"></i></span><span class="vt">成就中心</span></a>
+    <a href="#"><span class="ic"><i class="fa-solid fa-tree"></i></span><span class="vt">树洞</span></a>
+    <a class="active" href="#"><span class="ic"><i class="fa-solid fa-music"></i></span><span class="vt">音乐疗愈</span></a>
+  </nav>
+
+  <div class="wrap">
+    <div class="page-head">
+      <h1 class="serif">音乐疗愈</h1>
+    </div>
+
+    <div class="cat-grid">
+      <div class="cat on"><i class="fa-solid fa-music ic"></i><span>轻音乐</span></div>
+      <div class="cat"><i class="fa-solid fa-volume-high ic"></i><span>白噪音</span></div>
+      <div class="cat"><i class="fa-solid fa-leaf ic"></i><span>自然之声</span></div>
+      <div class="cat"><i class="fa-solid fa-om ic"></i><span>冥想音乐</span></div>
+    </div>
+
+    <div class="track-card">
+      <div class="track">
+        <div>
+          <div class="name">宁静致远</div>
+          <div class="type">轻音乐</div>
+        </div>
+        <div class="dur">3:45</div>
+      </div>
+      <div class="track">
+        <div>
+          <div class="name">钢琴曲</div>
+          <div class="type">轻音乐</div>
+        </div>
+        <div class="dur">4:30</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cool-spacer"></div>
+
+  <div class="warm-foot">
+    <div class="copyright">© 2025 情绪健康平台 版权所有</div>
+  </div>
+
+  <nav class="tabbar">
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-house"></i></span><span>首页</span></a>
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-face-smile"></i></span><span>情绪</span></a>
+    <a class="tab-item active" href="#"><span class="ic"><i class="fa-solid fa-leaf"></i></span><span>放松</span></a>
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-chart-line"></i></span><span>提升</span></a>
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-ellipsis"></i></span><span>更多</span></a>
+  </nav>
+</div>
+</body>
+</html>

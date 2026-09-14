@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>心理咨询陪伴 - 情绪健康平台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  body { overflow-x: hidden; }
+  .wrap { padding: 22px 20px 0; }
+
+  /* 页头：汉堡 + 大标题 */
+  .chat-head { display: flex; align-items: center; gap: 18px; padding: 4px 6px 0; }
+  .hamburger {
+    width: 60px; height: 60px; border-radius: 16px; flex-shrink: 0;
+    background: #fff; border: 1.5px solid var(--line-strong);
+    color: var(--ink-soft); font-size: 24px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--sh-soft);
+  }
+  .chat-head h1 { font-size: 34px; line-height: 1.25; letter-spacing: 1px; }
+  .chat-sub { text-align: center; color: var(--ink-mute); font-size: 15px; margin: 16px 0 24px; }
+
+  .info-card {
+    background: #fdf9f3; border: 1px solid var(--line); border-radius: var(--r-lg);
+    box-shadow: var(--sh-soft); padding: 24px 22px; margin-bottom: 20px;
+  }
+  .info-card h2 { font-size: 22px; margin-bottom: 16px; }
+  .info-card p { font-size: 16px; color: var(--ink-mute); line-height: 1.8; }
+  .info-card ul { display: flex; flex-direction: column; gap: 12px; }
+  .info-card li { font-size: 16px; color: var(--ink-mute); line-height: 1.6; padding-left: 20px; position: relative; }
+  .info-card li::before {
+    content: '•'; position: absolute; left: 2px; top: 0; color: var(--ink-mute); font-size: 18px;
+  }
+  .hotline { color: var(--danger); font-weight: 700; font-size: 18px; margin-top: 14px; display: block; }
+
+  /* 今日对话卡 */
+  .dialog-card {
+    background: #fdf9f3; border: 1px solid var(--line); border-radius: var(--r-lg);
+    box-shadow: var(--sh-soft); padding: 26px 22px 0; margin-bottom: 22px;
+  }
+  .dialog-card h2 { font-size: 26px; margin-bottom: 18px; }
+  .dialog-tip { font-size: 16px; color: var(--ink-mute); line-height: 1.7; margin-bottom: 18px; }
+  .btn-clear {
+    background: #fff; border: 1.5px solid var(--line-strong); border-radius: 12px;
+    color: var(--ink-soft); font-size: 16px; padding: 13px 26px; margin-bottom: 24px;
+  }
+  .msg-row { display: flex; justify-content: flex-start; padding: 4px 0 10px; }
+  .bubble-them {
+    background: #f4eee5; border-radius: 16px; padding: 16px 18px; max-width: 88%;
+    font-size: 16px; color: var(--ink); line-height: 1.7;
+  }
+  .msg-time { font-size: 13px; color: var(--ink-faint); margin: 8px 0 26px; }
+  .chat-spacer { height: 300px; }
+
+  /* 底部输入区 */
+  .composer {
+    background: #fdf9f3; border-top: 1px solid var(--line);
+    border-radius: 0 0 var(--r-lg) var(--r-lg);
+    padding: 18px 18px 20px; margin: 0 -22px;
+  }
+  .composer-inner {
+    background: #fff; border: 1.5px solid var(--line); border-radius: 16px; padding: 14px 14px 0;
+  }
+  .composer textarea {
+    width: 100%; border: none; background: transparent; resize: none; outline: none;
+    font-family: inherit; font-size: 16px; line-height: 1.7; min-height: 92px; color: var(--ink);
+  }
+  .composer textarea::placeholder { color: var(--ink-faint); }
+  .composer-row { display: flex; align-items: center; justify-content: flex-end; gap: 18px; padding: 6px 0 10px; }
+  .composer-row .cnt { font-size: 15px; color: var(--ink-mute); }
+  .btn-send {
+    background: #f0ab82; color: #fff; font-size: 18px; font-weight: 700;
+    border-radius: var(--r-pill); padding: 14px 44px; box-shadow: 0 6px 16px rgba(240,171,130,.3);
+  }
+  .composer-hint { font-size: 14px; color: var(--ink-mute); padding: 12px 4px 2px; }
+</style>
+</head>
+<body>
+<div class="phone" style="padding-bottom:130px;">
+  <div class="wrap">
+    <div class="chat-head">
+      <button class="hamburger"><i class="fa-solid fa-bars"></i></button>
+      <h1 class="serif">心理咨询陪伴</h1>
+    </div>
+    <p class="chat-sub">专业支持，温柔陪伴，和你一起慢慢变好</p>
+
+    <div class="info-card">
+      <h2 class="serif">服务介绍</h2>
+      <p>这是一个用于情绪倾诉与压力梳理的陪伴空间。你可以把此刻的烦恼、焦虑或困惑说出来，我们会给出温和且实用的建议。</p>
+    </div>
+
+    <div class="info-card">
+      <h2 class="serif">服务特色</h2>
+      <ul>
+        <li>专注倾听，减少情绪堆积</li>
+        <li>结合情境，提供可执行建议</li>
+        <li>支持多轮对话与连续陪伴</li>
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <h2 class="serif">紧急联系</h2>
+      <p>如出现强烈自伤或伤人风险，请立刻联系专业机构：</p>
+      <span class="hotline">全国心理危机干预热线：400-161-9995</span>
+    </div>
+
+    <div class="dialog-card">
+      <h2 class="serif">今日对话</h2>
+      <p class="dialog-tip">你说的话会被认真对待，请放心表达。</p>
+      <button class="btn-clear">清空对话</button>
+      <div class="msg-row">
+        <div class="bubble-them">你好，欢迎来到心理咨询陪伴空间。你…</div>
+      </div>
+      <div class="msg-time">13:20</div>
+      <div class="chat-spacer"></div>
+
+      <div class="composer">
+        <div class="composer-inner">
+          <textarea placeholder="把你现在的感受告诉我，支持换行输入..."></textarea>
+          <div class="composer-row">
+            <span class="cnt">0 / 1000</span>
+            <button class="btn-send">发送</button>
+          </div>
+        </div>
+        <div class="composer-hint">按 Ctrl + Enter 发送，Enter 换行</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="tabbar">
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-house"></i></span><span>首页</span></a>
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-face-smile"></i></span><span>情绪</span></a>
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-leaf"></i></span><span>放松</span></a>
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-chart-line"></i></span><span>提升</span></a>
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-ellipsis"></i></span><span>更多</span></a>
+  </nav>
+  <div class="copyright">© 2025 情绪健康平台 版权所有</div>
+</div>
+</body>
+</html>

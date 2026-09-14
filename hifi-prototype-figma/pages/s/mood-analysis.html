@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>情绪分析 - 情绪健康平台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  body { overflow-x: hidden; }
+  .page { padding: 28px 20px 0; }
+
+  .tag-orange {
+    display: inline-block;
+    color: var(--primary-deep);
+    font-size: 15px; font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .page-h1 {
+    font-family: var(--font-serif);
+    font-size: 32px; font-weight: 700; color: var(--ink);
+    line-height: 1.35; margin-bottom: 14px;
+  }
+  .page-sub { font-size: 16px; color: #9b9083; line-height: 1.7; margin-bottom: 28px; }
+
+  /* 时间切换 */
+  .period {
+    display: flex;
+    background: #f4efe6;
+    border-radius: 16px;
+    padding: 6px;
+    margin-bottom: 26px;
+  }
+  .period button {
+    flex: 1;
+    border-radius: 12px;
+    background: transparent;
+    padding: 12px 0;
+    font-size: 16px; line-height: 1.3;
+    color: #8f8578; font-weight: 500;
+  }
+  .period button.on {
+    background: #fff;
+    color: var(--primary-deep);
+    font-weight: 800;
+    box-shadow: var(--sh-soft);
+  }
+
+  /* 空状态大卡 */
+  .analysis-empty {
+    background: linear-gradient(170deg, #fdf6f0 0%, #fdf4ef 100%);
+    border: 1.5px solid #f7e3d5;
+    border-radius: 24px;
+    box-shadow: var(--sh-soft);
+    padding: 40px 24px 42px;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .illus {
+    position: relative;
+    width: 250px; height: 230px;
+    margin: 0 auto 30px;
+  }
+  .cloud { position: absolute; border-radius: 999px; }
+  .cloud.c1 { width: 130px; height: 50px; background: #dceee7; top: 24px; left: 2px; }
+  .cloud.c2 { width: 120px; height: 46px; background: #f7e4d7; top: 18px; right: 0; }
+  .cloud.c3 { width: 180px; height: 40px; background: #dceee7; bottom: 38px; left: 24px; }
+  .file-back {
+    position: absolute; width: 150px; height: 172px;
+    border-radius: 24px;
+    background: #f3cfb8;
+    left: 62px; top: 42px;
+    transform: rotate(6deg);
+  }
+  .file-front {
+    position: absolute; width: 150px; height: 172px;
+    border-radius: 24px;
+    background: #fff;
+    border: 1.5px solid #f0ddc9;
+    left: 52px; top: 32px;
+    transform: rotate(-4deg);
+    box-shadow: 0 12px 28px rgba(200,160,120,.18);
+    padding: 44px 22px 0;
+  }
+  .file-front .ln { display: block; height: 10px; border-radius: 5px; background: #e4c6ae; margin-bottom: 17px; }
+  .file-front .ln.w1 { width: 100px; }
+  .file-front .ln.w2 { width: 82px; margin-left: 4px; }
+  .file-front .ln.w3 { width: 46px; margin-left: 4px; }
+  .smile {
+    position: absolute; width: 72px; height: 72px; border-radius: 50%;
+    background: #fde89a;
+    left: 92px; top: 122px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px;
+    z-index: 2;
+  }
+  .analysis-empty h3 {
+    font-family: var(--font-serif);
+    font-size: 26px; font-weight: 700; color: #43524a;
+    margin-bottom: 18px;
+  }
+  .analysis-empty p {
+    font-size: 17px; color: #8d948c; line-height: 1.85;
+    margin-bottom: 34px;
+  }
+  .btn-go-record {
+    border-radius: var(--r-pill);
+    background: #6faea4;
+    color: #fff;
+    font-size: 19px; font-weight: 700;
+    padding: 17px 64px;
+    box-shadow: 0 10px 22px rgba(111,174,164,.32);
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <nav class="subnav">
+    <a class="subnav-item" href="mood-record.html"><i class="fa-solid fa-pencil ic"></i><span>情绪记录</span></a>
+    <a class="subnav-item" href="mood-archive.html"><i class="fa-solid fa-box-archive ic"></i><span>情绪档案</span></a>
+    <a class="subnav-item" href="mood-insight.html"><i class="fa-solid fa-lightbulb ic"></i><span>情绪洞察</span></a>
+    <a class="subnav-item active" href="mood-analysis.html"><i class="fa-solid fa-chart-pie ic"></i><span>情绪分析</span></a>
+  </nav>
+
+  <div class="page">
+    <span class="tag-orange">情绪分析</span>
+    <h1 class="page-h1">了解自己的情绪模式</h1>
+    <p class="page-sub">基于你的情绪记录，生成数据事实和分析建议</p>
+
+    <div class="period">
+      <button class="on">7天</button>
+      <button>1个月</button>
+      <button>3个月</button>
+      <button>6个月</button>
+      <button>1年</button>
+    </div>
+
+    <section class="analysis-empty">
+      <div class="illus">
+        <span class="cloud c1"></span>
+        <span class="cloud c2"></span>
+        <span class="file-back"></span>
+        <span class="file-front">
+          <span class="ln w1"></span>
+          <span class="ln w2"></span>
+          <span class="ln w3"></span>
+        </span>
+        <span class="cloud c3"></span>
+        <span class="smile">😊</span>
+      </div>
+      <h3>还没有7天的情绪数据</h3>
+      <p>积累更多记录后，AI 会为你生成贴心的分析报告</p>
+      <button class="btn-go-record">去记录情绪</button>
+    </section>
+
+    <div class="copyright">© 2025 情绪健康平台 版权所有</div>
+  </div>
+
+  <nav class="tabbar">
+    <a class="tab-item" href="home.html"><i class="fa-solid fa-house ic"></i><span>首页</span></a>
+    <a class="tab-item active" href="mood-record.html"><i class="fa-solid fa-face-smile ic"></i><span>情绪</span></a>
+    <a class="tab-item" href="relax-center.html"><i class="fa-solid fa-leaf ic"></i><span>放松</span></a>
+    <a class="tab-item" href="#"><i class="fa-solid fa-chart-line ic"></i><span>提升</span></a>
+    <a class="tab-item" href="#"><i class="fa-solid fa-ellipsis ic"></i><span>更多</span></a>
+  </nav>
+
+</div>
+</body>
+</html>

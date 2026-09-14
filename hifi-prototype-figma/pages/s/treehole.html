@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>树洞 - 情绪健康平台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  body { overflow-x: hidden; }
+  .wrap { padding: 22px 20px 0; }
+
+  /* 竖排窄字子导航 */
+  .vnav { display: flex; background: #f4f8f4; border-bottom: 1px solid #e7efe7; position: relative; }
+  .vnav a {
+    flex: 1; display: flex; flex-direction: row; align-items: center; justify-content: center;
+    gap: 5px; padding: 16px 4px 14px; color: #7c8a7c; font-size: 13px; position: relative;
+  }
+  .vnav a .ic { font-size: 19px; line-height: 1; }
+  .vnav a .vt { writing-mode: vertical-rl; letter-spacing: 4px; line-height: 1.05; }
+  .vnav a.active { color: var(--green-deep); font-weight: 700; }
+  .vnav a.active::after {
+    content: ''; position: absolute; bottom: 0; left: 26%; right: 26%;
+    height: 3px; border-radius: 3px; background: var(--green-deep);
+  }
+
+  /* 错误提示浮条 */
+  .error-toast {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    z-index: 20; display: flex; align-items: center; gap: 10px;
+    background: #fdeceb; border: 1px solid #f6d2ce; border-radius: 12px;
+    padding: 11px 18px; width: 300px;
+    box-shadow: 0 6px 18px rgba(200,90,70,.14);
+  }
+  .error-toast .x {
+    width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+    background: var(--primary); color: #fff; font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .error-toast span { font-size: 15px; color: #5b4a42; font-weight: 500; }
+
+  /* 心事卡 */
+  .post-card {
+    background: #fffdf9; border: 1px solid var(--line); border-radius: var(--r-lg);
+    box-shadow: var(--sh-soft); padding: 24px 20px 26px; margin-top: 22px;
+  }
+  .post-card h2 { font-size: 26px; margin-bottom: 18px; }
+  .audit-bar {
+    display: flex; align-items: center; gap: 10px;
+    background: #e9f2ea; border-radius: 12px; padding: 13px 14px; margin-bottom: 20px;
+  }
+  .audit-bar .info {
+    width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+    background: #6f9a7c; color: #fff; font-size: 13px; font-style: italic; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .audit-bar p { font-size: 14px; color: #5f7a66; line-height: 1.5; }
+
+  .post-card .input, .post-card .textarea {
+    background: #fff; border: 1.5px solid var(--line-strong); border-radius: 12px;
+    padding: 16px 16px; font-size: 16px;
+  }
+  .post-card .input { margin-bottom: 18px; }
+  .post-card .textarea { min-height: 168px; margin-bottom: 10px; }
+  .counter { text-align: right; color: var(--ink-mute); font-size: 14px; margin-bottom: 22px; }
+
+  .check-row { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; font-size: 17px; }
+  .check-row + .check-row { margin-bottom: 26px; }
+  .cb {
+    width: 24px; height: 24px; border-radius: 6px; border: 2px solid #b9b0a4;
+    background: #fff; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 14px;
+  }
+  .cb.on { background: var(--blue); border-color: var(--blue); }
+
+  .btn-publish {
+    width: 100%; border-radius: 12px; padding: 18px 0;
+    background: #f0ab82; color: #fff; font-size: 19px; font-weight: 700;
+    box-shadow: 0 6px 16px rgba(240,171,130,.3);
+  }
+
+  .refresh-wrap { display: flex; justify-content: flex-end; margin: 26px 0 18px; }
+  .btn-refresh {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: #fff; border: 1.5px solid var(--line-strong); border-radius: 10px;
+    padding: 13px 26px; font-size: 17px; color: var(--ink); box-shadow: var(--sh-soft);
+  }
+  .btn-refresh i { font-size: 18px; }
+
+  /* 空状态渐变卡 */
+  .empty-card {
+    border-radius: var(--r-lg); padding: 30px 22px 36px; text-align: center;
+    background: linear-gradient(160deg, #eef1fb 0%, #f0ecfb 55%, #eef0fb 100%);
+    border: 1px solid #e2e4f4; box-shadow: var(--sh-soft); margin-bottom: 26px;
+  }
+  .empty-illus {
+    width: 230px; height: 132px; margin: 4px auto 24px; border-radius: 18px;
+    background: linear-gradient(160deg, #efe9fb, #f3ecfa);
+    display: flex; align-items: center; justify-content: center; position: relative;
+  }
+  .bubble {
+    position: absolute; top: 6px; left: 52px;
+    width: 40px; height: 32px; border-radius: 50% 50% 50% 6px;
+    background: linear-gradient(135deg, #c9b8f0, #b6a3ec);
+    transform: rotate(-8deg);
+  }
+  .sprout { font-size: 56px; margin-top: 26px; }
+  .empty-card h3 { font-size: 24px; color: #3f3a52; margin-bottom: 16px; }
+  .empty-card p { font-size: 16px; color: #8a8498; line-height: 1.7; margin-bottom: 24px; }
+  .btn-empty {
+    display: inline-block; border-radius: var(--r-pill); padding: 15px 30px;
+    background: var(--grad-violet); color: #fff; font-size: 17px; font-weight: 700;
+    box-shadow: 0 8px 18px rgba(122,140,240,.35);
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <nav class="vnav">
+    <div class="error-toast">
+      <span class="x"><i class="fa-solid fa-xmark"></i></span>
+      <span>获取帖子列表失败，请稍后重试</span>
+    </div>
+    <a href="#"><span class="ic"><i class="fa-solid fa-headphones"></i></span><span class="vt">解压中心</span></a>
+    <a href="#"><span class="ic"><i class="fa-solid fa-clock-rotate-left"></i></span><span class="vt">放松历史</span></a>
+    <a href="#"><span class="ic"><i class="fa-solid fa-trophy"></i></span><span class="vt">成就中心</span></a>
+    <a class="active" href="#"><span class="ic"><i class="fa-solid fa-tree"></i></span><span class="vt">树洞</span></a>
+    <a href="#"><span class="ic"><i class="fa-solid fa-music"></i></span><span class="vt">音乐疗愈</span></a>
+  </nav>
+
+  <div class="wrap">
+    <div class="post-card">
+      <h2 class="serif">分享你的心事</h2>
+      <div class="audit-bar">
+        <span class="info">i</span>
+        <p>发布后需经过审核，审核通过后其他用户才能看到</p>
+      </div>
+      <input class="input" type="text" placeholder="标题">
+      <textarea class="textarea" placeholder="在这里倾诉你的心事，树洞会给你一个温柔的回复..."></textarea>
+      <div class="counter">0/1000</div>
+      <label class="check-row"><span class="cb"></span>匿名发布</label>
+      <label class="check-row"><span class="cb on"><i class="fa-solid fa-check"></i></span>发布前预览温柔回复</label>
+      <button class="btn-publish">发布并获取温柔回复</button>
+    </div>
+
+    <div class="refresh-wrap">
+      <button class="btn-refresh"><i class="fa-solid fa-rotate-right"></i>刷新</button>
+    </div>
+
+    <div class="empty-card">
+      <div class="empty-illus">
+        <span class="bubble"></span>
+        <span class="sprout">🌱</span>
+      </div>
+      <h3 class="serif">树洞里暂时很安静</h3>
+      <p>把此刻的心情写下来，也许会遇见温柔回应。</p>
+      <a class="btn-empty" href="#">去解压中心放松一下</a>
+    </div>
+  </div>
+
+  <nav class="tabbar">
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-house"></i></span><span>首页</span></a>
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-face-smile"></i></span><span>情绪</span></a>
+    <a class="tab-item active" href="#"><span class="ic"><i class="fa-solid fa-leaf"></i></span><span>放松</span></a>
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-chart-line"></i></span><span>提升</span></a>
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-ellipsis"></i></span><span>更多</span></a>
+  </nav>
+  <div class="copyright">© 2025 情绪健康平台 版权所有</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>团体辅导 - 情绪健康平台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  body { overflow-x: hidden; }
+  .phone {
+    background:
+      linear-gradient(180deg, #fdeef5 0%, #f5effa 34%, #f6f1fb 62%, #fdf4ee 100%);
+  }
+  .wrap { padding: 22px 18px 0; }
+
+  /* 横排子导航（双行窄字） */
+  .hnav { display: flex; background: #f4f8f4; border-bottom: 1px solid #e7efe7; }
+  .hnav a {
+    flex: 1; display: flex; flex-direction: row; align-items: center; justify-content: center;
+    gap: 7px; padding: 13px 4px 12px; color: #7c8a7c; font-size: 14px; position: relative;
+  }
+  .hnav a .ic { font-size: 20px; line-height: 1; }
+  .hnav a .lb { line-height: 1.25; }
+  .hnav a.active { color: var(--green-deep); font-weight: 700; }
+  .hnav a.active::after {
+    content: ''; position: absolute; bottom: 0; left: 24%; right: 24%;
+    height: 3px; border-radius: 3px; background: var(--green-deep);
+  }
+
+  /* Hero 渐变卡 */
+  .hero {
+    margin-top: 20px; border-radius: var(--r-xl); padding: 16px;
+    background: linear-gradient(150deg, #f6c9dd 0%, #d9c6f2 60%, #cdb9ef 100%);
+    box-shadow: 0 10px 26px rgba(180,140,200,.22);
+  }
+  .hero-inner {
+    background: rgba(255,255,255,.92); border-radius: 20px; padding: 26px 22px 28px;
+  }
+  .hero-pill {
+    display: inline-block; background: #fbe4ee; color: #d46a98;
+    font-size: 14px; font-weight: 700; border-radius: var(--r-pill); padding: 7px 18px; margin-bottom: 20px;
+  }
+  .hero-inner h1 { font-size: 28px; line-height: 1.45; color: #3f3550; margin-bottom: 18px; }
+  .hero-inner p { font-size: 15px; color: #8b8398; line-height: 1.85; margin-bottom: 24px; }
+  .btn-upcoming {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #fff; border: 1.5px solid #e2d8ee; border-radius: 10px;
+    color: #7a6a96; font-size: 15px; font-weight: 600; padding: 13px 22px; margin-bottom: 20px;
+  }
+  .hero-link { display: block; text-align: center; color: #8a6fc0; font-size: 15px; font-weight: 600; }
+
+  /* 统计卡 */
+  .stat-card {
+    margin-top: 22px; border-radius: var(--r-xl); padding: 16px;
+    background: linear-gradient(150deg, #e7cdf2 0%, #cdb9ef 55%, #c3b0ec 100%);
+    box-shadow: 0 10px 26px rgba(170,130,200,.22); position: relative; overflow: hidden;
+  }
+  .stat-card::before {
+    content: ''; position: absolute; top: 26px; right: 30px; width: 26px; height: 26px;
+    border-radius: 50%; background: rgba(255,255,255,.55);
+  }
+  .stat-card::after {
+    content: ''; position: absolute; top: 66px; right: 78px; width: 16px; height: 16px;
+    border-radius: 50%; background: rgba(255,255,255,.4);
+  }
+  .stat-inner { background: #fff; border-radius: 20px; padding: 24px 22px 10px; position: relative; z-index: 1; }
+  .stat-top { text-align: center; padding-bottom: 22px; }
+  .stat-top .lab { font-size: 15px; color: var(--ink-soft); margin-bottom: 6px; }
+  .stat-top .num { font-size: 46px; font-weight: 800; color: #2b2f38; line-height: 1.15; }
+  .stat-top .sublab { font-size: 14px; color: var(--ink-mute); }
+  .stat-row { padding: 20px 2px; }
+  .stat-row + .stat-row { border-top: 1px solid #f2edf6; }
+  .stat-row .lab { font-size: 16px; color: var(--ink-soft); margin-bottom: 4px; }
+  .stat-row .num { font-size: 40px; font-weight: 800; color: #2b2f38; line-height: 1.2; }
+  .stat-row .sublab { font-size: 14px; color: var(--ink-mute); }
+
+  /* 活动列表卡 */
+  .list-card {
+    margin-top: 22px; background: #fff; border: 1px solid var(--line);
+    border-radius: var(--r-lg); box-shadow: var(--sh-soft); padding: 24px 20px 0;
+  }
+  .list-card h2 { font-size: 22px; margin-bottom: 12px; }
+  .list-card > p { font-size: 15px; color: var(--ink-mute); line-height: 1.8; margin-bottom: 20px; }
+  .refresh-circle {
+    width: 52px; height: 52px; border-radius: 50%; background: #f1ecfb;
+    color: #9b86d8; font-size: 20px; display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+  }
+  .atabs { display: flex; align-items: center; gap: 28px; border-bottom: 1px solid #efeaf5; }
+  .atab { font-size: 17px; color: var(--ink-mute); padding-bottom: 14px; position: relative; display: flex; align-items: center; gap: 8px; }
+  .atab .zero {
+    width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid #dcd4e8;
+    font-size: 13px; color: var(--ink-mute); display: flex; align-items: center; justify-content: center;
+  }
+  .atab.on { color: var(--blue); font-weight: 700; }
+  .atab.on .zero { border-color: #b9d0f2; color: var(--blue); }
+  .atab.on::after {
+    content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 3px;
+    border-radius: 3px; background: linear-gradient(90deg, #f08ab4, #9b8cf0);
+  }
+  .atab.arrow i { font-size: 15px; margin-left: 2px; }
+  .list-card .list-foot { height: 18px; }
+
+  /* 空状态卡 */
+  .empty-card {
+    margin-top: 22px; background: #fff; border: 1px solid var(--line);
+    border-radius: var(--r-lg); box-shadow: var(--sh-soft); padding: 34px 24px 36px; text-align: center;
+  }
+  .tulip-ring {
+    width: 184px; height: 184px; margin: 0 auto 24px; border-radius: 50%;
+    background: radial-gradient(circle, #f6e3f4 0%, #efe0f6 100%);
+    border: 2px solid #ecdcf4;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tulip-ring span { font-size: 76px; }
+  .empty-card h3 { font-size: 21px; line-height: 1.6; color: var(--ink); margin-bottom: 18px; }
+  .empty-card > p { font-size: 15px; color: var(--ink-mute); line-height: 1.85; margin-bottom: 26px; }
+  .btn-empty-outline {
+    display: inline-block; background: #fff; border: 1.5px solid var(--line-strong);
+    border-radius: 10px; color: var(--ink-soft); font-size: 16px; padding: 13px 26px; margin-bottom: 20px;
+  }
+  .empty-link { display: block; color: #8a8296; font-size: 16px; }
+
+  /* 我的活动记录 */
+  .record-card {
+    margin-top: 22px; background: #fff; border: 1px solid var(--line);
+    border-radius: var(--r-lg); box-shadow: var(--sh-soft); padding: 24px 22px 30px; margin-bottom: 26px;
+  }
+  .record-card h2 { font-size: 22px; margin-bottom: 12px; }
+  .record-card > p { font-size: 15px; color: var(--ink-mute); line-height: 1.8; margin-bottom: 20px; }
+  .record-pill {
+    display: block; text-align: center; border: 1.5px solid #9dbce8; border-radius: var(--r-pill);
+    color: var(--blue); font-size: 16px; font-weight: 700; padding: 9px 0; margin-bottom: 20px;
+  }
+  .record-card .none { font-size: 15px; color: var(--ink-mute); line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <nav class="hnav">
+    <a class="active" href="#"><span class="ic"><i class="fa-solid fa-users"></i></span><span class="lb">团体<br>辅导</span></a>
+    <a href="#"><span class="ic"><i class="fa-solid fa-book"></i></span><span class="lb">情绪<br>科普</span></a>
+    <a href="#"><span class="ic"><i class="fa-solid fa-graduation-cap"></i></span><span class="lb">成长<br>课程</span></a>
+    <a href="#"><span class="ic"><i class="fa-solid fa-clipboard-list"></i></span><span class="lb">问卷<br>调查</span></a>
+  </nav>
+
+  <div class="wrap">
+    <div class="hero">
+      <div class="hero-inner">
+        <span class="hero-pill">团体辅导</span>
+        <h1 class="serif">和一群愿意认真生活的人，一起慢慢变好。</h1>
+        <p>从正在进行的支持小组，到即将开始的成长活动，这里会把可以参与的团体辅导整齐地放到你面前。</p>
+        <button class="btn-upcoming"><i class="fa-regular fa-calendar"></i>查看即将开始的活动</button>
+        <a class="hero-link" href="#">查看我的参与记录</a>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-inner">
+        <div class="stat-top">
+          <div class="lab">本页浏览</div>
+          <div class="num">0</div>
+          <div class="sublab">场可浏览活动</div>
+        </div>
+        <div class="stat-row">
+          <div class="lab">进行中</div>
+          <div class="num">0</div>
+          <div class="sublab">适合立刻加入</div>
+        </div>
+        <div class="stat-row">
+          <div class="lab">即将开始</div>
+          <div class="num">0</div>
+          <div class="sublab">可以提前预留时间</div>
+        </div>
+        <div class="stat-row">
+          <div class="lab">我的报名</div>
+          <div class="num">0</div>
+          <div class="sublab">你的陪伴轨迹</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="list-card">
+      <h2 class="serif">活动列表</h2>
+      <p>用顶部状态切换不同节奏的活动，快速找到现在适合参与的场次。</p>
+      <div class="refresh-circle"><i class="fa-solid fa-rotate-right"></i></div>
+      <div class="atabs">
+        <a class="atab on" href="#">全部活动<span class="zero">0</span></a>
+        <a class="atab" href="#">进行中<span class="zero">0</span></a>
+        <a class="atab arrow" href="#">即将<i class="fa-solid fa-chevron-right"></i></a>
+      </div>
+      <div class="list-foot"></div>
+    </div>
+
+    <div class="empty-card">
+      <div class="tulip-ring"><span>🌷</span></div>
+      <h3 class="serif">这里暂时还没有活动，稍后再来看看也没关系</h3>
+      <p>你可以切换顶部状态看看别的阶段，或者稍后回来，新的支持活动会慢慢出现。</p>
+      <a class="btn-empty-outline" href="#">去看看即将开始的场次</a>
+      <a class="empty-link" href="#">查看全部活动</a>
+    </div>
+
+    <div class="record-card">
+      <h2 class="serif">我的活动记录</h2>
+      <p>把已经参加过或已经报名的活动收在这里，回看时会更有成长感。</p>
+      <span class="record-pill">0 场</span>
+      <p class="none">你还没有参加任何活动，挑一场温和开始也很好。</p>
+    </div>
+  </div>
+
+  <nav class="tabbar">
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-house"></i></span><span>首页</span></a>
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-face-smile"></i></span><span>情绪</span></a>
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-leaf"></i></span><span>放松</span></a>
+    <a class="tab-item active" href="#"><span class="ic"><i class="fa-solid fa-chart-line"></i></span><span>提升</span></a>
+    <a class="tab-item" href="#"><span class="ic"><i class="fa-solid fa-ellipsis"></i></span><span>更多</span></a>
+  </nav>
+  <div class="copyright">© 2025 情绪健康平台 版权所有</div>
+</div>
+</body>
+</html>

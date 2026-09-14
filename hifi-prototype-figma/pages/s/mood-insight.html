@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>情绪洞察 - 情绪健康平台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  body { overflow-x: hidden; }
+  .page { padding: 30px 24px 0; }
+
+  .page-h1 {
+    font-family: var(--font-serif);
+    font-size: 35px; font-weight: 700; color: var(--ink); margin-bottom: 16px;
+  }
+  .page-sub { font-size: 17px; color: #9b9083; line-height: 1.7; margin-bottom: 34px; }
+
+  .insight-segment { margin-bottom: 90px; }
+
+  .error-text {
+    text-align: center;
+    color: var(--danger);
+    font-size: 20px;
+    font-weight: 500;
+    margin-bottom: 26px;
+  }
+  .reload-wrap { text-align: center; margin-bottom: 60px; }
+  .btn-reload {
+    border: 1.5px solid #87a6e8;
+    background: #fff;
+    color: var(--blue);
+    border-radius: var(--r-pill);
+    padding: 15px 52px;
+    font-size: 19px; font-weight: 500;
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <nav class="subnav">
+    <a class="subnav-item" href="mood-record.html"><i class="fa-solid fa-pencil ic"></i><span>情绪记录</span></a>
+    <a class="subnav-item" href="mood-archive.html"><i class="fa-solid fa-box-archive ic"></i><span>情绪档案</span></a>
+    <a class="subnav-item active" href="mood-insight.html"><i class="fa-solid fa-lightbulb ic"></i><span>情绪洞察</span></a>
+    <a class="subnav-item" href="mood-analysis.html"><i class="fa-solid fa-chart-pie ic"></i><span>情绪分析</span></a>
+  </nav>
+
+  <div class="page">
+    <h1 class="page-h1">情绪洞察</h1>
+    <p class="page-sub">AI 分析你的情绪变化，帮助你更好地了解自己</p>
+
+    <div class="segment insight-segment">
+      <button>今日</button>
+      <button class="on">本周</button>
+      <button>本月</button>
+      <button>今年</button>
+    </div>
+
+    <p class="error-text">获取洞察失败，请稍后重试</p>
+    <div class="reload-wrap">
+      <button class="btn-reload">重新加载</button>
+    </div>
+
+    <div class="copyright">© 2025 情绪健康平台 版权所有</div>
+  </div>
+
+  <nav class="tabbar">
+    <a class="tab-item" href="home.html"><i class="fa-solid fa-house ic"></i><span>首页</span></a>
+    <a class="tab-item active" href="mood-record.html"><i class="fa-solid fa-face-smile ic"></i><span>情绪</span></a>
+    <a class="tab-item" href="relax-center.html"><i class="fa-solid fa-leaf ic"></i><span>放松</span></a>
+    <a class="tab-item" href="#"><i class="fa-solid fa-chart-line ic"></i><span>提升</span></a>
+    <a class="tab-item" href="#"><i class="fa-solid fa-ellipsis ic"></i><span>更多</span></a>
+  </nav>
+
+</div>
+</body>
+</html>

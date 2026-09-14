@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>情绪档案 - 情绪健康平台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  body { overflow-x: hidden; }
+  .page { padding: 24px 16px 0; }
+
+  .eyebrow-orange {
+    font-size: 15px; letter-spacing: .18em; font-weight: 700;
+    color: var(--primary-deep); margin-bottom: 14px;
+  }
+  .page-h1 {
+    font-family: var(--font-serif);
+    font-size: 33px; font-weight: 700; color: var(--ink); margin-bottom: 16px;
+  }
+  .page-desc { font-size: 16px; color: #9b9083; line-height: 1.75; margin-bottom: 26px; }
+
+  /* 统计卡 */
+  .mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 22px; }
+  .mini-stat {
+    border-radius: 20px;
+    padding: 22px 22px 20px;
+    border: 1px solid var(--line);
+  }
+  .mini-stat .lab { font-size: 15px; color: #9b9083; margin-bottom: 10px; }
+  .mini-stat .num { font-size: 36px; font-weight: 800; color: var(--ink); line-height: 1.05; }
+  .mini-stat .unit { font-size: 15px; color: #9b9083; margin-top: 8px; }
+  .mini-stat.plain { background: #fff; }
+  .mini-stat.grad {
+    background: linear-gradient(135deg, #fbecd2 0%, #e7f0e2 100%);
+  }
+  .mini-stat.grad .num { font-size: 32px; }
+  .mini-stat.grad .sub2 { font-size: 14px; color: #9b9083; margin-top: 8px; }
+
+  /* 筛选面板 */
+  .filter-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    box-shadow: var(--sh-soft);
+    padding: 24px 20px 22px;
+    margin-bottom: 22px;
+  }
+  .filter-label { font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 14px; }
+  .range-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px; }
+  .range-row button {
+    border-radius: var(--r-pill);
+    border: 1.5px solid #e7dccb;
+    background: #fff;
+    padding: 12px 0;
+    font-size: 15px; font-weight: 700; color: var(--ink);
+  }
+  .range-row button.on {
+    background: linear-gradient(135deg, #e8834a 0%, #7fb08f 100%);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 6px 14px rgba(150, 150, 110, .25);
+  }
+
+  .tag-scroll {
+    display: flex; flex-wrap: nowrap; gap: 10px;
+    overflow-x: auto;
+    margin: 0 -20px 20px;
+    padding: 2px 20px 6px;
+    scrollbar-width: none;
+  }
+  .tag-scroll::-webkit-scrollbar { display: none; }
+  .mtag {
+    flex: 0 0 auto;
+    display: inline-flex; align-items: center; gap: 9px;
+    border: 1.5px solid #e7dccb;
+    background: #fff;
+    border-radius: var(--r-pill);
+    padding: 10px 18px;
+    font-size: 15px; font-weight: 700; color: var(--ink);
+    white-space: nowrap;
+  }
+  .mtag .dot {
+    width: 15px; height: 15px; border-radius: 50%;
+    border: 2px solid #d6d6d6; background: #ececec;
+  }
+  .mtag.on {
+    background: linear-gradient(135deg, #e8834a 0%, #7fb08f 100%);
+    border-color: transparent; color: #fff;
+    box-shadow: 0 6px 14px rgba(150, 150, 110, .25);
+  }
+  .dot-yellow { border-color: #f0cf86 !important; background: #fdeec6 !important; }
+  .dot-purple { border-color: #d8c4f2 !important; background: #f0e7fc !important; }
+  .dot-gray { border-color: #d3d3d3 !important; background: #ececec !important; }
+  .dot-blue { border-color: #aecdf3 !important; background: #dceafb !important; }
+  .dot-red { border-color: #f4aeb8 !important; background: #fbdce1 !important; }
+  .dot-grayblue { border-color: #cdd5dd !important; background: #e7ecf1 !important; }
+  .dot-orange { border-color: #f2c79f !important; background: #fbe4cf !important; }
+  .dot-green { border-color: #a9d8c3 !important; background: #d4eee2 !important; }
+  .dot-pink { border-color: #f6b6c0 !important; background: #fddde2 !important; }
+
+  .btn-reset {
+    border: 1.5px solid #e0d5c4;
+    background: #fff;
+    border-radius: var(--r-pill);
+    padding: 11px 30px;
+    font-size: 15px; font-weight: 500; color: var(--ink);
+  }
+
+  /* 空状态卡 */
+  .empty-card {
+    background: linear-gradient(168deg, #fdf6f1 0%, #fdf3ef 100%);
+    border: 1.5px solid #f7e3d6;
+    border-radius: 24px;
+    box-shadow: var(--sh-soft);
+    padding: 36px 24px 40px;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .illus {
+    position: relative;
+    width: 230px; height: 190px;
+    margin: 0 auto 26px;
+  }
+  .cloud {
+    position: absolute; border-radius: 999px;
+  }
+  .cloud.c1 { width: 120px; height: 46px; background: #dceee7; top: 18px; left: 6px; }
+  .cloud.c2 { width: 110px; height: 42px; background: #f7e4d7; top: 12px; right: 0; }
+  .cloud.c3 { width: 150px; height: 34px; background: #dceee7; bottom: 30px; left: 30px; }
+  .file-back {
+    position: absolute; width: 132px; height: 150px;
+    border-radius: 22px;
+    background: #f3cfb8;
+    left: 56px; top: 34px;
+    transform: rotate(6deg);
+  }
+  .file-front {
+    position: absolute; width: 132px; height: 150px;
+    border-radius: 22px;
+    background: #fff;
+    border: 1.5px solid #f0ddc9;
+    left: 48px; top: 26px;
+    transform: rotate(-4deg);
+    box-shadow: 0 10px 24px rgba(200,160,120,.18);
+    padding: 34px 18px 0;
+  }
+  .file-front .ln { display: block; height: 9px; border-radius: 5px; background: #e4c6ae; margin-bottom: 14px; }
+  .file-front .ln.w1 { width: 88px; }
+  .file-front .ln.w2 { width: 72px; margin-left: 4px; }
+  .file-front .ln.w3 { width: 40px; margin-left: 4px; }
+  .smile {
+    position: absolute; width: 62px; height: 62px; border-radius: 50%;
+    background: #fde89a;
+    left: 84px; top: 104px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 34px;
+    z-index: 2;
+  }
+  .empty-card h3 {
+    font-family: var(--font-serif);
+    font-size: 24px; font-weight: 700; color: #456f5d; margin-bottom: 18px;
+  }
+  .empty-card p {
+    font-size: 16px; color: #8a948c; line-height: 1.85; margin-bottom: 30px;
+  }
+  .btn-go-record {
+    border-radius: var(--r-pill);
+    background: #6faea4;
+    color: #fff;
+    font-size: 17px; font-weight: 700;
+    padding: 15px 36px;
+    box-shadow: 0 8px 18px rgba(111,174,164,.32);
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <nav class="subnav">
+    <a class="subnav-item" href="mood-record.html"><i class="fa-solid fa-pencil ic"></i><span>情绪记录</span></a>
+    <a class="subnav-item active" href="mood-archive.html"><i class="fa-solid fa-box-archive ic"></i><span>情绪档案</span></a>
+    <a class="subnav-item" href="mood-insight.html"><i class="fa-solid fa-lightbulb ic"></i><span>情绪洞察</span></a>
+    <a class="subnav-item" href="mood-analysis.html"><i class="fa-solid fa-chart-pie ic"></i><span>情绪分析</span></a>
+  </nav>
+
+  <div class="page">
+
+    <p class="eyebrow-orange">MOOD ARCHIVE</p>
+    <h1 class="page-h1">情绪档案</h1>
+    <p class="page-desc">按时间回看自己的情绪变化，把每一次记录变得更清楚。</p>
+
+    <div class="mini-stats">
+      <div class="mini-stat plain">
+        <div class="lab">本月记录</div>
+        <div class="num">0</div>
+        <div class="unit">条</div>
+      </div>
+      <div class="mini-stat grad">
+        <div class="lab">主要情绪</div>
+        <div class="num">暂无</div>
+        <div class="sub2">先记录一条情绪</div>
+      </div>
+    </div>
+
+    <section class="filter-card">
+      <div class="filter-label">时间范围</div>
+      <div class="range-row">
+        <button>今日</button>
+        <button>本周</button>
+        <button class="on">本月</button>
+        <button>自定义</button>
+      </div>
+
+      <div class="filter-label">情绪类型</div>
+      <div class="tag-scroll">
+        <span class="mtag on">全部</span>
+        <span class="mtag"><i class="dot dot-yellow"></i>开心</span>
+        <span class="mtag"><i class="dot dot-purple"></i>愉悦</span>
+        <span class="mtag"><i class="dot dot-gray"></i>一般</span>
+        <span class="mtag"><i class="dot dot-blue"></i>难过</span>
+        <span class="mtag"><i class="dot dot-red"></i>愤怒</span>
+        <span class="mtag"><i class="dot dot-grayblue"></i>烦躁</span>
+        <span class="mtag"><i class="dot dot-orange"></i>焦虑</span>
+        <span class="mtag"><i class="dot dot-green"></i>平静</span>
+        <span class="mtag"><i class="dot dot-pink"></i>兴奋</span>
+        <span class="mtag"><i class="dot dot-gray"></i>疲惫</span>
+        <span class="mtag"><i class="dot dot-yellow"></i>感恩</span>
+        <span class="mtag"><i class="dot dot-gray"></i>狂喜</span>
+        <span class="mtag"><i class="dot dot-gray"></i>钦佩</span>
+        <span class="mtag"><i class="dot dot-gray"></i>恐惧</span>
+        <span class="mtag"><i class="dot dot-gray"></i>惊愕</span>
+        <span class="mtag"><i class="dot dot-gray"></i>厌恶</span>
+        <span class="mtag"><i class="dot dot-grayblue"></i>警惕</span>
+        <span class="mtag"><i class="dot dot-grayblue"></i>信任</span>
+        <span class="mtag"><i class="dot dot-gray"></i>惊喜</span>
+        <span class="mtag"><i class="dot dot-grayblue"></i>反感</span>
+        <span class="mtag"><i class="dot dot-grayblue"></i>期待</span>
+        <span class="mtag"><i class="dot dot-grayblue"></i>接纳</span>
+        <span class="mtag"><i class="dot dot-grayblue"></i>娱乐</span>
+        <span class="mtag"><i class="dot dot-grayblue"></i>沉思</span>
+        <span class="mtag"><i class="dot dot-grayblue"></i>无聊</span>
+        <span class="mtag"><i class="dot dot-grayblue"></i>烦恼</span>
+        <span class="mtag"><i class="dot dot-grayblue"></i>兴趣</span>
+        <span class="mtag"><i class="dot dot-grayblue"></i>生气</span>
+        <span class="mtag"><i class="dot dot-grayblue"></i>害怕</span>
+        <span class="mtag"><i class="dot dot-grayblue"></i>忧虑</span>
+        <span class="mtag"><i class="dot dot-grayblue"></i>悲伤</span>
+        <span class="mtag"><i class="dot dot-grayblue"></i>反对</span>
+        <span class="mtag"><i class="dot dot-grayblue"></i>悔恨</span>
+        <span class="mtag"><i class="dot dot-grayblue"></i>蔑视</span>
+      </div>
+
+      <button class="btn-reset">重置筛选</button>
+    </section>
+
+    <section class="empty-card">
+      <div class="illus">
+        <span class="cloud c1"></span>
+        <span class="cloud c2"></span>
+        <span class="file-back"></span>
+        <span class="file-front">
+          <span class="ln w1"></span>
+          <span class="ln w2"></span>
+          <span class="ln w3"></span>
+        </span>
+        <span class="cloud c3"></span>
+        <span class="smile">😊</span>
+      </div>
+      <h3>没有符合当前筛选的记录</h3>
+      <p>尝试切换时间范围或情绪类型，找回你想查看的那一段情绪轨迹。</p>
+      <button class="btn-go-record">去记录情绪</button>
+    </section>
+
+    <div class="copyright">© 2025 情绪健康平台 版权所有</div>
+  </div>
+
+  <nav class="tabbar">
+    <a class="tab-item" href="home.html"><i class="fa-solid fa-house ic"></i><span>首页</span></a>
+    <a class="tab-item active" href="mood-record.html"><i class="fa-solid fa-face-smile ic"></i><span>情绪</span></a>
+    <a class="tab-item" href="relax-center.html"><i class="fa-solid fa-leaf ic"></i><span>放松</span></a>
+    <a class="tab-item" href="#"><i class="fa-solid fa-chart-line ic"></i><span>提升</span></a>
+    <a class="tab-item" href="#"><i class="fa-solid fa-ellipsis ic"></i><span>更多</span></a>
+  </nav>
+
+</div>
+</body>
+</html>
