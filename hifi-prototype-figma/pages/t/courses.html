@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>课程管理 · 管理后台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  .desktop { position: relative; }
+  .toast-stack {
+    position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+    z-index: 60; display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .toast {
+    display: inline-flex; align-items: center; gap: 9px;
+    background: var(--danger-soft); color: #c0394c;
+    border: 1px solid #f4c3cc; border-radius: 10px;
+    padding: 9px 26px; font-size: 14px;
+    box-shadow: 0 6px 18px rgba(192, 57, 76, 0.14);
+  }
+  .toast i { color: var(--primary); }
+  .btn-plain {
+    background: #f7f4ef; border: 1px solid #cfc7bb; border-radius: 5px;
+    padding: 9px 15px; font-size: 14px; color: #4a443d; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .refresh-v {
+    width: 34px; height: 38px;
+    border: 1px solid #cfc7bb; background: #f7f4ef;
+    border-radius: 5px; font-size: 13px; color: #4a443d;
+    writing-mode: vertical-rl; letter-spacing: 2px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+</style>
+</head>
+<body>
+<div class="desktop">
+
+  <!-- 错误提示 toast -->
+  <div class="toast-stack">
+    <div class="toast"><i class="fa-solid fa-circle-exclamation"></i>请求的资源不存在</div>
+    <div class="toast"><i class="fa-solid fa-circle-exclamation"></i>获取课程失败</div>
+  </div>
+
+  <!-- 顶部前台导航 -->
+  <nav class="top-nav">
+    <a href="#"><i class="fa-solid fa-house ic"></i>首页</a>
+    <a href="#"><i class="fa-solid fa-face-smile ic"></i>情绪</a>
+    <a href="#"><i class="fa-solid fa-leaf ic"></i>放松</a>
+    <a href="#"><i class="fa-solid fa-chart-line ic"></i>提升</a>
+    <a href="#"><i class="fa-solid fa-heart ic"></i>咨询</a>
+    <a href="#"><i class="fa-solid fa-robot ic"></i>AI知识助手</a>
+    <a href="#"><i class="fa-solid fa-user ic"></i>我的</a>
+    <a href="#" class="active"><i class="fa-solid fa-users-gear ic"></i>管理后台</a>
+    <span class="spacer"></span>
+    <span class="user-name">demo_super_admin</span>
+    <a class="logout" href="#"><i class="fa-solid fa-right-from-bracket"></i> 退出</a>
+  </nav>
+
+  <!-- 面包屑条 -->
+  <div class="crumb-bar">
+    <div class="left"><i class="fa-solid fa-house ic"></i><span>课程管理</span></div>
+    <div class="right">
+      <i class="fa-solid fa-circle-user" style="color:var(--primary);font-size:16px;"></i>
+      <span>demo_super_admin</span>
+      <span class="role-tag">super_admin</span>
+    </div>
+  </div>
+
+  <div class="admin-body">
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+      <div class="sidebar-head">
+        <span><i class="fa-solid fa-users ic"></i> 管理后台</span>
+        <i class="fa-solid fa-chevron-left collapse"></i>
+      </div>
+      <nav class="side-menu">
+        <a href="dashboard.html"><i class="fa-solid fa-gauge-high ic"></i>管理首页</a>
+        <a href="users.html"><i class="fa-solid fa-users-cog ic"></i>用户管理</a>
+        <a href="user-moods.html"><i class="fa-solid fa-chart-line ic"></i>用户情绪数据</a>
+        <a href="moods.html"><i class="fa-solid fa-face-smile ic"></i>情绪记录</a>
+        <a href="posts.html"><i class="fa-solid fa-clipboard-check ic"></i>帖子审核</a>
+        <a href="treehole-audit.html"><i class="fa-solid fa-tree ic"></i>树洞审核</a>
+        <a href="cases.html"><i class="fa-solid fa-heart-circle-exclamation ic"></i>风险个案</a>
+        <a href="courses.html" class="active"><i class="fa-solid fa-book-medical ic"></i>课程管理</a>
+        <a href="music-manage.html"><i class="fa-solid fa-music ic"></i>音乐管理</a>
+        <a href="audit-logs.html"><i class="fa-solid fa-file-shield ic"></i>审计日志</a>
+        <a href="activity-stats.html"><i class="fa-solid fa-chart-bar ic"></i>活动统计</a>
+      </nav>
+      <div class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> 退出登录</div>
+    </aside>
+
+    <!-- 主内容 -->
+    <main class="admin-main">
+      <div class="admin-h">
+        <h2>课程管理</h2>
+        <div class="ops">
+          <button class="btn-plain">+ 新建课程</button>
+          <button class="refresh-v">刷新</button>
+        </div>
+      </div>
+
+      <div class="empty-line">还没有课程</div>
+
+      <div class="copyright">© 2025 情绪健康平台 版权所有</div>
+    </main>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>风险个案管理 · 管理后台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  .btn-orange {
+    background: var(--primary); color: #fff; border-radius: 8px;
+    padding: 9px 22px; font-size: 14px; font-weight: 600;
+    box-shadow: 0 4px 12px rgba(232, 131, 74, 0.25);
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .state-block {
+    text-align: center; color: var(--ink-mute); font-size: 15px;
+    padding: 56px 20px;
+  }
+  .state-block i { display: block; font-size: 46px; color: var(--ink-faint); margin-bottom: 16px; }
+  .demo-note { font-size: 12px; color: var(--ink-mute); margin: 8px 2px 10px; }
+  .tbl { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .tbl .summary { color: var(--ink-soft); max-width: 360px; }
+  .tbl .link { color: var(--primary-deep); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="desktop">
+
+  <!-- 顶部前台导航 -->
+  <nav class="top-nav">
+    <a href="#"><i class="fa-solid fa-house ic"></i>首页</a>
+    <a href="#"><i class="fa-solid fa-face-smile ic"></i>情绪</a>
+    <a href="#"><i class="fa-solid fa-leaf ic"></i>放松</a>
+    <a href="#"><i class="fa-solid fa-chart-line ic"></i>提升</a>
+    <a href="#"><i class="fa-solid fa-heart ic"></i>咨询</a>
+    <a href="#"><i class="fa-solid fa-robot ic"></i>AI知识助手</a>
+    <a href="#"><i class="fa-solid fa-user ic"></i>我的</a>
+    <a href="#" class="active"><i class="fa-solid fa-users-gear ic"></i>管理后台</a>
+    <span class="spacer"></span>
+    <span class="user-name">demo_super_admin</span>
+    <a class="logout" href="#"><i class="fa-solid fa-right-from-bracket"></i> 退出</a>
+  </nav>
+
+  <!-- 面包屑条 -->
+  <div class="crumb-bar">
+    <div class="left"><i class="fa-solid fa-house ic"></i><span>风险个案</span></div>
+    <div class="right">
+      <i class="fa-solid fa-circle-user" style="color:var(--primary);font-size:16px;"></i>
+      <span>demo_super_admin</span>
+      <span class="role-tag">super_admin</span>
+    </div>
+  </div>
+
+  <div class="admin-body">
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+      <div class="sidebar-head">
+        <span><i class="fa-solid fa-users ic"></i> 管理后台</span>
+        <i class="fa-solid fa-chevron-left collapse"></i>
+      </div>
+      <nav class="side-menu">
+        <a href="dashboard.html"><i class="fa-solid fa-gauge-high ic"></i>管理首页</a>
+        <a href="users.html"><i class="fa-solid fa-users-cog ic"></i>用户管理</a>
+        <a href="user-moods.html"><i class="fa-solid fa-chart-line ic"></i>用户情绪数据</a>
+        <a href="moods.html"><i class="fa-solid fa-face-smile ic"></i>情绪记录</a>
+        <a href="posts.html"><i class="fa-solid fa-clipboard-check ic"></i>帖子审核</a>
+        <a href="treehole-audit.html"><i class="fa-solid fa-tree ic"></i>树洞审核</a>
+        <a href="cases.html" class="active"><i class="fa-solid fa-heart-circle-exclamation ic"></i>风险个案</a>
+        <a href="courses.html"><i class="fa-solid fa-book-medical ic"></i>课程管理</a>
+        <a href="music-manage.html"><i class="fa-solid fa-music ic"></i>音乐管理</a>
+        <a href="audit-logs.html"><i class="fa-solid fa-file-shield ic"></i>审计日志</a>
+        <a href="activity-stats.html"><i class="fa-solid fa-chart-bar ic"></i>活动统计</a>
+      </nav>
+      <div class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> 退出登录</div>
+    </aside>
+
+    <!-- 主内容 -->
+    <main class="admin-main">
+      <div class="admin-h">
+        <h2>风险个案管理</h2>
+        <div class="ops">
+          <button class="btn-orange"><i class="fa-solid fa-rotate"></i>刷新</button>
+        </div>
+      </div>
+
+      <!-- 当前账号无数据时的空状态 -->
+      <div class="state-block">
+        <i class="fa-regular fa-folder-open"></i>
+        还没有风险个案记录
+      </div>
+
+      <!-- 示例表格：结构与真实页面一致 -->
+      <div class="demo-note">示例数据 · 结构与真实页面一致</div>
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>学生ID</th>
+            <th>状态</th>
+            <th>风险等级</th>
+            <th>摘要</th>
+            <th>创建时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>12</td>
+            <td>2</td>
+            <td><span class="tag tag-open">待处理</span></td>
+            <td><span class="tag tag-risk-high">高风险</span></td>
+            <td class="summary">近一周情绪持续低落并出现自伤倾向关键词…</td>
+            <td>2026/9/12 21:14:03</td>
+            <td><a class="link" href="case-detail.html">查看详情</a></td>
+          </tr>
+          <tr>
+            <td>11</td>
+            <td>5</td>
+            <td><span class="tag tag-progress">处理中</span></td>
+            <td><span class="tag tag-risk-moderate">中度</span></td>
+            <td class="summary">连续三次测评焦虑分值偏高…</td>
+            <td>2026/9/10 09:22:40</td>
+            <td><a class="link" href="case-detail.html">查看详情</a></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="copyright">© 2025 情绪健康平台 版权所有</div>
+    </main>
+  </div>
+
+</div>
+</body>
+</html>

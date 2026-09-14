@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>审计日志 · 管理后台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  .refresh-v {
+    width: 32px; height: 46px;
+    border: 1px solid var(--line-strong); background: #fff;
+    border-radius: 5px; font-size: 13px; color: var(--ink-soft);
+    writing-mode: vertical-rl; letter-spacing: 2px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .tbl { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .tbl th:first-child, .tbl td:first-child { padding-left: 20px; }
+</style>
+</head>
+<body>
+<div class="desktop">
+
+  <!-- 顶部前台导航 -->
+  <nav class="top-nav">
+    <a href="#"><i class="fa-solid fa-house ic"></i>首页</a>
+    <a href="#"><i class="fa-solid fa-face-smile ic"></i>情绪</a>
+    <a href="#"><i class="fa-solid fa-leaf ic"></i>放松</a>
+    <a href="#"><i class="fa-solid fa-chart-line ic"></i>提升</a>
+    <a href="#"><i class="fa-solid fa-heart ic"></i>咨询</a>
+    <a href="#"><i class="fa-solid fa-robot ic"></i>AI知识助手</a>
+    <a href="#"><i class="fa-solid fa-user ic"></i>我的</a>
+    <a href="#" class="active"><i class="fa-solid fa-users-gear ic"></i>管理后台</a>
+    <span class="spacer"></span>
+    <span class="user-name">demo_super_admin</span>
+    <a class="logout" href="#"><i class="fa-solid fa-right-from-bracket"></i> 退出</a>
+  </nav>
+
+  <!-- 面包屑条 -->
+  <div class="crumb-bar">
+    <div class="left"><i class="fa-solid fa-house ic"></i><span>审计日志</span></div>
+    <div class="right">
+      <i class="fa-solid fa-circle-user" style="color:var(--primary);font-size:16px;"></i>
+      <span>demo_super_admin</span>
+      <span class="role-tag">super_admin</span>
+    </div>
+  </div>
+
+  <div class="admin-body">
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+      <div class="sidebar-head">
+        <span><i class="fa-solid fa-users ic"></i> 管理后台</span>
+        <i class="fa-solid fa-chevron-left collapse"></i>
+      </div>
+      <nav class="side-menu">
+        <a href="dashboard.html"><i class="fa-solid fa-gauge-high ic"></i>管理首页</a>
+        <a href="users.html"><i class="fa-solid fa-users-cog ic"></i>用户管理</a>
+        <a href="user-moods.html"><i class="fa-solid fa-chart-line ic"></i>用户情绪数据</a>
+        <a href="moods.html"><i class="fa-solid fa-face-smile ic"></i>情绪记录</a>
+        <a href="posts.html"><i class="fa-solid fa-clipboard-check ic"></i>帖子审核</a>
+        <a href="treehole-audit.html"><i class="fa-solid fa-tree ic"></i>树洞审核</a>
+        <a href="cases.html"><i class="fa-solid fa-heart-circle-exclamation ic"></i>风险个案</a>
+        <a href="courses.html"><i class="fa-solid fa-book-medical ic"></i>课程管理</a>
+        <a href="music-manage.html"><i class="fa-solid fa-music ic"></i>音乐管理</a>
+        <a href="audit-logs.html" class="active"><i class="fa-solid fa-file-shield ic"></i>审计日志</a>
+        <a href="activity-stats.html"><i class="fa-solid fa-chart-bar ic"></i>活动统计</a>
+      </nav>
+      <div class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> 退出登录</div>
+    </aside>
+
+    <!-- 主内容 -->
+    <main class="admin-main">
+      <div class="admin-h">
+        <h2>审计日志</h2>
+        <div class="ops">
+          <button class="refresh-v">刷新</button>
+        </div>
+      </div>
+
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>操作者</th>
+            <th>权限</th>
+            <th>操作</th>
+            <th>结果</th>
+            <th>时间</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>20</td><td>4</td><td>post.audit.pending.read</td><td>POST_AUDIT_STATS_READ</td><td class="ok-text">success</td><td>2026-09-14T07:20:42.432Z</td></tr>
+          <tr><td>19</td><td>4</td><td>post.audit.pending.read</td><td>POST_AUDIT_PENDING_READ</td><td class="ok-text">success</td><td>2026-09-14T07:20:42.426Z</td></tr>
+          <tr><td>18</td><td>4</td><td>post.audit.pending.read</td><td>POST_AUDIT_PENDING_READ</td><td class="ok-text">success</td><td>2026-09-14T07:20:39.400Z</td></tr>
+          <tr><td>17</td><td>4</td><td>user.manage</td><td>USER_LIST</td><td class="ok-text">success</td><td>2026-09-14T07:20:30.366Z</td></tr>
+          <tr><td>16</td><td>4</td><td>post.audit.pending.read</td><td>POST_AUDIT_STATS_READ</td><td class="ok-text">success</td><td>2026-08-13T02:05:53.267Z</td></tr>
+          <tr><td>15</td><td>4</td><td>post.audit.pending.read</td><td>POST_AUDIT_PENDING_READ</td><td class="ok-text">success</td><td>2026-08-13T02:05:53.265Z</td></tr>
+          <tr><td>14</td><td>4</td><td>user.manage</td><td>USER_LIST</td><td class="ok-text">success</td><td>2026-08-13T02:05:38.890Z</td></tr>
+          <tr><td>13</td><td>99999002</td><td>post.audit.pending.read</td><td>POST_AUDIT_PENDING_READ</td><td class="ok-text">success</td><td>2026-08-12T19:02:48.057Z</td></tr>
+          <tr><td>12</td><td>99999002</td><td>post.audit.pending.read</td><td>POST_AUDIT_STATS_READ</td><td class="ok-text">success</td><td>2026-08-12T19:02:48.056Z</td></tr>
+          <tr><td>11</td><td>99999002</td><td>user.manage</td><td>USER_LIST</td><td class="ok-text">success</td><td>2026-08-12T19:02:43.784Z</td></tr>
+          <tr><td>10</td><td>99999002</td><td>post.audit.pending.read</td><td>POST_AUDIT_STATS_READ</td><td class="ok-text">success</td><td>2026-08-12T17:59:38.150Z</td></tr>
+          <tr><td>9</td><td>99999002</td><td>post.audit.pending.read</td><td>POST_AUDIT_PENDING_READ</td><td class="ok-text">success</td><td>2026-08-12T17:59:38.149Z</td></tr>
+          <tr><td>8</td><td>99999002</td><td>user.manage</td><td>USER_LIST</td><td class="ok-text">success</td><td>2026-08-12T17:59:35.388Z</td></tr>
+          <tr><td>7</td><td>99999002</td><td>post.audit.pending.read</td><td>POST_AUDIT_STATS_READ</td><td class="ok-text">success</td><td>2026-08-12T17:46:33.182Z</td></tr>
+          <tr><td>6</td><td>99999002</td><td>post.audit.pending.read</td><td>POST_AUDIT_PENDING_READ</td><td class="ok-text">success</td><td>2026-08-12T17:46:32.960Z</td></tr>
+          <tr><td>5</td><td>99999002</td><td>user.manage</td><td>USER_LIST</td><td class="ok-text">success</td><td>2026-08-12T17:46:30.089Z</td></tr>
+          <tr><td>4</td><td>4</td><td>post.audit.pending.read</td><td>POST_AUDIT_STATS_READ</td><td class="ok-text">success</td><td>2026-08-02T10:14:45.068Z</td></tr>
+          <tr><td>3</td><td>4</td><td>post.audit.pending.read</td><td>POST_AUDIT_PENDING_READ</td><td class="ok-text">success</td><td>2026-08-02T10:14:45.066Z</td></tr>
+          <tr><td>2</td><td>4</td><td>post.audit.pending.read</td><td>POST_AUDIT_PENDING_READ</td><td class="ok-text">success</td><td>2026-08-02T10:14:43.252Z</td></tr>
+          <tr><td>1</td><td>4</td><td>user.manage</td><td>USER_LIST</td><td class="ok-text">success</td><td>2026-08-02T10:14:29.088Z</td></tr>
+        </tbody>
+      </table>
+
+      <div class="copyright">© 2025 情绪健康平台 版权所有</div>
+    </main>
+  </div>
+
+</div>
+</body>
+</html>

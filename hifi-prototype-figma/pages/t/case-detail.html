@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>个案详情 #12 · 管理后台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  .detail-head { display: flex; align-items: center; gap: 16px; margin-bottom: 6px; }
+  .detail-head h2 { font-family: var(--font-serif); font-size: 26px; font-weight: 700; }
+  .btn-back {
+    background: #fff; border: 1px solid var(--line-strong); border-radius: 8px;
+    padding: 9px 18px; font-size: 14px; color: var(--ink-soft);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .demo-note { font-size: 12px; color: var(--ink-mute); margin: 0 2px 18px; }
+  .info-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    row-gap: 18px; column-gap: 40px; margin-bottom: 20px;
+  }
+  .info-item .lab { font-size: 13px; color: var(--ink-mute); margin-bottom: 5px; }
+  .info-item .val { font-size: 15px; color: var(--ink); }
+  .info-item .val.muted { color: var(--ink-mute); }
+  .summary-block .lab { font-size: 13px; color: var(--ink-mute); margin-bottom: 8px; }
+  .summary-block .val {
+    font-size: 14.5px; color: var(--ink-soft); line-height: 1.8;
+    background: var(--surface-muted); border-radius: 10px; padding: 14px 16px;
+  }
+  .assign-row { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .assign-row .lab { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .assign-row input {
+    width: 220px; border: 1.5px solid var(--line-strong); background: #fff;
+    border-radius: 8px; padding: 9px 14px; font-size: 14px; color: var(--ink);
+  }
+  .btn-assign {
+    background: var(--primary); color: #fff; border-radius: 8px;
+    padding: 9px 24px; font-size: 14px; font-weight: 600;
+    box-shadow: 0 4px 12px rgba(232, 131, 74, 0.25);
+  }
+  .locked-zone {
+    border: 1px dashed var(--line-strong); border-radius: 10px;
+    background: var(--surface-muted); padding: 18px 20px;
+  }
+  .locked-zone .locked-title { font-size: 13px; color: var(--ink-mute); margin-bottom: 12px; }
+  .locked-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .locked-row .lk-lab { font-size: 13.5px; color: var(--ink-faint); width: 150px; flex-shrink: 0; }
+  .locked-row .lk-field {
+    flex: 1; height: 38px; border: 1px solid #e7dfd2; border-radius: 8px;
+    background: #f3ede4; color: var(--ink-faint); font-size: 13px;
+    display: flex; align-items: center; padding: 0 14px;
+  }
+  .locked-row .lk-btn {
+    border: 1px solid #e2d9cb; background: #f3ede4; color: var(--ink-faint);
+    border-radius: 8px; padding: 8px 22px; font-size: 13.5px;
+  }
+  .locked-hint { font-size: 12.5px; color: var(--ink-mute); margin-top: 4px; }
+  .records-empty { text-align: center; color: var(--ink-mute); font-size: 14px; padding: 40px 0 34px; }
+</style>
+</head>
+<body>
+<div class="desktop">
+
+  <!-- 顶部前台导航 -->
+  <nav class="top-nav">
+    <a href="#"><i class="fa-solid fa-house ic"></i>首页</a>
+    <a href="#"><i class="fa-solid fa-face-smile ic"></i>情绪</a>
+    <a href="#"><i class="fa-solid fa-leaf ic"></i>放松</a>
+    <a href="#"><i class="fa-solid fa-chart-line ic"></i>提升</a>
+    <a href="#"><i class="fa-solid fa-heart ic"></i>咨询</a>
+    <a href="#"><i class="fa-solid fa-robot ic"></i>AI知识助手</a>
+    <a href="#"><i class="fa-solid fa-user ic"></i>我的</a>
+    <a href="#" class="active"><i class="fa-solid fa-users-gear ic"></i>管理后台</a>
+    <span class="spacer"></span>
+    <span class="user-name">demo_super_admin</span>
+    <a class="logout" href="#"><i class="fa-solid fa-right-from-bracket"></i> 退出</a>
+  </nav>
+
+  <!-- 面包屑条 -->
+  <div class="crumb-bar">
+    <div class="left"><i class="fa-solid fa-house ic"></i><span>风险个案</span></div>
+    <div class="right">
+      <i class="fa-solid fa-circle-user" style="color:var(--primary);font-size:16px;"></i>
+      <span>demo_super_admin</span>
+      <span class="role-tag">super_admin</span>
+    </div>
+  </div>
+
+  <div class="admin-body">
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+      <div class="sidebar-head">
+        <span><i class="fa-solid fa-users ic"></i> 管理后台</span>
+        <i class="fa-solid fa-chevron-left collapse"></i>
+      </div>
+      <nav class="side-menu">
+        <a href="dashboard.html"><i class="fa-solid fa-gauge-high ic"></i>管理首页</a>
+        <a href="users.html"><i class="fa-solid fa-users-cog ic"></i>用户管理</a>
+        <a href="user-moods.html"><i class="fa-solid fa-chart-line ic"></i>用户情绪数据</a>
+        <a href="moods.html"><i class="fa-solid fa-face-smile ic"></i>情绪记录</a>
+        <a href="posts.html"><i class="fa-solid fa-clipboard-check ic"></i>帖子审核</a>
+        <a href="treehole-audit.html"><i class="fa-solid fa-tree ic"></i>树洞审核</a>
+        <a href="cases.html" class="active"><i class="fa-solid fa-heart-circle-exclamation ic"></i>风险个案</a>
+        <a href="courses.html"><i class="fa-solid fa-book-medical ic"></i>课程管理</a>
+        <a href="music-manage.html"><i class="fa-solid fa-music ic"></i>音乐管理</a>
+        <a href="audit-logs.html"><i class="fa-solid fa-file-shield ic"></i>审计日志</a>
+        <a href="activity-stats.html"><i class="fa-solid fa-chart-bar ic"></i>活动统计</a>
+      </nav>
+      <div class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> 退出登录</div>
+    </aside>
+
+    <!-- 主内容 -->
+    <main class="admin-main">
+      <div class="detail-head">
+        <button class="btn-back"><i class="fa-solid fa-arrow-left"></i>返回列表</button>
+        <h2>个案详情 #12</h2>
+      </div>
+      <div class="demo-note">示例数据 · 依据真实代码结构绘制</div>
+
+      <!-- ① 基本信息 -->
+      <section class="panel">
+        <div class="panel-title">基本信息</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="lab">学生ID</div>
+            <div class="val">2</div>
+          </div>
+          <div class="info-item">
+            <div class="lab">状态</div>
+            <div class="val"><span class="tag tag-open">待处理</span></div>
+          </div>
+          <div class="info-item">
+            <div class="lab">风险等级</div>
+            <div class="val"><span class="tag tag-risk-high">高风险</span></div>
+          </div>
+          <div class="info-item">
+            <div class="lab">咨询师ID</div>
+            <div class="val muted">未分配</div>
+          </div>
+          <div class="info-item">
+            <div class="lab">创建时间</div>
+            <div class="val">2026/9/12 21:14:03</div>
+          </div>
+          <div class="info-item">
+            <div class="lab">更新时间</div>
+            <div class="val">2026/9/13 08:00:11</div>
+          </div>
+        </div>
+        <div class="summary-block">
+          <div class="lab">摘要</div>
+          <div class="val">近一周情绪持续低落并出现自伤倾向关键词，连续多次在情绪记录中表达无助与绝望感，夜间活跃度明显升高。系统风险模型综合判定为高风险，建议尽快安排咨询师介入评估。</div>
+        </div>
+      </section>
+
+      <!-- ② 个案操作 -->
+      <section class="panel">
+        <div class="panel-title">个案操作</div>
+
+        <!-- open 待处理：仅分配咨询师可用 -->
+        <div class="assign-row">
+          <span class="lab">分配咨询师：</span>
+          <input type="number" placeholder="咨询师用户ID">
+          <button class="btn-assign">分配</button>
+        </div>
+
+        <!-- assigned / in_progress 后解锁的功能（禁用预览） -->
+        <div class="locked-zone">
+          <div class="locked-title">以下操作在分配咨询师后开放（assigned / in_progress 状态）</div>
+
+          <div class="locked-row">
+            <span class="lk-lab">干预类型（备注/访谈）</span>
+            <span class="lk-field">请选择干预类型</span>
+          </div>
+          <div class="locked-row">
+            <span class="lk-lab">干预内容</span>
+            <span class="lk-field">请输入干预内容</span>
+            <button class="lk-btn">添加干预</button>
+          </div>
+          <div class="locked-row">
+            <span class="lk-lab">转介目标</span>
+            <span class="lk-field">请输入转介目标</span>
+          </div>
+          <div class="locked-row">
+            <span class="lk-lab">转介原因</span>
+            <span class="lk-field">请输入转介原因</span>
+            <button class="lk-btn">转介</button>
+          </div>
+          <div class="locked-row">
+            <span class="lk-lab">结案摘要</span>
+            <span class="lk-field">请输入结案摘要</span>
+            <button class="lk-btn">结案</button>
+          </div>
+
+          <div class="locked-hint"><i class="fa-solid fa-lock"></i> 分配咨询师后解锁</div>
+        </div>
+      </section>
+
+      <!-- ③ 干预记录 -->
+      <section class="panel">
+        <div class="panel-title">干预记录（0）</div>
+        <div class="records-empty">还没有干预记录</div>
+      </section>
+
+      <div class="copyright">© 2025 情绪健康平台 版权所有</div>
+    </main>
+  </div>
+
+</div>
+</body>
+</html>

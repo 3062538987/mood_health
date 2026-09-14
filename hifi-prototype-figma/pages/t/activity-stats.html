@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>活动效果统计 · 管理后台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  .admin-main { background: #f2f4f8; }
+  .stats-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+  .stats-head h2 { font-family: var(--font-serif); font-size: 26px; font-weight: 700; }
+  .date-row { display: flex; align-items: center; gap: 10px; }
+  .date-field {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #fff; border: 1px solid #dfe4ec; border-radius: 6px;
+    padding: 9px 14px; width: 172px; color: var(--ink-mute); font-size: 14px;
+  }
+  .date-field i { color: #9aa4b2; }
+  .date-sep { color: var(--ink-soft); font-size: 14px; }
+  .btn-query {
+    background: var(--blue); color: #fff; border-radius: 6px;
+    padding: 10px 24px; font-size: 15px; font-weight: 500;
+  }
+  .stat-grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; margin-bottom: 22px; }
+  .stat-card {
+    background: #fff; border: 1px solid #e6ebf2; border-radius: 14px;
+    padding: 30px 18px 32px; text-align: center;
+  }
+  .stat-card .lab { font-size: 15px; color: var(--ink-soft); margin-bottom: 16px; }
+  .stat-card .num { font-size: 46px; font-weight: 800; color: #1f2430; line-height: 1.1; }
+  .stat-card .num small { font-size: 16px; font-weight: 500; color: var(--ink-mute); }
+  .dist-card { background: #fff; border: 1px solid #e6ebf2; border-radius: 14px; overflow: hidden; }
+  .dist-head { padding: 20px 26px; font-size: 18px; font-weight: 800; border-bottom: 1px solid #eef1f5; }
+  .dist-body { height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+  .dist-body .box { font-size: 72px; color: #d9dee6; }
+  .dist-body .txt { color: var(--ink-mute); font-size: 15px; }
+</style>
+</head>
+<body>
+<div class="desktop">
+
+  <!-- 顶部前台导航 -->
+  <nav class="top-nav">
+    <a href="#"><i class="fa-solid fa-house ic"></i>首页</a>
+    <a href="#"><i class="fa-solid fa-face-smile ic"></i>情绪</a>
+    <a href="#"><i class="fa-solid fa-leaf ic"></i>放松</a>
+    <a href="#"><i class="fa-solid fa-chart-line ic"></i>提升</a>
+    <a href="#"><i class="fa-solid fa-heart ic"></i>咨询</a>
+    <a href="#"><i class="fa-solid fa-robot ic"></i>AI知识助手</a>
+    <a href="#"><i class="fa-solid fa-user ic"></i>我的</a>
+    <a href="#" class="active"><i class="fa-solid fa-users-gear ic"></i>管理后台</a>
+    <span class="spacer"></span>
+    <span class="user-name">demo_super_admin</span>
+    <a class="logout" href="#"><i class="fa-solid fa-right-from-bracket"></i> 退出</a>
+  </nav>
+
+  <!-- 面包屑条 -->
+  <div class="crumb-bar">
+    <div class="left"><i class="fa-solid fa-house ic"></i><span>活动统计</span></div>
+    <div class="right">
+      <i class="fa-solid fa-circle-user" style="color:var(--primary);font-size:16px;"></i>
+      <span>demo_super_admin</span>
+      <span class="role-tag">super_admin</span>
+    </div>
+  </div>
+
+  <div class="admin-body">
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+      <div class="sidebar-head">
+        <span><i class="fa-solid fa-users ic"></i> 管理后台</span>
+        <i class="fa-solid fa-chevron-left collapse"></i>
+      </div>
+      <nav class="side-menu">
+        <a href="dashboard.html"><i class="fa-solid fa-gauge-high ic"></i>管理首页</a>
+        <a href="users.html"><i class="fa-solid fa-users-cog ic"></i>用户管理</a>
+        <a href="user-moods.html"><i class="fa-solid fa-chart-line ic"></i>用户情绪数据</a>
+        <a href="moods.html"><i class="fa-solid fa-face-smile ic"></i>情绪记录</a>
+        <a href="posts.html"><i class="fa-solid fa-clipboard-check ic"></i>帖子审核</a>
+        <a href="treehole-audit.html"><i class="fa-solid fa-tree ic"></i>树洞审核</a>
+        <a href="cases.html"><i class="fa-solid fa-heart-circle-exclamation ic"></i>风险个案</a>
+        <a href="courses.html"><i class="fa-solid fa-book-medical ic"></i>课程管理</a>
+        <a href="music-manage.html"><i class="fa-solid fa-music ic"></i>音乐管理</a>
+        <a href="audit-logs.html"><i class="fa-solid fa-file-shield ic"></i>审计日志</a>
+        <a href="activity-stats.html" class="active"><i class="fa-solid fa-chart-bar ic"></i>活动统计</a>
+      </nav>
+      <div class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> 退出登录</div>
+    </aside>
+
+    <!-- 主内容 -->
+    <main class="admin-main">
+      <div class="stats-head">
+        <h2>活动效果统计</h2>
+        <div class="date-row">
+          <span class="date-field"><i class="fa-regular fa-calendar"></i>开始日期</span>
+          <span class="date-sep">至</span>
+          <span class="date-field"><i class="fa-regular fa-calendar"></i>结束日期</span>
+          <button class="btn-query">查询</button>
+        </div>
+      </div>
+
+      <div class="stat-grid4">
+        <div class="stat-card">
+          <div class="lab">总活动数</div>
+          <div class="num">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="lab">总报名人次</div>
+          <div class="num">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="lab">反馈总数</div>
+          <div class="num">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="lab">平均评分</div>
+          <div class="num">0 <small>/ 5</small></div>
+        </div>
+      </div>
+
+      <div class="dist-card">
+        <div class="dist-head">评分分布</div>
+        <div class="dist-body">
+          <div class="box">📦</div>
+          <div class="txt">暂无评分数据</div>
+        </div>
+      </div>
+
+      <div class="copyright">© 2025 情绪健康平台 版权所有</div>
+    </main>
+  </div>
+
+</div>
+</body>
+</html>
